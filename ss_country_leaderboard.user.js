@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         ScoreSaber country leaderboards
+// @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
 // @version      0.1
 // @description  Add country leaderboard tab
@@ -7,8 +7,8 @@
 // @match        http://scoresaber.com/leaderboard/*
 // @match        https://scoresaber.com/leaderboard/*
 // @icon         https://scoresaber.com/imports/images/logo.ico
-// @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.js
-// @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.js
+// @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
+// @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @require      https://raw.githubusercontent.com/localForage/localForage/master/dist/localforage.min.js
 // for Tampermonkey
 // @grant        GM_xmlhttpRequest
