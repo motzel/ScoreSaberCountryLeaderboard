@@ -6,6 +6,9 @@
 // @author       motzel
 // @match        http://scoresaber.com/leaderboard/*
 // @match        https://scoresaber.com/leaderboard/*
+// @icon         https://scoresaber.com/imports/images/logo.ico
+// @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.js
+// @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.js
 // @require      https://raw.githubusercontent.com/localForage/localForage/master/dist/localforage.min.js
 // for Tampermonkey
 // @grant        GM_xmlhttpRequest
