@@ -1,0 +1,484 @@
+// ==UserScript==
+// @name         ScoreSaber country leaderboards
+// @namespace    https://motzel.dev
+// @version      0.1
+// @description  Add country leaderboard tab
+// @author       motzel
+// @match        http://scoresaber.com/leaderboard/*
+// @match        https://scoresaber.com/leaderboard/*
+// @require      https://raw.githubusercontent.com/localForage/localForage/master/dist/localforage.min.js
+// for Tampermonkey
+// @grant        GM_xmlhttpRequest
+// @grant        GM_addStyle
+// @grant        GM_info
+// for Greasemonkey
+// @grant        GM.xmlHttpRequest
+// @connect      beatsaver.com
+// @connect      githubusercontent.com
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    const COUNTRY = 'pl';
+
+    const SCORESABER_URL = 'https://scoresaber.com';
+    const SCORESABER_API_URL = 'https://new.scoresaber.com/api';
+    const USERS_URL = SCORESABER_URL + '/global/${page}?country=' + COUNTRY;
+    const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
+    const SCORES_URL = SCORESABER_API_URL + '/player/${userId}/scores/recent/${page}';
+
+    const CACHE_KEY = 'sspl_users';
+
+    let Globals = {addStyle: null, data: null};
+
+    let substituteVars = (url, vars) => Object.keys(vars).reduce((cum, key) => cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]), url);
+    let dateFromString = str => str ? new Date(Date.parse(str)) : null;
+    let getFirstRegexpMatch = (regexp, str) => {
+        let _ = regexp.exec(str);
+        return _ ? _[1] : null
+    }
+
+    let getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)/, window.location.href.toLowerCase());
+
+    let fetchHtmlPage = async (url, page = 1) => new DOMParser().parseFromString(await (await fetch(substituteVars(url, {page}))).text(), 'text/html');
+    let fetchApiPage = async (url, page = 1) => (await fetch(substituteVars(url, {page}))).json();
+
+    let fetchUsers = async (page = 1) => Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), a => ({
+        id: getFirstRegexpMatch(/\/(\d+)$/, a.href),
+        name: a.querySelector('.songTop.pp').innerText,
+        url: a.href,
+        lastUpdated: null,
+        scores: {}
+    }));
+    let fetchScores = async (userId, page = 1) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page);
+
+    async function fetchAllNewScores(user, lastUpdated = null, progressCallback = null) {
+        let allScores = {
+            lastUpdated,
+            scores: {}
+        };
+
+        let page = 0;
+        let recentPlay = null;
+        while (++page) {
+            if (progressCallback) progressCallback({id: user.id, name: user.name, page: page, total: null});
+
+            let scorePage = await fetchScores(user.id, page);
+            if (!scorePage || !scorePage.scores) break;
+
+            // remember most recent play time
+            if (page === 1 && scorePage.scores.length) {
+                recentPlay = dateFromString(scorePage.scores[0].timeset);
+            }
+
+            for (let i in scorePage.scores) {
+                if (lastUpdated && dateFromString(scorePage.scores[i].timeset) <= lastUpdated) {
+                    // remember most recent play time
+                    if (recentPlay) allScores.lastUpdated = recentPlay;
+
+                    return allScores;
+                }
+
+                allScores.scores[scorePage.scores[i].leaderboardId] = scorePage.scores[i];
+            }
+
+            // remember most recent play time
+            if (recentPlay) allScores.lastUpdated = recentPlay;
+
+            if (scorePage.scores.length < 8) break;
+        }
+
+        allScores.lastUpdated = recentPlay;
+
+        return allScores;
+    }
+
+    function isAnyData() {
+        return Globals.data && Object.keys(Globals.data.users).length;
+    }
+
+    async function getCache() {
+        return new Promise((resolve, reject) => localforage.getItem(CACHE_KEY, function (err, value) {
+            resolve(value);
+        }));
+    }
+
+    async function setCache(value) {
+        Globals.data = value;
+
+        localforage.setItem(CACHE_KEY, value);
+
+        return value;
+    }
+
+    async function getCacheAndConvertIfNeeded() {
+        let cache = await getCache() || {version: 1, lastUpdated: null, users: {}};
+
+        // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
+
+        Globals.data = cache;
+
+        return cache;
+    }
+
+    async function getLeaderboard(leadId) {
+        let data = await getCacheAndConvertIfNeeded();
+
+        return Object.keys(data.users)
+            .reduce((cum, userId) => {
+                if (!data.users[userId].scores[leadId]) return cum;
+
+                const {scores, ...user} = data.users[userId];
+                const {score, timeset, rank, mods, pp, maxScoreEx, ..._} = data.users[userId].scores[leadId];
+
+                cum.push(Object.assign({}, user, {
+                    score,
+                    timeset,
+                    rank,
+                    mods,
+                    pp,
+                    percent: maxScoreEx ? score / maxScoreEx : null
+                }));
+
+                return cum;
+            }, [])
+            .sort((a, b) => b.score - a.score)
+            ;
+    }
+
+    function assert(el) {
+        if (null === el) throw new Error("Assertion failed");
+
+        return el;
+    }
+
+    function getBySelector(sel, el = null) {
+        return assert((el || document).querySelector(sel));
+    }
+
+    function setupPlTable() {
+        let scoreTableNode = getBySelector(".ranking table.global");
+
+        let clonedTable = document.querySelector(".ranking table.sspl");
+        if (!clonedTable) clonedTable = scoreTableNode.cloneNode(true);
+
+        clonedTable.classList.remove('ranking');
+        clonedTable.classList.remove('global');
+        clonedTable.classList.add('sspl');
+        getBySelector('tbody', clonedTable).innerHTML = '';
+
+        const clonedTableHead = getBySelector('thead', clonedTable);
+        getBySelector('.rank', clonedTableHead).innerHTML = 'Miejsce';
+        getBySelector('.player', clonedTableHead).innerHTML = 'Gracz';
+        getBySelector('.score', clonedTableHead).innerHTML = 'Wynik';
+        getBySelector('.timeset', clonedTableHead).innerHTML = 'Czas';
+        getBySelector('.mods', clonedTableHead).innerHTML = 'Mody';
+        getBySelector('.percentage', clonedTableHead).innerHTML = 'Procent';
+
+        const sspl = create("div", {id: "sspl"}, "");
+        sspl.style.display = 'none';
+        scoreTableNode.parentElement.appendChild(sspl);
+
+        const refreshDiv = create("div", {id: "ssplrefresh"}, "");
+        refreshDiv.appendChild(create("button", {
+            title: "Odśwież", onclick: (e) => {
+                refreshDiv.appendChild(create("div", {id: "sspl_progress_cont"}, create("progress", {
+                    id: "sspl_progress",
+                    value: 0,
+                    max: 100
+                }, "0"), create("div", {id: "sspl_progress_info"}, "")));
+                e.target.disabled = true;
+
+                refresh().then(_ => {
+                    getBySelector('#sspl_progress_cont').remove();
+                    e.target.disabled = false;
+                    fillLeaderboard();
+                });
+            }
+        }, "↻"));
+        refreshDiv.appendChild(create("strong", {}, " Data pobrania:"));
+        refreshDiv.appendChild(create("span", {}, "-"));
+
+        sspl.appendChild(refreshDiv);
+        sspl.appendChild(clonedTable);
+        sspl.appendChild(create("div", {class: "ssplcont text-center"}, ""));
+    }
+
+    async function fillLeaderboard() {
+        const leaderboard = await getLeaderboard(getLeaderboardId());
+        const container = getBySelector('.ranking.global .ssplcont');
+        const ssplTable = getBySelector('#sspl table');
+        const ssplTableBody = getBySelector('tbody', ssplTable);
+
+        container.innerHTML = '';
+        ssplTableBody.innerHTML = '';
+
+        if (leaderboard && leaderboard.length) {
+            const sseUserId = getSSEUser();
+            let idx = 1;
+            leaderboard.map(u => {
+                let row = generate_song_table_row(u, idx++);
+                if (u.id == sseUserId) row.style = "background-color: var(--color-highlight);";
+                ssplTableBody.appendChild(row);
+            });
+
+            ssplTable.style.display = '';
+        } else {
+            ssplTable.style.display = 'none';
+            container.appendChild(create("h3", {}, "Strasznie tu pusto..."));
+        }
+
+        if (!isAnyData()) {
+            const firstFetch = create("div", {}, "");
+            firstFetch.appendChild(create("p", {}, "Wygląda na to, że nie ma jeszcze żadnych danych."));
+            firstFetch.appendChild(create("p", {}, "Usiądź sobie wygodnie, otwórz harnasia, kliknij Pobierz i poczekaj, bo trochę to potrwa..."));
+            firstFetch.appendChild(create("button", {
+                onclick: (e) => {
+                    e.target.disabled = true;
+
+                    refresh().then(_ => {
+                        firstFetch.remove();
+                        fillLeaderboard();
+                    });
+                }
+            }, "Pobierz"));
+            firstFetch.appendChild(create("div", {}, create("progress", {
+                id: "sspl_progress",
+                value: 0,
+                max: 100
+            }, "0"), create("div", {id: "sspl_progress_info"}, "")));
+            container.appendChild(firstFetch);
+
+            getBySelector('#ssplrefresh').style.display = 'none';
+        } else {
+            const refresh = getBySelector('#ssplrefresh');
+            refresh.style.display = '';
+            getBySelector('span', refresh).innerText = formatDate(Globals.data.lastUpdated);
+        }
+    }
+
+    async function setupLeaderboard() {
+        let leadId = getLeaderboardId();
+        if (!leadId) return;
+
+        const tabs = getBySelector(".tabs > ul");
+        tabs.appendChild(generate_tab("pl_tab", false, null === document.querySelector('.filter_tab')));
+        setupPlTable();
+
+        document.addEventListener('click', function (e) {
+            let clickedTab = e.target.closest('.filter_tab');
+            if (!clickedTab) return;
+
+            const box = assert(e.target.closest('.box'));
+
+            const sspl = getBySelector('#sspl', box);
+            const originalTable = getBySelector('table.ranking', box);
+            if (clickedTab.classList.contains('sspl')) {
+                originalTable.style.display = 'none';
+                sspl.style.display = '';
+                getBySelector('.pagination').style.display = 'none';
+            } else {
+                originalTable.style.display = '';
+                sspl.style.display = 'none';
+                getBySelector('.pagination').style.display = '';
+            }
+        }, {passive: true});
+    }
+
+    function updateProgress(info) {
+        const ssplProgress = document.querySelector("#sspl_progress");
+        const ssplProgressInfo = document.querySelector("#sspl_progress_info");
+
+        if (ssplProgress) ssplProgress.value = info.percent;
+        if (ssplProgressInfo) ssplProgressInfo.innerHTML = '<strong>' + info.name + '</strong> / ' + info.page;
+    }
+
+    async function refresh() {
+        const users = await fetchUsers();
+
+        let idx = 0;
+        let cache = await users.reduce(async (promisedCum, u) => {
+            let cum = await promisedCum;
+
+            let newScores = await fetchAllNewScores(u, dateFromString(cum.users[u.id] ? cum.users[u.id].lastUpdated : null), (info) => updateProgress(Object.assign({}, info, {percent: Math.floor(idx / users.length * 100)})));
+
+            cum.users[u.id] = Object.assign(
+                {},
+                u,
+                {
+                    lastUpdated: newScores.lastUpdated,
+                    scores: Object.assign({}, cum.users[u.id] ? cum.users[u.id].scores : {}, newScores.scores)
+                }
+            );
+
+            idx++;
+
+            return cum;
+        }, await getCacheAndConvertIfNeeded());
+
+        cache.lastUpdated = (new Date()).toISOString();
+
+        return setCache(cache);
+    }
+
+    // Taken from ScoreSaberEnhanced to play nicely with SSE running: https://github.com/Splamy/ScoreSaberEnhanced
+    function toggled_class(bool, css_class) {
+        return bool ? css_class : "";
+    }
+
+    function into(parent, ...children) {
+        for (const child of children) {
+            if (typeof child === "string") {
+                if (children.length > 1) {
+                    parent.appendChild(create("div", {}, child));
+                } else {
+                    parent.innerText = child;
+                }
+            } else {
+                parent.appendChild(child);
+            }
+        }
+        return parent;
+    }
+
+    function create(tag, attrs, ...children) {
+        if (!tag)
+            throw new SyntaxError("'tag' not defined");
+        const ele = document.createElement(tag);
+        if (attrs) {
+            for (const attrName in attrs) {
+                if (attrName === "style") {
+                    for (const styleName in attrs.style) {
+                        ele.style[styleName] = attrs.style[styleName];
+                    }
+                } else if (attrName === "class") {
+                    if (typeof attrs.class === "string") {
+                        const classes = attrs.class.split(/ /g).filter(c => c.trim().length > 0);
+                        ele.classList.add(...classes);
+                    } else {
+                        ele.classList.add(...attrs.class);
+                    }
+                } else if (attrName === "for") {
+                    ele.htmlFor = attrs[attrName];
+                } else if (attrName === "selected") {
+                    ele.selected = attrs[attrName] ? "selected" : undefined;
+                } else if (attrName === "disabled") {
+                    if (attrs[attrName])
+                        ele.setAttribute("disabled", undefined);
+                } else if (attrName === "data") {
+                    const data_dict = attrs[attrName];
+                    for (const data_key in data_dict) {
+                        ele.setAttribute(`data-${data_key}`, data_dict[data_key]);
+                    }
+                } else {
+                    ele[attrName] = attrs[attrName];
+                }
+            }
+        }
+        into(ele, ...children);
+        return ele;
+    }
+
+    function generate_tab(css_id, is_active, has_offset) {
+        const tabClass = `filter_tab sspl ${toggled_class(is_active, "is-active")} ${toggled_class(has_offset, "offset_tab")}`;
+        return create("li", {
+            id: css_id,
+            class: tabClass,
+        }, create("a", {
+            class: "has-text-info",
+            onclick: () => {
+                document.querySelectorAll(".tabs > ul .filter_tab").forEach(x => x.classList.remove("is-active"));
+                assert(document.getElementById(css_id)).classList.add("is-active");
+            },
+        }, create("img", {
+            class: "bloodtrail",
+            src: "data:image/png;base64,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"
+        })));
+    }
+
+    function generate_song_table_row(user, idx) {
+        return create("tr", {}, create("td", {class: "picture"}), create("td", {class: "rank"}, create("span", {}, "#" + idx), create("small", {}, "#" + user.rank)), create("td", {class: "player"}, generate_song_table_player(user)), create("td", {class: "score"}, user.score ? formatNumber(user.score, 0) : "-"), create("td", {
+            class: "timeset",
+            title: dateFromString(user.timeset).toLocaleString()
+        }, formatDate(user.timeset)), create("td", {class: "mods"}, user.mods ? user.mods.toString() : "-"), create("td", {class: "percentage"}, user.percent ? (formatNumber(user.percent * 100, 2).toString() + "%") : "-"), create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(user.pp, 2)), create("span", {class: "scoreTop ppLabel"}, "pp")));
+    }
+
+    function generate_song_table_player(user) {
+        return create("a", {href: substituteVars(USER_PROFILE_URL, {userId: user.id})}, create("img", {src: `/imports/images/flags/${COUNTRY}.png`}), create("span", {class: "player-name"}, " " + user.name));
+    }
+
+    // needed by removed SSE dependencies
+    function formatNumber(num, digits) {
+        digits = digits || 2;
+        return num.toLocaleString(COUNTRY, {minimumFractionDigits: digits, maximumFractionDigits: digits});
+    }
+
+    function formatDate(val) {
+        const rtf = new Intl.RelativeTimeFormat(
+            COUNTRY,
+            {
+                localeMatcher: "best fit",
+                numeric: "auto",
+                style: "long",
+            }
+        );
+
+        const diffInSecs = (Date.now() - dateFromString(val)) / 1000;
+
+        if (diffInSecs < 60) return rtf.format(-Math.ceil(diffInSecs), 'second');
+        else if (diffInSecs < 60 * 60) return rtf.format(-Math.ceil(diffInSecs / 60), 'minute');
+        else if (diffInSecs < 60 * 60 * 24) return rtf.format(-Math.ceil(diffInSecs / (60 * 60)), 'hour');
+        else if (diffInSecs < 60 * 60 * 24 * 30) return rtf.format(-Math.ceil(diffInSecs / (60 * 60 * 24)), 'day');
+        else if (diffInSecs < 60 * 60 * 24 * 365) return rtf.format(-Math.ceil(diffInSecs / (60 * 60 * 24 * 30)), 'month');
+        else return rtf.format(-Math.floor(diffInSecs / (60 * 60 * 24 * 365)), 'year');
+    }
+
+    function getSSEUser() {
+        let user = localStorage.getItem("home_user");
+        return user ? JSON.parse(user).id : null
+    }
+
+    function setupStyles() {
+        const styles = `
+            .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
+            .box .tabs a {border-bottom: none;}
+            .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
+            .tabs li.is-active {border-bottom: 1px solid #3273dc; margin-bottom: -1px;}
+            img.bloodtrail {height:24px;}
+            .sspl .rank small {font-size: .75rem; margin-left: .5rem; color: lightgray;}
+            .sspl .rank span {display: inline-block; width: 1.5rem; text-align: right;}
+            .text-center {text-align: center;}
+            #sspl progress {width: 20rem; max-width: 90%;}
+            #ssplrefresh {text-align: right; margin-bottom: 1rem;}
+            #ssplrefresh button {margin-right: .5rem;}
+            #ssplrefresh strong {margin-right: .5rem;}
+            .offset_tab {margin-left: auto;}
+        `;
+        Globals.addStyle(styles);
+    }
+
+    function setupPlugin() {
+        Globals.addStyle = GM_addStyle ? GM_addStyle : () => {};
+
+        setupStyles();
+    }
+
+    let loaded = false;
+
+    function onload() {
+        if (loaded) {
+            return;
+        }
+
+        loaded = true;
+
+        setupPlugin();
+        setupLeaderboard();
+        fillLeaderboard();
+    }
+
+    onload();
+    window.addEventListener("DOMContentLoaded", onload);
+    window.addEventListener("load", onload);
+})();
