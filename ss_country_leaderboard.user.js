@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.1
+// @version      0.2
 // @description  Add country leaderboard tab
 // @author       motzel
-// @match        http://scoresaber.com/leaderboard/*
 // @match        https://scoresaber.com/leaderboard/*
+// @match        https://scoresaber.com/u/*
 // @icon         https://scoresaber.com/imports/images/logo.ico
 // @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @require      https://raw.githubusercontent.com/localForage/localForage/master/dist/localforage.min.js
+// @run-at document-end
 // for Tampermonkey
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
@@ -25,15 +26,21 @@
 
     const COUNTRY = 'pl';
 
+    const SSE_CHECK_DELAY = 500; // in ms
+
     const SCORESABER_URL = 'https://scoresaber.com';
     const SCORESABER_API_URL = 'https://new.scoresaber.com/api';
+    const BEATSAVER_API_URL = 'https://beatsaver.com/api';
     const USERS_URL = SCORESABER_URL + '/global/${page}?country=' + COUNTRY;
     const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
     const SCORES_URL = SCORESABER_API_URL + '/player/${userId}/scores/recent/${page}';
+    const PLAYER_INFO_URL = SCORESABER_API_URL + '/player/${userId}/full';
+    const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${songHash}';
 
     const CACHE_KEY = 'sspl_users';
+    const ADDITIONAL_USER_IDS = ['76561198967371424', '76561198093469724'];
 
-    let Globals = {addStyle: null, data: null};
+    let Globals = {data: null};
 
     let substituteVars = (url, vars) => Object.keys(vars).reduce((cum, key) => cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]), url);
     let dateFromString = str => str ? new Date(Date.parse(str)) : null;
@@ -41,18 +48,43 @@
         let _ = regexp.exec(str);
         return _ ? _[1] : null
     }
+    let getMaxScore = (blocks, maxScorePerBlock = 115) =>
+            Math.floor(
+                (blocks >= 14 ? 8 * maxScorePerBlock * (blocks - 13) : 0) +
+                (blocks >= 6 ? 4 * maxScorePerBlock * (Math.min(blocks, 13) - 5) : 0) +
+                (blocks >= 2 ? 2 * maxScorePerBlock * (Math.min(blocks, 5) - 1) : 0) +
+                Math.min(blocks, 1) * maxScorePerBlock
+            );
 
-    let getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)/, window.location.href.toLowerCase());
+    let getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, window.location.href.toLowerCase());
+    let getSongHash = () => document.querySelector('.title~b')?.innerText;
+    let isLeaderboardPage = () => null !== getLeaderboardId();
+    let getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
+    let isProfilePage = () => null !== getProfileId();
 
     let fetchHtmlPage = async (url, page = 1) => new DOMParser().parseFromString(await (await fetch(substituteVars(url, {page}))).text(), 'text/html');
     let fetchApiPage = async (url, page = 1) => (await fetch(substituteVars(url, {page}))).json();
 
-    let fetchUsers = async (page = 1) => Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), a => ({
-        id: getFirstRegexpMatch(/\/(\d+)$/, a.href),
-        name: a.querySelector('.songTop.pp').innerText,
-        url: a.href,
-        lastUpdated: null,
-        scores: {}
+    let fetchSongByHash = async (songHash) => await fetchApiPage(substituteVars(SONG_BY_HASH_URL, {songHash}));
+
+    let fetchPlayerInfo = async (userId) => await(fetchApiPage(substituteVars(PLAYER_INFO_URL, {userId})));
+    let getUserIds = async (page = 1) => (await Promise.all(Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href) ))).concat(ADDITIONAL_USER_IDS);
+    let fetchUsers = async (page = 1) => Promise.all(Array.prototype.map.call(await getUserIds(page), async userId => {
+        const info = await fetchPlayerInfo(userId);
+        const {name, playerid, role, badges, banned, history, inactive, ...playerInfo} = info.playerInfo;
+
+        return Object.assign(
+            {
+            id: playerid,
+            name: name,
+            url: substituteVars(USER_PROFILE_URL, {userId: playerid}),
+            lastUpdated: null,
+
+            scores: {}
+            },
+            playerInfo,
+            {stats: info.scoreStats}
+        );
     }));
     let fetchScores = async (userId, page = 1) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page);
 
@@ -116,7 +148,7 @@
     }
 
     async function getCacheAndConvertIfNeeded() {
-        let cache = await getCache() || {version: 1, lastUpdated: null, users: {}};
+        let cache = await getCache() ?? {version: 1, lastUpdated: null, users: {}};
 
         // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
 
@@ -125,15 +157,41 @@
         return cache;
     }
 
+    function findDiffInfo(characteristics, ssDiff) {
+        const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
+        if(!match) return null;
+
+        const diff = match[1].toLowerCase().replace('plus', 'Plus');
+        const type = match[2] ?? 'Standard';
+
+        return characteristics.reduce((cum, ch) => {
+          if(ch.name === type) {
+            return ch.difficulties?.[diff];
+          }
+
+          return cum;
+        }, null);
+    }
+
     async function getLeaderboard(leadId) {
-        let data = await getCacheAndConvertIfNeeded();
+        const data = await getCacheAndConvertIfNeeded();
+
+        const songHash = getSongHash() ?? null;
+        const songInfo = songHash ? await fetchSongByHash(songHash) : null;
+        const songCharacteristics = songInfo?.metadata?.characteristics;
+        let diffInfo = null, maxSongScore = 0;
 
         return Object.keys(data.users)
             .reduce((cum, userId) => {
                 if (!data.users[userId].scores[leadId]) return cum;
 
+                if(!maxSongScore && !cum.length) {
+                    diffInfo = findDiffInfo(songCharacteristics, data.users[userId].scores[leadId].diff);
+                    maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
+                }
+
                 const {scores, ...user} = data.users[userId];
-                const {score, timeset, rank, mods, pp, maxScoreEx, ..._} = data.users[userId].scores[leadId];
+                const {score, timeset, rank, mods, pp, maxScoreEx, diff, ..._} = data.users[userId].scores[leadId];
 
                 cum.push(Object.assign({}, user, {
                     score,
@@ -141,7 +199,7 @@
                     rank,
                     mods,
                     pp,
-                    percent: maxScoreEx ? score / maxScoreEx : null
+                    percent: maxSongScore ? score / maxSongScore : (maxScoreEx ? score / maxScoreEx : null)
                 }));
 
                 return cum;
@@ -157,7 +215,7 @@
     }
 
     function getBySelector(sel, el = null) {
-        return assert((el || document).querySelector(sel));
+        return assert((el ?? document).querySelector(sel));
     }
 
     function setupPlTable() {
@@ -217,7 +275,7 @@
         container.innerHTML = '';
         ssplTableBody.innerHTML = '';
 
-        if (leaderboard && leaderboard.length) {
+        if (leaderboard?.length) {
             const sseUserId = getSSEUser();
             let idx = 1;
             leaderboard.map(u => {
@@ -262,12 +320,14 @@
     }
 
     async function setupLeaderboard() {
-        let leadId = getLeaderboardId();
+        const leadId = getLeaderboardId();
         if (!leadId) return;
 
         const tabs = getBySelector(".tabs > ul");
         tabs.appendChild(generate_tab("pl_tab", false, null === document.querySelector('.filter_tab')));
         setupPlTable();
+
+        fillLeaderboard();
 
         document.addEventListener('click', function (e) {
             let clickedTab = e.target.closest('.filter_tab');
@@ -287,6 +347,21 @@
                 getBySelector('.pagination').style.display = '';
             }
         }, {passive: true});
+    }
+
+    async function setupProfile() {
+        const profileId = getProfileId();
+        if (!profileId) return;
+
+        const data = await getCacheAndConvertIfNeeded();
+        if(data.users?.[profileId]?.stats) {
+            const stats = document.querySelector('.content .column ul');
+            if(stats) {
+                stats.appendChild(create("li", {}, create("strong", {}, "Ranked play count: "), create("span", {}, formatNumber(data.users[profileId].stats.rankedPlayCount, 0))));
+                stats.appendChild(create("li", {}, create("strong", {}, "Total ranked score: "), create("span", {}, formatNumber(data.users[profileId].stats.totalRankedScore, 0))));
+                stats.appendChild(create("li", {}, create("strong", {}, "Ranked accuracy: "), create("span", {}, formatNumber(data.users[profileId].stats.averageRankedAccuracy,2).toString() + "%")));
+            }
+        }
     }
 
     function updateProgress(info) {
@@ -408,12 +483,12 @@
     }
 
     function generate_song_table_player(user) {
-        return create("a", {href: substituteVars(USER_PROFILE_URL, {userId: user.id})}, create("img", {src: `/imports/images/flags/${COUNTRY}.png`}), create("span", {class: "player-name"}, " " + user.name));
+        const country = user.country.toLowerCase();
+        return create("a", {href: substituteVars(USER_PROFILE_URL, {userId: user.id})}, create("img", {src: `/imports/images/flags/${country}.png`}), create("span", {class: "player-name"}, " " + user.name));
     }
 
     // needed by removed SSE dependencies
-    function formatNumber(num, digits) {
-        digits = digits || 2;
+    function formatNumber(num, digits = 2) {
         return num.toLocaleString(COUNTRY, {minimumFractionDigits: digits, maximumFractionDigits: digits});
     }
 
@@ -458,30 +533,38 @@
             #ssplrefresh strong {margin-right: .5rem;}
             .offset_tab {margin-left: auto;}
         `;
-        Globals.addStyle(styles);
+
+        const addStyles = GM_addStyle ? GM_addStyle : () => {};
+        addStyles(styles);
     }
 
-    function setupPlugin() {
-        Globals.addStyle = GM_addStyle ? GM_addStyle : () => {};
-
-        setupStyles();
-    }
-
-    let loaded = false;
-
-    function onload() {
-        if (loaded) {
+    function setupDelayed() {
+        if (initialized) {
             return;
         }
 
-        loaded = true;
+        initialized = true;
 
-        setupPlugin();
-        setupLeaderboard();
-        fillLeaderboard();
+        setupStyles();
+
+        if(isLeaderboardPage()) {
+           setupLeaderboard();
+        }
     }
 
-    onload();
-    window.addEventListener("DOMContentLoaded", onload);
-    window.addEventListener("load", onload);
+    let initialized = false;
+    function init() {
+        if (initialized) {
+            return;
+        }
+
+        if(isProfilePage()) {
+            setupProfile();
+        }
+
+        // wait a sec for SSE
+        setTimeout(setupDelayed, SSE_CHECK_DELAY);
+    }
+
+    init();
 })();
