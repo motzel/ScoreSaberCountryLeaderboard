@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.4
+// @version      0.5
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -367,6 +367,31 @@
         if (!profileId) return;
 
         const data = await getCacheAndConvertIfNeeded();
+
+        var scoreSpans = document.querySelectorAll('.score .scoreBottom');
+        [].forEach.call(scoreSpans, async function (span) {
+            const songLink = span.closest('tr').querySelector('.song a');
+            if (songLink) {
+                const leaderboardId = getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, songLink.href);
+                if (leaderboardId) {
+                    const leaderboard = data.users?.[profileId].scores?.[leaderboardId];
+
+                    if (leaderboard) {
+                        try {
+                            const songInfo = await fetchSongByHash(leaderboard.id);
+                            const songCharacteristics = songInfo?.metadata?.characteristics;
+                            const diffInfo = findDiffInfo(songCharacteristics, leaderboard.diff);
+                            const maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
+                            const percent = maxSongScore ? leaderboard.score / maxSongScore : (maxScoreEx ? leaderboard.score / maxScoreEx : null);
+
+                            span.innerHTML = "score: " + formatNumber(leaderboard.score, 0) + (percent ? '<br />accuracy: ' + formatNumber(percent * 100, 2).toString() + '%' : '') + (leaderboard.mods.length ? '<br />(' + leaderboard.mods + ')' : '');
+                        }
+                        catch(e) {} // swallow error
+                    }
+                }
+            }
+        });
+
         if (data.users?.[profileId]?.stats) {
             const stats = document.querySelector('.content .column ul');
             if (stats) {
@@ -618,8 +643,6 @@
 
         initialized = true;
 
-        setupStyles();
-
         if (isLeaderboardPage()) {
             setupLeaderboard();
         }
@@ -631,6 +654,8 @@
         if (initialized) {
             return;
         }
+
+        setupStyles();
 
         if (isProfilePage()) {
             setupProfile();
