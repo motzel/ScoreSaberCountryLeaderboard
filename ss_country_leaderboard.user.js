@@ -54,7 +54,7 @@
     }
     const getMaxScore = (blocks, maxScorePerBlock = 115) =>
         Math.floor(
-            (blocks >= 14 ? 8 * maxScorePerBlock * (blocks-13) : 0) +
+            (blocks >= 14 ? 8 * maxScorePerBlock * (blocks - 13) : 0) +
             (blocks >= 6 ? 4 * maxScorePerBlock * (Math.min(blocks, 13) - 5) : 0) +
             (blocks >= 2 ? 2 * maxScorePerBlock * (Math.min(blocks, 5) - 1) : 0) +
             Math.min(blocks, 1) * maxScorePerBlock
@@ -72,14 +72,17 @@
 
     const fetchSongByHash = async (songHash) => await fetchApiPage(substituteVars(SONG_BY_HASH_URL, {songHash}));
 
-    const fetchPlayerInfo = async (userId) => await(fetchApiPage(substituteVars(PLAYER_INFO_URL, {userId})));
-    const getUserIds = async (page = 1) => (await Promise.all(Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href) ))).concat(ADDITIONAL_USER_IDS);
+    const fetchPlayerInfo = async (userId) => await (fetchApiPage(substituteVars(PLAYER_INFO_URL, {userId})));
+    const getUserIds = async (page = 1) => (await Promise.all(Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href)))).concat(ADDITIONAL_USER_IDS);
     const fetchUsers = async (page = 1) => Promise.all(Array.prototype.map.call(await getUserIds(page), async userId => {
         const info = await fetchPlayerInfo(userId);
         const {name, playerid, role, badges, banned, inactive, ...playerInfo} = info.playerInfo;
 
         // history is fetched as comma separated values string, let's make it a proper array
-        playerInfo.history = playerInfo.history ? playerInfo.history.split(',').map(rank => {const i = parseInt(rank, 10); return !isNaN(i) ? i : null;}).reverse() : null;
+        playerInfo.history = playerInfo.history ? playerInfo.history.split(',').map(rank => {
+            const i = parseInt(rank, 10);
+            return !isNaN(i) ? i : null;
+        }).reverse() : null;
 
         return Object.assign(
             {
@@ -167,13 +170,13 @@
 
     function findDiffInfo(characteristics, ssDiff) {
         const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
-        if(!match) return null;
+        if (!match) return null;
 
         const diff = match[1].toLowerCase().replace('plus', 'Plus');
         const type = match[2] ?? 'Standard';
 
         return characteristics.reduce((cum, ch) => {
-            if(ch.name === type) {
+            if (ch.name === type) {
                 return ch.difficulties?.[diff];
             }
 
@@ -193,7 +196,7 @@
             .reduce((cum, userId) => {
                 if (!data.users[userId].scores[leadId]) return cum;
 
-                if(!maxSongScore && !cum.length) {
+                if (!maxSongScore && !cum.length) {
                     diffInfo = findDiffInfo(songCharacteristics, data.users[userId].scores[leadId].diff);
                     maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
                 }
@@ -362,12 +365,12 @@
         if (!profileId) return;
 
         const data = await getCacheAndConvertIfNeeded();
-        if(data.users?.[profileId]?.stats) {
+        if (data.users?.[profileId]?.stats) {
             const stats = document.querySelector('.content .column ul');
-            if(stats) {
+            if (stats) {
                 stats.appendChild(create("li", {}, create("strong", {}, "Ranked play count: "), create("span", {}, formatNumber(data.users[profileId].stats.rankedPlayCount, 0))));
                 stats.appendChild(create("li", {}, create("strong", {}, "Total ranked score: "), create("span", {}, formatNumber(data.users[profileId].stats.totalRankedScore, 0))));
-                stats.appendChild(create("li", {}, create("strong", {}, "Ranked accuracy: "), create("span", {}, formatNumber(data.users[profileId].stats.averageRankedAccuracy,2).toString() + "%")));
+                stats.appendChild(create("li", {}, create("strong", {}, "Ranked accuracy: "), create("span", {}, formatNumber(data.users[profileId].stats.averageRankedAccuracy, 2).toString() + "%")));
             }
         }
     }
@@ -377,8 +380,8 @@
             create("td", {class: "picture"}),
             create("td", {class: "rank"}, create("span", {}, "#" + u.idx)),
             create("td", {class: "player"}, generate_song_table_player(u)),
-            create("td", {class: "pp"}, create("span", {class:"scoreTop ppValue"}, formatNumber(u.pp, 2).toString()), create("span", {class:"scoreTop ppLabel"}, 'pp')),
-            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec'): '')}, u.weeklyChange ? u.weeklyChange.toString() : "-")
+            create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(u.pp, 2).toString()), create("span", {class: "scoreTop ppLabel"}, 'pp')),
+            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, u.weeklyChange ? u.weeklyChange.toString() : "-")
         );
     }
 
@@ -388,11 +391,19 @@
         const ranking = Object.keys(users).reduce((cum, userId) => {
             const {id, name, country, pp, rank, history} = users[userId];
 
-            cum.push({id, name, country, pp, rank, history, weeklyChange: rank && history?.[6] && rank !== MAGIC_HISTORY_NUMBER && history?.[6] !== MAGIC_HISTORY_NUMBER ? rank - history[6] : null});
+            cum.push({
+                id,
+                name,
+                country,
+                pp,
+                rank,
+                history,
+                weeklyChange: rank && history?.[6] && rank !== MAGIC_HISTORY_NUMBER && history?.[6] !== MAGIC_HISTORY_NUMBER ? rank - history[6] : null
+            });
 
             return cum;
         }, [])
-            .sort((a,b) => b.pp - a.pp)
+            .sort((a, b) => b.pp - a.pp)
             .slice(0, 50);
 
         tblBody.innerHTML = '';
@@ -402,7 +413,7 @@
         const sseUserId = getSSEUser();
         ranking.forEach(u => {
             const row = generateRankingRow(Object.assign({}, u, {idx}));
-            if(u.id === sseUserId) row.style = "background-color: var(--color-highlight);";
+            if (u.id === sseUserId) row.style = "background-color: var(--color-highlight);";
             tblBody.appendChild(row);
             idx++;
         });
@@ -580,7 +591,8 @@
             .offset_tab {margin-left: auto;}
         `;
 
-        const addStyles = GM_addStyle ? GM_addStyle : () => {};
+        const addStyles = GM_addStyle ? GM_addStyle : () => {
+        };
         addStyles(styles);
     }
 
@@ -593,22 +605,23 @@
 
         setupStyles();
 
-        if(isLeaderboardPage()) {
+        if (isLeaderboardPage()) {
             setupLeaderboard();
         }
     }
 
     let initialized = false;
+
     function init() {
         if (initialized) {
             return;
         }
 
-        if(isProfilePage()) {
+        if (isProfilePage()) {
             setupProfile();
         }
 
-        if(isCountryRankingPage()) {
+        if (isCountryRankingPage()) {
             setupCountryRanking();
         }
 
