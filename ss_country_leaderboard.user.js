@@ -6,6 +6,8 @@
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
 // @match        https://scoresaber.com/u/*
+// @match        https://scoresaber.com/global/1&country=pl
+// @match        https://scoresaber.com/global?country=pl
 // @icon         https://scoresaber.com/imports/images/logo.ico
 // @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
@@ -40,53 +42,59 @@
     const CACHE_KEY = 'sspl_users';
     const ADDITIONAL_USER_IDS = ['76561198967371424', '76561198093469724'];
 
-    let Globals = {data: null};
+    const MAGIC_HISTORY_NUMBER = 999999; // just ask Umbra
 
-    let substituteVars = (url, vars) => Object.keys(vars).reduce((cum, key) => cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]), url);
-    let dateFromString = str => str ? new Date(Date.parse(str)) : null;
-    let getFirstRegexpMatch = (regexp, str) => {
+    const Globals = {data: null};
+
+    const substituteVars = (url, vars) => Object.keys(vars).reduce((cum, key) => cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]), url);
+    const dateFromString = str => str ? new Date(Date.parse(str)) : null;
+    const getFirstRegexpMatch = (regexp, str) => {
         let _ = regexp.exec(str);
         return _ ? _[1] : null
     }
-    let getMaxScore = (blocks, maxScorePerBlock = 115) =>
-            Math.floor(
-                (blocks >= 14 ? 8 * maxScorePerBlock * (blocks - 13) : 0) +
-                (blocks >= 6 ? 4 * maxScorePerBlock * (Math.min(blocks, 13) - 5) : 0) +
-                (blocks >= 2 ? 2 * maxScorePerBlock * (Math.min(blocks, 5) - 1) : 0) +
-                Math.min(blocks, 1) * maxScorePerBlock
-            );
+    const getMaxScore = (blocks, maxScorePerBlock = 115) =>
+        Math.floor(
+            (blocks >= 14 ? 8 * maxScorePerBlock * (blocks-13) : 0) +
+            (blocks >= 6 ? 4 * maxScorePerBlock * (Math.min(blocks, 13) - 5) : 0) +
+            (blocks >= 2 ? 2 * maxScorePerBlock * (Math.min(blocks, 5) - 1) : 0) +
+            Math.min(blocks, 1) * maxScorePerBlock
+        );
 
-    let getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, window.location.href.toLowerCase());
-    let getSongHash = () => document.querySelector('.title~b')?.innerText;
-    let isLeaderboardPage = () => null !== getLeaderboardId();
-    let getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
-    let isProfilePage = () => null !== getProfileId();
+    const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, window.location.href.toLowerCase());
+    const getSongHash = () => document.querySelector('.title~b')?.innerText;
+    const isLeaderboardPage = () => null !== getLeaderboardId();
+    const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
+    const isProfilePage = () => null !== getProfileId();
+    const isCountryRankingPage = () => ['https://scoresaber.com/global?country=pl', 'https://scoresaber.com/global/1&country=pl'].indexOf(window.location.href) >= 0;
 
-    let fetchHtmlPage = async (url, page = 1) => new DOMParser().parseFromString(await (await fetch(substituteVars(url, {page}))).text(), 'text/html');
-    let fetchApiPage = async (url, page = 1) => (await fetch(substituteVars(url, {page}))).json();
+    const fetchHtmlPage = async (url, page = 1) => new DOMParser().parseFromString(await (await fetch(substituteVars(url, {page}))).text(), 'text/html');
+    const fetchApiPage = async (url, page = 1) => (await fetch(substituteVars(url, {page}))).json();
 
-    let fetchSongByHash = async (songHash) => await fetchApiPage(substituteVars(SONG_BY_HASH_URL, {songHash}));
+    const fetchSongByHash = async (songHash) => await fetchApiPage(substituteVars(SONG_BY_HASH_URL, {songHash}));
 
-    let fetchPlayerInfo = async (userId) => await(fetchApiPage(substituteVars(PLAYER_INFO_URL, {userId})));
-    let getUserIds = async (page = 1) => (await Promise.all(Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href) ))).concat(ADDITIONAL_USER_IDS);
-    let fetchUsers = async (page = 1) => Promise.all(Array.prototype.map.call(await getUserIds(page), async userId => {
+    const fetchPlayerInfo = async (userId) => await(fetchApiPage(substituteVars(PLAYER_INFO_URL, {userId})));
+    const getUserIds = async (page = 1) => (await Promise.all(Array.prototype.map.call((await fetchHtmlPage(USERS_URL, page)).querySelectorAll('.ranking.global .player a'), async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href) ))).concat(ADDITIONAL_USER_IDS);
+    const fetchUsers = async (page = 1) => Promise.all(Array.prototype.map.call(await getUserIds(page), async userId => {
         const info = await fetchPlayerInfo(userId);
-        const {name, playerid, role, badges, banned, history, inactive, ...playerInfo} = info.playerInfo;
+        const {name, playerid, role, badges, banned, inactive, ...playerInfo} = info.playerInfo;
+
+        // history is fetched as comma separated values string, let's make it a proper array
+        playerInfo.history = playerInfo.history ? playerInfo.history.split(',').map(rank => {const i = parseInt(rank, 10); return !isNaN(i) ? i : null;}).reverse() : null;
 
         return Object.assign(
             {
-            id: playerid,
-            name: name,
-            url: substituteVars(USER_PROFILE_URL, {userId: playerid}),
-            lastUpdated: null,
+                id: playerid,
+                name: name,
+                url: substituteVars(USER_PROFILE_URL, {userId: playerid}),
+                lastUpdated: null,
 
-            scores: {}
+                scores: {}
             },
             playerInfo,
             {stats: info.scoreStats}
         );
     }));
-    let fetchScores = async (userId, page = 1) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page);
+    const fetchScores = async (userId, page = 1) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page);
 
     async function fetchAllNewScores(user, lastUpdated = null, progressCallback = null) {
         let allScores = {
@@ -165,11 +173,11 @@
         const type = match[2] ?? 'Standard';
 
         return characteristics.reduce((cum, ch) => {
-          if(ch.name === type) {
-            return ch.difficulties?.[diff];
-          }
+            if(ch.name === type) {
+                return ch.difficulties?.[diff];
+            }
 
-          return cum;
+            return cum;
         }, null);
     }
 
@@ -364,6 +372,42 @@
         }
     }
 
+    function generateRankingRow(u) {
+        return create("tr", {},
+            create("td", {class: "picture"}),
+            create("td", {class: "rank"}, create("span", {}, "#" + u.idx)),
+            create("td", {class: "player"}, generate_song_table_player(u)),
+            create("td", {class: "pp"}, create("span", {class:"scoreTop ppValue"}, formatNumber(u.pp, 2).toString()), create("span", {class:"scoreTop ppLabel"}, 'pp')),
+            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec'): '')}, u.weeklyChange ? u.weeklyChange.toString() : "-")
+        );
+    }
+
+    async function setupCountryRanking() {
+        const tblBody = getBySelector('table.ranking.global tbody');
+        const users = (await getCache())?.users;
+        const ranking = Object.keys(users).reduce((cum, userId) => {
+            const {id, name, country, pp, rank, history} = users[userId];
+
+            cum.push({id, name, country, pp, rank, history, weeklyChange: rank && history?.[6] && rank !== MAGIC_HISTORY_NUMBER && history?.[6] !== MAGIC_HISTORY_NUMBER ? rank - history[6] : null});
+
+            return cum;
+        }, [])
+            .sort((a,b) => b.pp - a.pp)
+            .slice(0, 50);
+
+        tblBody.innerHTML = '';
+        tblBody.classList.add('sspl');
+
+        let idx = 1;
+        const sseUserId = getSSEUser();
+        ranking.forEach(u => {
+            const row = generateRankingRow(Object.assign({}, u, {idx}));
+            if(u.id === sseUserId) row.style = "background-color: var(--color-highlight);";
+            tblBody.appendChild(row);
+            idx++;
+        });
+    }
+
     function updateProgress(info) {
         const ssplProgress = document.querySelector("#sspl_progress");
         const ssplProgressInfo = document.querySelector("#sspl_progress_info");
@@ -520,6 +564,8 @@
     function setupStyles() {
         const styles = `
             .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
+            .sspl .diff.inc {color: #42B129;}
+            .sspl .diff.dec {color: #F94022;}
             .box .tabs a {border-bottom: none;}
             .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
             .tabs li.is-active {border-bottom: 1px solid #3273dc; margin-bottom: -1px;}
@@ -548,7 +594,7 @@
         setupStyles();
 
         if(isLeaderboardPage()) {
-           setupLeaderboard();
+            setupLeaderboard();
         }
     }
 
@@ -560,6 +606,10 @@
 
         if(isProfilePage()) {
             setupProfile();
+        }
+
+        if(isCountryRankingPage()) {
+            setupCountryRanking();
         }
 
         // wait a sec for SSE

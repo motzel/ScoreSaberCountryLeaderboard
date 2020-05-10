@@ -5,6 +5,9 @@ Provides additional features to the [ScoreSaber](https://scoresaber.com)
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js).
 
 # Changelog
+0.3
+ - add global country leaderboard with additional users
+
 0.2
  - add ranked play count/total ranked score/ranked accuracy to profile page
  - add accuracy for every song on country leaderboard, even unreanked ones
