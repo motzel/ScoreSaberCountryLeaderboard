@@ -10,7 +10,7 @@ Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/d
 
 0.2
  - add ranked play count/total ranked score/ranked accuracy to profile page
- - add accuracy for every song on country leaderboard, even unreanked ones
+ - add accuracy for every song on country leaderboard, even unranked ones
  - add option to add arbitrary user(s) to song country leaderboard
  - add configurable SSE delay for peaceful existence
 
