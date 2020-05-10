@@ -10,5 +10,6 @@ Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/d
  - add accuracy for every song on country leaderboard, even unreanked ones
  - add option to add arbitrary user(s) to song country leaderboard
  - add configurable SSE delay for peaceful existence
+
 0.1
  - Initial version
