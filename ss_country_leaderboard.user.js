@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.3
+// @version      0.4
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -41,6 +41,8 @@
 
     const CACHE_KEY = 'sspl_users';
     const ADDITIONAL_USER_IDS = ['76561198967371424', '76561198093469724'];
+
+    const changeDiff = [{value: 0, text: 'Daily change'}, {value: 6, text: 'Weekly change'}, {value: 29, text: 'Monthly change'}];
 
     const MAGIC_HISTORY_NUMBER = 999999; // just ask Umbra
 
@@ -385,7 +387,7 @@
         );
     }
 
-    async function setupCountryRanking() {
+    async function fillCountryRanking(diffOffset = 6) {
         const tblBody = getBySelector('table.ranking.global tbody');
         const users = (await getCache())?.users;
         const ranking = Object.keys(users).reduce((cum, userId) => {
@@ -398,7 +400,7 @@
                 pp,
                 rank,
                 history,
-                weeklyChange: rank && history?.[6] && rank !== MAGIC_HISTORY_NUMBER && history?.[6] !== MAGIC_HISTORY_NUMBER ? rank - history[6] : null
+                weeklyChange: rank && history?.[diffOffset] && rank !== MAGIC_HISTORY_NUMBER && history?.[diffOffset] !== MAGIC_HISTORY_NUMBER ? history[diffOffset] - rank : null
             });
 
             return cum;
@@ -407,7 +409,7 @@
             .slice(0, 50);
 
         tblBody.innerHTML = '';
-        tblBody.classList.add('sspl');
+        tblBody.parentNode.classList.add('sspl');
 
         let idx = 1;
         const sseUserId = getSSEUser();
@@ -417,6 +419,18 @@
             tblBody.appendChild(row);
             idx++;
         });
+    }
+
+    async function setupCountryRanking(diffOffset = 6) {
+        const headDiff = getBySelector('table.ranking.global thead .diff');
+        headDiff.innerHTML = '';
+
+        const changeSel = create('select', {}, '');
+        changeDiff.map(o => changeSel.appendChild(create('option', {value: o.value, selected: o.value === diffOffset}, o.text)));
+        headDiff.appendChild(changeSel);
+        changeSel.addEventListener('change', e => fillCountryRanking(e.target.options[e.target.selectedIndex].value))
+
+        await fillCountryRanking(diffOffset);
     }
 
     function updateProgress(info) {
@@ -577,6 +591,7 @@
             .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
             .sspl .diff.inc {color: #42B129;}
             .sspl .diff.dec {color: #F94022;}
+            .sspl thead .diff select {font-weight: 700; border: none;}
             .box .tabs a {border-bottom: none;}
             .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
             .tabs li.is-active {border-bottom: 1px solid #3273dc; margin-bottom: -1px;}
