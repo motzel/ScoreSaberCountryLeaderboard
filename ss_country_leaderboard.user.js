@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.5
+// @version      0.5.1
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -404,11 +404,11 @@
 
     function generateRankingRow(u) {
         return create("tr", {},
-            create("td", {class: "picture"}),
-            create("td", {class: "rank"}, create("span", {}, "#" + u.idx)),
+            //create("td", {class: "picture"}),
+            create("td", {class: "rank"}, create("span", {}, "#" + u.idx), create("small", {}, "#" + u.rank)),
             create("td", {class: "player"}, generate_song_table_player(u)),
             create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(u.pp, 2).toString()), create("span", {class: "scoreTop ppLabel"}, 'pp')),
-            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, u.weeklyChange ? u.weeklyChange.toString() : "-")
+            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, u.weeklyChange ? (u.weeklyChange > 0 ? '+' : '') + u.weeklyChange.toString() : "-")
         );
     }
 
@@ -435,6 +435,8 @@
 
         tblBody.innerHTML = '';
         tblBody.parentNode.classList.add('sspl');
+
+        document.querySelector('table.ranking.global.sspl thead .picture')?.remove();
 
         let idx = 1;
         const sseUserId = getSSEUser();
@@ -614,9 +616,10 @@
     function setupStyles() {
         const styles = `
             .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
-            .sspl .diff.inc {color: #42B129;}
-            .sspl .diff.dec {color: #F94022;}
-            .sspl thead .diff select {font-weight: 700; border: none;}
+            .sspl .diff.inc {color: #42B129 !important;}
+            .sspl .diff.dec {color: #F94022 !important;}
+            .sspl thead .diff select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
+            .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
             .box .tabs a {border-bottom: none;}
             .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
             .tabs li.is-active {border-bottom: 1px solid #3273dc; margin-bottom: -1px;}
