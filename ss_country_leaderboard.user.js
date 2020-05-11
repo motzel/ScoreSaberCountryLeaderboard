@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.5.1
+// @version      0.5.2
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -45,6 +45,9 @@
 
     const changeDiff = [{value: 0, text: 'Daily change'}, {value: 6, text: 'Weekly change'}, {value: 29, text: 'Monthly change'}];
 
+    const SS_PLAYERS_PER_PAGE = 50; // global ranking
+    const SS_SCORES_PER_PAGE = 12; // song leaderboard
+    const SS_PLAYS_PER_PAGE = 8; // top/recent plays
     const MAGIC_HISTORY_NUMBER = 999999; // just ask Umbra
 
     const Globals = {data: null};
@@ -281,7 +284,8 @@
     }
 
     async function fillLeaderboard() {
-        const leaderboard = await getLeaderboard(getLeaderboardId());
+        const leaderboardId = getLeaderboardId();
+        const leaderboard = await getLeaderboard(leaderboardId);
         const container = getBySelector('.ranking.global .ssplcont');
         const ssplTable = getBySelector('#sspl table');
         const ssplTableBody = getBySelector('tbody', ssplTable);
@@ -293,7 +297,7 @@
             const sseUserId = getSSEUser();
             let idx = 1;
             leaderboard.map(u => {
-                let row = generate_song_table_row(u, idx++);
+                let row = generate_song_table_row(u, leaderboardId, idx++);
                 if (u.id == sseUserId) row.style = "background-color: var(--color-highlight);";
                 ssplTableBody.appendChild(row);
             });
@@ -406,7 +410,7 @@
     function generateRankingRow(u) {
         return create("tr", {},
             //create("td", {class: "picture"}),
-            create("td", {class: "rank"}, create("span", {}, "#" + u.idx), create("small", {}, "#" + u.rank)),
+            create("td", {class: "rank"}, create("span", {}, "#" + u.idx), create("small", {}, create("a", {href: "/global/" + encodeURIComponent(Math.ceil(u.rank / SS_PLAYERS_PER_PAGE))}, "#" + u.rank))),
             create("td", {class: "player"}, generate_song_table_player(u)),
             create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(u.pp, 2).toString()), create("span", {class: "scoreTop ppLabel"}, 'pp')),
             create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, u.weeklyChange ? (u.weeklyChange > 0 ? '+' : '') + u.weeklyChange.toString() : "-")
@@ -572,8 +576,8 @@
         })));
     }
 
-    function generate_song_table_row(user, idx) {
-        return create("tr", {}, create("td", {class: "picture"}), create("td", {class: "rank"}, create("span", {}, "#" + idx), create("small", {}, "#" + user.rank)), create("td", {class: "player"}, generate_song_table_player(user)), create("td", {class: "score"}, user.score ? formatNumber(user.score, 0) : "-"), create("td", {
+    function generate_song_table_row(user, leaderboardId, idx) {
+        return create("tr", {}, create("td", {class: "picture"}), create("td", {class: "rank"}, create("span", {}, "#" + idx), create("small", {}, create("a", {href: "/leaderboard/"+encodeURIComponent(leaderboardId)+"?page=" + encodeURIComponent(Math.ceil(user.rank / SS_SCORES_PER_PAGE))}, "#" + user.rank))), create("td", {class: "player"}, generate_song_table_player(user)), create("td", {class: "score"}, user.score ? formatNumber(user.score, 0) : "-"), create("td", {
             class: "timeset",
             title: dateFromString(user.timeset).toLocaleString()
         }, formatDate(user.timeset)), create("td", {class: "mods"}, user.mods ? user.mods.toString() : "-"), create("td", {class: "percentage"}, user.percent ? (formatNumber(user.percent * 100, 2).toString() + "%") : "-"), create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(user.pp, 2)), create("span", {class: "scoreTop ppLabel"}, "pp")));
