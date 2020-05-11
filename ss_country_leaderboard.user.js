@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.5.3
+// @version      0.5.4
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -652,7 +652,7 @@
             .sspl .diff.inc {color: #42B129 !important;}
             .sspl .diff.dec {color: #F94022 !important;}
             .sspl thead .diff select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
-            table.ranking tbody tr.hidden {opacity: 0.01;}
+            table.ranking tbody tr.hidden {opacity: 0.05;}
             .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
             .box .tabs a {border-bottom: none;}
             .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
