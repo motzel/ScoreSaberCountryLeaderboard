@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.5.2
+// @version      0.5.3
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -43,12 +43,15 @@
     const CACHE_KEY = 'sspl_users';
     const ADDITIONAL_USER_IDS = ['76561198967371424', '76561198093469724'];
 
-    const changeDiff = [{value: 0, text: 'Daily change'}, {value: 6, text: 'Weekly change'}, {value: 29, text: 'Monthly change'}];
-
     const SS_PLAYERS_PER_PAGE = 50; // global ranking
     const SS_SCORES_PER_PAGE = 12; // song leaderboard
     const SS_PLAYS_PER_PAGE = 8; // top/recent plays
     const MAGIC_HISTORY_NUMBER = 999999; // just ask Umbra
+
+    const changeDiff = [{value: 0, text: 'Daily change'}, {value: 6, text: 'Weekly change'}, {value: 29, text: 'Monthly change'}];
+    const easterEggConditions = [[{field:"id", value:"76561198165064325", cond:"==="}, {field:"percent", value:0.85, cond:"<"}]];
+
+    let enableEasterEggs = true;
 
     const Globals = {data: null};
 
@@ -241,7 +244,6 @@
         let clonedTable = document.querySelector(".ranking table.sspl");
         if (!clonedTable) clonedTable = scoreTableNode.cloneNode(true);
 
-        clonedTable.classList.remove('ranking');
         clonedTable.classList.remove('global');
         clonedTable.classList.add('sspl');
         getBySelector('tbody', clonedTable).innerHTML = '';
@@ -283,6 +285,30 @@
         sspl.appendChild(create("div", {class: "ssplcont text-center"}, ""));
     }
 
+    function shouldBeHidden(u) {
+        return enableEasterEggs && easterEggConditions.reduce((ret, conditions) => {
+            return ret || conditions.reduce((subret, cond) => {
+                let userFieldValue = u?.[cond?.field];
+                let currentConditionFulfilled = true;
+                switch (cond?.cond) {
+                    case '===':
+                        currentConditionFulfilled = userFieldValue === cond?.value;
+                        break;
+                    case '<':
+                        currentConditionFulfilled = userFieldValue < cond?.value;
+                        break;
+                    case '>':
+                        currentConditionFulfilled = userFieldValue > cond?.value;
+                        break;
+                    default:
+                        console.log("Unknown condition: ", cond?.cond);
+                        currentConditionFulfilled = false;
+                }
+                return subret && currentConditionFulfilled;
+            }, true);
+        }, false);
+    }
+
     async function fillLeaderboard() {
         const leaderboardId = getLeaderboardId();
         const leaderboard = await getLeaderboard(leaderboardId);
@@ -297,8 +323,8 @@
             const sseUserId = getSSEUser();
             let idx = 1;
             leaderboard.map(u => {
-                let row = generate_song_table_row(u, leaderboardId, idx++);
-                if (u.id == sseUserId) row.style = "background-color: var(--color-highlight);";
+                let row = generate_song_table_row(u, leaderboardId, idx++, shouldBeHidden(u) ? "hidden" : "");
+                if (u.id === sseUserId) row.style = "background-color: var(--color-highlight);";
                 ssplTableBody.appendChild(row);
             });
 
@@ -388,6 +414,8 @@
                             const diffInfo = findDiffInfo(songCharacteristics, leaderboard.diff);
                             const maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
                             const percent = maxSongScore ? leaderboard.score / maxSongScore : (maxScoreEx ? leaderboard.score / maxScoreEx : null);
+
+                            if(shouldBeHidden(Object.assign({}, leaderboard, {id:leaderboard.playerId, percent}))) songLink.closest('tr').classList.add("hidden");
 
                             span.innerHTML = "score: " + formatNumber(leaderboard.score, 0) + (percent ? '<br />accuracy: ' + formatNumber(percent * 100, 2).toString() + '%' : '') + (leaderboard.mods.length ? '<br />(' + leaderboard.mods + ')' : '');
                         }
@@ -576,8 +604,8 @@
         })));
     }
 
-    function generate_song_table_row(user, leaderboardId, idx) {
-        return create("tr", {}, create("td", {class: "picture"}), create("td", {class: "rank"}, create("span", {}, "#" + idx), create("small", {}, create("a", {href: "/leaderboard/"+encodeURIComponent(leaderboardId)+"?page=" + encodeURIComponent(Math.ceil(user.rank / SS_SCORES_PER_PAGE))}, "#" + user.rank))), create("td", {class: "player"}, generate_song_table_player(user)), create("td", {class: "score"}, user.score ? formatNumber(user.score, 0) : "-"), create("td", {
+    function generate_song_table_row(user, leaderboardId, idx, cls) {
+        return create("tr", {class: cls}, create("td", {class: "picture"}), create("td", {class: "rank"}, create("span", {}, "#" + idx), create("small", {}, create("a", {href: "/leaderboard/"+encodeURIComponent(leaderboardId)+"?page=" + encodeURIComponent(Math.ceil(user.rank / SS_SCORES_PER_PAGE))}, "#" + user.rank))), create("td", {class: "player"}, generate_song_table_player(user)), create("td", {class: "score"}, user.score ? formatNumber(user.score, 0) : "-"), create("td", {
             class: "timeset",
             title: dateFromString(user.timeset).toLocaleString()
         }, formatDate(user.timeset)), create("td", {class: "mods"}, user.mods ? user.mods.toString() : "-"), create("td", {class: "percentage"}, user.percent ? (formatNumber(user.percent * 100, 2).toString() + "%") : "-"), create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(user.pp, 2)), create("span", {class: "scoreTop ppLabel"}, "pp")));
@@ -624,6 +652,7 @@
             .sspl .diff.inc {color: #42B129 !important;}
             .sspl .diff.dec {color: #F94022 !important;}
             .sspl thead .diff select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
+            table.ranking tbody tr.hidden {opacity: 0.01;}
             .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
             .box .tabs a {border-bottom: none;}
             .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
