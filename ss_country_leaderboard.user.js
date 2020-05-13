@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.5.4
+// @version      0.5.5
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
 // @match        https://scoresaber.com/u/*
-// @match        https://scoresaber.com/global/1&country=pl
-// @match        https://scoresaber.com/global?country=pl
+// @include      /^https://scoresaber\.com\/global(\/\d+&country=pl|\?country=pl)/
 // @icon         https://scoresaber.com/imports/images/logo.ico
 // @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
@@ -454,7 +453,7 @@
     }
 
     async function fillCountryRanking(diffOffset = 6) {
-        const tblBody = getBySelector('table.ranking.global tbody');
+        const tblBody = getBySelector('table.ranking.global.sspl tbody');
         const users = (await getCacheAndConvertIfNeeded())?.users;
         if(!users) return;
 
@@ -477,7 +476,6 @@
             .slice(0, 50);
 
         tblBody.innerHTML = '';
-        tblBody.parentNode.classList.add('sspl');
 
         document.querySelector('table.ranking.global.sspl thead .picture')?.remove();
 
@@ -494,7 +492,22 @@
     async function setupCountryRanking(diffOffset = 6) {
         if(!getFlag('rankHistoryAvailable')) return;
 
-        const headDiff = getBySelector('table.ranking.global thead .diff');
+        const origTable = getBySelector("table.ranking.global");
+        const clonedTable = origTable.cloneNode(true);
+
+        const pagination = getBySelector(".pagination", origTable.parentNode.parentNode);
+        const typeSel = create('select', {class: "type"}, '');
+        [{value: "sspl", text: 'Cached'}, {value: "original", text: 'Original'}].map(o => typeSel.appendChild(create('option', {value: o.value, selected: o.value === 'sspl'}, o.text)));
+        pagination.insertBefore(typeSel, getBySelector("br", pagination));
+        typeSel.addEventListener('change', e => Array.prototype.slice.apply(e.target.closest('.box').querySelectorAll('table.ranking.global')).map(tbl => tbl.style.display = tbl.classList.contains(e.target.options[e.target.selectedIndex].value) ? '' : 'none'));
+
+        clonedTable.classList.add("sspl");
+
+        origTable.style.display = 'none';
+        origTable.classList.add("original");
+        origTable.parentNode.appendChild(clonedTable);
+
+        const headDiff = getBySelector('thead .diff', clonedTable);
         headDiff.innerHTML = '';
 
         const changeSel = create('select', {}, '');
@@ -663,7 +676,7 @@
             .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
             .sspl .diff.inc {color: #42B129 !important;}
             .sspl .diff.dec {color: #F94022 !important;}
-            .sspl thead .diff select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
+            .sspl thead .diff select, .pagination select.type {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
             table.ranking tbody tr.hidden {opacity: 0.05;}
             .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
             .box .tabs a {border-bottom: none;}

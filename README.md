@@ -5,6 +5,9 @@ Provides additional features to the [ScoreSaber](https://scoresaber.com)
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js).
 
 # Changelog
+0.5.5
+ - add option to show original or cached version of global country leaderboard
+ 
 0.5.4
  - bugfix global country leaderboard is transformed only when rank history data is in cache
  
