@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6.5
+// @version      0.6.6
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -61,6 +61,7 @@
     const nullIfFalsy = val => val ? val : null;
     const nullIfUndefined = val => typeof(val) !== 'undefined' ? val : null;
     const defaultIfFalsy = (val, def) => val ? val : def;
+    const round = (val, places=2) => {const mult = Math.pow(10, places); return Math.round((val + Number.EPSILON) * mult) / mult};
     const substituteVars = (url, vars) => Object.keys(vars).reduce((cum, key) => cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]), url);
     const dateFromString = str => str ? new Date(Date.parse(str)) : null;
     const getFirstRegexpMatch = (regexp, str) => {
@@ -74,6 +75,13 @@
             (blocks >= 2 ? 2 * maxScorePerBlock * (Math.min(blocks, 5) - 1) : 0) +
             Math.min(blocks, 1) * maxScorePerBlock
         );
+    const getTotalPp = (scores) => Object.values(scores).filter(s => s.pp > 0).map(s => s.pp).sort((a,b) => b-a).reduce((cum, pp, idx) => cum + Math.pow(0.965, idx) * pp, 0);
+    const getTotalUserPp = async (userId, modifiedScores = {}) => getTotalPp(Object.assign({}, (await getCacheAndConvertIfNeeded()).users?.[userId]?.scores, modifiedScores));
+    const getWhatIfScore = async (userId, leaderboardId, pp) => {
+        const currentTotalPp = (await getTotalUserPp(userId));
+        const newTotalPp = (await getTotalUserPp(userId, {[leaderboardId]:{pp}}));
+        return {currentTotalPp, newTotalPp, diff: newTotalPp - currentTotalPp};
+    };
 
     const getFlag = name => Globals.data?.flags?.[name];
 
@@ -566,7 +574,18 @@
         tabs.appendChild(generate_tab("pl_tab", false, null === document.querySelector('.filter_tab')));
         setupPlTable();
 
-        fillLeaderboard();
+        await fillLeaderboard();
+
+        const sseUserId = getSSEUser();
+        if(sseUserId) {
+            var scoreSpans = document.querySelectorAll('.scoreTop.ppValue');
+            [].forEach.call(scoreSpans, async function (span) {
+                const pp = parseFloat(span.innerText.replace(/\s/,'').replace(',','.'));
+                if(pp && pp > 0.0 + Number.EPSILON) {
+                    span.parentNode.appendChild(await createWhatIfPpButton(sseUserId, leadId, pp));
+                }
+            });
+        }
 
         document.addEventListener('click', function (e) {
             let clickedTab = e.target.closest('.filter_tab');
@@ -588,11 +607,18 @@
         }, {passive: true});
     }
 
+    async function createWhatIfPpButton(userId, leaderboardId, pp) {
+        const whatIfPp = await getWhatIfScore(userId, leaderboardId, pp);
+        return create("button", {class:"what-if", title: "Jeśli tak zagrasz: \n" + formatNumber(whatIfPp.currentTotalPp) + formatNumber(whatIfPp.diff, 2, true) + '=' + formatNumber(whatIfPp.newTotalPp) + 'pp'}, "?")
+    }
+
     async function setupProfile() {
         const profileId = getProfileId();
         if (!profileId) return;
 
         const data = await getCacheAndConvertIfNeeded();
+
+        const sseUserId = getSSEUser();
 
         var scoreSpans = document.querySelectorAll('.score .scoreBottom');
         [].forEach.call(scoreSpans, async function (span) {
@@ -600,7 +626,7 @@
             if (songLink) {
                 const leaderboardId = getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, songLink.href);
                 if (leaderboardId) {
-                    const leaderboard = data.users?.[profileId].scores?.[leaderboardId];
+                    const leaderboard = data.users?.[profileId]?.scores?.[leaderboardId];
 
                     if (leaderboard) {
                         try {
@@ -615,6 +641,13 @@
                             span.innerHTML = "score: " + formatNumber(leaderboard.score, 0) + (percent ? '<br />accuracy: ' + formatNumber(percent * 100, 2) + '%' : '') + (leaderboard.mods.length ? '<br />(' + leaderboard.mods + ')' : '');
                         }
                         catch(e) {} // swallow error
+                    }
+
+                    if(sseUserId) {
+                        const pp = parseFloat(span.parentNode.querySelector('.scoreTop.ppValue')?.innerText);
+                        if(pp && pp > 0.0 + Number.EPSILON) {
+                            span.parentNode.appendChild(await createWhatIfPpButton(sseUserId, leaderboardId, pp));
+                        }
                     }
                 }
             }
@@ -871,6 +904,8 @@
             #new-rankeds {margin-bottom: 2rem;}
             #new-rankeds th, #new-rankeds td {text-align: center;}
             #new-rankeds tbody tr td:nth-child(1) {text-align: left;}
+            .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
+            table.ranking.songs th.score, table.ranking td.pp {position: relative;}
             table.ranking tbody tr.hidden {opacity: 0.05;}
             .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
             .box .tabs a {border-bottom: none;}
