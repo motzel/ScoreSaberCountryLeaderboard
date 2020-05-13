@@ -12,7 +12,7 @@
 // @updateURL    https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @downloadURL  https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js
 // @supportURL   https://github.com/motzel/ScoreSaberCountryLeaderboard/issues
-// @require      https://raw.githubusercontent.com/localForage/localForage/master/dist/localforage.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js
 // @run-at document-end
 // for Tampermonkey
 // @grant        GM_xmlhttpRequest
