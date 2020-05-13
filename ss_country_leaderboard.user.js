@@ -69,6 +69,8 @@
             Math.min(blocks, 1) * maxScorePerBlock
         );
 
+    const getFlag = name => Globals.data?.flags?.[name];
+
     const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, window.location.href.toLowerCase());
     const getSongHash = () => document.querySelector('.title~b')?.innerText;
     const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -168,11 +170,17 @@
     }
 
     async function getCacheAndConvertIfNeeded() {
+        if(Globals.data) return Globals.data;
+
         let cache = await getCache() ?? {version: 1, lastUpdated: null, users: {}};
 
         // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
+        let flags = {rankHistoryAvailable: false};
+        if(Object.values(cache?.users)?.[0]?.history?.length) {
+            flags.rankHistoryAvailable = true;
+        }
 
-        Globals.data = cache;
+        Globals.data = Object.assign(cache, {flags});
 
         return cache;
     }
@@ -447,7 +455,9 @@
 
     async function fillCountryRanking(diffOffset = 6) {
         const tblBody = getBySelector('table.ranking.global tbody');
-        const users = (await getCache())?.users;
+        const users = (await getCacheAndConvertIfNeeded())?.users;
+        if(!users) return;
+
         const ranking = Object.keys(users).reduce((cum, userId) => {
             const {id, name, country, pp, rank, history} = users[userId];
 
@@ -482,6 +492,8 @@
     }
 
     async function setupCountryRanking(diffOffset = 6) {
+        if(!getFlag('rankHistoryAvailable')) return;
+
         const headDiff = getBySelector('table.ranking.global thead .diff');
         headDiff.innerHTML = '';
 
@@ -687,10 +699,13 @@
 
     let initialized = false;
 
-    function init() {
+    async function init() {
         if (initialized) {
             return;
         }
+
+        // fetch cache
+        await getCacheAndConvertIfNeeded();
 
         setupStyles();
 
