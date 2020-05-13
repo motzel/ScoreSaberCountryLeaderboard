@@ -70,7 +70,7 @@
 
     const getFlag = name => Globals.data?.flags?.[name];
 
-    const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+$)/, window.location.href.toLowerCase());
+    const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)($|\?page=.*)/, window.location.href.toLowerCase());
     const getSongHash = () => document.querySelector('.title~b')?.innerText;
     const isLeaderboardPage = () => null !== getLeaderboardId();
     const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
