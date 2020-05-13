@@ -425,7 +425,7 @@
 
                             if(shouldBeHidden(Object.assign({}, leaderboard, {id:leaderboard.playerId, percent}))) songLink.closest('tr').classList.add("hidden");
 
-                            span.innerHTML = "score: " + formatNumber(leaderboard.score, 0) + (percent ? '<br />accuracy: ' + formatNumber(percent * 100, 2).toString() + '%' : '') + (leaderboard.mods.length ? '<br />(' + leaderboard.mods + ')' : '');
+                            span.innerHTML = "score: " + formatNumber(leaderboard.score, 0) + (percent ? '<br />accuracy: ' + formatNumber(percent * 100, 2) + '%' : '') + (leaderboard.mods.length ? '<br />(' + leaderboard.mods + ')' : '');
                         }
                         catch(e) {} // swallow error
                     }
@@ -448,8 +448,8 @@
             //create("td", {class: "picture"}),
             create("td", {class: "rank"}, create("span", {}, "#" + u.idx), create("small", {}, create("a", {href: "/global/" + encodeURIComponent(Math.ceil(u.rank / SS_PLAYERS_PER_PAGE))}, "#" + u.rank))),
             create("td", {class: "player"}, generate_song_table_player(u)),
-            create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(u.pp, 2).toString()), create("span", {class: "scoreTop ppLabel"}, 'pp')),
-            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, u.weeklyChange ? (u.weeklyChange > 0 ? '+' : '') + u.weeklyChange.toString() : "-")
+            create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(u.pp, 2)), create("span", {class: "scoreTop ppLabel"}, 'pp')),
+            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, formatNumber(u.weeklyChange,0,true))
         );
     }
 
@@ -620,7 +620,7 @@
         return create("tr", {class: cls}, create("td", {class: "picture"}), create("td", {class: "rank"}, create("span", {}, "#" + idx), create("small", {}, create("a", {href: "/leaderboard/"+encodeURIComponent(leaderboardId)+"?page=" + encodeURIComponent(Math.ceil(user.rank / SS_SCORES_PER_PAGE))}, "#" + user.rank))), create("td", {class: "player"}, generate_song_table_player(user)), create("td", {class: "score"}, user.score ? formatNumber(user.score, 0) : "-"), create("td", {
             class: "timeset",
             title: dateFromString(user.timeset).toLocaleString()
-        }, formatDate(user.timeset)), create("td", {class: "mods"}, user.mods ? user.mods.toString() : "-"), create("td", {class: "percentage"}, user.percent ? (formatNumber(user.percent * 100, 2).toString() + "%") : "-"), create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(user.pp, 2)), create("span", {class: "scoreTop ppLabel"}, "pp")));
+        }, formatDate(user.timeset)), create("td", {class: "mods"}, user.mods ? user.mods.toString() : "-"), create("td", {class: "percentage"}, user.percent ? (formatNumber(user.percent * 100, 2) + "%") : "-"), create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(user.pp, 2)), create("span", {class: "scoreTop ppLabel"}, "pp")));
     }
 
     function generate_song_table_player(user) {
@@ -629,8 +629,8 @@
     }
 
     // needed by removed SSE dependencies
-    function formatNumber(num, digits = 2) {
-        return num.toLocaleString(COUNTRY, {minimumFractionDigits: digits, maximumFractionDigits: digits});
+    function formatNumber(num, digits = 2, addSign = false) {
+        return (addSign && num > 0 ? '+' : '') + num.toLocaleString(COUNTRY, {minimumFractionDigits: digits, maximumFractionDigits: digits});
     }
 
     function formatDate(val) {
