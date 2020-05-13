@@ -449,7 +449,7 @@
             create("td", {class: "rank"}, create("span", {}, "#" + u.idx), create("small", {}, create("a", {href: "/global/" + encodeURIComponent(Math.ceil(u.rank / SS_PLAYERS_PER_PAGE))}, "#" + u.rank))),
             create("td", {class: "player"}, generate_song_table_player(u)),
             create("td", {class: "pp"}, create("span", {class: "scoreTop ppValue"}, formatNumber(u.pp, 2)), create("span", {class: "scoreTop ppLabel"}, 'pp')),
-            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, formatNumber(u.weeklyChange,0,true))
+            create("td", {class: "diff " + (u.weeklyChange ? (u.weeklyChange > 0 ? 'inc' : 'dec') : '')}, formatNumber(u.weeklyChange ?? 0, 0, true))
         );
     }
 
