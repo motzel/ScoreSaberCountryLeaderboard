@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.5.5
+// @version      0.6
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -54,6 +54,13 @@
 
     const Globals = {data: null};
 
+    const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
+    const isEmpty = obj => Object.keys(obj).length === 0 && obj.constructor === Object;
+    const convertArrayToObjectByKey = (arr, key) => arr.reduce((cum,item) => {cum[item[key]] = item; return cum;}, {});
+    const arrayIntersection = (arr1, arr2) => arr1.filter(x => !arr2.includes(x));
+    const nullIfFalsy = val => val ? val : null;
+    const nullIfUndefined = val => typeof(val) !== 'undefined' ? val : null;
+    const defaultIfFalsy = (val, def) => val ? val : def;
     const substituteVars = (url, vars) => Object.keys(vars).reduce((cum, key) => cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]), url);
     const dateFromString = str => str ? new Date(Date.parse(str)) : null;
     const getFirstRegexpMatch = (regexp, str) => {
@@ -76,6 +83,7 @@
     const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
     const isProfilePage = () => null !== getProfileId();
     const isCountryRankingPage = () => ['https://scoresaber.com/global?country=pl', 'https://scoresaber.com/global/1&country=pl'].indexOf(window.location.href) >= 0;
+    const getRankedSongs = async () => defaultIfFalsy((await getCacheAndConvertIfNeeded())?.rankedSongs, {});
 
     const fetchHtmlPage = async (url, page = 1) => new DOMParser().parseFromString(await (await fetch(substituteVars(url, {page}))).text(), 'text/html');
     const fetchApiPage = async (url, page = 1) => (await fetch(substituteVars(url, {page}))).json();
@@ -107,7 +115,102 @@
             {stats: info.scoreStats}
         );
     }));
-    const fetchScores = async (userId, page = 1) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page);
+    const fetchScores = async (userId, page = 1, ...leaderboards) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page).then(s => s && s.scores ? s.scores.filter(s => !leaderboards.length || leaderboards.includes(s.leaderboardId)) : null);
+    const fetchRankedSongs = () => fetchApiPage("https://scoresaber.com/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1")
+        .then(songs => songs?.songs
+            ? songs?.songs.reduce((cum, s) => {
+                cum[s.uid] = {
+                    leaderboardId: s.uid,
+                    id: s.id,
+                    name: s.name + ' ' + s.songSubName,
+                    songAuthor: s.songAuthorName,
+                    levelAuthor: s.levelAuthorName,
+                    diff: extractDiffAndType(s.diff),
+                    stars: s.stars,
+                    oldStars: null
+                };
+                return cum;
+            }, {})
+            : null
+        );
+
+    async function getNewlyRanked() {
+        const fetchedRankedSongs = await fetchRankedSongs();
+        if (!fetchedRankedSongs) return null;
+
+        const oldRankedSongs = Globals.data.rankedSongs;
+
+        // find differences between old and new ranked songs
+        return {
+            newRanked: arrayIntersection(Object.keys(fetchedRankedSongs), Object.keys(oldRankedSongs)).map(k => fetchedRankedSongs[k]),
+            changed: Object.values(oldRankedSongs)
+                .filter(s => s.stars !== fetchedRankedSongs?.[s.leaderboardId]?.stars)
+                .map(s => Object.assign({}, s, {oldStars: s.stars, stars: nullIfUndefined(fetchedRankedSongs?.[s.leaderboardId]?.stars)}))
+        };
+    }
+
+    async function updateNewRankedsPpScores(progressCallback = null) {
+        const data = (await getCacheAndConvertIfNeeded());
+
+        const ssplHeader = document.querySelector('#sspl_progress_head');
+        if(ssplHeader) ssplHeader.innerHTML = "Aktualizacja wyników nowych rankedów";
+
+        // check if scores has been updated max 1 minute ago
+        if((new Date()).getTime() - dateFromString(Globals.data.lastUpdated).getTime() > 60000) {
+            console.error("Please update song data first");
+            return null;
+        }
+
+        const newlyRanked = await getNewlyRanked();
+        if(!newlyRanked) return null;
+
+        const leaderboardsToUpdate = newlyRanked.newRanked.map(s => s.leaderboardId).concat(newlyRanked.changed.map(s => s.leaderboardId));
+
+        const users = data.users;
+
+        // fetch all user pages that need to be fetched
+        // {userId: {pageId: [leaderboardId, leaderboardId...]}}
+        const usersToUpdate = Object.values(users).reduce((cum, u) => {
+            const userScoresToUpdate = Object.values(u.scores)
+                .map(s => ({leaderboardId: s.leaderboardId, timeset: dateFromString(s.timeset)}))
+                .sort((a,b) => b.timeset.getTime() - a.timeset.getTime())
+                .reduce((scum, s, idx) => {
+                    if(leaderboardsToUpdate.includes(s.leaderboardId)) {
+                        const page = Math.floor(idx / SS_PLAYS_PER_PAGE) + 1;
+                        scum[page] = defaultIfFalsy(scum?.[page], []).concat([s.leaderboardId]);
+                    }
+                    return scum;
+                }, {});
+
+            if(!isEmpty(userScoresToUpdate)) {
+                cum[u.id] = userScoresToUpdate;
+            }
+
+            return cum;
+        }, {});
+
+        const totalPages = Object.values(usersToUpdate).reduce((sum, u) => sum += Object.keys(u).length, 0);
+
+        let idxGlobal = 0;
+        for(var userId in usersToUpdate) {
+            let idxLocal = 0;
+            for(var page in usersToUpdate[userId]) {
+                const scores = convertArrayToObjectByKey(await fetchScores(userId, page, ...usersToUpdate[userId][page]), 'leaderboardId');
+                users[userId].scores = Object.assign({}, users[userId].scores, scores);
+
+                if (progressCallback) progressCallback({id: userId, name: users[userId].name, page: idxLocal+1, percent: Math.floor(idxGlobal/totalPages *100)});
+
+                idxLocal++; idxGlobal++;
+            }
+        }
+
+        data.rankedSongs = Object.assign({}, data.rankedSongs, convertArrayToObjectByKey(newlyRanked.newRanked, 'leaderboardId'), convertArrayToObjectByKey(newlyRanked.changed, 'leaderboardId'));
+        data.rankedSongsLastUpdated = JSON.parse(JSON.stringify(new Date()));
+
+        setCache(data);
+
+        return newlyRanked;
+    }
 
     async function fetchAllNewScores(user, lastUpdated = null, progressCallback = null) {
         let allScores = {
@@ -121,28 +224,28 @@
             if (progressCallback) progressCallback({id: user.id, name: user.name, page: page, total: null});
 
             let scorePage = await fetchScores(user.id, page);
-            if (!scorePage || !scorePage.scores) break;
+            if (!scorePage) break;
 
             // remember most recent play time
-            if (page === 1 && scorePage.scores.length) {
-                recentPlay = dateFromString(scorePage.scores[0].timeset);
+            if (page === 1 && scorePage.length) {
+                recentPlay = dateFromString(scorePage[0].timeset);
             }
 
-            for (let i in scorePage.scores) {
-                if (lastUpdated && dateFromString(scorePage.scores[i].timeset) <= lastUpdated) {
+            for (let i in scorePage) {
+                if (lastUpdated && dateFromString(scorePage[i].timeset) <= lastUpdated) {
                     // remember most recent play time
                     if (recentPlay) allScores.lastUpdated = recentPlay;
 
                     return allScores;
                 }
 
-                allScores.scores[scorePage.scores[i].leaderboardId] = scorePage.scores[i];
+                allScores.scores[scorePage[i].leaderboardId] = scorePage[i];
             }
 
             // remember most recent play time
             if (recentPlay) allScores.lastUpdated = recentPlay;
 
-            if (scorePage.scores.length < 8) break;
+            if (scorePage.length < 8) break;
         }
 
         allScores.lastUpdated = recentPlay;
@@ -171,12 +274,24 @@
     async function getCacheAndConvertIfNeeded() {
         if(Globals.data) return Globals.data;
 
-        let cache = await getCache() ?? {version: 1, lastUpdated: null, users: {}};
+        let cache = await getCache() ?? {version: 1, lastUpdated: null, users: {}, rankedSongs: null, rankedSongsLastUpdated: null};
 
         // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
-        let flags = {rankHistoryAvailable: false};
+        let flags = {rankHistoryAvailable: false, rankedSongsAvailable: false};
         if(Object.values(cache?.users)?.[0]?.history?.length) {
             flags.rankHistoryAvailable = true;
+        }
+
+        if(!(cache?.rankedSongs) || isEmpty(cache?.rankedSongs)) {
+            // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
+            cache.rankedSongs = convertArrayToObjectByKey(
+                Object.values(await fetchRankedSongs())
+                    .filter(s => [201498,204895,204899,204903,209788,209791,209793,209794,209797,210515,210525,210530,210531,210532,210806,210808,210810,210813,210825,214440,214445,216587,217972,218477,219611,219623,219625,219995,224659,228057,228058,228060,228129,228135,228141,228239,235375,235376,235380,236608,237290,237291,237292].indexOf(s.leaderboardId) < 0),
+                'leaderboardId'
+            );
+            cache.rankedSongsLastUpdated = JSON.parse(JSON.stringify(new Date()));
+        } else {
+            flags.rankedSongsAvailable = true;
         }
 
         Globals.data = Object.assign(cache, {flags});
@@ -184,16 +299,24 @@
         return cache;
     }
 
-    function findDiffInfo(characteristics, ssDiff) {
+    function getHumanDiffName(diffInfo) {
+        return capitalize(diffInfo.diff).replace('ExpertPlus', 'Expert+') + (diffInfo.type !== 'Standard' ? '/' + diffInfo.type : '');
+    }
+
+    function extractDiffAndType(ssDiff) {
         const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
         if (!match) return null;
 
-        const diff = match[1].toLowerCase().replace('plus', 'Plus');
-        const type = match[2] ?? 'Standard';
+        return {diff: match[1].toLowerCase().replace('plus', 'Plus'), type: match[2] ?? 'Standard'};
+    }
+
+    function findDiffInfo(characteristics, ssDiff) {
+        const diffAndType = extractDiffAndType(ssDiff);
+        if(!diffAndType) return null;
 
         return characteristics.reduce((cum, ch) => {
-            if (ch.name === type) {
-                return ch.difficulties?.[diff];
+            if (ch.name === diffAndType.type) {
+                return ch.difficulties?.[diffAndType.diff];
             }
 
             return cum;
@@ -270,18 +393,32 @@
         const refreshDiv = create("div", {id: "ssplrefresh"}, "");
         refreshDiv.appendChild(create("button", {
             title: "Odśwież", onclick: (e) => {
-                refreshDiv.appendChild(create("div", {id: "sspl_progress_cont"}, create("progress", {
-                    id: "sspl_progress",
-                    value: 0,
-                    max: 100
-                }, "0"), create("div", {id: "sspl_progress_info"}, "")));
+                refreshDiv.appendChild(
+                    create("div", {id: "sspl_progress_cont"},
+                        create("header", {id: "sspl_progress_head"}, ""),
+                        create(
+                            "progress",
+                            {
+                                id: "sspl_progress",
+                                value: 0,
+                                max: 100
+                            },
+                            "0"
+                        ),
+                        create("div", {id: "sspl_progress_info"}, "")
+                    )
+                );
+
                 e.target.disabled = true;
 
-                refresh().then(_ => {
-                    getBySelector('#sspl_progress_cont').remove();
-                    e.target.disabled = false;
-                    fillLeaderboard();
-                });
+                refresh()
+                    .then(_ => updateNewRankedsPpScores(updateProgress))
+                    .then(_ => {
+                            getBySelector('#sspl_progress_cont').remove();
+                            e.target.disabled = false;
+                            fillLeaderboard();
+                        }
+                    );
             }
         }, "↻"));
         refreshDiv.appendChild(create("strong", {}, " Data pobrania:"));
@@ -308,7 +445,7 @@
                         currentConditionFulfilled = userFieldValue > cond?.value;
                         break;
                     default:
-                        console.log("Unknown condition: ", cond?.cond);
+                        console.error("Unknown condition: ", cond?.cond);
                         currentConditionFulfilled = false;
                 }
                 return subret && currentConditionFulfilled;
@@ -527,6 +664,9 @@
     }
 
     async function refresh() {
+        const ssplHeader = document.querySelector('#sspl_progress_head');
+        if(ssplHeader) ssplHeader.innerHTML = "Pobieranie nowych wyników";
+
         const users = await fetchUsers();
 
         let idx = 0;
