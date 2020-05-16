@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6
+// @version      0.6.5
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -303,6 +303,11 @@
         return capitalize(diffInfo.diff).replace('ExpertPlus', 'Expert+') + (diffInfo.type !== 'Standard' ? '/' + diffInfo.type : '');
     }
 
+    function getDiffColor(diffInfo) {
+        const colors = {'easy': 'MediumSeaGreen', 'normal': '#59b0f4', 'hard': 'tomato', 'expert': '#bf2a42', 'expertPlus': '#8f48db'};
+        return colors[diffInfo.diff] ? colors[diffInfo.diff] : null;
+    }
+
     function extractDiffAndType(ssDiff) {
         const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
         if (!match) return null;
@@ -413,6 +418,7 @@
 
                 refresh()
                     .then(_ => updateNewRankedsPpScores(updateProgress))
+                    .then(rankeds => showNewRankeds(rankeds))
                     .then(_ => {
                             getBySelector('#sspl_progress_cont').remove();
                             e.target.disabled = false;
@@ -453,11 +459,56 @@
         }, false);
     }
 
+    function formatNumberWithSuffix(num, suffix) {
+        return (num ? formatNumber(num) : '-') + (num && suffix ? suffix : '');
+    }
+    function newTdWithNumber(num, suffix) {
+        return create("td", {}, formatNumberWithSuffix(num, suffix));
+    }
+
+    function createDiffSpan(diffInfo) {
+        const span = create("span", {}, getHumanDiffName(diffInfo, true));
+        const col = getDiffColor(diffInfo);
+        if(col) span.style.color = col;
+        return span;
+    }
+
+    function newRankedRow(r) {
+        return create("tr", {},
+            create("td", {}, create("a", {href:SCORESABER_URL + '/leaderboard/' + encodeURIComponent(r.leaderboardId)}, r.songAuthor + ' - ' + r.name)),
+            create("td", {}, r.levelAuthor),
+            create("td", {}, createDiffSpan(r.diff)),
+            create("td", {}, create("span", {class: "scoreTop ppValue"}, formatNumberWithSuffix(r.pp, 'pp'))),
+            newTdWithNumber(r.stars, '*'),
+            newTdWithNumber(r.oldStars, '*')
+        );
+    }
+
+    function showNewRankeds(info) {
+        document.getElementById('new-rankeds')?.remove();
+
+        const allChanges = info.newRanked.concat(info.changed);
+        if(!allChanges.length) return;
+
+        const container = getBySelector('#sspl');
+        const ssplTable = getBySelector('#sspl table.ranking');
+        const newRankedsTbody = create("tbody", {}, "");
+        const newRankedsTbl = create("table", {id:"new-rankeds"},
+            create("thead", {}, create("tr", {}, create("th", {}, "Nuta"), create("th", {}, "Mapper"), create("th", {}, "Trudność"), create("th", {}, "PP"), create("th", {}, "*"), create("th", {}, "Stare *"))),
+            newRankedsTbody
+        );
+
+        const sseUserId = getSSEUser();
+        allChanges.sort((a,b) => b.stars-a.stars).map(m => newRankedsTbody.appendChild(newRankedRow(Object.assign({}, m, {pp: Globals.data?.users?.[sseUserId].scores?.[m.leaderboardId]?.pp}))));
+        container.insertBefore(create("h3", {}, "Nowe/zmienione rankedy"), ssplTable);
+        container.insertBefore(newRankedsTbl, ssplTable);
+    }
+
     async function fillLeaderboard() {
         const leaderboardId = getLeaderboardId();
         const leaderboard = await getLeaderboard(leaderboardId);
         const container = getBySelector('.ranking.global .ssplcont');
-        const ssplTable = getBySelector('#sspl table');
+        const ssplTable = getBySelector('#sspl table.ranking');
         const ssplTableBody = getBySelector('tbody', ssplTable);
 
         container.innerHTML = '';
@@ -817,6 +868,9 @@
             .sspl .diff.inc {color: #42B129 !important;}
             .sspl .diff.dec {color: #F94022 !important;}
             .sspl thead .diff select, .pagination select.type {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
+            #new-rankeds {margin-bottom: 2rem;}
+            #new-rankeds th, #new-rankeds td {text-align: center;}
+            #new-rankeds tbody tr td:nth-child(1) {text-align: left;}
             table.ranking tbody tr.hidden {opacity: 0.05;}
             .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
             .box .tabs a {border-bottom: none;}

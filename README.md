@@ -5,6 +5,9 @@ Provides additional features to the [ScoreSaber](https://scoresaber.com)
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js).
 
 # Changelog
+0.6.5
+ - add new/changed rankeds info after refresh
+ 
 0.6
  - update older plays PPs when song is ranked/unranked/nerfed 
 
