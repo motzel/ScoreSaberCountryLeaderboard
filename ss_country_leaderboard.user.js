@@ -124,23 +124,27 @@
         );
     }));
     const fetchScores = async (userId, page = 1, ...leaderboards) => fetchApiPage(substituteVars(SCORES_URL, {userId}), page).then(s => s && s.scores ? s.scores.filter(s => !leaderboards.length || leaderboards.includes(s.leaderboardId)) : null);
-    const fetchRankedSongs = () => fetchApiPage("https://scoresaber.com/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1")
+    const fetchRankedSongsArray = async () => fetchApiPage("https://scoresaber.com/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1")
         .then(songs => songs?.songs
-            ? songs?.songs.reduce((cum, s) => {
-                cum[s.uid] = {
-                    leaderboardId: s.uid,
-                    id: s.id,
-                    name: s.name + ' ' + s.songSubName,
-                    songAuthor: s.songAuthorName,
-                    levelAuthor: s.levelAuthorName,
-                    diff: extractDiffAndType(s.diff),
-                    stars: s.stars,
-                    oldStars: null
-                };
-                return cum;
-            }, {})
-            : null
+            ? songs?.songs.map(s => ({
+                leaderboardId: s.uid,
+                id: s.id,
+                name: s.name + ' ' + s.songSubName,
+                songAuthor: s.songAuthorName,
+                levelAuthor: s.levelAuthorName,
+                diff: extractDiffAndType(s.diff),
+                stars: s.stars,
+                oldStars: null,
+            }))
+            : []
         );
+    const convertFetchedRankedSongsToObj = (songs) => songs.length
+        ? songs.reduce((cum, s) => {
+            cum[s.leaderboardId] = s;
+            return cum;
+        }, {})
+        : null;
+    const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
 
     async function getNewlyRanked() {
         const fetchedRankedSongs = await fetchRankedSongs();
@@ -282,7 +286,7 @@
     async function getCacheAndConvertIfNeeded() {
         if(Globals.data) return Globals.data;
 
-        let cache = await getCache() ?? {version: 1, lastUpdated: null, users: {}, rankedSongs: null, rankedSongsLastUpdated: null};
+        let cache = await getCache() ?? {version: 1.1, lastUpdated: null, users: {}, rankedSongs: null, rankedSongsLastUpdated: null};
 
         // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
         let flags = {rankHistoryAvailable: false, rankedSongsAvailable: false};
@@ -290,14 +294,19 @@
             flags.rankHistoryAvailable = true;
         }
 
-        if(!(cache?.rankedSongs) || isEmpty(cache?.rankedSongs)) {
+        if(cache.version === 1) {
             // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
-            cache.rankedSongs = convertArrayToObjectByKey(
-                Object.values(await fetchRankedSongs())
-                    .filter(s => [201498,204895,204899,204903,209788,209791,209793,209794,209797,210515,210525,210530,210531,210532,210806,210808,210810,210813,210825,214440,214445,216587,217972,218477,219611,219623,219625,219995,224659,228057,228058,228060,228129,228135,228141,228239,235375,235376,235380,236608,237290,237291,237292].indexOf(s.leaderboardId) < 0),
-                'leaderboardId'
+            const allRankeds = await fetchRankedSongsArray();
+            let nanomoriApproached = false;
+            cache.rankedSongs = convertFetchedRankedSongsToObj(
+                allRankeds.filter(s => {
+                    if(s.leaderboardId === 221711) nanomoriApproached = true;
+                    return nanomoriApproached;
+                })
             );
+            cache.version = 1.1;
             cache.rankedSongsLastUpdated = JSON.parse(JSON.stringify(new Date()));
+            flags.rankedSongsAvailable = false;
         } else {
             flags.rankedSongsAvailable = true;
         }
@@ -493,6 +502,8 @@
     }
 
     function showNewRankeds(info) {
+        if(!Globals.data.flags.rankedSongsAvailable) return;
+
         document.getElementById('new-rankeds')?.remove();
 
         const allChanges = info.newRanked.concat(info.changed);
