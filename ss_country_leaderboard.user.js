@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6.6
+// @version      0.6.7
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -664,13 +664,20 @@
             }
         });
 
-        if (data.users?.[profileId]?.stats) {
-            const stats = document.querySelector('.content .column ul');
-            if (stats) {
-                stats.appendChild(create("li", {}, create("strong", {}, "Ranked play count: "), create("span", {}, formatNumber(data.users[profileId].stats.rankedPlayCount, 0))));
-                stats.appendChild(create("li", {}, create("strong", {}, "Total ranked score: "), create("span", {}, formatNumber(data.users[profileId].stats.totalRankedScore, 0))));
-                stats.appendChild(create("li", {}, create("strong", {}, "Ranked accuracy: "), create("span", {}, formatNumber(data.users[profileId].stats.averageRankedAccuracy, 2).toString() + "%")));
+        const stats = document.querySelector('.content .column ul');
+        if(stats) {
+            if (data.users?.[profileId]?.stats) {
+                if (stats) {
+                    stats.appendChild(create("li", {}, create("strong", {}, "Ranked play count: "), create("span", {}, formatNumber(data.users[profileId].stats.rankedPlayCount, 0))));
+                    stats.appendChild(create("li", {}, create("strong", {}, "Total ranked score: "), create("span", {}, formatNumber(data.users[profileId].stats.totalRankedScore, 0))));
+                    stats.appendChild(create("li", {}, create("strong", {}, "Ranked accuracy: "), create("span", {}, formatNumber(data.users[profileId].stats.averageRankedAccuracy, 2).toString() + "%")));
+                }
             }
+
+            const expected = 1;
+            const userScores = Object.values(data.users?.[profileId].scores).filter(s => s.pp > 0).map(s => s.pp).sort((a,b) => b-a);
+            const rawPp = await findRawPp(userScores, expected);
+            stats.appendChild(create("li", {}, create("strong", {}, "+1pp boundary: "), create("span", {}, formatNumber(rawPp) + ' raw pp new play')));
         }
     }
 
@@ -948,6 +955,42 @@
         if (isLeaderboardPage()) {
             setupLeaderboard();
         }
+    }
+
+    function calcPp(scores, startIdx = 0) {
+        return scores.reduce((cum, pp, idx) => cum + Math.pow(0.965, idx + startIdx) * pp, 0);
+    }
+
+    function calcRawPpAtIdx(bottomScores, idx, expected) {
+        const oldBottomPp = calcPp(bottomScores, idx);
+        const newBottomPp = calcPp(bottomScores, idx+1);
+
+        // 0.965^idx * rawPpToFind = expected + oldBottomPp - newBottomPp;
+        // rawPpToFind = (expected + oldBottomPp - newBottomPp) / 0.965^idx;
+        return (expected + oldBottomPp - newBottomPp) / Math.pow(0.965, idx);
+    }
+
+    async function findRawPp(scores, expected) {
+        if(!scores.length) return expected;
+
+        let idx = scores.length - 1;
+
+        while(idx >= 0) {
+            const bottomSlice = scores.slice(idx);
+            const bottomPp = calcPp(bottomSlice, idx);
+
+            bottomSlice.unshift(scores[idx]);
+            const modifiedBottomPp = calcPp(bottomSlice, idx);
+            const diff = modifiedBottomPp - bottomPp;
+
+            if(diff > expected) {
+                return calcRawPpAtIdx(scores.slice(idx+1), idx+1, expected);
+            }
+
+            idx--;
+        }
+
+        return calcRawPpAtIdx(scores, 0, expected);
     }
 
     let initialized = false;
