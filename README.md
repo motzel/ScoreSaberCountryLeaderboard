@@ -5,6 +5,9 @@ Provides additional features to the [ScoreSaber](https://scoresaber.com)
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/ss_country_leaderboard.user.js).
 
 # Changelog
+0.6.8
+ - add any pp boundary info to player's profile
+ 
 0.6.7
  - add +1pp boundary info to player's profile
  

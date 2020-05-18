@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6.7
+// @version      0.6.8
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -677,7 +677,18 @@
             const expected = 1;
             const userScores = Object.values(data.users?.[profileId].scores).filter(s => s.pp > 0).map(s => s.pp).sort((a,b) => b-a);
             const rawPp = await findRawPp(userScores, expected);
-            stats.appendChild(create("li", {}, create("strong", {}, "+1pp boundary: "), create("span", {}, formatNumber(rawPp) + ' raw pp new play')));
+            stats.appendChild(create("li", {}, create("strong", {}, "+"), create("input", {id: "pp-boundary", value: formatNumber(expected)}, "boundary: "), create("strong", {}, "pp: "), create("span", {id: "pp-boundary-value"}, formatNumber(rawPp)), create("span", {}, ' raw pp new play')));
+            document.getElementById('pp-boundary').addEventListener('keyup', async e => {
+                const result = document.getElementById('pp-boundary-value');
+                if(!result) return;
+
+                const val = e.target.value;
+                if(/^\s*\d+((,|.)\d+)?$/.test(val)) {
+                    result.innerHTML = formatNumber(await findRawPp(userScores, parseFloat(val.replace(/\s/,'').replace(',','.'))));
+                } else {
+                    result.innerHTML = '???';
+                }
+            });
         }
     }
 
@@ -922,6 +933,7 @@
             #new-rankeds {margin-bottom: 2rem;}
             #new-rankeds th, #new-rankeds td {text-align: center;}
             #new-rankeds tbody tr td:nth-child(1) {text-align: left;}
+            #pp-boundary {border: none; background: transparent; color: white; font-weight: 700; font-size: 1rem; width: 3rem; text-align: center; margin-right: .25rem; outline: none;}
             .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
             table.ranking.songs th.score, table.ranking td.pp {position: relative;}
             table.ranking tbody tr.hidden {opacity: 0.05;}
