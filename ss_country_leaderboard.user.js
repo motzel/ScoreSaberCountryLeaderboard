@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6.8
+// @version      0.6.8.1
 // @description  Add country leaderboard tab
 // @author       motzel
 // @match        https://scoresaber.com/leaderboard/*
@@ -933,7 +933,7 @@
             #new-rankeds {margin-bottom: 2rem;}
             #new-rankeds th, #new-rankeds td {text-align: center;}
             #new-rankeds tbody tr td:nth-child(1) {text-align: left;}
-            #pp-boundary {border: none; background: transparent; color: white; font-weight: 700; font-size: 1rem; width: 3rem; text-align: center; margin-right: .25rem; outline: none;}
+            #pp-boundary {border: none; background: transparent; color: color: var(--textColor, black); font-weight: 700; font-size: 1rem; width: 3rem; text-align: center; margin-right: .25rem; outline: none;}
             .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
             table.ranking.songs th.score, table.ranking td.pp {position: relative;}
             table.ranking tbody tr.hidden {opacity: 0.05;}
