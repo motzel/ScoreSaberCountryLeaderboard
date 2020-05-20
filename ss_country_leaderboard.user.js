@@ -94,7 +94,7 @@
     const getRankedSongs = async () => defaultIfFalsy((await getCacheAndConvertIfNeeded())?.rankedSongs, {});
 
     const fetchHtmlPage = async (url, page = 1) => new DOMParser().parseFromString(await (await fetch(substituteVars(url, {page}))).text(), 'text/html');
-    const fetchApiPage = async (url, page = 1) => (await fetch(substituteVars(url, {page}))).json();
+    const fetchApiPage = async (url, page = 1) => fetch(substituteVars(url, {page})).then(r => r.json()).catch(e => null);
 
     const fetchSongByHash = async (songHash) => await fetchApiPage(substituteVars(SONG_BY_HASH_URL, {songHash}));
 
@@ -333,6 +333,7 @@
     }
 
     function findDiffInfo(characteristics, ssDiff) {
+        if(!characteristics) return null;
         const diffAndType = extractDiffAndType(ssDiff);
         if(!diffAndType) return null;
 
