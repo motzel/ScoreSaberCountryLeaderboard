@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.1
+ - fix bug with disappearing "whatif" buttons after scores refresh
+ 
 0.6.9
  - now using [SettingDust/webpack-tampermonkey](https://github.com/SettingDust/webpack-tampermonkey) template for easier development
  

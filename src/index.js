@@ -886,6 +886,21 @@ async function fillLeaderboard() {
         getBySelector('span', refresh).innerText = formatDate(
             Globals.data.lastUpdated
         );
+
+        const sseUserId = getSSEUser();
+        if (sseUserId) {
+            var scoreSpans = document.querySelectorAll('.scoreTop.ppValue');
+            [].forEach.call(scoreSpans, async function (span) {
+                const pp = parseFloat(
+                    span.innerText.replace(/\s/, '').replace(',', '.')
+                );
+                if (pp && pp > 0.0 + Number.EPSILON) {
+                    span.parentNode.appendChild(
+                        await createWhatIfPpButton(sseUserId, leaderboardId, pp)
+                    );
+                }
+            });
+        }
     }
 }
 
@@ -904,21 +919,6 @@ async function setupLeaderboard() {
     setupPlTable();
 
     await fillLeaderboard();
-
-    const sseUserId = getSSEUser();
-    if (sseUserId) {
-        var scoreSpans = document.querySelectorAll('.scoreTop.ppValue');
-        [].forEach.call(scoreSpans, async function (span) {
-            const pp = parseFloat(
-                span.innerText.replace(/\s/, '').replace(',', '.')
-            );
-            if (pp && pp > 0.0 + Number.EPSILON) {
-                span.parentNode.appendChild(
-                    await createWhatIfPpButton(sseUserId, leadId, pp)
-                );
-            }
-        });
-    }
 
     document.addEventListener(
         'click',

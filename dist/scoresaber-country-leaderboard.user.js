@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6.9
+// @version      0.6.9.1
 // @description  Add country leaderboard tab
 // @author       motzel
 // @icon         https://scoresaber.com/imports/images/logo.ico
@@ -580,6 +580,19 @@
             if (isAnyData()) {
                 var _refresh2 = getBySelector("#ssplrefresh");
                 _refresh2.style.display = "", getBySelector("span", _refresh2).innerText = formatDate(Globals.data.lastUpdated);
+                var _sseUserId = getSSEUser();
+                if (_sseUserId) {
+                    var scoreSpans = document.querySelectorAll(".scoreTop.ppValue");
+                    [].forEach.call(scoreSpans, function() {
+                        var _ref15 = _asyncToGenerator((function*(span) {
+                            var pp = parseFloat(span.innerText.replace(/\s/, "").replace(",", "."));
+                            pp && pp > 0 + Number.EPSILON && span.parentNode.appendChild(yield createWhatIfPpButton(_sseUserId, leaderboardId, pp));
+                        }));
+                        return function(_x20) {
+                            return _ref15.apply(this, arguments);
+                        };
+                    }());
+                }
             } else {
                 var firstFetch = create("div", {}, "");
                 firstFetch.appendChild(create("p", {}, "Wygląda na to, że nie ma jeszcze żadnych danych.")), 
@@ -602,35 +615,18 @@
     }
     function _setupLeaderboard() {
         return (_setupLeaderboard = _asyncToGenerator((function*() {
-            var leadId = getLeaderboardId();
-            if (leadId) {
-                getBySelector(".tabs > ul").appendChild(generate_tab("pl_tab", !1, null === document.querySelector(".filter_tab"))), 
-                setupPlTable(), yield fillLeaderboard();
-                var sseUserId = getSSEUser();
-                if (sseUserId) {
-                    var scoreSpans = document.querySelectorAll(".scoreTop.ppValue");
-                    [].forEach.call(scoreSpans, function() {
-                        var _ref15 = _asyncToGenerator((function*(span) {
-                            var pp = parseFloat(span.innerText.replace(/\s/, "").replace(",", "."));
-                            pp && pp > 0 + Number.EPSILON && span.parentNode.appendChild(yield createWhatIfPpButton(sseUserId, leadId, pp));
-                        }));
-                        return function(_x20) {
-                            return _ref15.apply(this, arguments);
-                        };
-                    }());
+            getLeaderboardId() && (getBySelector(".tabs > ul").appendChild(generate_tab("pl_tab", !1, null === document.querySelector(".filter_tab"))), 
+            setupPlTable(), yield fillLeaderboard(), document.addEventListener("click", (function(e) {
+                var clickedTab = e.target.closest(".filter_tab");
+                if (clickedTab) {
+                    var box = assert(e.target.closest(".box")), sspl = getBySelector("#sspl", box), originalTable = getBySelector("table.ranking", box);
+                    clickedTab.classList.contains("sspl") ? (originalTable.style.display = "none", sspl.style.display = "", 
+                    getBySelector(".pagination").style.display = "none") : (originalTable.style.display = "", 
+                    sspl.style.display = "none", getBySelector(".pagination").style.display = "");
                 }
-                document.addEventListener("click", (function(e) {
-                    var clickedTab = e.target.closest(".filter_tab");
-                    if (clickedTab) {
-                        var box = assert(e.target.closest(".box")), sspl = getBySelector("#sspl", box), originalTable = getBySelector("table.ranking", box);
-                        clickedTab.classList.contains("sspl") ? (originalTable.style.display = "none", sspl.style.display = "", 
-                        getBySelector(".pagination").style.display = "none") : (originalTable.style.display = "", 
-                        sspl.style.display = "none", getBySelector(".pagination").style.display = "");
-                    }
-                }), {
-                    passive: !0
-                });
-            }
+            }), {
+                passive: !0
+            }));
         }))).apply(this, arguments);
     }
     function createWhatIfPpButton(_x15, _x16, _x17) {
@@ -979,7 +975,7 @@
         return headerString.push("// ==/UserScript=="), headerString.push(""), headerString.join("\n");
     };
 }, function(module) {
-    module.exports = JSON.parse('{"name":"ScoreSaber country leaderboard","namespace":"https://motzel.dev","version":"0.6.9","description":"Add country leaderboard tab","author":"motzel","icon":"https://scoresaber.com/imports/images/logo.ico","updateURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","downloadURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","supportURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/issues","match":["https://scoresaber.com/leaderboard/*","https://scoresaber.com/u/*"],"include":["/^https://scoresaber\\\\.com\\\\/global(\\\\/\\\\d+&country=pl|\\\\?country=pl)/"],"require":["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],"grant":["GM_addStyle","GM_info","GM_xmlhttpRequest"],"run-at":"document-end"}');
+    module.exports = JSON.parse('{"name":"ScoreSaber country leaderboard","namespace":"https://motzel.dev","version":"0.6.9.1","description":"Add country leaderboard tab","author":"motzel","icon":"https://scoresaber.com/imports/images/logo.ico","updateURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","downloadURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","supportURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/issues","match":["https://scoresaber.com/leaderboard/*","https://scoresaber.com/u/*"],"include":["/^https://scoresaber\\\\.com\\\\/global(\\\\/\\\\d+&country=pl|\\\\?country=pl)/"],"require":["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],"grant":["GM_addStyle","GM_info","GM_xmlhttpRequest"],"run-at":"document-end"}');
 }, function(module, exports, __webpack_require__) {
     (exports = __webpack_require__(5)(!1)).push([ module.i, '.navbar-brand .navbar-item b{background:#fff;background:-webkit-gradient(left top,left bottom,color-stop(0,#fff),color-stop(55%,#fff),color-stop(55%,red),color-stop(100%,#ff1500));background:linear-gradient(180deg,#fff 0,#fff 55%,red 0,#ff1500);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#ff1500",GradientType=0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}', "" ]), 
     module.exports = exports;
