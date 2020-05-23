@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.2
+ - faster initialization if SSE is installed
+ 
 0.6.9.1
  - fix bug with disappearing "whatif" buttons after scores refresh
  

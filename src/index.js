@@ -1665,6 +1665,28 @@ async function findRawPp(scores, expected) {
     return calcRawPpAtIdx(scores, 0, expected);
 }
 
+function rafAsync() {
+    return new Promise(resolve => {
+        requestAnimationFrame(resolve); //faster than set time out
+    });
+}
+
+function checkElement(selector) {
+    if (document.querySelector(selector) === null) {
+        return rafAsync().then(() => checkElement(selector));
+    } else {
+        return Promise.resolve(true);
+    }
+}
+
+async function waitForSSEInit(timeout) {
+    return new Promise(function(resolve, reject) {
+        // whatever comes first
+        checkElement('#all_scores_tab').then(el => resolve(el))
+        setTimeout(() => resolve(null), timeout);
+    });
+}
+
 let initialized = false;
 
 async function init() {
@@ -1687,8 +1709,10 @@ async function init() {
         setupCountryRanking();
     }
 
-    // wait a sec for SSE
-    setTimeout(setupDelayed, SSE_CHECK_DELAY);
+    // wait for SSE or given timeout
+    await waitForSSEInit(SSE_CHECK_DELAY);
+
+    setupDelayed();
 }
 
 init();

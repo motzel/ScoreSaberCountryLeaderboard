@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.6.9.1
+// @version      0.6.9.2
 // @description  Add country leaderboard tab
 // @author       motzel
 // @icon         https://scoresaber.com/imports/images/logo.ico
@@ -588,7 +588,7 @@
                             var pp = parseFloat(span.innerText.replace(/\s/, "").replace(",", "."));
                             pp && pp > 0 + Number.EPSILON && span.parentNode.appendChild(yield createWhatIfPpButton(_sseUserId, leaderboardId, pp));
                         }));
-                        return function(_x20) {
+                        return function(_x21) {
                             return _ref15.apply(this, arguments);
                         };
                     }());
@@ -670,7 +670,7 @@
                             }
                         }
                     }));
-                    return function(_x21) {
+                    return function(_x22) {
                         return _ref16.apply(this, arguments);
                     };
                 }());
@@ -694,7 +694,7 @@
                                 /^\s*\d+((,|.)\d+)?$/.test(val) ? result.innerHTML = formatNumber(yield findRawPp(userScores, parseFloat(val.replace(/\s/, "").replace(",", ".")))) : result.innerHTML = "???";
                             }
                         }));
-                        return function(_x22) {
+                        return function(_x23) {
                             return _ref17.apply(this, arguments);
                         };
                     }());
@@ -806,7 +806,7 @@
                         scores: Object.assign({}, cum.users[u.id] ? cum.users[u.id].scores : {}, newScores.scores)
                     }), idx++, cum;
                 }));
-                return function(_x23, _x24) {
+                return function(_x24, _x25) {
                     return _ref18.apply(this, arguments);
                 };
             }(), yield getCacheAndConvertIfNeeded());
@@ -940,12 +940,27 @@
             return calcRawPpAtIdx(scores, 0, expected);
         }))).apply(this, arguments);
     }
+    function checkElement(selector) {
+        return null === document.querySelector(selector) ? new Promise(resolve => {
+            requestAnimationFrame(resolve);
+        }).then(() => checkElement(selector)) : Promise.resolve(!0);
+    }
+    function waitForSSEInit(_x20) {
+        return _waitForSSEInit.apply(this, arguments);
+    }
+    function _waitForSSEInit() {
+        return (_waitForSSEInit = _asyncToGenerator((function*(timeout) {
+            return new Promise((function(resolve, reject) {
+                checkElement("#all_scores_tab").then(el => resolve(el)), setTimeout(() => resolve(null), timeout);
+            }));
+        }))).apply(this, arguments);
+    }
     var initialized = !1;
     function _init() {
         return (_init = _asyncToGenerator((function*() {
             log.info("init"), initialized || (yield getCacheAndConvertIfNeeded(), setupStyles(), 
             isProfilePage() && setupProfile(), isCountryRankingPage() && setupCountryRanking(), 
-            setTimeout(setupDelayed, 500));
+            yield waitForSSEInit(500), setupDelayed());
         }))).apply(this, arguments);
     }
     !function() {
@@ -975,7 +990,7 @@
         return headerString.push("// ==/UserScript=="), headerString.push(""), headerString.join("\n");
     };
 }, function(module) {
-    module.exports = JSON.parse('{"name":"ScoreSaber country leaderboard","namespace":"https://motzel.dev","version":"0.6.9.1","description":"Add country leaderboard tab","author":"motzel","icon":"https://scoresaber.com/imports/images/logo.ico","updateURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","downloadURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","supportURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/issues","match":["https://scoresaber.com/leaderboard/*","https://scoresaber.com/u/*"],"include":["/^https://scoresaber\\\\.com\\\\/global(\\\\/\\\\d+&country=pl|\\\\?country=pl)/"],"require":["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],"grant":["GM_addStyle","GM_info","GM_xmlhttpRequest"],"run-at":"document-end"}');
+    module.exports = JSON.parse('{"name":"ScoreSaber country leaderboard","namespace":"https://motzel.dev","version":"0.6.9.2","description":"Add country leaderboard tab","author":"motzel","icon":"https://scoresaber.com/imports/images/logo.ico","updateURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","downloadURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","supportURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/issues","match":["https://scoresaber.com/leaderboard/*","https://scoresaber.com/u/*"],"include":["/^https://scoresaber\\\\.com\\\\/global(\\\\/\\\\d+&country=pl|\\\\?country=pl)/"],"require":["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],"grant":["GM_addStyle","GM_info","GM_xmlhttpRequest"],"run-at":"document-end"}');
 }, function(module, exports, __webpack_require__) {
     (exports = __webpack_require__(5)(!1)).push([ module.i, '.navbar-brand .navbar-item b{background:#fff;background:-webkit-gradient(left top,left bottom,color-stop(0,#fff),color-stop(55%,#fff),color-stop(55%,red),color-stop(100%,#ff1500));background:linear-gradient(180deg,#fff 0,#fff 55%,red 0,#ff1500);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#ff1500",GradientType=0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}', "" ]), 
     module.exports = exports;
