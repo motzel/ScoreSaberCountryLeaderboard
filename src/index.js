@@ -1,6 +1,5 @@
 const log = require('./utils/logger');
 
-
 const COUNTRY = 'pl';
 
 const SSE_CHECK_DELAY = 500; // in ms
