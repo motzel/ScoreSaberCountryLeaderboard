@@ -1583,33 +1583,12 @@ function getSSEUser() {
 
 function setupStyles() {
     const styles = `
-            .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
-            .sspl .diff.inc {color: #42B129 !important;}
-            .sspl .diff.dec {color: #F94022 !important;}
             .sspl thead .diff select, .pagination select.type {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
-            #new-rankeds {margin-bottom: 2rem;}
-            #new-rankeds th, #new-rankeds td {text-align: center;}
-            #new-rankeds tbody tr td:nth-child(1) {text-align: left;}
             #pp-boundary {border: none; background: transparent; color: color: var(--textColor, black); font-weight: 700; font-size: 1rem; width: 3rem; text-align: center; margin-right: .25rem; outline: none;}
-            .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
-            table.ranking.songs th.score, table.ranking td.pp {position: relative;}
-            table.ranking tbody tr.hidden {opacity: 0.05;}
-            .content table.ranking.global.sspl .pp, .content table.ranking.global.sspl .diff {text-align: center;}
-            .box .tabs a {border-bottom: none;}
-            .box .tabs li:hover {border-bottom: 1px solid black; margin-bottom: -1px;}
-            .tabs li.is-active {border-bottom: 1px solid #3273dc; margin-bottom: -1px;}
-            img.bloodtrail {height:24px;}
-            .sspl .rank small {font-size: .75rem; margin-left: .5rem; color: lightgray;}
-            .sspl .rank span {display: inline-block; width: 1.5rem; text-align: right;}
-            .text-center {text-align: center;}
-            #sspl progress {width: 20rem; max-width: 90%;}
-            #ssplrefresh {text-align: right; margin-bottom: 1rem;}
-            #ssplrefresh button {margin-right: .5rem;}
-            #ssplrefresh strong {margin-right: .5rem;}
-            .offset_tab {margin-left: auto;}
         `;
 
     const addStyles = GM_addStyle ? GM_addStyle : () => {};
+
     addStyles(styles);
     addStyles(require('./resource/style/style.css').toString());
 }
