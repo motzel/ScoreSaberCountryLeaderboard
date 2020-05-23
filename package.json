@@ -1,0 +1,31 @@
+{
+  "name": "webpack-tampermonkey",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "gulp build --color",
+    "dev": "gulp --color",
+    "format": "gulp --color format"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/plugin-proposal-optional-chaining": "^7.9.0",
+    "@babel/preset-env": "^7.9.6",
+    "autoprefixer": "^9.8.0",
+    "babel-loader": "^8.1.0",
+    "colors": "^1.4.0",
+    "css-loader": "^3.5.3",
+    "cssnano": "^4.1.10",
+    "gulp": "^4.0.2",
+    "gulp-prettier": "^3.0.0",
+    "moment": "^2.26.0",
+    "postcss-loader": "^3.0.0",
+    "prettier": "^2.0.5",
+    "terser-webpack-plugin": "^2.3.6",
+    "to-string-loader": "^1.1.6",
+    "url-loader": "^4.1.0",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  },
+  "dependencies": {}
+}

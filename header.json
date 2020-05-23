@@ -1,0 +1,18 @@
+{
+  "name": "ScoreSaber country leaderboard",
+  "namespace": "https://motzel.dev",
+  "version": "0.6.9",
+  "description": "Add country leaderboard tab",
+  "author": "motzel",
+  "icon": "https://scoresaber.com/imports/images/logo.ico",
+  "updateURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js",
+  "downloadURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js",
+  "supportURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/issues",
+  "match": ["https://scoresaber.com/leaderboard/*", "https://scoresaber.com/u/*"],
+  "include": ["/^https://scoresaber\\.com\\/global(\\/\\d+&country=pl|\\?country=pl)/"],
+  "require": ["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],
+  "grant": [
+    "GM_addStyle", "GM_info", "GM_xmlhttpRequest"
+  ],
+  "run-at": "document-end"
+}
