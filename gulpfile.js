@@ -6,7 +6,7 @@ const colors = require('colors');
 
 const paths = {
     js: {
-        all: ['./javascript/**/*.js', './*.js']
+        all: ['./javascript/**/*.js', './*.js', './*.svelte']
     }
 };
 

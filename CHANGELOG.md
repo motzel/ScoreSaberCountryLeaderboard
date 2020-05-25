@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.3
+ - add Svelte integration for components development
+ 
 0.6.9.2
  - faster initialization if SSE is installed
  

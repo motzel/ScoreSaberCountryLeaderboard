@@ -22,10 +22,21 @@ module.exports = {
         path: path.resolve(__dirname, 'test'),
         filename: monkey.header.name.toLowerCase().replace(/\s/g, '-') + '.js'
     },
+    resolve: {
+        alias: {
+            svelte: path.resolve('node_modules', 'svelte')
+        },
+        mainFields: ['svelte', 'browser', 'module', 'main']
+    },
     watch: true,
     mode: 'none',
     module: {
         rules: [
+            {
+                test: /\.(html|svelte)$/,
+                exclude: /node_modules/,
+                use: 'svelte-loader'
+            },
             {
                 test: /\.css$/,
                 exclude: /(node_modules)/,

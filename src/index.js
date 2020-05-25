@@ -1,13 +1,12 @@
-const log = require('./utils/logger');
+import Profile from './Svelte/Profile/Profile.svelte';
+import log from './utils/logger';
 
-const COUNTRY = 'pl';
-
-const SSE_CHECK_DELAY = 500; // in ms
+import config from './config';
 
 const SCORESABER_URL = 'https://scoresaber.com';
 const SCORESABER_API_URL = 'https://new.scoresaber.com/api';
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
-const USERS_URL = SCORESABER_URL + '/global/${page}?country=' + COUNTRY;
+const USERS_URL = SCORESABER_URL + '/global/${page}?country=' + config.COUNTRY;
 const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 const SCORES_URL =
     SCORESABER_API_URL + '/player/${userId}/scores/recent/${page}';
@@ -120,8 +119,8 @@ const getProfileId = () =>
 const isProfilePage = () => null !== getProfileId();
 const isCountryRankingPage = () =>
     [
-        'https://scoresaber.com/global?country=pl',
-        'https://scoresaber.com/global/1&country=pl'
+        'https://scoresaber.com/global?country=' + config.COUNTRY,
+        'https://scoresaber.com/global/1&country=' + config.COUNTRY
     ].indexOf(window.location.href) >= 0;
 const getRankedSongs = async () =>
     defaultIfFalsy((await getCacheAndConvertIfNeeded())?.rankedSongs, {});
@@ -1049,102 +1048,13 @@ async function setupProfile() {
     const stats = document.querySelector('.content .column ul');
     if (stats) {
         if (data.users?.[profileId]?.stats) {
-            if (stats) {
-                stats.appendChild(
-                    create(
-                        'li',
-                        {},
-                        create('strong', {}, 'Ranked play count: '),
-                        create(
-                            'span',
-                            {},
-                            formatNumber(
-                                data.users[profileId].stats.rankedPlayCount,
-                                0
-                            )
-                        )
-                    )
-                );
-                stats.appendChild(
-                    create(
-                        'li',
-                        {},
-                        create('strong', {}, 'Total ranked score: '),
-                        create(
-                            'span',
-                            {},
-                            formatNumber(
-                                data.users[profileId].stats
-                                    .totalRankedScore,
-                                0
-                            )
-                        )
-                    )
-                );
-                stats.appendChild(
-                    create(
-                        'li',
-                        {},
-                        create('strong', {}, 'Ranked accuracy: '),
-                        create(
-                            'span',
-                            {},
-                            formatNumber(
-                                data.users[profileId].stats
-                                    .averageRankedAccuracy,
-                                2
-                            ).toString() + '%'
-                        )
-                    )
-                );
-            }
-        }
-
-        const expected = 1;
-        const userScores = Object.values(data.users?.[profileId].scores)
-            .filter((s) => s.pp > 0)
-            .map((s) => s.pp)
-            .sort((a, b) => b - a);
-        const rawPp = await findRawPp(userScores, expected);
-        stats.appendChild(
-            create(
-                'li',
-                {},
-                create('strong', {}, '+'),
-                create(
-                    'input',
-                    { id: 'pp-boundary', value: formatNumber(expected) },
-                    'boundary: '
-                ),
-                create('strong', {}, 'pp: '),
-                create(
-                    'span',
-                    { id: 'pp-boundary-value' },
-                    formatNumber(rawPp)
-                ),
-                create('span', {}, ' raw pp new play')
-            )
-        );
-        document
-            .getElementById('pp-boundary')
-            .addEventListener('keyup', async (e) => {
-                const result = document.getElementById('pp-boundary-value');
-                if (!result) return;
-
-                const val = e.target.value;
-                if (/^\s*\d+((,|.)\d+)?$/.test(val)) {
-                    result.innerHTML = formatNumber(
-                        await findRawPp(
-                            userScores,
-                            parseFloat(
-                                val.replace(/\s/, '').replace(',', '.')
-                            )
-                        )
-                    );
-                } else {
-                    result.innerHTML = '???';
+            new Profile({
+                target: stats,
+                props: {
+                    profile: data.users?.[profileId] ?? null,
                 }
             });
+        }
     }
 }
 
@@ -1540,7 +1450,7 @@ function generate_song_table_player(user) {
 function formatNumber(num, digits = 2, addSign = false) {
     return (
         (addSign && num > 0 ? '+' : '') +
-        num.toLocaleString(COUNTRY, {
+        num.toLocaleString(config.COUNTRY, {
             minimumFractionDigits: digits,
             maximumFractionDigits: digits
         })
@@ -1548,7 +1458,7 @@ function formatNumber(num, digits = 2, addSign = false) {
 }
 
 function formatDate(val) {
-    const rtf = new Intl.RelativeTimeFormat(COUNTRY, {
+    const rtf = new Intl.RelativeTimeFormat(config.COUNTRY, {
         localeMatcher: 'best fit',
         numeric: 'auto',
         style: 'long'
@@ -1584,7 +1494,7 @@ function getSSEUser() {
 function setupStyles() {
     const styles = `
             .sspl thead .diff select, .pagination select.type {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
-            #pp-boundary {border: none; background: transparent; color: color: var(--textColor, black); font-weight: 700; font-size: 1rem; width: 3rem; text-align: center; margin-right: .25rem; outline: none;}
+            .pp-boundary {color: var(--textColor, black);}
         `;
 
     const addStyles = GM_addStyle ? GM_addStyle : () => {};
@@ -1603,45 +1513,6 @@ function setupDelayed() {
     if (isLeaderboardPage()) {
         setupLeaderboard();
     }
-}
-
-function calcPp(scores, startIdx = 0) {
-    return scores.reduce(
-        (cum, pp, idx) => cum + Math.pow(0.965, idx + startIdx) * pp,
-        0
-    );
-}
-
-function calcRawPpAtIdx(bottomScores, idx, expected) {
-    const oldBottomPp = calcPp(bottomScores, idx);
-    const newBottomPp = calcPp(bottomScores, idx + 1);
-
-    // 0.965^idx * rawPpToFind = expected + oldBottomPp - newBottomPp;
-    // rawPpToFind = (expected + oldBottomPp - newBottomPp) / 0.965^idx;
-    return (expected + oldBottomPp - newBottomPp) / Math.pow(0.965, idx);
-}
-
-async function findRawPp(scores, expected) {
-    if (!scores.length) return expected;
-
-    let idx = scores.length - 1;
-
-    while (idx >= 0) {
-        const bottomSlice = scores.slice(idx);
-        const bottomPp = calcPp(bottomSlice, idx);
-
-        bottomSlice.unshift(scores[idx]);
-        const modifiedBottomPp = calcPp(bottomSlice, idx);
-        const diff = modifiedBottomPp - bottomPp;
-
-        if (diff > expected) {
-            return calcRawPpAtIdx(scores.slice(idx + 1), idx + 1, expected);
-        }
-
-        idx--;
-    }
-
-    return calcRawPpAtIdx(scores, 0, expected);
 }
 
 function rafAsync() {
@@ -1689,7 +1560,7 @@ async function init() {
     }
 
     // wait for SSE or given timeout
-    await waitForSSEInit(SSE_CHECK_DELAY);
+    await waitForSSEInit(config.SSE_CHECK_DELAY);
 
     setupDelayed();
 }

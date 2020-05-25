@@ -12,9 +12,20 @@ module.exports = {
         filename:
             monkey.header.name.toLowerCase().replace(/\s/g, '-') + '.user.js'
     },
+    resolve: {
+        alias: {
+            svelte: path.resolve('node_modules', 'svelte')
+        },
+        mainFields: ['svelte', 'browser', 'module', 'main']
+    },
     mode: 'none',
     module: {
         rules: [
+            {
+                test: /\.(html|svelte)$/,
+                exclude: /node_modules/,
+                use: 'svelte-loader'
+            },
             {
                 test: /\.css$/,
                 exclude: /(node_modules)/,
