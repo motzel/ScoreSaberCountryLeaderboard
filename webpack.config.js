@@ -4,6 +4,7 @@ const webpack = require('webpack');
 
 const Terser = require('terser-webpack-plugin');
 const BannerPlugin = require('webpack/lib/BannerPlugin');
+const MinifyPlugin = require('babel-minify-webpack-plugin');
 
 module.exports = {
     entry: monkey.config.entry,
@@ -54,6 +55,7 @@ module.exports = {
                 }
             }
         }),
+        new MinifyPlugin(),
         new BannerPlugin({
             banner: monkey.buildedHeader(),
             raw: true
