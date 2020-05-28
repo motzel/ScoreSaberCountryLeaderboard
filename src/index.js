@@ -1,4 +1,5 @@
 import Profile from './Svelte/Profile/Profile.svelte';
+import CountryRanking from './Svelte/Country/Ranking.svelte';
 import log from './utils/logger';
 
 import config from './config';
@@ -16,16 +17,9 @@ const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${songHash}';
 const CACHE_KEY = 'sspl_users';
 const ADDITIONAL_USER_IDS = ['76561198967371424', '76561198093469724'];
 
-const SS_PLAYERS_PER_PAGE = 50; // global ranking
 const SS_SCORES_PER_PAGE = 12; // song leaderboard
 const SS_PLAYS_PER_PAGE = 8; // top/recent plays
-const MAGIC_HISTORY_NUMBER = 999999; // just ask Umbra
 
-const changeDiff = [
-    { value: 0, text: 'Daily change' },
-    { value: 6, text: 'Weekly change' },
-    { value: 29, text: 'Monthly change' }
-];
 const easterEggConditions = [
     [
         { field: 'id', value: '76561198165064325', cond: '===' },
@@ -47,13 +41,8 @@ const convertArrayToObjectByKey = (arr, key) =>
     }, {});
 const arrayIntersection = (arr1, arr2) =>
     arr1.filter((x) => !arr2.includes(x));
-const nullIfFalsy = (val) => (val ? val : null);
 const nullIfUndefined = (val) => (typeof val !== 'undefined' ? val : null);
 const defaultIfFalsy = (val, def) => (val ? val : def);
-const round = (val, places = 2) => {
-    const mult = Math.pow(10, places);
-    return Math.round((val + Number.EPSILON) * mult) / mult;
-};
 const substituteVars = (url, vars) =>
     Object.keys(vars).reduce(
         (cum, key) =>
@@ -122,8 +111,6 @@ const isCountryRankingPage = () =>
         'https://scoresaber.com/global?country=' + config.COUNTRY,
         'https://scoresaber.com/global/1&country=' + config.COUNTRY
     ].indexOf(window.location.href) >= 0;
-const getRankedSongs = async () =>
-    defaultIfFalsy((await getCacheAndConvertIfNeeded())?.rankedSongs, {});
 
 const fetchHtmlPage = async (url, page = 1) =>
     new DOMParser().parseFromString(
@@ -986,16 +973,9 @@ async function setupProfile() {
                         const songInfo = await fetchSongByHash(
                             leaderboard.id
                         );
-                        const songCharacteristics =
-                            songInfo?.metadata?.characteristics;
-                        const diffInfo = findDiffInfo(
-                            songCharacteristics,
-                            leaderboard.diff
-                        );
-                        const maxSongScore =
-                            diffInfo?.length && diffInfo?.notes
-                                ? getMaxScore(diffInfo.notes)
-                                : 0;
+                        const songCharacteristics = songInfo?.metadata?.characteristics;
+                        const diffInfo = findDiffInfo(songCharacteristics, leaderboard.diff);
+                        const maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
                         const percent = maxSongScore
                             ? leaderboard.score / maxSongScore
                             : maxScoreEx
@@ -1058,110 +1038,11 @@ async function setupProfile() {
     }
 }
 
-function generateRankingRow(u) {
-    return create(
-        'tr',
-        {},
-        //create("td", {class: "picture"}),
-        create(
-            'td',
-            { class: 'rank' },
-            create('span', {}, '#' + u.idx),
-            create(
-                'small',
-                {},
-                create(
-                    'a',
-                    {
-                        href:
-                            '/global/' +
-                            encodeURIComponent(
-                                Math.ceil(u.rank / SS_PLAYERS_PER_PAGE)
-                            )
-                    },
-                    '#' + u.rank
-                )
-            )
-        ),
-        create('td', { class: 'player' }, generate_song_table_player(u)),
-        create(
-            'td',
-            { class: 'pp' },
-            create(
-                'span',
-                { class: 'scoreTop ppValue' },
-                formatNumber(u.pp, 2)
-            ),
-            create('span', { class: 'scoreTop ppLabel' }, 'pp')
-        ),
-        create(
-            'td',
-            {
-                class:
-                    'diff ' +
-                    (u.weeklyChange
-                        ? u.weeklyChange > 0
-                            ? 'inc'
-                            : 'dec'
-                        : '')
-            },
-            formatNumber(u.weeklyChange ?? 0, 0, true)
-        )
-    );
-}
-
-async function fillCountryRanking(diffOffset = 6) {
-    const tblBody = getBySelector('table.ranking.global.sspl tbody');
-    const users = (await getCacheAndConvertIfNeeded())?.users;
-    if (!users) return;
-
-    const ranking = Object.keys(users)
-        .reduce((cum, userId) => {
-            const { id, name, country, pp, rank, history } = users[userId];
-
-            cum.push({
-                id,
-                name,
-                country,
-                pp,
-                rank,
-                history,
-                weeklyChange:
-                    rank &&
-                    history?.[diffOffset] &&
-                    rank !== MAGIC_HISTORY_NUMBER &&
-                    history?.[diffOffset] !== MAGIC_HISTORY_NUMBER
-                        ? history[diffOffset] - rank
-                        : null
-            });
-
-            return cum;
-        }, [])
-        .sort((a, b) => b.pp - a.pp)
-        .slice(0, 50);
-
-    tblBody.innerHTML = '';
-
-    document
-        .querySelector('table.ranking.global.sspl thead .picture')
-        ?.remove();
-
-    let idx = 1;
-    const sseUserId = getSSEUser();
-    ranking.forEach((u) => {
-        const row = generateRankingRow(Object.assign({}, u, { idx }));
-        if (u.id === sseUserId)
-            row.style = 'background-color: var(--color-highlight);';
-        tblBody.appendChild(row);
-        idx++;
-    });
-}
-
 async function setupCountryRanking(diffOffset = 6) {
-    if (!getFlag('rankHistoryAvailable')) return;
+    const users = (await getCacheAndConvertIfNeeded())?.users;
+    if (!users || !getFlag('rankHistoryAvailable')) return;
 
     const origTable = getBySelector('table.ranking.global');
-    const clonedTable = origTable.cloneNode(true);
 
     const pagination = getBySelector(
         '.pagination',
@@ -1198,31 +1079,15 @@ async function setupCountryRanking(diffOffset = 6) {
             )
     );
 
-    clonedTable.classList.add('sspl');
-
     origTable.style.display = 'none';
     origTable.classList.add('original');
-    origTable.parentNode.appendChild(clonedTable);
 
-    const headDiff = getBySelector('thead .diff', clonedTable);
-    headDiff.innerHTML = '';
-
-    const changeSel = create('select', {}, '');
-    changeDiff.map((o) =>
-        changeSel.appendChild(
-            create(
-                'option',
-                { value: o.value, selected: o.value === diffOffset },
-                o.text
-            )
-        )
-    );
-    headDiff.appendChild(changeSel);
-    changeSel.addEventListener('change', (e) =>
-        fillCountryRanking(e.target.options[e.target.selectedIndex].value)
-    );
-
-    await fillCountryRanking(diffOffset);
+    new CountryRanking({
+        target: origTable.parentNode,
+        props: {
+            users
+        }
+    });
 }
 
 function updateProgress(info) {
@@ -1493,7 +1358,7 @@ function getSSEUser() {
 
 function setupStyles() {
     const styles = `
-            .sspl thead .diff select, .pagination select.type {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
+            .sspl thead .diff select, .pagination select.type, .sspl select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
             .pp-boundary {color: var(--textColor, black);}
         `;
 

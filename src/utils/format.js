@@ -42,3 +42,11 @@ export function formatDate(val) {
             'year'
         );
 }
+
+export function substituteVars(url, vars) {
+    return Object.keys(vars).reduce(
+        (cum, key) =>
+            cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]),
+        url
+    );
+}
