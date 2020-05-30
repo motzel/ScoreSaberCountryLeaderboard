@@ -74,7 +74,7 @@
             <td class="pp">
                 <Pp pp="{user.pp}" zero="0,00" />
             </td>
-            <td class="diff {user.change ? (user.change > 0 ? 'inc' : 'dec') : ''}"><Value value={user.change ? user.change : 0} digits={0} withSign={true} /></td>
+            <td class="diff {user.change ? (user.change > 0 ? 'inc' : 'dec') : ''}"><Value value={user.change ? user.change : 0} zero="0" digits={0} withSign={true} /></td>
         </tr>
     {/each}
     </tbody>
