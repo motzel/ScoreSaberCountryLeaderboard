@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.5
+ - fix updating ranked songs 
+ 
 0.6.9.4
  - convert country ranking to Svelte components
  

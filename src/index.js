@@ -213,8 +213,7 @@ const convertFetchedRankedSongsToObj = (songs) =>
             return cum;
         }, {})
         : null;
-const fetchRankedSongs = async () =>
-    convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
+const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
 
 async function getNewlyRanked() {
     const fetchedRankedSongs = await fetchRankedSongs();
@@ -224,6 +223,7 @@ async function getNewlyRanked() {
 
     // find differences between old and new ranked songs
     return {
+        allRanked: fetchedRankedSongs,
         newRanked: arrayIntersection(
             Object.keys(fetchedRankedSongs),
             Object.keys(oldRankedSongs)
@@ -332,12 +332,7 @@ async function updateNewRankedsPpScores(progressCallback = null) {
         }
     }
 
-    data.rankedSongs = Object.assign(
-        {},
-        data.rankedSongs,
-        convertArrayToObjectByKey(newlyRanked.newRanked, 'leaderboardId'),
-        convertArrayToObjectByKey(newlyRanked.changed, 'leaderboardId')
-    );
+    data.rankedSongs = newlyRanked.allRanked;
     data.rankedSongsLastUpdated = JSON.parse(JSON.stringify(new Date()));
 
     setCache(data);
@@ -625,9 +620,7 @@ function setupPlTable() {
                     e.target.disabled = true;
 
                     refresh()
-                        .then((_) =>
-                            updateNewRankedsPpScores(updateProgress)
-                        )
+                        .then((_) => updateNewRankedsPpScores(updateProgress))
                         .then((rankeds) => showNewRankeds(rankeds))
                         .then((_) => {
                             getBySelector('#sspl_progress_cont').remove();
@@ -735,6 +728,8 @@ function showNewRankeds(info) {
     if (!Globals.data.flags.rankedSongsAvailable) return;
 
     document.getElementById('new-rankeds')?.remove();
+
+    if(!info) return;
 
     const allChanges = info.newRanked.concat(info.changed);
     if (!allChanges.length) return;
