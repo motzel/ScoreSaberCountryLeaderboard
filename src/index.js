@@ -772,11 +772,13 @@ function showNewRankeds(info) {
                 )
             )
         );
-    container.insertBefore(
-        create('h3', {}, 'Nowe/zmienione rankedy'),
-        ssplTable
-    );
-    container.insertBefore(newRankedsTbl, ssplTable);
+    if(allChanges.length) {
+        container.insertBefore(
+            create('h3', {}, 'Nowe/zmienione rankedy'),
+            ssplTable
+        );
+        container.insertBefore(newRankedsTbl, ssplTable);
+    }
 }
 
 async function fillLeaderboard() {
