@@ -1,7 +1,7 @@
 import config from '../config';
 
-export function formatNumberWithSuffix(num, suffix) {
-    return (num ? formatNumber(num) : '-') + (num && suffix ? suffix : '');
+export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
+    return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
 }
 
 export function formatNumber(num, digits = 2, addSign = false) {

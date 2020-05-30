@@ -1,6 +1,10 @@
 <script>
+    import Rank from '../Common/Rank.svelte';
+    import Player from '../Common/Player.svelte';
+    import Pp from '../Common/Pp.svelte';
+    import Value from '../Common/Value.svelte';
+
     import {getMainUserId, default as config} from '../../config';
-    import {formatNumber, substituteVars} from '../../utils/format';
 
     export let diff = 6;
     export let users = {};
@@ -62,21 +66,15 @@
     {#each ranking as user, idx (user.id)}
         <tr style="{mainUserId === user.id ? 'background-color: var(--color-highlight);' : ''}">
             <td class="rank">
-                <span>#{idx+1}</span>
-                <small>
-                    <a href="/global/{encodeURIComponent( Math.ceil(user.rank / config.SS_PLAYERS_PER_PAGE))}">#{user.rank}</a>
-                </small>
+                <Rank rank={idx+1} subRank={user.rank} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / config.SS_PLAYERS_PER_PAGE))} />
             </td>
             <td class="player">
-                <a href="{substituteVars(config.USER_PROFILE_URL, { userId: user.id })}">
-                    <img src="/imports/images/flags/{user.country.toLowerCase()}.png"/>
-                    <span class="player-name">{user.name}</span>
-                </a>
+                <Player {user} />
             </td>
             <td class="pp">
-                <span class="scoreTop ppValue">{formatNumber(user.pp, 2)}</span>
-                <span class="scoreTop ppLabel">pp</span></td>
-            <td class="diff {user.change ? (user.change > 0 ? 'inc' : 'dec') : ''}">{formatNumber(user.change ? user.change : 0,  0, true)}</td>
+                <Pp pp="{user.pp}" zero="0,00" />
+            </td>
+            <td class="diff {user.change ? (user.change > 0 ? 'inc' : 'dec') : ''}"><Value value={user.change ? user.change : 0} digits={0} withSign={true} /></td>
         </tr>
     {/each}
     </tbody>
