@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.4
+ - convert country ranking to Svelte components
+ 
 0.6.9.3
  - add Svelte integration for components development
  

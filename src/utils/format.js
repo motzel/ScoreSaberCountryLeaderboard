@@ -1,7 +1,7 @@
 import config from '../config';
 
-export function formatNumberWithSuffix(num, suffix) {
-    return (num ? formatNumber(num) : '-') + (num && suffix ? suffix : '');
+export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
+    return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
 }
 
 export function formatNumber(num, digits = 2, addSign = false) {
@@ -41,4 +41,12 @@ export function formatDate(val) {
             -Math.floor(diffInSecs / (60 * 60 * 24 * 365)),
             'year'
         );
+}
+
+export function substituteVars(url, vars) {
+    return Object.keys(vars).reduce(
+        (cum, key) =>
+            cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]),
+        url
+    );
 }
