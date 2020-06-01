@@ -42,6 +42,10 @@ const convertArrayToObjectByKey = (arr, key) =>
 const arrayIntersection = (arr1, arr2) =>
     arr1.filter((x) => !arr2.includes(x));
 const nullIfUndefined = (val) => (typeof val !== 'undefined' ? val : null);
+const round = (val, places = 2) => {
+    const mult = Math.pow(10, places);
+    return Math.round((val + Number.EPSILON) * mult) / mult;
+};
 const defaultIfFalsy = (val, def) => (val ? val : def);
 const substituteVars = (url, vars) =>
     Object.keys(vars).reduce(
@@ -257,7 +261,7 @@ async function updateNewRankedsPpScores(progressCallback = null) {
         dateFromString(Globals.data.lastUpdated).getTime() >
         60000
     ) {
-        console.error('Please update song data first');
+        log.error('Please update song data first');
         return null;
     }
 
@@ -663,7 +667,7 @@ function shouldBeHidden(u) {
                                 userFieldValue > cond?.value;
                             break;
                         default:
-                            console.error(
+                            log.error(
                                 'Unknown condition: ',
                                 cond?.cond
                             );
@@ -989,17 +993,27 @@ async function setupProfile() {
                         )
                             songLink.closest('tr').classList.add('hidden');
 
-                        span.innerHTML =
-                            'score: ' +
-                            formatNumber(leaderboard.score, 0) +
-                            (percent
-                                ? '<br />accuracy: ' +
-                                formatNumber(percent * 100, 2) +
-                                '%'
-                                : '') +
-                            (leaderboard.mods.length
-                                ? '<br />(' + leaderboard.mods + ')'
-                                : '');
+                        if(!span.innerHTML.includes("accuracy:")) {
+                            span.innerHTML =
+                                'score: ' +
+                                formatNumber(leaderboard.score, 0) +
+                                (percent
+                                    ? '<br />accuracy: ' +
+                                    formatNumber(percent * 100, 2) +
+                                    '%'
+                                    : '') +
+                                (leaderboard.mods.length
+                                    ? '<br />(' + leaderboard.mods + ')'
+                                    : '');
+                      } else {
+                            let score = leaderboard.score;
+                            let matches = null;
+                            if(matches = span.innerHTML.match(/accuracy:\s(\d+(\.\d+))%/)) {
+                                const pagePercent = parseFloat(matches[1])/100;
+                                if(pagePercent > round(percent,4)) score = pagePercent * maxSongScore;
+                            }
+                            span.innerHTML = 'score: ' + formatNumber(score, 0) + '<br />' + span.innerHTML;
+                      }
                     } catch (e) {} // swallow error
                 }
 

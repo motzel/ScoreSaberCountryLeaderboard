@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.6
+ - do not replace the accuracy field for ranked songs on player profile
+ 
 0.6.9.5
  - fix updating ranked songs 
  
