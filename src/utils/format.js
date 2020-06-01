@@ -50,3 +50,7 @@ export function substituteVars(url, vars) {
         url
     );
 }
+
+export function dateFromString(str) {
+    return str ? new Date(Date.parse(str)) : null;
+}

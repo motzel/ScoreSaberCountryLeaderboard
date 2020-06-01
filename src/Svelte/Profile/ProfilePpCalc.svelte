@@ -2,7 +2,7 @@
     import {formatNumber} from '../../utils/format';
     import {findRawPp} from '../../pp';
 
-    export let scores;
+    export let scores = [];
 
     let expectedStr = "1,00";
     let rawPp = "???";

@@ -32,3 +32,8 @@ img.bloodtrail {height:24px;}
 #ssplrefresh button {margin-right: .5rem;}
 #ssplrefresh strong {margin-right: .5rem;}
 .offset_tab {margin-left: auto;}
+
+.sspl thead .diff select, .pagination select.type, .sspl select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
+.pp-boundary {color: var(--textColor, black);}
+.sspl tbody tr.main {background-color: var(--color-highlight);}
+table.ranking tbody tr:hover {background-color: var(--hover) !important;}

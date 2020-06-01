@@ -1,5 +1,7 @@
 import Profile from './Svelte/Profile/Profile.svelte';
 import CountryRanking from './Svelte/Country/Ranking.svelte';
+import SongLeaderboard from './Svelte/Song/Leaderboard.svelte';
+
 import log from './utils/logger';
 
 import config from './config';
@@ -99,7 +101,7 @@ const getFlag = (name) => Globals.data?.flags?.[name];
 
 const getLeaderboardId = () =>
     getFirstRegexpMatch(
-        /\/leaderboard\/(\d+)($|\?page=.*)/,
+        /\/leaderboard\/(\d+)(\?page=.*)?#?/,
         window.location.href.toLowerCase()
     );
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -557,6 +559,7 @@ async function getLeaderboard(leadId) {
 
             return cum;
         }, [])
+        .map((u) => Object.assign({}, u, {hidden: shouldBeHidden(u)}))
         .sort((a, b) => b.score - a.score);
 }
 
@@ -568,80 +571,6 @@ function assert(el) {
 
 function getBySelector(sel, el = null) {
     return assert((el ?? document).querySelector(sel));
-}
-
-function setupPlTable() {
-    let scoreTableNode = getBySelector('.ranking table.global');
-
-    let clonedTable = document.querySelector('.ranking table.sspl');
-    if (!clonedTable) clonedTable = scoreTableNode.cloneNode(true);
-
-    clonedTable.classList.remove('global');
-    clonedTable.classList.add('sspl');
-    getBySelector('tbody', clonedTable).innerHTML = '';
-
-    const clonedTableHead = getBySelector('thead', clonedTable);
-    getBySelector('.rank', clonedTableHead).innerHTML = 'Miejsce';
-    getBySelector('.player', clonedTableHead).innerHTML = 'Gracz';
-    getBySelector('.score', clonedTableHead).innerHTML = 'Wynik';
-    getBySelector('.timeset', clonedTableHead).innerHTML = 'Czas';
-    getBySelector('.mods', clonedTableHead).innerHTML = 'Mody';
-    getBySelector('.percentage', clonedTableHead).innerHTML = 'Procent';
-
-    const sspl = create('div', { id: 'sspl' }, '');
-    sspl.style.display = 'none';
-    scoreTableNode.parentElement.appendChild(sspl);
-
-    const refreshDiv = create('div', { id: 'ssplrefresh' }, '');
-    refreshDiv.appendChild(
-        create(
-            'button',
-            {
-                title: 'Odśwież',
-                onclick: (e) => {
-                    refreshDiv.appendChild(
-                        create(
-                            'div',
-                            { id: 'sspl_progress_cont' },
-                            create(
-                                'header',
-                                { id: 'sspl_progress_head' },
-                                ''
-                            ),
-                            create(
-                                'progress',
-                                {
-                                    id: 'sspl_progress',
-                                    value: 0,
-                                    max: 100
-                                },
-                                '0'
-                            ),
-                            create('div', { id: 'sspl_progress_info' }, '')
-                        )
-                    );
-
-                    e.target.disabled = true;
-
-                    refresh()
-                        .then((_) => updateNewRankedsPpScores(updateProgress))
-                        .then((rankeds) => showNewRankeds(rankeds))
-                        .then((_) => {
-                            getBySelector('#sspl_progress_cont').remove();
-                            e.target.disabled = false;
-                            fillLeaderboard();
-                        });
-                }
-            },
-            '↻'
-        )
-    );
-    refreshDiv.appendChild(create('strong', {}, ' Data pobrania:'));
-    refreshDiv.appendChild(create('span', {}, '-'));
-
-    sspl.appendChild(refreshDiv);
-    sspl.appendChild(clonedTable);
-    sspl.appendChild(create('div', { class: 'ssplcont text-center' }, ''));
 }
 
 function shouldBeHidden(u) {
@@ -891,6 +820,97 @@ async function fillLeaderboard() {
     }
 }
 
+async function setupPlTable() {
+    let scoreTableNode = getBySelector('.ranking table.global');
+    /*
+
+    let clonedTable = document.querySelector('.ranking table.sspl');
+    if (!clonedTable) clonedTable = scoreTableNode.cloneNode(true);
+
+    clonedTable.classList.remove('global');
+    clonedTable.classList.add('sspl');
+    getBySelector('tbody', clonedTable).innerHTML = '';
+
+    const clonedTableHead = getBySelector('thead', clonedTable);
+    getBySelector('.rank', clonedTableHead).innerHTML = 'Miejsce';
+    getBySelector('.player', clonedTableHead).innerHTML = 'Gracz';
+    getBySelector('.score', clonedTableHead).innerHTML = 'Wynik';
+    getBySelector('.timeset', clonedTableHead).innerHTML = 'Czas';
+    getBySelector('.mods', clonedTableHead).innerHTML = 'Mody';
+    getBySelector('.percentage', clonedTableHead).innerHTML = 'Procent';
+
+    const sspl = create('div', { id: 'sspl' }, '');
+    sspl.style.display = 'none';
+    scoreTableNode.parentElement.appendChild(sspl);
+
+    const refreshDiv = create('div', { id: 'ssplrefresh' }, '');
+    refreshDiv.appendChild(
+        create(
+            'button',
+            {
+                title: 'Odśwież',
+                onclick: (e) => {
+                    refreshDiv.appendChild(
+                        create(
+                            'div',
+                            { id: 'sspl_progress_cont' },
+                            create(
+                                'header',
+                                { id: 'sspl_progress_head' },
+                                ''
+                            ),
+                            create(
+                                'progress',
+                                {
+                                    id: 'sspl_progress',
+                                    value: 0,
+                                    max: 100
+                                },
+                                '0'
+                            ),
+                            create('div', { id: 'sspl_progress_info' }, '')
+                        )
+                    );
+
+                    e.target.disabled = true;
+
+                    refresh()
+                        .then((_) => updateNewRankedsPpScores(updateProgress))
+                        .then((rankeds) => showNewRankeds(rankeds))
+                        .then((_) => {
+                            getBySelector('#sspl_progress_cont').remove();
+                            e.target.disabled = false;
+                            fillLeaderboard();
+                        });
+                }
+            },
+            '↻'
+        )
+    );
+    refreshDiv.appendChild(create('strong', {}, ' Data pobrania:'));
+    refreshDiv.appendChild(create('span', {}, '-'));
+
+    sspl.appendChild(refreshDiv);
+    sspl.appendChild(clonedTable);
+    sspl.appendChild(create('div', { class: 'ssplcont text-center' }, ''));
+*/
+    const leaderboardId = getLeaderboardId();
+    const leaderboard = await getLeaderboard(leaderboardId);
+    if(leaderboard?.length) {
+        let tblContainer = document.createElement('div');
+        tblContainer["id"] = "sspl";
+        tblContainer.style["display"] = "none";
+        scoreTableNode.parentNode.appendChild(tblContainer);
+        new SongLeaderboard({
+            target: tblContainer,
+            props: {
+                leaderboardId,
+                leaderboard
+            }
+        });
+    }
+}
+
 async function setupLeaderboard() {
     const leadId = getLeaderboardId();
     if (!leadId) return;
@@ -903,9 +923,8 @@ async function setupLeaderboard() {
             null === document.querySelector('.filter_tab')
         )
     );
-    setupPlTable();
 
-    await fillLeaderboard();
+    await setupPlTable();
 
     document.addEventListener(
         'click',
@@ -1368,15 +1387,28 @@ function getSSEUser() {
 }
 
 function setupStyles() {
-    const styles = `
-            .sspl thead .diff select, .pagination select.type, .sspl select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
-            .pp-boundary {color: var(--textColor, black);}
-        `;
-
     const addStyles = GM_addStyle ? GM_addStyle : () => {};
 
-    addStyles(styles);
     addStyles(require('./resource/style/style.css').toString());
+
+    // set css variables
+    let cssVars = [];
+    if(!getComputedStyle(document.documentElement).getPropertyValue('--foreground').length) {
+        // light mode
+        cssVars = [
+            ['background', 'white'],
+            ['foreground', 'white'],
+            ['textColor', '#4a4a4a'],
+            ['ppColour', '#6772E5'],
+            ['alternate', '#3273dc'],
+            ['hover', '#ddd']
+        ]
+    } else {
+        cssVars = [
+            ['hover', '#444']
+        ]
+    }
+    cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
 }
 
 function setupDelayed() {

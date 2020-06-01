@@ -5,5 +5,7 @@
     export let zero = '-';
 </script>
 
-<span class="scoreTop ppValue"><Value value="{pp}" {zero} /></span>
-<span class="scoreTop ppLabel">pp</span>
+<span class="scoreTop ppValue"><Value value="{pp}" {zero}/></span>
+{#if pp}
+    <span class="scoreTop ppLabel">pp</span>
+{/if}
