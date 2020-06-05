@@ -1,4 +1,5 @@
 import {fetchRankedSongsArray, convertFetchedRankedSongsToObj} from './network/api';
+import log from './utils/logger';
 
 const CACHE_KEY = 'sspl_users';
 
@@ -13,6 +14,8 @@ const getCache = async () => new Promise((resolve, reject) =>
 
 export async function getCacheAndConvertIfNeeded() {
     if (Globals.data) return Globals.data;
+
+    log.info("Data fetch from cache");
 
     let cache = (await getCache()) ?? {
         version: 1.1,

@@ -6,7 +6,7 @@ import WhatIfpp from './Svelte/Components/Common/WhatIfPp.svelte';
 import {default as config, getMainUserId} from './config';
 import {getCacheAndConvertIfNeeded, setCache, Globals} from "./store";
 import {fetchApiPage, fetchRankedSongs} from "./network/api";
-import {round, substituteVars} from './utils/format';
+import {round, substituteVars, formatNumber, formatNumberWithSuffix} from './utils/format';
 import {capitalize, isEmpty, convertArrayToObjectByKey, arrayIntersection, nullIfUndefined, defaultIfFalsy, dateFromString, getFirstRegexpMatch} from "./utils/js";
 import log from './utils/logger';
 
@@ -15,8 +15,7 @@ const SCORESABER_API_URL = 'https://new.scoresaber.com/api';
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const USERS_URL = SCORESABER_URL + '/global/${page}?country=' + config.COUNTRY;
 const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
-const SCORES_URL =
-    SCORESABER_API_URL + '/player/${userId}/scores/recent/${page}';
+const SCORES_URL = SCORESABER_API_URL + '/player/${userId}/scores/recent/${page}';
 const PLAYER_INFO_URL = SCORESABER_API_URL + '/player/${userId}/full';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${songHash}';
 
@@ -469,9 +468,6 @@ function shouldBeHidden(u) {
     );
 }
 
-function formatNumberWithSuffix(num, suffix) {
-    return (num ? formatNumber(num) : '-') + (num && suffix ? suffix : '');
-}
 function newTdWithNumber(num, suffix) {
     return create('td', {}, formatNumberWithSuffix(num, suffix));
 }
@@ -739,6 +735,8 @@ async function setupPlTable() {
 }
 
 async function setupLeaderboard() {
+    log.info("Setup leaderboard page");
+
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
@@ -797,6 +795,8 @@ async function setupLeaderboard() {
 }
 
 async function setupProfile() {
+    log.info("Setup profile page");
+
     const profileId = getProfileId();
     if (!profileId) return;
 
@@ -897,6 +897,8 @@ async function setupProfile() {
 }
 
 async function setupCountryRanking(diffOffset = 6) {
+    log.info("Setup country ranking");
+
     const users = (await getCacheAndConvertIfNeeded())?.users;
     if (!users || !getFlag('rankHistoryAvailable')) return;
 
@@ -1004,7 +1006,6 @@ async function refresh() {
 function toggled_class(bool, css_class) {
     return bool ? css_class : '';
 }
-
 function into(parent, ...children) {
     for (const child of children) {
         if (typeof child === 'string') {
@@ -1019,7 +1020,6 @@ function into(parent, ...children) {
     }
     return parent;
 }
-
 function create(tag, attrs, ...children) {
     if (!tag) throw new SyntaxError("'tag' not defined");
     const ele = document.createElement(tag);
@@ -1061,7 +1061,6 @@ function create(tag, attrs, ...children) {
     into(ele, ...children);
     return ele;
 }
-
 function generate_tab(css_id, is_active, has_offset) {
     const tabClass = `filter_tab sspl ${toggled_class(
         is_active,
@@ -1095,121 +1094,9 @@ function generate_tab(css_id, is_active, has_offset) {
     );
 }
 
-function generate_song_table_row(user, leaderboardId, idx, cls) {
-    return create(
-        'tr',
-        { class: cls },
-        create('td', { class: 'picture' }),
-        create(
-            'td',
-            { class: 'rank' },
-            create('span', {}, '#' + idx),
-            create(
-                'small',
-                {},
-                create(
-                    'a',
-                    {
-                        href:
-                            '/leaderboard/' +
-                            encodeURIComponent(leaderboardId) +
-                            '?page=' +
-                            encodeURIComponent(
-                                Math.ceil(user.rank / SS_SCORES_PER_PAGE)
-                            )
-                    },
-                    '#' + user.rank
-                )
-            )
-        ),
-        create('td', { class: 'player' }, generate_song_table_player(user)),
-        create(
-            'td',
-            { class: 'score' },
-            user.score ? formatNumber(user.score, 0) : '-'
-        ),
-        create(
-            'td',
-            {
-                class: 'timeset',
-                title: dateFromString(user.timeset).toLocaleString()
-            },
-            formatDate(user.timeset)
-        ),
-        create(
-            'td',
-            { class: 'mods' },
-            user.mods ? user.mods.toString() : '-'
-        ),
-        create(
-            'td',
-            { class: 'percentage' },
-            user.percent ? formatNumber(user.percent * 100, 2) + '%' : '-'
-        ),
-        create(
-            'td',
-            { class: 'pp' },
-            create(
-                'span',
-                { class: 'scoreTop ppValue' },
-                formatNumber(user.pp, 2)
-            ),
-            create('span', { class: 'scoreTop ppLabel' }, 'pp')
-        )
-    );
-}
-
-function generate_song_table_player(user) {
-    const country = user.country.toLowerCase();
-    return create(
-        'a',
-        { href: substituteVars(USER_PROFILE_URL, { userId: user.id }) },
-        create('img', { src: `/imports/images/flags/${country}.png` }),
-        create('span', { class: 'player-name' }, ' ' + user.name)
-    );
-}
-
-// needed by removed SSE dependencies
-function formatNumber(num, digits = 2, addSign = false) {
-    return (
-        (addSign && num > 0 ? '+' : '') +
-        num.toLocaleString(config.COUNTRY, {
-            minimumFractionDigits: digits,
-            maximumFractionDigits: digits
-        })
-    );
-}
-
-function formatDate(val) {
-    const rtf = new Intl.RelativeTimeFormat(config.COUNTRY, {
-        localeMatcher: 'best fit',
-        numeric: 'auto',
-        style: 'long'
-    });
-
-    const diffInSecs = (Date.now() - dateFromString(val)) / 1000;
-
-    if (diffInSecs < 60)
-        return rtf.format(-Math.ceil(diffInSecs), 'second');
-    else if (diffInSecs < 60 * 60)
-        return rtf.format(-Math.ceil(diffInSecs / 60), 'minute');
-    else if (diffInSecs < 60 * 60 * 24)
-        return rtf.format(-Math.ceil(diffInSecs / (60 * 60)), 'hour');
-    else if (diffInSecs < 60 * 60 * 24 * 30)
-        return rtf.format(-Math.ceil(diffInSecs / (60 * 60 * 24)), 'day');
-    else if (diffInSecs < 60 * 60 * 24 * 365)
-        return rtf.format(
-            -Math.ceil(diffInSecs / (60 * 60 * 24 * 30)),
-            'month'
-        );
-    else
-        return rtf.format(
-            -Math.floor(diffInSecs / (60 * 60 * 24 * 365)),
-            'year'
-        );
-}
-
 function setupStyles() {
+    log.info("Setup styles");
+
     const addStyles = GM_addStyle ? GM_addStyle : () => {};
 
     addStyles(require('./resource/style/style.css').toString());
@@ -1234,15 +1121,14 @@ function setupStyles() {
     cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
 }
 
-function setupDelayed() {
-    if (initialized) {
-        return;
-    }
-
+async function setupDelayed() {
     initialized = true;
 
     if (isLeaderboardPage()) {
-        setupLeaderboard();
+        // wait for SSE or given timeout
+        await waitForSSEInit(config.SSE_CHECK_DELAY);
+
+        await setupLeaderboard();
     }
 }
 
@@ -1261,6 +1147,8 @@ function checkElement(selector) {
 }
 
 async function waitForSSEInit(timeout) {
+    log.info("Waiting for SSE initialization");
+
     return new Promise(function(resolve, reject) {
         // whatever comes first
         checkElement('#all_scores_tab').then(el => resolve(el))
@@ -1290,10 +1178,9 @@ async function init() {
         setupCountryRanking();
     }
 
-    // wait for SSE or given timeout
-    await waitForSSEInit(config.SSE_CHECK_DELAY);
+    await setupDelayed();
 
-    setupDelayed();
+    log.info("Setup complete");
 }
 
 init();
