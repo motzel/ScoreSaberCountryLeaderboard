@@ -4,7 +4,7 @@
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
 
-    import {getMainUserId, default as config} from '../../config';
+    import {getMainUserId, default as config} from '../../../config';
 
     export let diff = 6;
     export let users = {};

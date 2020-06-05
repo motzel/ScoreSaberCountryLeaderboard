@@ -1,6 +1,6 @@
 <script>
-    import {formatNumber} from '../../utils/format';
-    import {findRawPp} from '../../pp';
+    import {formatNumber} from '../../../utils/format';
+    import {findRawPp} from '../../../pp';
 
     export let scores = [];
 

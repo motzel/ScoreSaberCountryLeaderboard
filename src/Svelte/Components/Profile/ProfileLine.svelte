@@ -1,5 +1,5 @@
 <script>
-    import {formatNumber} from '../../utils/format';
+    import {formatNumber} from '../../../utils/format';
 
     export let label;
     export let value;

@@ -4,9 +4,10 @@
     import Player from '../Common/Player.svelte';
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
+    import WhatIfPp from '../Common/WhatIfPp.svelte';
 
-    import {getMainUserId, default as config} from '../../config';
-    import {dateFromString, formatDate} from '../../utils/format';
+    import {getMainUserId, default as config} from '../../../config';
+    import {dateFromString, formatDate} from '../../../utils/format';
 
     export let leaderboardId;
     export let leaderboard = [];
@@ -73,6 +74,7 @@
             <td class="percentage"><Value value={item.percent*100} zero="-"/>%</td>
             <td class="pp">
                 <Pp pp="{item.pp}"/>
+                <WhatIfPp {leaderboardId} pp={item.pp} />
             </td>
         </tr>
     {/each}

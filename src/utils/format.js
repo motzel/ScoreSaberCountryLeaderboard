@@ -54,3 +54,8 @@ export function substituteVars(url, vars) {
 export function dateFromString(str) {
     return str ? new Date(Date.parse(str)) : null;
 }
+
+export const round = (val, places = 2) => {
+    const mult = Math.pow(10, places);
+    return Math.round((val + Number.EPSILON) * mult) / mult;
+};

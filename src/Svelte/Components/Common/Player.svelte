@@ -1,6 +1,6 @@
 <script>
-    import {default as config} from '../../config';
-    import {substituteVars} from '../../utils/format';
+    import {default as config} from '../../../config';
+    import {substituteVars} from '../../../utils/format';
 
     export let user;
 

@@ -1,10 +1,14 @@
-import Profile from './Svelte/Profile/Profile.svelte';
-import CountryRanking from './Svelte/Country/Ranking.svelte';
-import SongLeaderboard from './Svelte/Song/Leaderboard.svelte';
+import Profile from './Svelte/Components/Profile/Profile.svelte';
+import CountryRanking from './Svelte/Components/Country/Ranking.svelte';
+import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
+import WhatIfpp from './Svelte/Components/Common/WhatIfPp.svelte';
 
+import {default as config, getMainUserId} from './config';
+import {getCacheAndConvertIfNeeded, setCache, Globals} from "./store";
+import {fetchApiPage, fetchRankedSongs} from "./network/api";
+import {round, substituteVars} from './utils/format';
+import {capitalize, isEmpty, convertArrayToObjectByKey, arrayIntersection, nullIfUndefined, defaultIfFalsy, dateFromString, getFirstRegexpMatch} from "./utils/js";
 import log from './utils/logger';
-
-import config from './config';
 
 const SCORESABER_URL = 'https://scoresaber.com';
 const SCORESABER_API_URL = 'https://new.scoresaber.com/api';
@@ -16,7 +20,6 @@ const SCORES_URL =
 const PLAYER_INFO_URL = SCORESABER_API_URL + '/player/${userId}/full';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${songHash}';
 
-const CACHE_KEY = 'sspl_users';
 const ADDITIONAL_USER_IDS = ['76561198967371424', '76561198093469724'];
 
 const SS_SCORES_PER_PAGE = 12; // song leaderboard
@@ -31,35 +34,6 @@ const easterEggConditions = [
 
 let enableEasterEggs = true;
 
-const Globals = { data: null };
-
-const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-const isEmpty = (obj) =>
-    Object.keys(obj).length === 0 && obj.constructor === Object;
-const convertArrayToObjectByKey = (arr, key) =>
-    arr.reduce((cum, item) => {
-        cum[item[key]] = item;
-        return cum;
-    }, {});
-const arrayIntersection = (arr1, arr2) =>
-    arr1.filter((x) => !arr2.includes(x));
-const nullIfUndefined = (val) => (typeof val !== 'undefined' ? val : null);
-const round = (val, places = 2) => {
-    const mult = Math.pow(10, places);
-    return Math.round((val + Number.EPSILON) * mult) / mult;
-};
-const defaultIfFalsy = (val, def) => (val ? val : def);
-const substituteVars = (url, vars) =>
-    Object.keys(vars).reduce(
-        (cum, key) =>
-            cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]),
-        url
-    );
-const dateFromString = (str) => (str ? new Date(Date.parse(str)) : null);
-const getFirstRegexpMatch = (regexp, str) => {
-    let _ = regexp.exec(str);
-    return _ ? _[1] : null;
-};
 const getMaxScore = (blocks, maxScorePerBlock = 115) =>
     Math.floor(
         (blocks >= 14 ? 8 * maxScorePerBlock * (blocks - 13) : 0) +
@@ -71,31 +45,6 @@ const getMaxScore = (blocks, maxScorePerBlock = 115) =>
             : 0) +
         Math.min(blocks, 1) * maxScorePerBlock
     );
-const getTotalPp = (scores) =>
-    Object.values(scores)
-        .filter((s) => s.pp > 0)
-        .map((s) => s.pp)
-        .sort((a, b) => b - a)
-        .reduce((cum, pp, idx) => cum + Math.pow(0.965, idx) * pp, 0);
-const getTotalUserPp = async (userId, modifiedScores = {}) =>
-    getTotalPp(
-        Object.assign(
-            {},
-            (await getCacheAndConvertIfNeeded()).users?.[userId]?.scores,
-            modifiedScores
-        )
-    );
-const getWhatIfScore = async (userId, leaderboardId, pp) => {
-    const currentTotalPp = await getTotalUserPp(userId);
-    const newTotalPp = await getTotalUserPp(userId, {
-        [leaderboardId]: { pp }
-    });
-    return {
-        currentTotalPp,
-        newTotalPp,
-        diff: newTotalPp - currentTotalPp
-    };
-};
 
 const getFlag = (name) => Globals.data?.flags?.[name];
 
@@ -123,10 +72,6 @@ const fetchHtmlPage = async (url, page = 1) =>
         await (await fetch(substituteVars(url, { page }))).text(),
         'text/html'
     );
-const fetchApiPage = async (url, page = 1) =>
-    fetch(substituteVars(url, { page }))
-        .then((r) => r.json())
-        .catch((e) => null);
 
 const fetchSongByHash = async (songHash) =>
     await fetchApiPage(substituteVars(SONG_BY_HASH_URL, { songHash }));
@@ -195,31 +140,6 @@ const fetchScores = async (userId, page = 1, ...leaderboards) =>
             )
             : null
     );
-const fetchRankedSongsArray = async () =>
-    fetchApiPage(
-        'https://scoresaber.com/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1'
-    ).then((songs) =>
-        songs?.songs
-            ? songs?.songs.map((s) => ({
-                leaderboardId: s.uid,
-                id: s.id,
-                name: s.name + ' ' + s.songSubName,
-                songAuthor: s.songAuthorName,
-                levelAuthor: s.levelAuthorName,
-                diff: extractDiffAndType(s.diff),
-                stars: s.stars,
-                oldStars: null
-            }))
-            : []
-    );
-const convertFetchedRankedSongsToObj = (songs) =>
-    songs.length
-        ? songs.reduce((cum, s) => {
-            cum[s.leaderboardId] = s;
-            return cum;
-        }, {})
-        : null;
-const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
 
 async function getNewlyRanked() {
     const fetchedRankedSongs = await fetchRankedSongs();
@@ -402,66 +322,6 @@ async function fetchAllNewScores(
 
 function isAnyData() {
     return Globals.data && Object.keys(Globals.data.users).length;
-}
-
-async function getCache() {
-    return new Promise((resolve, reject) =>
-        localforage.getItem(CACHE_KEY, function (err, value) {
-            resolve(value);
-        })
-    );
-}
-
-async function setCache(value) {
-    Globals.data = value;
-
-    localforage.setItem(CACHE_KEY, value);
-
-    return value;
-}
-
-async function getCacheAndConvertIfNeeded() {
-    if (Globals.data) return Globals.data;
-
-    let cache = (await getCache()) ?? {
-        version: 1.1,
-        lastUpdated: null,
-        users: {},
-        rankedSongs: null,
-        rankedSongsLastUpdated: null
-    };
-
-    // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
-    let flags = {
-        rankHistoryAvailable: false,
-        rankedSongsAvailable: false
-    };
-    if (Object.values(cache?.users)?.[0]?.history?.length) {
-        flags.rankHistoryAvailable = true;
-    }
-
-    if (cache.version === 1) {
-        // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
-        const allRankeds = await fetchRankedSongsArray();
-        let nanomoriApproached = false;
-        cache.rankedSongs = convertFetchedRankedSongsToObj(
-            allRankeds.filter((s) => {
-                if (s.leaderboardId === 221711) nanomoriApproached = true;
-                return nanomoriApproached;
-            })
-        );
-        cache.version = 1.1;
-        cache.rankedSongsLastUpdated = JSON.parse(
-            JSON.stringify(new Date())
-        );
-        flags.rankedSongsAvailable = false;
-    } else {
-        flags.rankedSongsAvailable = true;
-    }
-
-    Globals.data = Object.assign(cache, { flags });
-
-    return cache;
 }
 
 function getHumanDiffName(diffInfo) {
@@ -690,7 +550,7 @@ function showNewRankeds(info) {
         newRankedsTbody
     );
 
-    const sseUserId = getSSEUser();
+    const sseUserId = getMainUserId();
     allChanges
         .sort((a, b) => b.stars - a.stars)
         .map((m) =>
@@ -714,6 +574,7 @@ function showNewRankeds(info) {
     }
 }
 
+/*
 async function fillLeaderboard() {
     const leaderboardId = getLeaderboardId();
     const leaderboard = await getLeaderboard(leaderboardId);
@@ -725,7 +586,7 @@ async function fillLeaderboard() {
     ssplTableBody.innerHTML = '';
 
     if (leaderboard?.length) {
-        const sseUserId = getSSEUser();
+        const sseUserId = getMainUserId();
         let idx = 1;
         leaderboard.map((u) => {
             let row = generate_song_table_row(
@@ -802,47 +663,13 @@ async function fillLeaderboard() {
         getBySelector('span', refresh).innerText = formatDate(
             Globals.data.lastUpdated
         );
-
-        const sseUserId = getSSEUser();
-        if (sseUserId) {
-            var scoreSpans = document.querySelectorAll('.scoreTop.ppValue');
-            [].forEach.call(scoreSpans, async function (span) {
-                const pp = parseFloat(
-                    span.innerText.replace(/\s/, '').replace(',', '.')
-                );
-                if (pp && pp > 0.0 + Number.EPSILON) {
-                    span.parentNode.appendChild(
-                        await createWhatIfPpButton(sseUserId, leaderboardId, pp)
-                    );
-                }
-            });
-        }
     }
 }
+*/
 
 async function setupPlTable() {
     let scoreTableNode = getBySelector('.ranking table.global');
     /*
-
-    let clonedTable = document.querySelector('.ranking table.sspl');
-    if (!clonedTable) clonedTable = scoreTableNode.cloneNode(true);
-
-    clonedTable.classList.remove('global');
-    clonedTable.classList.add('sspl');
-    getBySelector('tbody', clonedTable).innerHTML = '';
-
-    const clonedTableHead = getBySelector('thead', clonedTable);
-    getBySelector('.rank', clonedTableHead).innerHTML = 'Miejsce';
-    getBySelector('.player', clonedTableHead).innerHTML = 'Gracz';
-    getBySelector('.score', clonedTableHead).innerHTML = 'Wynik';
-    getBySelector('.timeset', clonedTableHead).innerHTML = 'Czas';
-    getBySelector('.mods', clonedTableHead).innerHTML = 'Mody';
-    getBySelector('.percentage', clonedTableHead).innerHTML = 'Procent';
-
-    const sspl = create('div', { id: 'sspl' }, '');
-    sspl.style.display = 'none';
-    scoreTableNode.parentElement.appendChild(sspl);
-
     const refreshDiv = create('div', { id: 'ssplrefresh' }, '');
     refreshDiv.appendChild(
         create(
@@ -912,8 +739,8 @@ async function setupPlTable() {
 }
 
 async function setupLeaderboard() {
-    const leadId = getLeaderboardId();
-    if (!leadId) return;
+    const leaderboardId = getLeaderboardId();
+    if (!leaderboardId) return;
 
     const tabs = getBySelector('.tabs > ul');
     tabs.appendChild(
@@ -948,24 +775,25 @@ async function setupLeaderboard() {
         },
         { passive: true }
     );
-}
 
-async function createWhatIfPpButton(userId, leaderboardId, pp) {
-    const whatIfPp = await getWhatIfScore(userId, leaderboardId, pp);
-    return create(
-        'button',
-        {
-            class: 'what-if',
-            title:
-                'Jeśli tak zagrasz: \n' +
-                formatNumber(whatIfPp.currentTotalPp) +
-                formatNumber(whatIfPp.diff, 2, true) +
-                '=' +
-                formatNumber(whatIfPp.newTotalPp) +
-                'pp'
-        },
-        '?'
-    );
+    const sseUserId = getMainUserId();
+    if (sseUserId) {
+        var scoreSpans = document.querySelectorAll('.scoreTop.ppValue');
+        [].forEach.call(scoreSpans, async function (span) {
+            const pp = parseFloat(
+                span.innerText.replace(/\s/, '').replace(',', '.')
+            );
+            if (pp && pp > 0.0 + Number.EPSILON) {
+                new WhatIfpp({
+                    target: span.parentNode,
+                    props: {
+                        leaderboardId,
+                        pp
+                    }
+                });
+            }
+        });
+    }
 }
 
 async function setupProfile() {
@@ -974,7 +802,7 @@ async function setupProfile() {
 
     const data = await getCacheAndConvertIfNeeded();
 
-    const sseUserId = getSSEUser();
+    const sseUserId = getMainUserId();
 
     var scoreSpans = document.querySelectorAll('.score .scoreBottom');
     [].forEach.call(scoreSpans, async function (span) {
@@ -1042,13 +870,13 @@ async function setupProfile() {
                             ?.innerText
                     );
                     if (pp && pp > 0.0 + Number.EPSILON) {
-                        span.parentNode.appendChild(
-                            await createWhatIfPpButton(
-                                sseUserId,
+                        new WhatIfpp({
+                            target: span.parentNode,
+                            props: {
                                 leaderboardId,
                                 pp
-                            )
-                        );
+                            }
+                        });
                     }
                 }
             }
@@ -1379,11 +1207,6 @@ function formatDate(val) {
             -Math.floor(diffInSecs / (60 * 60 * 24 * 365)),
             'year'
         );
-}
-
-function getSSEUser() {
-    let user = localStorage.getItem('home_user');
-    return user ? JSON.parse(user).id : null;
 }
 
 function setupStyles() {

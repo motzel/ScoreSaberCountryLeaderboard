@@ -1,3 +1,5 @@
+import {getCacheAndConvertIfNeeded} from './store';
+
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
         (cum, pp, idx) => cum + Math.pow(0.965, idx + startIdx) * pp,
@@ -35,4 +37,43 @@ export function findRawPp(scores, expected) {
     }
 
     return calcRawPpAtIdx(scores, 0, expected);
+}
+
+export function getTotalPp(scores) {
+    return Object.values(scores)
+        .filter((s) => s.pp > 0)
+        .map((s) => s.pp)
+        .sort((a, b) => b - a)
+        .reduce((cum, pp, idx) => cum + Math.pow(0.965, idx) * pp, 0);
+}
+
+export async function getTotalUserPp(userId, modifiedScores = {}) {
+    return getTotalPp(
+        Object.assign(
+            {},
+            (await getCacheAndConvertIfNeeded()).users?.[userId]?.scores,
+            modifiedScores
+        )
+    );
+}
+
+export async function getWhatIfScore(userId, leaderboardId, pp) {
+    const currentTotalPp = await getTotalUserPp(userId);
+    const newTotalPp = await getTotalUserPp(userId, {
+        [leaderboardId]: { pp }
+    });
+    return {
+        currentTotalPp,
+        newTotalPp,
+        diff: newTotalPp - currentTotalPp
+    };
+}
+
+export async function getUserScores(userId) {
+    return (await getCacheAndConvertIfNeeded()).users?.[userId]?.scores;
+}
+
+export async function getUserSongScore(userId, leaderboardId)
+{
+    return (await getUserScores(userId))?.[leaderboardId];
 }
