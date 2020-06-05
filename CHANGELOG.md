@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.7
+ - convert country song leaderboard to Svelte components
+ 
 0.6.9.6
  - do not replace the accuracy field for ranked songs on player profile
  
