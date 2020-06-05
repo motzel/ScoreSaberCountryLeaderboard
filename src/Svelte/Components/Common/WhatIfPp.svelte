@@ -40,8 +40,8 @@
         font-size: .875rem;
         font-weight: normal;
         text-align: center;
-        color: var(--background);
-        background-color: var(--textColor);
+        color: var(--textColor);
+        background-color: var(--background);
         border: 1px solid var(--foreground);
     }
 
