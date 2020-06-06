@@ -634,25 +634,6 @@ async function fillLeaderboard() {
                 'Pobierz'
             )
         );
-        firstFetch.appendChild(
-            create(
-                'div',
-                {},
-                create(
-                    'progress',
-                    {
-                        id: 'sspl_progress',
-                        value: 0,
-                        max: 100
-                    },
-                    '0'
-                ),
-                create('div', { id: 'sspl_progress_info' }, '')
-            )
-        );
-        container.appendChild(firstFetch);
-
-        getBySelector('#ssplrefresh').style.display = 'none';
     } else {
         const refresh = getBySelector('#ssplrefresh');
         refresh.style.display = '';
