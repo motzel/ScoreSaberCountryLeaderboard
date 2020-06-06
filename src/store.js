@@ -11,6 +11,9 @@ const getCache = async () => new Promise((resolve, reject) =>
     })
 );
 
+export const lastUpdated = async () => (await getCacheAndConvertIfNeeded()).lastUpdated;
+
+export const isAnyData = async () => {await getCacheAndConvertIfNeeded(); return Globals.data && Object.keys(Globals.data.users).length}
 
 export async function getCacheAndConvertIfNeeded() {
     if (Globals.data) return Globals.data;

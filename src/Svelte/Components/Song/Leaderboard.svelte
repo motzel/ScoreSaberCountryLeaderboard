@@ -6,13 +6,26 @@
     import Value from '../Common/Value.svelte';
     import WhatIfPp from '../Common/WhatIfPp.svelte';
 
+    import Refresh from '../Common/Refresh.svelte';
+    import NewRankeds from '../Song/NewRankeds.svelte';
+
     import {getMainUserId, default as config} from '../../../config';
     import {dateFromString, formatDate} from '../../../utils/format';
+    import {isAnyData} from '../../../store';
 
     export let leaderboardId;
     export let leaderboard = [];
 
     const mainUserId = getMainUserId();
+
+    let newRankeds = [];
+
+    let dataAvailable = false;
+    isAnyData().then(v => dataAvailable = v);
+
+    function onNewRankeds(event) {
+        newRankeds = event.detail;
+    }
 </script>
 
 <style>
@@ -39,8 +52,17 @@
     .sspl .picture {
         padding: .5rem 0;
     }
+
+    .refresh {text-align: right; margin-bottom: 1rem;}
+
+    .first-fetch {text-align: center}
 </style>
 
+<div class="refresh"><Refresh on:new-rankeds={onNewRankeds}/></div>
+
+<NewRankeds rankeds={newRankeds} />
+
+{#if dataAvailable}
 <table class="ranking sspl">
     <thead>
     <tr>
@@ -80,3 +102,10 @@
     {/each}
     </tbody>
 </table>
+{:else}
+    <div class="first-fetch">
+        <h3>Strasznie tu pusto</h3>
+        <p>Wygląda na to, że nie ma jeszcze żadnych danych.</p>
+        <p>Usiądź sobie wygodnie, otwórz harnasia, kliknij Odśwież i poczekaj, bo trochę to potrwa...</p>
+    </div>
+{/if}

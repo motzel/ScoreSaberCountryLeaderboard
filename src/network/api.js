@@ -1,4 +1,6 @@
 import {substituteVars} from "../utils/format";
+import {getCacheAndConvertIfNeeded} from "../store";
+import {arrayIntersection, nullIfUndefined} from "../utils/js";
 
 export const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
@@ -41,3 +43,29 @@ export const fetchRankedSongsArray = async () =>
             : []
     );
 export const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
+
+export async function getNewlyRanked() {
+    const fetchedRankedSongs = await fetchRankedSongs();
+    if (!fetchedRankedSongs) return null;
+
+    const data = await getCacheAndConvertIfNeeded();
+
+    const oldRankedSongs = data.rankedSongs;
+
+    // find differences between old and new ranked songs
+    return {
+        allRanked: fetchedRankedSongs,
+        newRanked: arrayIntersection(
+            Object.keys(fetchedRankedSongs),
+            Object.keys(oldRankedSongs)
+        ).map((k) => fetchedRankedSongs[k]),
+        changed: Object.values(oldRankedSongs)
+            .filter((s) => s.stars !== fetchedRankedSongs?.[s.leaderboardId]?.stars)
+            .map((s) =>
+                Object.assign({}, s, {
+                    oldStars: s.stars,
+                    stars: nullIfUndefined(fetchedRankedSongs?.[s.leaderboardId]?.stars)
+                })
+            )
+    };
+}

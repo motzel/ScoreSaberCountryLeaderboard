@@ -13,3 +13,9 @@ export const getFirstRegexpMatch = (regexp, str) => {
     let _ = regexp.exec(str);
     return _ ? _[1] : null;
 };
+export const escapeHtml = unsafe => unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");

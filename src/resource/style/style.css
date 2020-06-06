@@ -13,9 +13,6 @@
 .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
 .sspl .diff.inc {color: #42B129 !important;}
 .sspl .diff.dec {color: #F94022 !important;}
-#new-rankeds {margin-bottom: 2rem;}
-#new-rankeds th, #new-rankeds td {text-align: center;}
-#new-rankeds tbody tr td:nth-child(1) {text-align: left;}
 .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
 table.ranking.songs th.score, table.ranking td.pp {position: relative;}
 table.ranking tbody tr.hidden {opacity: 0.05;}
@@ -27,9 +24,6 @@ img.bloodtrail {height:24px;}
 .sspl .rank small {font-size: .75rem; margin-left: .5rem; color: lightgray;}
 .sspl .rank span {display: inline-block; width: 1.5rem; text-align: right;}
 .text-center {text-align: center;}
-#ssplrefresh {text-align: right; margin-bottom: 1rem;}
-#ssplrefresh button {margin-right: .5rem;}
-#ssplrefresh strong {margin-right: .5rem;}
 .offset_tab {margin-left: auto;}
 .sspl .inc {color: #42b129!important}
 .sspl .dec {color: #f94022!important}
