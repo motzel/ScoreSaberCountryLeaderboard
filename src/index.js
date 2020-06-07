@@ -3,142 +3,27 @@ import CountryRanking from './Svelte/Components/Country/Ranking.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import WhatIfpp from './Svelte/Components/Common/WhatIfPp.svelte';
 
-import {default as config, getMainUserId} from './config';
-import {getCacheAndConvertIfNeeded, Globals} from "./store";
-import {fetchApiPage} from "./network/api";
-import {round, substituteVars, formatNumber} from './utils/format';
-import {getFirstRegexpMatch} from "./utils/js";
-
 import log from './utils/logger';
-
-const BEATSAVER_API_URL = 'https://beatsaver.com/api';
-const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${songHash}';
-
-const easterEggConditions = [
-    [
-        { field: 'id', value: '76561198165064325', cond: '===' },
-        { field: 'percent', value: 0.85, cond: '<' }
-    ]
-];
-
-let enableEasterEggs = true;
-
-const getMaxScore = (blocks, maxScorePerBlock = 115) =>
-    Math.floor(
-        (blocks >= 14 ? 8 * maxScorePerBlock * (blocks - 13) : 0) +
-        (blocks >= 6
-            ? 4 * maxScorePerBlock * (Math.min(blocks, 13) - 5)
-            : 0) +
-        (blocks >= 2
-            ? 2 * maxScorePerBlock * (Math.min(blocks, 5) - 1)
-            : 0) +
-        Math.min(blocks, 1) * maxScorePerBlock
-    );
+import {default as config, getMainUserId} from './temp';
+import {getCacheAndConvertIfNeeded, Globals} from "./store";
+import {round, formatNumber} from './utils/format';
+import {getFirstRegexpMatch} from "./utils/js";
+import {getLeaderboard, getMaxScore} from "./song";
+import {fetchSongByHash, findDiffInfo} from "./network/beatsaver";
+import {shouldBeHidden} from "./eastereggs";
 
 const getFlag = (name) => Globals.data?.flags?.[name];
 
-const getLeaderboardId = () =>
-    getFirstRegexpMatch(
-        /\/leaderboard\/(\d+)(\?page=.*)?#?/,
-        window.location.href.toLowerCase()
-    );
+const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
 const isLeaderboardPage = () => null !== getLeaderboardId();
-const getProfileId = () =>
-    getFirstRegexpMatch(
-        /\u\/(\d+)((\?|&).*)?$/,
-        window.location.href.toLowerCase()
-    );
+const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
 const isCountryRankingPage = () =>
     [
         'https://scoresaber.com/global?country=' + config.COUNTRY,
         'https://scoresaber.com/global/1&country=' + config.COUNTRY
     ].indexOf(window.location.href) >= 0;
-const fetchSongByHash = async (songHash) =>
-    await fetchApiPage(substituteVars(SONG_BY_HASH_URL, { songHash }));
-
-
-function extractDiffAndType(ssDiff) {
-    const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
-    if (!match) return null;
-
-    return {
-        diff: match[1].toLowerCase().replace('plus', 'Plus'),
-        type: match[2] ?? 'Standard'
-    };
-}
-
-function findDiffInfo(characteristics, ssDiff) {
-    if (!characteristics) return null;
-    const diffAndType = extractDiffAndType(ssDiff);
-    if (!diffAndType) return null;
-
-    return characteristics.reduce((cum, ch) => {
-        if (ch.name === diffAndType.type) {
-            return ch.difficulties?.[diffAndType.diff];
-        }
-
-        return cum;
-    }, null);
-}
-
-async function getLeaderboard(leadId) {
-    const data = await getCacheAndConvertIfNeeded();
-
-    const songHash = getSongHash() ?? null;
-    const songInfo = songHash ? await fetchSongByHash(songHash) : null;
-    const songCharacteristics = songInfo?.metadata?.characteristics;
-    let diffInfo = null,
-        maxSongScore = 0;
-
-    return Object.keys(data.users)
-        .reduce((cum, userId) => {
-            if (!data.users[userId].scores[leadId]) return cum;
-
-            if (!maxSongScore && !cum.length) {
-                diffInfo = findDiffInfo(
-                    songCharacteristics,
-                    data.users[userId].scores[leadId].diff
-                );
-                maxSongScore =
-                    diffInfo?.length && diffInfo?.notes
-                        ? getMaxScore(diffInfo.notes)
-                        : 0;
-            }
-
-            const { scores, ...user } = data.users[userId];
-            const {
-                score,
-                timeset,
-                rank,
-                mods,
-                pp,
-                maxScoreEx,
-                diff,
-                ..._
-            } = data.users[userId].scores[leadId];
-
-            cum.push(
-                Object.assign({}, user, {
-                    score,
-                    timeset,
-                    rank,
-                    mods,
-                    pp,
-                    percent: maxSongScore
-                        ? score / maxSongScore
-                        : maxScoreEx
-                            ? score / maxScoreEx
-                            : null
-                })
-            );
-
-            return cum;
-        }, [])
-        .map((u) => Object.assign({}, u, {hidden: shouldBeHidden(u)}))
-        .sort((a, b) => b.score - a.score);
-}
 
 function assert(el) {
     if (null === el) throw new Error('Assertion failed');
@@ -150,46 +35,10 @@ function getBySelector(sel, el = null) {
     return assert((el ?? document).querySelector(sel));
 }
 
-function shouldBeHidden(u) {
-    return (
-        enableEasterEggs &&
-        easterEggConditions.reduce((ret, conditions) => {
-            return (
-                ret ||
-                conditions.reduce((subret, cond) => {
-                    let userFieldValue = u?.[cond?.field];
-                    let currentConditionFulfilled = true;
-                    switch (cond?.cond) {
-                        case '===':
-                            currentConditionFulfilled =
-                                userFieldValue === cond?.value;
-                            break;
-                        case '<':
-                            currentConditionFulfilled =
-                                userFieldValue < cond?.value;
-                            break;
-                        case '>':
-                            currentConditionFulfilled =
-                                userFieldValue > cond?.value;
-                            break;
-                        default:
-                            log.error(
-                                'Unknown condition: ',
-                                cond?.cond
-                            );
-                            currentConditionFulfilled = false;
-                    }
-                    return subret && currentConditionFulfilled;
-                }, true)
-            );
-        }, false)
-    );
-}
-
 async function setupPlTable() {
     let scoreTableNode = getBySelector('.ranking table.global');
     const leaderboardId = getLeaderboardId();
-    const leaderboard = await getLeaderboard(leaderboardId);
+    const leaderboard = await getLeaderboard(getSongHash(), leaderboardId);
     if(leaderboard?.length) {
         let tblContainer = document.createElement('div');
         tblContainer["id"] = "sspl";
@@ -289,9 +138,7 @@ async function setupProfile() {
 
                 if (leaderboard) {
                     try {
-                        const songInfo = await fetchSongByHash(
-                            leaderboard.id
-                        );
+                        const songInfo = await fetchSongByHash(leaderboard.id);
                         const songCharacteristics = songInfo?.metadata?.characteristics;
                         const diffInfo = findDiffInfo(songCharacteristics, leaderboard.diff);
                         const maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;

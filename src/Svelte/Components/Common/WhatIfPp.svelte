@@ -1,6 +1,6 @@
 <script>
     import {hoverable} from '../../Actions/hoverable';
-    import {getMainUserId} from '../../../config';
+    import {getMainUserId} from '../../../temp';
     import {getWhatIfScore, getUserSongScore} from '../../../pp';
     import {formatNumber, round} from '../../../utils/format';
 

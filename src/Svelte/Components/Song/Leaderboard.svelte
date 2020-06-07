@@ -9,9 +9,10 @@
     import Refresh from '../Common/Refresh.svelte';
     import NewRankeds from '../Song/NewRankeds.svelte';
 
-    import {getMainUserId, default as config} from '../../../config';
+    import {getMainUserId, default as config} from '../../../temp';
     import {dateFromString, formatDate} from '../../../utils/format';
     import {isAnyData} from '../../../store';
+    import {NEW_SCORESABER_URL, SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
 
     export let leaderboardId;
     export let leaderboard = [];
@@ -80,13 +81,13 @@
     <tbody>
     {#each leaderboard as item, idx (item.id)}
         <tr class={item.hidden ? 'hidden' : '', mainUserId === item.id ? 'main' : ''}>
-            <td class="picture"><Avatar url={config.NEW_SCORESABER_URL + item.avatar}/></td>
+            <td class="picture"><Avatar url={NEW_SCORESABER_URL + item.avatar}/></td>
             <td class="rank">
                 <Rank rank={idx+1} subRank={item.rank} url={'/leaderboard/' +
                             encodeURIComponent(leaderboardId) +
                             '?page=' +
                             encodeURIComponent(
-                                Math.ceil(item.rank / config.SS_SCORES_PER_PAGE)
+                                Math.ceil(item.rank / SCORES_PER_PAGE)
                             )}/>
             </td>
             <td class="player"><Player user={item}/></td>

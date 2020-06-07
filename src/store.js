@@ -1,5 +1,5 @@
-import {fetchRankedSongsArray, convertFetchedRankedSongsToObj} from './network/api';
 import log from './utils/logger';
+import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
 
 const CACHE_KEY = 'sspl_users';
 

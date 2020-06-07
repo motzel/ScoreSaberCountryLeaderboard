@@ -1,6 +1,8 @@
-import {substituteVars} from "../utils/format";
-import {getCacheAndConvertIfNeeded} from "../store";
-import {arrayIntersection, nullIfUndefined} from "../utils/js";
+import {fetchApiPage} from "../fetch";
+import {extractDiffAndType} from "../beatsaver";
+import {getCacheAndConvertIfNeeded} from "../../store";
+import {arrayIntersection, nullIfUndefined} from "../../utils/js";
+import {SCORESABER_URL} from "./consts";
 
 export const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
@@ -10,24 +12,9 @@ export const convertFetchedRankedSongsToObj = (songs) =>
         }, {})
         : null;
 
-function extractDiffAndType(ssDiff) {
-    const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
-    if (!match) return null;
-
-    return {
-        diff: match[1].toLowerCase().replace('plus', 'Plus'),
-        type: match[2] ?? 'Standard'
-    };
-}
-
-export const fetchApiPage = async (url, page = 1) =>
-    fetch(substituteVars(url, {page}))
-        .then((r) => r.json())
-        .catch((e) => null);
-
 export const fetchRankedSongsArray = async () =>
     fetchApiPage(
-        'https://scoresaber.com/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1'
+        SCORESABER_URL + '/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1'
     ).then((songs) =>
         songs?.songs
             ? songs?.songs.map((s) => ({
@@ -42,6 +29,7 @@ export const fetchRankedSongsArray = async () =>
             }))
             : []
     );
+
 export const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
 
 export async function getNewlyRanked() {

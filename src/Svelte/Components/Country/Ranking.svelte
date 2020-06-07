@@ -4,7 +4,9 @@
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
 
-    import {getMainUserId, default as config} from '../../../config';
+    import {getMainUserId} from '../../../temp';
+    import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
+
 
     export let diff = 6;
     export let users = {};
@@ -34,7 +36,7 @@
                         pp,
                         rank,
                         history,
-                        change: rank && historicalRank && rank !== config.MAGIC_HISTORY_NUMBER && historicalRank !== config.MAGIC_HISTORY_NUMBER
+                        change: rank && historicalRank && rank !== MAGIC_HISTORY_NUMBER && historicalRank !== MAGIC_HISTORY_NUMBER
                                 ? historicalRank - rank
                                 : null
                     });
@@ -66,7 +68,7 @@
     {#each ranking as user, idx (user.id)}
         <tr style="{mainUserId === user.id ? 'background-color: var(--color-highlight);' : ''}">
             <td class="rank">
-                <Rank rank={idx+1} subRank={user.rank} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / config.SS_PLAYERS_PER_PAGE))} />
+                <Rank rank={idx+1} subRank={user.rank} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / PLAYERS_PER_PAGE))} />
             </td>
             <td class="player">
                 <Player {user} />

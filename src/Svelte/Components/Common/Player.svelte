@@ -1,6 +1,6 @@
 <script>
-    import {default as config} from '../../../config';
     import {substituteVars} from '../../../utils/format';
+    import {USER_PROFILE_URL} from "../../../network/scoresaber/players";
 
     export let user;
 
@@ -9,7 +9,7 @@
     $: userName = user && user.name ? user.name : '???'
 </script>
 {#if user}
-    <a href="{substituteVars(config.USER_PROFILE_URL, { userId })}">
+    <a href="{substituteVars(USER_PROFILE_URL, { userId })}">
         <img src="/imports/images/flags/{userCountry}.png"/>
         <span class="player-name">{userName}</span>
     </a>

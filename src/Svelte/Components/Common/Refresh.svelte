@@ -3,13 +3,15 @@
 
     import {formatDate, dateFromString} from '../../../utils/format';
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
-    import {fetchUsers, fetchAllNewScores, SS_PLAYS_PER_PAGE, fetchScores} from '../../../network/scoresaber';
-    import {default as config, getMainUserId} from '../../../config';
+    import {PLAYS_PER_PAGE} from '../../../network/scoresaber/consts';
+    import {default as config, getMainUserId} from '../../../temp';
     import {convertArrayToObjectByKey, escapeHtml, isEmpty} from '../../../utils/js';
-    import {getNewlyRanked} from '../../../network/api';
     import log from '../../../utils/logger';
 
     import { createEventDispatcher } from 'svelte';
+    import {getNewlyRanked} from "../../../network/scoresaber/rankeds";
+    import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
+    import {fetchUsers} from "../../../network/scoresaber/players";
     const dispatch = createEventDispatcher();
 
     let label = "";
@@ -34,17 +36,21 @@
         const data = await getCacheAndConvertIfNeeded();
 
         label = "";
-        subLabel = 'Pobieranie wyników nowych rankedów';
+        subLabel = "";
 
         // check if scores has been updated max 1 minute ago
+        const MAX_TIME_AFTER_UPDATE = 60 * 1000;
         if (
                 new Date().getTime() -
                 dateFromString(data.lastUpdated).getTime() >
-                60000
+                MAX_TIME_AFTER_UPDATE
         ) {
             log.error('Please update song data first');
             return null;
         }
+
+        label = "";
+        subLabel = 'Pobieranie nowych rankedów';
 
         const newlyRanked = await getNewlyRanked();
         if (!newlyRanked) return null;
@@ -66,7 +72,7 @@
                     .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
                     .reduce((scum, s, idx) => {
                         if (leaderboardsToUpdate.includes(s.leaderboardId)) {
-                            const page = Math.floor(idx / SS_PLAYS_PER_PAGE) + 1;
+                            const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
                             scum[page] = (scum && scum[page] ? scum[page] : []).concat([
                                 s.leaderboardId
                             ]);
@@ -80,6 +86,9 @@
 
             return cum;
         }, {});
+
+        label = "";
+        subLabel = 'Aktualizacja wyników nowych rankedów';
 
         const totalPages = Object.values(usersToUpdate).reduce((sum, u) => (sum += Object.keys(u).length), 0);
 

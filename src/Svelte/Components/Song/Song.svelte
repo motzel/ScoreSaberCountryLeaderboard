@@ -1,5 +1,5 @@
 <script>
-    import {SCORESABER_URL} from "../../../network/scoresaber";
+    import {SCORESABER_URL} from "../../../network/scoresaber/consts";
 
     export let song;
 </script>

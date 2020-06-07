@@ -1,4 +1,4 @@
-import config from '../config';
+import config from '../temp';
 
 export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
     return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
