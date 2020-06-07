@@ -64,7 +64,6 @@ async function setupLeaderboard() {
     tabs.appendChild(
         generate_tab(
             'pl_tab',
-            false,
             null === document.querySelector('.filter_tab')
         )
     );
@@ -226,18 +225,18 @@ async function setupCountryRanking(diffOffset = 6) {
         '.pagination',
         origTable.parentNode.parentNode
     );
-    const typeSel = create('select', { class: 'type' }, '');
+    const typeSel = document.createElement('select');
+    typeSel.classList.add('type');
     [
-        { value: 'sspl', text: 'Cached' },
-        { value: 'original', text: 'Original' }
-    ].map((o) =>
-        typeSel.appendChild(
-            create(
-                'option',
-                { value: o.value, selected: o.value === 'sspl' },
-                o.text
-            )
-        )
+        {value: 'sspl', text: 'Cached'},
+        {value: 'original', text: 'Original'}
+    ].map((o) => {
+            const option = document.createElement('option');
+            option.selected = o.value === 'sspl';
+            option.value = o.value;
+            option.text = o.text;
+            typeSel.appendChild(option);
+        }
     );
     pagination.insertBefore(typeSel, getBySelector('br', pagination));
     typeSel.addEventListener('change', (e) =>
@@ -268,95 +267,30 @@ async function setupCountryRanking(diffOffset = 6) {
     });
 }
 
-// Taken from ScoreSaberEnhanced to play nicely with SSE running: https://github.com/Splamy/ScoreSaberEnhanced
-function toggled_class(bool, css_class) {
-    return bool ? css_class : '';
-}
-function into(parent, ...children) {
-    for (const child of children) {
-        if (typeof child === 'string') {
-            if (children.length > 1) {
-                parent.appendChild(create('div', {}, child));
-            } else {
-                parent.innerText = child;
-            }
-        } else {
-            parent.appendChild(child);
-        }
-    }
-    return parent;
-}
-function create(tag, attrs, ...children) {
-    if (!tag) throw new SyntaxError("'tag' not defined");
-    const ele = document.createElement(tag);
-    if (attrs) {
-        for (const attrName in attrs) {
-            if (attrName === 'style') {
-                for (const styleName in attrs.style) {
-                    ele.style[styleName] = attrs.style[styleName];
-                }
-            } else if (attrName === 'class') {
-                if (typeof attrs.class === 'string') {
-                    const classes = attrs.class
-                        .split(/ /g)
-                        .filter((c) => c.trim().length > 0);
-                    ele.classList.add(...classes);
-                } else {
-                    ele.classList.add(...attrs.class);
-                }
-            } else if (attrName === 'for') {
-                ele.htmlFor = attrs[attrName];
-            } else if (attrName === 'selected') {
-                ele.selected = attrs[attrName] ? 'selected' : undefined;
-            } else if (attrName === 'disabled') {
-                if (attrs[attrName])
-                    ele.setAttribute('disabled', undefined);
-            } else if (attrName === 'data') {
-                const data_dict = attrs[attrName];
-                for (const data_key in data_dict) {
-                    ele.setAttribute(
-                        `data-${data_key}`,
-                        data_dict[data_key]
-                    );
-                }
-            } else {
-                ele[attrName] = attrs[attrName];
-            }
-        }
-    }
-    into(ele, ...children);
-    return ele;
-}
-function generate_tab(css_id, is_active, has_offset) {
-    const tabClass = `filter_tab sspl ${toggled_class(
-        is_active,
-        'is-active'
-    )} ${toggled_class(has_offset, 'offset_tab')}`;
-    return create(
-        'li',
-        {
-            id: css_id,
-            class: tabClass
-        },
-        create(
-            'a',
-            {
-                class: 'has-text-info',
-                onclick: () => {
-                    document
-                        .querySelectorAll('.tabs > ul .filter_tab')
-                        .forEach((x) => x.classList.remove('is-active'));
-                    assert(document.getElementById(css_id)).classList.add(
-                        'is-active'
-                    );
-                }
-            },
-            create('img', {
-                class: 'bloodtrail',
-                src: require('./resource/img/bloodtrail.png').default
-            })
-        )
-    );
+function generate_tab(css_id, has_offset) {
+    const tabClass = 'filter_tab sspl ' + (has_offset ? ' offset_tab' : '');
+
+    const li = document.createElement('li');
+    li.id = css_id;
+    tabClass.split(' ').filter(cls => cls.length).map(cls => li.classList.add(cls));
+
+    const a = document.createElement('a');
+    a.classList.add('has-text-info');
+
+    const img = document.createElement('img');
+    img.classList.add('bloodtrail');
+    img.src = require('./resource/img/bloodtrail.png').default;
+    a.appendChild(img);
+    li.appendChild(a);
+
+    a.addEventListener('click', () => {
+        document
+            .querySelectorAll('.tabs > ul .filter_tab')
+            .forEach((x) => x.classList.remove('is-active'));
+        assert(document.getElementById(css_id)).classList.add('is-active');
+    });
+
+    return li;
 }
 
 function setupStyles() {
