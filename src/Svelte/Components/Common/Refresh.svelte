@@ -226,6 +226,10 @@
                 .then(_ => updateNewRankedsPpScores(updateProgress))
                 .then(newlyRanked => updateNewRankeds(newlyRanked))
                 .then(_ => started = false)
+                .catch(e => {
+                    started = false
+                    log.error("Can not refresh users")
+                })
         ;
     }
 </script>
