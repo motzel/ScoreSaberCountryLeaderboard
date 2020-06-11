@@ -12,6 +12,7 @@
     import {getNewlyRanked} from "../../../network/scoresaber/rankeds";
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
     import {fetchUsers} from "../../../network/scoresaber/players";
+
     const dispatch = createEventDispatcher();
 
     let label = "";
@@ -168,27 +169,42 @@
         let cache = await users.reduce(async (promisedCum, u) => {
             let cum = await promisedCum;
 
+            if (!u.userHistory) u.userHistory = [];
+            if(cum && cum.users && cum.users[u.id]) {
+                const {rank, pp, countryRank} = cum.users[u.id];
+                const lastUpdated= cum.users[u.id].lastUpdated ? cum.users[u.id].lastUpdated : new Date();
+                u.userHistory.push({rank, pp, countryRank, timestamp: lastUpdated.getTime()})
+            }
+
             let newScores = await fetchAllNewScores(
                     u,
-                    dateFromString(
-                            cum.users[u.id] ? cum.users[u.id].lastUpdated : null
-                    ),
-                    (info) =>
-                            updateProgress(
-                                    Object.assign({}, info, {
-                                        percent: Math.floor((idx / users.length) * 100)
-                                    })
-                            )
+                    dateFromString(cum.users[u.id] ? cum.users[u.id].lastUpdated : null),
+                    (info) => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / users.length) * 100)}))
             );
 
-            cum.users[u.id] = Object.assign({}, u, {
-                lastUpdated: newScores.lastUpdated,
-                scores: Object.assign(
-                        {},
-                        cum.users[u.id] ? cum.users[u.id].scores : {},
-                        newScores.scores
-                )
-            });
+            if(newScores && newScores.scores) {
+                const prevScores = cum.users[u.id] ? cum.users[u.id].scores : {};
+                Object.keys(newScores.scores).map(leaderboardId => {
+                    const prevScore = prevScores[leaderboardId] ? prevScores[leaderboardId] : null;
+                    if(prevScore) {
+                        if (!newScores.scores[leaderboardId].history) newScores.scores[leaderboardId].history = [];
+
+                        const {pp, rank, score, uScore, timeset} = prevScore;
+                        newScores.scores[leaderboardId].history.push(
+                                {pp, rank, score, uScore, timestamp: dateFromString(timeset).getTime()}
+                        )
+                    }
+                })
+
+                cum.users[u.id] = Object.assign({}, u, {
+                    lastUpdated: newScores.lastUpdated,
+                    scores: Object.assign(
+                            {},
+                            prevScores,
+                            newScores.scores
+                    )
+                });
+            }
 
             idx++;
 
