@@ -28,7 +28,6 @@ export const fetchUsers = async (page = 1) =>
                 role,
                 badges,
                 banned,
-                inactive,
                 ...playerInfo
             } = info.playerInfo;
 

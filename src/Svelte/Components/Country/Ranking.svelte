@@ -24,6 +24,7 @@
 
     $: if (selectedDiff) {
         ranking = Object.keys(users)
+                .filter(userId => !users[userId].inactive)
                 .reduce((cum, userId) => {
                     const {id, name, country, pp, rank, history} = users[userId];
 

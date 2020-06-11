@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.8
+ - remove inactive users (thx Patian!)
+ 
 0.6.9.7
  - convert country song leaderboard to Svelte components
  
