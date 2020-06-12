@@ -1,4 +1,6 @@
 <script>
+    import {hoverable} from '../../Actions/hoverable';
+
     import Avatar from '../Common/Avatar.svelte';
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
@@ -20,6 +22,10 @@
 
     const mainUserId = getMainUserId();
 
+    let tooltip;
+    let tooltipHistory = [];
+    let leaderboardContainer;
+
     let newRankeds = [];
 
     let dataAvailable = false;
@@ -28,9 +34,33 @@
     function onNewRankeds(event) {
         newRankeds = event.detail;
     }
+
+    function onHover(event) {
+        const tr = event.detail.target.closest("tr"), trBound = tr.getBoundingClientRect(),
+                lbBound = leaderboardContainer.getBoundingClientRect(),
+                tooltipTop = trBound.top - lbBound.top;
+
+        tooltipHistory = [];
+
+        const userId = tr.dataset.id;
+        if(!userId) return;
+
+        const score = leaderboard.find(u => u.id === userId);
+        if(!score || !score.playHistory || !score.playHistory.length) return;
+
+        tooltipHistory = score.playHistory.slice(0,3);
+
+        tooltip.style.display = 'inline-block';
+        tooltip.style.top = (tooltipTop + trBound.height) + 'px';
+    }
+
+    function onUnhover(event) {
+        tooltip.style.display = 'none';
+    }
 </script>
 
 <style>
+    .sspl tbody {padding-bottom: 2rem;}
     .sspl th, .sspl td {
         padding: .5rem;
     }
@@ -55,10 +85,37 @@
         padding: .5rem 0;
     }
 
-    .refresh {text-align: right; margin-bottom: 1rem;}
+    .refresh {
+        text-align: right;
+        margin-bottom: 1rem;
+    }
 
-    .first-fetch {text-align: center}
+    .first-fetch {
+        text-align: center
+    }
+
+    .tooltip {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 1rem;
+        z-index: 10;
+        width: 25rem;
+        padding: .25rem;
+        font-size: .875rem;
+        font-weight: normal;
+        text-align: center;
+        color: var(--textColor);
+        background-color: var(--background);
+        border: 1px solid var(--textColor);
+    }
+
+    .tooltip table td {padding: 3px;}
+
+    .leaderboard-container {position: relative;}
 </style>
+
+<div bind:this={leaderboardContainer} class="leaderboard-container">
 
 <div class="refresh"><Refresh on:new-rankeds={onNewRankeds}/></div>
 
@@ -79,9 +136,9 @@
     </tr>
     </thead>
 
-    <tbody>
+    <tbody use:hoverable on:hover={onHover} on:unhover={onUnhover}>
     {#each leaderboard as item, idx (item.id)}
-        <tr class={item.hidden ? 'hidden' : '', mainUserId === item.id ? 'main' : ''}>
+        <tr class={item.hidden ? 'hidden' : '', mainUserId === item.id ? 'main' : ''} data-id={item.id}>
             <td class="picture"><Avatar url={NEW_SCORESABER_URL + item.avatar}/></td>
             <td class="rank">
                 <Rank rank={idx+1} subRank={item.rank} url={'/leaderboard/' +
@@ -104,6 +161,18 @@
     {/each}
     </tbody>
 </table>
+<div bind:this={tooltip} class="tooltip">
+    <table class="history"><tbody>
+    {#each tooltipHistory as item (item.timestamp)}
+    <tr>
+        <td><Date date={item.timeset} /></td>
+        <td><Value value={item.score} digits={0} zero="-" /></td>
+        <td><Value value={item.percent*100} zero="-" suffix="%" /></td>
+        <td><Pp pp="{item.pp}" /></td>
+    </tr>
+    {/each}
+    </tbody></table>
+</div>
 {:else}
     <div class="first-fetch">
         <h3>Strasznie tu pusto</h3>
@@ -111,3 +180,4 @@
         <p>Usiądź sobie wygodnie, otwórz harnasia, kliknij Odśwież i poczekaj, bo trochę to potrwa...</p>
     </div>
 {/if}
+</div>

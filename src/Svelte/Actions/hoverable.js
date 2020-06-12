@@ -1,13 +1,13 @@
 export function hoverable(node) {
     function handleMouseover(event) {
         node.dispatchEvent(new CustomEvent('hover', {
-            detail: { clientX: event.clientX, clientY: event.clientY, pageX: event.pageX, pagetY: event.pageY }
+            detail: { target: event.target, clientX: event.clientX, clientY: event.clientY, pageX: event.pageX, pageY: event.pageY }
         }));
     }
 
     function handleMouseout(event) {
         node.dispatchEvent(new CustomEvent('unhover', {
-            detail: { clientX: event.clientX, clientY: event.clientY, pageX: event.pageX, pagetY: event.pageY }
+            detail: { target: event.target, clientX: event.clientX, clientY: event.clientY, pageX: event.pageX, pageY: event.pageY }
         }));
     }
 

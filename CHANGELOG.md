@@ -1,4 +1,7 @@
 # Changelog
+0.6.9.9
+ - showing the difference from previous play on song leaderboard
+ 
 0.6.9.8
  - remove inactive users (thx Patian!)
  
