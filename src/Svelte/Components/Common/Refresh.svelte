@@ -1,7 +1,7 @@
 <script>
     import Progress from './Progress.svelte';
 
-    import {formatDate, dateFromString} from '../../../utils/format';
+    import {formatDate} from '../../../utils/format';
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
     import {PLAYS_PER_PAGE} from '../../../network/scoresaber/consts';
     import {default as config, getMainUserId} from '../../../temp';
@@ -12,6 +12,7 @@
     import {getNewlyRanked} from "../../../network/scoresaber/rankeds";
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
     import {fetchUsers} from "../../../network/scoresaber/players";
+    import {dateFromString, todayUTC} from "../../../utils/date";
 
     const dispatch = createEventDispatcher();
 
@@ -169,11 +170,10 @@
         let cache = await users.reduce(async (promisedCum, u) => {
             let cum = await promisedCum;
 
-            if (!u.userHistory) u.userHistory = [];
+            if (!u.userHistory) u.userHistory = {};
             if(cum && cum.users && cum.users[u.id]) {
                 const {rank, pp, countryRank} = cum.users[u.id];
-                const lastUpdated= cum.users[u.id].lastUpdated ? cum.users[u.id].lastUpdated : new Date();
-                u.userHistory.push({rank, pp, countryRank, timestamp: lastUpdated.getTime()})
+                u.userHistory = Object.assign({}, u.userHistory, {[todayUTC()]: {rank, pp, countryRank}})
             }
 
             let newScores = await fetchAllNewScores(

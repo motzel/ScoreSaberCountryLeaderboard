@@ -1,4 +1,5 @@
 import config from '../temp';
+import {dateFromString} from "./date";
 
 export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
     return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
@@ -49,10 +50,6 @@ export function substituteVars(url, vars) {
             cum.replace(new RegExp('\\${' + key + '}', 'gi'), vars[key]),
         url
     );
-}
-
-export function dateFromString(str) {
-    return str ? new Date(Date.parse(str)) : null;
 }
 
 export const round = (val, places = 2) => {

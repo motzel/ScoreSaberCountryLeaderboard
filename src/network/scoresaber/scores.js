@@ -1,7 +1,7 @@
-import {dateFromString} from "../../utils/js";
 import {fetchApiPage} from "../fetch";
 import {substituteVars} from "../../utils/format";
 import {SCORES_URL} from "./consts";
+import {dateFromString} from "../../utils/date";
 
 export const fetchScores = async (userId, page = 1, ...leaderboards) =>
     fetchApiPage(substituteVars(SCORES_URL, {userId}), page).then((s) =>

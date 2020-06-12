@@ -10,9 +10,10 @@
     import NewRankeds from '../Song/NewRankeds.svelte';
 
     import {getMainUserId, default as config} from '../../../temp';
-    import {dateFromString, formatDate} from '../../../utils/format';
+    import {formatDate} from '../../../utils/format';
     import {isAnyData} from '../../../store';
     import {NEW_SCORESABER_URL, SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
+    import {dateFromString} from "../../../utils/date";
 
     export let leaderboardId;
     export let leaderboard = [];
