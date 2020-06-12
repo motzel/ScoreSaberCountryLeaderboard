@@ -65,8 +65,24 @@ export async function getLeaderboard(songHash, leaderboardId) {
                 pp,
                 maxScoreEx,
                 diff,
+                history,
                 ..._
             } = data.users[userId].scores[leaderboardId];
+
+            const playHistory = (history ? history: [])
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .map(h => Object.assign(
+                    {},
+                    h,
+                    {
+                        timeset: new Date(h.timestamp),
+                        percent: maxSongScore
+                            ? h.score / maxSongScore
+                            : (maxScoreEx
+                                ? h.score / maxScoreEx
+                                : null)
+                    }
+                ));
 
             cum.push(
                 Object.assign({}, user, {
@@ -75,11 +91,12 @@ export async function getLeaderboard(songHash, leaderboardId) {
                     rank,
                     mods,
                     pp,
+                    playHistory,
                     percent: maxSongScore
                         ? score / maxSongScore
-                        : maxScoreEx
+                        : (maxScoreEx
                             ? score / maxScoreEx
-                            : null
+                            : null)
                 })
             );
 

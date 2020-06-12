@@ -2,6 +2,7 @@
     import Avatar from '../Common/Avatar.svelte';
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
+    import Date from "../Common/Date.svelte";
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
     import WhatIfPp from '../Common/WhatIfPp.svelte';
@@ -9,11 +10,10 @@
     import Refresh from '../Common/Refresh.svelte';
     import NewRankeds from '../Song/NewRankeds.svelte';
 
-    import {getMainUserId, default as config} from '../../../temp';
-    import {formatDate} from '../../../utils/format';
+    import {getMainUserId} from '../../../temp';
     import {isAnyData} from '../../../store';
     import {NEW_SCORESABER_URL, SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
-    import {dateFromString} from "../../../utils/date";
+
 
     export let leaderboardId;
     export let leaderboard = [];
@@ -92,12 +92,12 @@
                             )}/>
             </td>
             <td class="player"><Player user={item}/></td>
-            <td class="score"><Value value={item.score} digits={0} zero="-"/></td>
-            <td class="timeset" title={dateFromString(item.timeset).toLocaleString()}>{formatDate(item.timeset)}</td>
+            <td class="score"><Value value={item.score} digits={0} zero="-" prevValue={item.playHistory && item.playHistory.length ? item.playHistory[0].score : null}/></td>
+            <td class="timeset"><Date date={item.timeset} prevDate={item.playHistory && item.playHistory.length ? item.playHistory[0].timeset : null} /></td>
             <td class="mods">{item.mods && item.mods.length ? item.mods : '-'}</td>
-            <td class="percentage"><Value value={item.percent*100} zero="-"/>%</td>
+            <td class="percentage"><Value value={item.percent*100} zero="-" suffix="%" prevValue={item.playHistory && item.playHistory.length ? item.playHistory[0].percent*100 : null} /></td>
             <td class="pp">
-                <Pp pp="{item.pp}"/>
+                <Pp pp="{item.pp}" prevPp={item.playHistory && item.playHistory.length ? item.playHistory[0].pp : null}/>
                 <WhatIfPp {leaderboardId} pp={item.pp} />
             </td>
         </tr>
