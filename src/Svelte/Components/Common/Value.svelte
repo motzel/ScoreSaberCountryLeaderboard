@@ -7,14 +7,17 @@
     export let digits = 2;
     export let withSign = false;
     export let suffix = "";
+    export let withZeroSuffix = false;
+    export let inline = false;
 
-    $: formatted = (value ? formatNumber(value, digits, withSign) + suffix : zero);
+    $: formatted = (value ? formatNumber(value, digits, withSign) + suffix : zero + (withZeroSuffix ? suffix : ""));
     $: prevFormatted = prevValue ? formatNumber(prevValue, digits, withSign) + suffix : ""
     $: prevDiffFormatted = prevValue ? formatNumber(value - prevValue, digits, true) + suffix : ""
-    $: prevClass = prevValue ? (value - prevValue > 0 ? "inc" : (value - prevValue < 0 ? "dec" : "zero")): "";
+    $: prevClass = (prevValue ? (value - prevValue > 0 ? "inc" : (value - prevValue < 0 ? "dec" : "zero")): "") + (!inline ? " block" : " inline");
 </script>
 
 <style>
-    small {display: block}
+    small.block {display: block;}
+    small.inline {margin-left: .5rem;}
 </style>
 {formatted}{#if prevValue} <small class={prevClass} title={prevFormatted}>{prevDiffFormatted}</small>{/if}

@@ -4,6 +4,11 @@
     export let pp = 0;
     export let prevPp = null;
     export let zero = '-';
+    export let withZeroSuffix = false;
+    export let weighted = null;
 </script>
 
-<span class="scoreTop ppValue"><Value value="{pp}" {zero} prevValue={prevPp} suffix="pp" /></span>
+<span class="scoreTop ppValue"><Value value="{pp}" {zero} {withZeroSuffix} prevValue={prevPp} suffix="pp" {...$$restProps} /></span>
+{#if weighted}
+<span class="scoreTop ppWeightedValue">(<Value value="{weighted}" {zero} {withZeroSuffix} suffix="pp" {...$$restProps} />)</span>
+{/if}

@@ -7,7 +7,7 @@
     import Date from "../Common/Date.svelte";
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
-    import WhatIfPp from '../Common/WhatIfPp.svelte';
+    import WhatIfPp from './WhatIfPp.svelte';
 
     import Refresh from '../Common/Refresh.svelte';
     import NewRankeds from '../Song/NewRankeds.svelte';

@@ -27,6 +27,7 @@ img.bloodtrail {height:24px;}
 .offset_tab {margin-left: auto;}
 .sspl .inc {color: #42b129!important}
 .sspl .dec {color: #f94022!important}
+table.ranking.songs.sspl th.score {min-width: 11rem;}
 
 .sspl thead .diff select, .pagination select.type, .sspl select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
 .pp-boundary {color: var(--textColor, black);}

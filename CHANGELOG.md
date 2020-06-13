@@ -1,6 +1,7 @@
 # Changelog
 0.7.1
  - cache the Beat Saver song data after downloading
+ - add difference from previous play on profile songs (top/recent)
  
 0.7
  - all API calls are now done using a rate limiting queue
