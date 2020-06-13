@@ -1,9 +1,9 @@
 import {fetchApiPage} from "../fetch";
-import {extractDiffAndType} from "../beatsaver";
 import {getCacheAndConvertIfNeeded} from "../../store";
 import {arrayIntersection, nullIfUndefined} from "../../utils/js";
 import {SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
+import {extractDiffAndType} from "../beatsaver";
 
 export const convertFetchedRankedSongsToObj = (songs) =>
     songs.length

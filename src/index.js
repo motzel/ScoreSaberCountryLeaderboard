@@ -9,7 +9,7 @@ import {getCacheAndConvertIfNeeded, Globals} from "./store";
 import {round, formatNumber} from './utils/format';
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getMaxScore} from "./song";
-import {fetchSongByHash, findDiffInfo} from "./network/beatsaver";
+import {findDiffInfo, getSongByHash} from "./network/beatsaver";
 import {shouldBeHidden} from "./eastereggs";
 
 const getFlag = (name) => Globals.data?.flags?.[name];
@@ -141,7 +141,7 @@ async function setupProfile() {
 
                 if (leaderboard) {
                     try {
-                        const songInfo = await fetchSongByHash(leaderboard.id);
+                        const songInfo = await getSongByHash(leaderboard.id);
                         const songCharacteristics = songInfo?.metadata?.characteristics;
                         const diffInfo = findDiffInfo(songCharacteristics, leaderboard.diff);
                         const maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;

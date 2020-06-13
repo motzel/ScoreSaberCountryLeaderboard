@@ -1,4 +1,7 @@
 # Changelog
+0.7.1
+ - cache the Beat Saver song data after downloading
+ 
 0.7
  - all API calls are now done using a rate limiting queue
  - fix: the song leaderboard was not automatically refreshed after downloading new data

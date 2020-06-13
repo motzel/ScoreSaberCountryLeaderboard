@@ -1,7 +1,7 @@
 import {capitalize} from "./utils/js";
 import {getCacheAndConvertIfNeeded} from "./store";
-import {fetchSongByHash, findDiffInfo} from "./network/beatsaver";
 import {shouldBeHidden} from "./eastereggs";
+import {findDiffInfo, getSongByHash} from "./network/beatsaver";
 
 export function getDiffColor(diffInfo) {
     const colors = {
@@ -36,7 +36,7 @@ export const getMaxScore = (blocks, maxScorePerBlock = 115) =>
 export async function getLeaderboard(songHash, leaderboardId) {
     const data = await getCacheAndConvertIfNeeded();
 
-    const songInfo = songHash ? await fetchSongByHash(songHash) : null;
+    const songInfo = songHash ? await getSongByHash(songHash) : null;
     const songCharacteristics = songInfo?.metadata?.characteristics;
     let diffInfo = null,
         maxSongScore = 0;
