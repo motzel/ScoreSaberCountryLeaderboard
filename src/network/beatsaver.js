@@ -13,7 +13,6 @@ export const getSongByHash = async (hash, forceUpdate = false) => {
     const data = await getCacheAndConvertIfNeeded();
     if (!forceUpdate && data.beatSaver && data.beatSaver.hashes && data.beatSaver.hashes[hash]) return Promise.resolve(data.beatSaver.hashes[hash]);
 
-    console.log("fetch", hash, data.beatSaver);
     const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash}));
     if (!songInfo) return Promise.resolve(null);
 
