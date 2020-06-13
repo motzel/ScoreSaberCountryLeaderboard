@@ -86,10 +86,8 @@ export async function queueFetchHtml(queue, url, options) {
 
 export const fetchHtmlPage = async (queue, url, page = 1) =>
     queueFetchHtml(queue, substituteVars(url, {page}))
-        .then(html => html)
         .catch(_ => new DOMParser().parseFromString('', 'text/html'));
 
-export const fetchApiPage = async (url, page = 1) =>
-    fetch(substituteVars(url, {page}))
-        .then((r) => r.json())
-        .catch((e) => null);
+export const fetchApiPage = async (queue, url, page = 1) =>
+    queueFetchJson(queue, substituteVars(url, {page}))
+        .catch(_ => null);

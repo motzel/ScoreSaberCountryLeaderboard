@@ -1,4 +1,8 @@
 # Changelog
+0.7
+ - all API calls are now done using a rate limiting queue
+ - fix: the song leaderboard was not automatically refreshed after downloading new data
+
 0.6.9.9
  - showing the difference from previous play on song leaderboard
  

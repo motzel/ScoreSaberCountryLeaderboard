@@ -1,18 +1,12 @@
 import {fetchApiPage} from "./fetch";
 import {substituteVars} from "../utils/format";
+import {default as queue} from "./queue";
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${songHash}';
 
-// 50 reqs/min, max 8 at the time
-export const RATE_LIMITS = {
-    concurrency: 8,
-    limit: 50,
-    time: 60 * 1000
-}
-
 export const fetchSongByHash = async (songHash) =>
-    await fetchApiPage(substituteVars(SONG_BY_HASH_URL, {songHash}));
+    await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {songHash}));
 
 export function extractDiffAndType(ssDiff) {
     const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);

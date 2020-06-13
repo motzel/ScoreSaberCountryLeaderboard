@@ -2,11 +2,11 @@ import {substituteVars} from "../../utils/format";
 import {fetchApiPage, fetchHtmlPage, SsplError} from "../fetch";
 import {getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, SCORESABER_URL, USERS_URL} from "./consts";
-import {default as queue} from "../queue";
+import {default as queue} from "..//queue";
 
 export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = ['76561198967371424', '76561198093469724'];
-const fetchPlayerInfo = async (userId) => await fetchApiPage(substituteVars(PLAYER_INFO_URL, {userId}));
+export const fetchPlayerInfo = async (userId) => await fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId}));
 export const getUserIds = async (page = 1) => {
     const usersIds = await Promise.all(
         Array.prototype.map.call(
@@ -16,7 +16,7 @@ export const getUserIds = async (page = 1) => {
             async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href)
         )
     );
-    if(!usersIds || !usersIds.length) throw new SsplError("Can not fetch users list");
+    if (!usersIds || !usersIds.length) throw new SsplError("Can not fetch users list");
 
     return usersIds.concat(ADDITIONAL_COUNTRY_PLAYERS_IDS);
 }

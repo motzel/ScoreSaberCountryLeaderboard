@@ -2,9 +2,10 @@ import {fetchApiPage} from "../fetch";
 import {substituteVars} from "../../utils/format";
 import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
+import {default as queue} from "../queue";
 
 export const fetchScores = async (userId, page = 1, ...leaderboards) =>
-    fetchApiPage(substituteVars(SCORES_URL, {userId}), page).then((s) =>
+    fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page).then((s) =>
         s && s.scores
             ? s.scores.filter(
             (s) =>

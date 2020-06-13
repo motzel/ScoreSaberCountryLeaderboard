@@ -3,6 +3,7 @@ import {extractDiffAndType} from "../beatsaver";
 import {getCacheAndConvertIfNeeded} from "../../store";
 import {arrayIntersection, nullIfUndefined} from "../../utils/js";
 import {SCORESABER_URL} from "./consts";
+import {default as queue} from "../queue";
 
 export const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
@@ -13,22 +14,21 @@ export const convertFetchedRankedSongsToObj = (songs) =>
         : null;
 
 export const fetchRankedSongsArray = async () =>
-    fetchApiPage(
-        SCORESABER_URL + '/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1'
-    ).then((songs) =>
-        songs?.songs
-            ? songs?.songs.map((s) => ({
-                leaderboardId: s.uid,
-                id: s.id,
-                name: s.name + ' ' + s.songSubName,
-                songAuthor: s.songAuthorName,
-                levelAuthor: s.levelAuthorName,
-                diff: extractDiffAndType(s.diff),
-                stars: s.stars,
-                oldStars: null
-            }))
-            : []
-    );
+    fetchApiPage(queue.SCORESABER_API, SCORESABER_URL + '/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1')
+        .then((songs) =>
+            songs?.songs
+                ? songs?.songs.map((s) => ({
+                    leaderboardId: s.uid,
+                    id: s.id,
+                    name: s.name + ' ' + s.songSubName,
+                    songAuthor: s.songAuthorName,
+                    levelAuthor: s.levelAuthorName,
+                    diff: extractDiffAndType(s.diff),
+                    stars: s.stars,
+                    oldStars: null
+                }))
+                : []
+        );
 
 export const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
 
