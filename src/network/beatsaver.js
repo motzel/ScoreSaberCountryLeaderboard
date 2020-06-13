@@ -42,30 +42,6 @@ export const getSongByKey = async (key, forceUpdate = false) => {
     return cacheSongInfo(songInfo);
 };
 
-export function extractDiffAndType(ssDiff) {
-    const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
-    if (!match) return null;
-
-    return {
-        diff: match[1].toLowerCase().replace('plus', 'Plus'),
-        type: match[2] ?? 'Standard'
-    };
-}
-
-export function findDiffInfo(characteristics, ssDiff) {
-    if (!characteristics) return null;
-    const diffAndType = extractDiffAndType(ssDiff);
-    if (!diffAndType) return null;
-
-    return characteristics.reduce((cum, ch) => {
-        if (ch.name === diffAndType.type) {
-            return ch.difficulties?.[diffAndType.diff];
-        }
-
-        return cum;
-    }, null);
-}
-
 async function cacheSongInfo(songInfo) {
     const data = await getCacheAndConvertIfNeeded();
 

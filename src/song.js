@@ -1,7 +1,7 @@
 import {capitalize} from "./utils/js";
 import {getCacheAndConvertIfNeeded} from "./store";
 import {shouldBeHidden} from "./eastereggs";
-import {findDiffInfo, getSongByHash} from "./network/beatsaver";
+import {getSongByHash} from "./network/beatsaver";
 
 export function getDiffColor(diffInfo) {
     const colors = {
@@ -32,6 +32,30 @@ export const getMaxScore = (blocks, maxScorePerBlock = 115) =>
             : 0) +
         Math.min(blocks, 1) * maxScorePerBlock
     );
+
+export function extractDiffAndType(ssDiff) {
+    const match = /^_([^_]+)_Solo(.*)$/.exec(ssDiff);
+    if (!match) return null;
+
+    return {
+        diff: match[1].toLowerCase().replace('plus', 'Plus'),
+        type: match[2] ?? 'Standard'
+    };
+}
+
+export function findDiffInfo(characteristics, ssDiff) {
+    if (!characteristics) return null;
+    const diffAndType = extractDiffAndType(ssDiff);
+    if (!diffAndType) return null;
+
+    return characteristics.reduce((cum, ch) => {
+        if (ch.name === diffAndType.type) {
+            return ch.difficulties?.[diffAndType.diff];
+        }
+
+        return cum;
+    }, null);
+}
 
 export async function getLeaderboard(songHash, leaderboardId) {
     const data = await getCacheAndConvertIfNeeded();
@@ -104,4 +128,12 @@ export async function getLeaderboard(songHash, leaderboardId) {
         }, [])
         .map((u) => Object.assign({}, u, {hidden: shouldBeHidden(u)}))
         .sort((a, b) => b.score - a.score);
+}
+
+export async function getSongMaxScore(hash, diff) {
+    const songInfo = await getSongByHash(hash);
+    const songCharacteristics = songInfo?.metadata?.characteristics;
+    const diffInfo = findDiffInfo(songCharacteristics, diff);
+
+    return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
 }

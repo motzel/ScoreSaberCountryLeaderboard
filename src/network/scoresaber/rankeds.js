@@ -3,7 +3,7 @@ import {getCacheAndConvertIfNeeded} from "../../store";
 import {arrayIntersection, nullIfUndefined} from "../../utils/js";
 import {SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
-import {extractDiffAndType} from "../beatsaver";
+import {extractDiffAndType} from "../../song";
 
 export const convertFetchedRankedSongsToObj = (songs) =>
     songs.length

@@ -8,8 +8,7 @@ import {default as config, getMainUserId} from './temp';
 import {getCacheAndConvertIfNeeded, Globals} from "./store";
 import {round, formatNumber} from './utils/format';
 import {getFirstRegexpMatch} from "./utils/js";
-import {getLeaderboard, getMaxScore} from "./song";
-import {findDiffInfo, getSongByHash} from "./network/beatsaver";
+import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
 const getFlag = (name) => Globals.data?.flags?.[name];
@@ -136,15 +135,10 @@ async function setupProfile() {
                 songLink.href
             );
             if (leaderboardId) {
-                const leaderboard =
-                    data.users?.[profileId]?.scores?.[leaderboardId];
-
+                const leaderboard = data.users?.[profileId]?.scores?.[leaderboardId];
                 if (leaderboard) {
                     try {
-                        const songInfo = await getSongByHash(leaderboard.id);
-                        const songCharacteristics = songInfo?.metadata?.characteristics;
-                        const diffInfo = findDiffInfo(songCharacteristics, leaderboard.diff);
-                        const maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
+                        const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
                         const percent = maxSongScore
                             ? leaderboard.score / maxSongScore
                             : maxScoreEx
