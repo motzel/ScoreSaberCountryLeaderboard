@@ -2,6 +2,7 @@ import {fetchApiPage} from "./fetch";
 import {substituteVars} from "../utils/format";
 import {default as queue} from "./queue";
 import {getCacheAndConvertIfNeeded, setCache} from "../store";
+import log from '../utils/logger';
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
@@ -14,7 +15,10 @@ export const getSongByHash = async (hash, forceUpdate = false) => {
     if (!forceUpdate && data.beatSaver && data.beatSaver.hashes && data.beatSaver.hashes[hash]) return Promise.resolve(data.beatSaver.hashes[hash]);
 
     const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash}));
-    if (!songInfo) return Promise.resolve(null);
+    if (!songInfo) {
+        log.warn(`Song with ${hash} hash is no longer available at Beat Saver.`);
+        return Promise.resolve(null)
+    };
 
     return cacheSongInfo(songInfo);
 };
@@ -30,7 +34,10 @@ export const getSongByKey = async (key, forceUpdate = false) => {
     ) return Promise.resolve(data.beatSaver.hashes[data.beatSaver.keys[key]]);
 
     const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_KEY_URL, {key}));
-    if (!songInfo) return Promise.resolve(null);
+    if (!songInfo) {
+        log.warn(`Song with ${key} key is no longer available at Beat Saver.`);
+        return Promise.resolve(null);
+    }
 
     return cacheSongInfo(songInfo);
 };
