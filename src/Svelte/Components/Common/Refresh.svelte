@@ -215,6 +215,8 @@
         date = cache.lastUpdated;
 
         await setCache(cache);
+
+        dispatch('data-refreshed', {})
     }
 
     async function onRefresh() {

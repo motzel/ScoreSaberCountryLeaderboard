@@ -44,12 +44,16 @@ async function setupPlTable() {
         tblContainer["id"] = "sspl";
         tblContainer.style["display"] = "none";
         scoreTableNode.parentNode.appendChild(tblContainer);
-        new SongLeaderboard({
+        const songLeaderboard = new SongLeaderboard({
             target: tblContainer,
             props: {
                 leaderboardId,
                 leaderboard
             }
+        });
+        songLeaderboard.$on('data-refreshed', async _ => {
+            const leaderboard = await getLeaderboard(getSongHash(), leaderboardId);
+            songLeaderboard.$set({leaderboard});
         });
     }
 }

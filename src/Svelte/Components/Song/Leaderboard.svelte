@@ -16,7 +16,6 @@
     import {isAnyData} from '../../../store';
     import {NEW_SCORESABER_URL, SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
 
-
     export let leaderboardId;
     export let leaderboard = [];
 
@@ -117,7 +116,7 @@
 
 <div bind:this={leaderboardContainer} class="leaderboard-container">
 
-<div class="refresh"><Refresh on:new-rankeds={onNewRankeds}/></div>
+<div class="refresh"><Refresh on:new-rankeds={onNewRankeds} on:data-refreshed/></div>
 
 <NewRankeds rankeds={newRankeds} />
 
