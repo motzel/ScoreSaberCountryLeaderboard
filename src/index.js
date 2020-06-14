@@ -403,7 +403,7 @@ async function init() {
     }
 
     // fetch cache
-    await getCacheAndConvertIfNeeded();
+    const data = await getCacheAndConvertIfNeeded();
 
     setupStyles();
 

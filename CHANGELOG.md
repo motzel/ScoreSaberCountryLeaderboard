@@ -1,4 +1,7 @@
 # Changelog
+0.7.1.1
+ - bugfix: storing user history during each data refresh
+ 
 0.7.1
  - cache the Beat Saver song data after downloading
  - add difference from previous play on profile songs (top/recent)

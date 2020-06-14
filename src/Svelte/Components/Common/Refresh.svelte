@@ -170,7 +170,7 @@
         let cache = await users.reduce(async (promisedCum, u) => {
             let cum = await promisedCum;
 
-            if (!u.userHistory) u.userHistory = {};
+            u.userHistory = cum.users && cum.users[u.id].userHistory ? cum.users[u.id].userHistory : {};
             if(cum && cum.users && cum.users[u.id]) {
                 const {rank, pp, countryRank} = cum.users[u.id];
                 u.userHistory = Object.assign({}, u.userHistory, {[todayUTC()]: {rank, pp, countryRank}})
