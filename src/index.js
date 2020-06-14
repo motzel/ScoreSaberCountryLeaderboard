@@ -7,7 +7,6 @@ import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import log from './utils/logger';
 import {default as config, getMainUserId} from './temp';
 import {getCacheAndConvertIfNeeded, Globals} from "./store";
-import {round, formatNumber} from './utils/format';
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";

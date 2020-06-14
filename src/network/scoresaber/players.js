@@ -34,6 +34,8 @@ export const fetchUsers = async (page = 1) =>
                 ...playerInfo
             } = info.playerInfo;
 
+            playerInfo.inactive = !!(playerInfo.inactive);
+
             // history is fetched as comma separated values string, let's make it a proper array
             playerInfo.history = playerInfo.history
                 ? playerInfo.history

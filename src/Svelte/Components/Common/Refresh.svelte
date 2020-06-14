@@ -12,7 +12,7 @@
     import {getNewlyRanked} from "../../../network/scoresaber/rankeds";
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
     import {fetchUsers} from "../../../network/scoresaber/players";
-    import {dateFromString, todayUTC} from "../../../utils/date";
+    import {dateFromString, toUTCDate} from "../../../utils/date";
 
     const dispatch = createEventDispatcher();
 
@@ -166,6 +166,11 @@
         label = "";
         subLabel = "";
 
+        const data = await getCacheAndConvertIfNeeded();
+
+        // set all cached users as inactive
+        if(data.users) Object.keys(data.users).map(userId => data.users[userId].inactive = true);
+
         let idx = 0;
         let cache = await users.reduce(async (promisedCum, u) => {
             let cum = await promisedCum;
@@ -173,7 +178,7 @@
             u.userHistory = cum.users && cum.users[u.id].userHistory ? cum.users[u.id].userHistory : {};
             if(cum && cum.users && cum.users[u.id]) {
                 const {rank, pp, countryRank} = cum.users[u.id];
-                u.userHistory = Object.assign({}, u.userHistory, {[todayUTC()]: {rank, pp, countryRank}})
+                u.userHistory = Object.assign({}, u.userHistory, {[toUTCDate(new Date())]: {rank, pp, countryRank}})
             }
 
             let newScores = await fetchAllNewScores(
@@ -209,7 +214,7 @@
             idx++;
 
             return cum;
-        }, await getCacheAndConvertIfNeeded());
+        }, data);
 
         cache.lastUpdated = new Date().toISOString();
         date = cache.lastUpdated;

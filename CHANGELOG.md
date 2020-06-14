@@ -1,4 +1,7 @@
 # Changelog
+0.7.2
+ - add pp change on global country leaderboard
+ 
 0.7.1.1
  - bugfix: storing user history during each data refresh
  

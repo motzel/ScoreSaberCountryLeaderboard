@@ -6,6 +6,7 @@
 
     import {getMainUserId} from '../../../temp';
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
+    import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
 
 
     export let diff = 6;
@@ -26,15 +27,17 @@
         ranking = Object.keys(users)
                 .filter(userId => !users[userId].inactive)
                 .reduce((cum, userId) => {
-                    const {id, name, country, pp, rank, history} = users[userId];
+                    const {id, name, country, pp, rank, history, userHistory} = users[userId];
 
                     const historicalRank = history && typeof (history[selectedDiff.value]) !== "undefined" ? history[selectedDiff.value] : null;
+                    const historicalTimestamp = userHistory ? getFirstNotNewerThan(toUTCDate(daysAgo(selectedDiff.value+1)), Object.keys(userHistory)) : null;
 
                     cum.push({
                         id,
                         name,
                         country,
                         pp,
+                        prevPp: userHistory && historicalTimestamp && pp !== userHistory[historicalTimestamp].pp ? userHistory[historicalTimestamp].pp : null,
                         rank,
                         history,
                         change: rank && historicalRank && rank !== MAGIC_HISTORY_NUMBER && historicalRank !== MAGIC_HISTORY_NUMBER
@@ -75,7 +78,7 @@
                 <Player {user} />
             </td>
             <td class="pp">
-                <Pp pp="{user.pp}" zero="0,00" />
+                <Pp pp="{user.pp}" zero="0,00" prevPp={user.prevPp} inline={true} />
             </td>
             <td class="diff {user.change ? (user.change > 0 ? 'inc' : 'dec') : ''}"><Value value={user.change ? user.change : 0} zero="0" digits={0} withSign={true} /></td>
         </tr>
