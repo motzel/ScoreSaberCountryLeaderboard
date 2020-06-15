@@ -7,7 +7,7 @@
     import {getMainUserId} from '../../../temp';
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
-
+    import {filterByCountry} from "../../../scoresaber/players";
 
     export let diff = 6;
     export let users = {};
@@ -24,8 +24,7 @@
     let ranking = [];
 
     $: if (selectedDiff) {
-        ranking = Object.keys(users)
-                .filter(userId => !users[userId].inactive)
+        ranking = filterByCountry(users)
                 .reduce((cum, userId) => {
                     const {id, name, country, pp, rank, history, userHistory} = users[userId];
 

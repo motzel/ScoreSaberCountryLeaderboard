@@ -2,6 +2,7 @@ import {capitalize} from "./utils/js";
 import {getCacheAndConvertIfNeeded} from "./store";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
+import {filterByCountry} from "./scoresaber/players";
 
 export function getDiffColor(diffInfo) {
     const colors = {
@@ -65,7 +66,7 @@ export async function getLeaderboard(songHash, leaderboardId) {
     let diffInfo = null,
         maxSongScore = 0;
 
-    return Object.keys(data.users)
+    return filterByCountry(data.users)
         .reduce((cum, userId) => {
             if (!data.users[userId].scores[leaderboardId]) return cum;
 

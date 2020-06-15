@@ -1,4 +1,4 @@
-import {getCacheAndConvertIfNeeded} from './store';
+import {getCacheAndConvertIfNeeded} from '../store';
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(

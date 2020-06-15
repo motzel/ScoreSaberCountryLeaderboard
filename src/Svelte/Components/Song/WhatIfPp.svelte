@@ -1,7 +1,7 @@
 <script>
     import {hoverable} from '../../Actions/hoverable';
     import {getMainUserId} from '../../../temp';
-    import {getWhatIfScore, getUserSongScore} from '../../../pp';
+    import {getWhatIfScore, getUserSongScore} from '../../../scoresaber/pp';
     import {formatNumber, round} from '../../../utils/format';
 
     export let leaderboardId;

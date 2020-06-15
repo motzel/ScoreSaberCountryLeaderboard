@@ -1,4 +1,7 @@
 # Changelog
+0.7.3
+ - refresh component added to player profile and global country ranking
+ 
 0.7.2
  - add pp change on global country leaderboard
  

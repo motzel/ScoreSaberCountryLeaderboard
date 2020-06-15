@@ -10,6 +10,7 @@ import {getCacheAndConvertIfNeeded, Globals} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
+import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 
 const getFlag = (name) => Globals.data?.flags?.[name];
 
@@ -98,8 +99,7 @@ async function setupLeaderboard() {
 
     const sseUserId = getMainUserId();
     if (sseUserId) {
-        var scoreSpans = document.querySelectorAll('.scoreTop.ppValue');
-        [].forEach.call(scoreSpans, async function (span) {
+        [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
             const pp = parseFloat(
                 span.innerText.replace(/\s/, '').replace(',', '.')
             );
@@ -299,7 +299,7 @@ async function setupCountryRanking(diffOffset = 6) {
     new CountryRanking({
         target: origTable.parentNode,
         props: {
-            users
+            users: mapUsersToObj(filterByCountry(users), users)
         }
     });
 }
