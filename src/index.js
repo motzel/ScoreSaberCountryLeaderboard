@@ -124,7 +124,6 @@ async function setupProfile() {
     if (!profileId) return;
 
     const data = await getCacheAndConvertIfNeeded();
-    if(!data.users?.[profileId]) return;
 
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
