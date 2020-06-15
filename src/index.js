@@ -250,12 +250,15 @@ async function setupProfile() {
 
     const header = document.querySelector('.content .column h5');
     if (header && data.users?.[profileId]) {
-        const refresh = document.createElement('div');
-        refresh.classList.add('refresh');
-        header.appendChild(refresh);
-        new Refresh({
-            target: refresh,
+        const refreshDiv = document.createElement('div');
+        refreshDiv.classList.add('refresh');
+        header.appendChild(refreshDiv);
+        const refresh = new Refresh({
+            target: refreshDiv,
             props: {}
+        })
+        refresh.$on('data-refreshed', async _ => {
+            window.location.reload(false);
         })
     }
 }
