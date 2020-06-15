@@ -3,6 +3,7 @@ import CountryRanking from './Svelte/Components/Country/Ranking.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
+import Refresh from './Svelte/Components/Common/Refresh.svelte';
 
 import log from './utils/logger';
 import {default as config, getMainUserId} from './temp';
@@ -238,15 +239,24 @@ async function setupProfile() {
         });
 
     const stats = document.querySelector('.content .column ul');
-    if (stats) {
-        if (data.users?.[profileId]?.stats) {
-            new Profile({
-                target: stats,
-                props: {
-                    profile: data.users?.[profileId] ?? null,
-                }
-            });
-        }
+    if (stats && data.users?.[profileId]?.stats) {
+        new Profile({
+            target: stats,
+            props: {
+                profile: data.users?.[profileId] ?? null,
+            }
+        });
+    }
+
+    const header = document.querySelector('.content .column h5');
+    if (header && data.users?.[profileId]) {
+        const refresh = document.createElement('div');
+        refresh.classList.add('refresh');
+        header.appendChild(refresh);
+        new Refresh({
+            target: refresh,
+            props: {}
+        })
     }
 }
 
