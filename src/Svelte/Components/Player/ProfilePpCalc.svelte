@@ -1,15 +1,20 @@
 <script>
     import {formatNumber} from '../../../utils/format';
-    import {findRawPp} from '../../../scoresaber/pp';
+    import {findRawPp, ppFromScore, PP_PER_STAR} from '../../../scoresaber/pp';
+    import Value from "../Common/Value.svelte";
 
     export let scores = [];
 
     let expectedStr = "1,00";
-    let rawPp = "???";
+    let rawPp = null;
+    let rawPpFormatted = "???";
     let error = "";
 
+    const thresholds = [90, 91, 92, 93, 94, 95];
+
     $: if (/^\s*\d+((,|.)\d+)?$/.test(expectedStr)) {
-        rawPp = formatNumber(findRawPp(scores, parseFloat(expectedStr.replace(/\s/, '').replace(',', '.'))))
+        rawPp = findRawPp(scores, parseFloat(expectedStr.replace(/\s/, '').replace(',', '.')));
+        rawPpFormatted = formatNumber(rawPp)
         error = "";
     } else {
         error = `Wpisz może jakąś liczbę, ok? 1 jest liczbą, 10 jest, a nawet 100. Ale "${expectedStr}"?`;
@@ -31,13 +36,35 @@
     .err {
         color: red;
     }
+
+    table {
+        width: auto;
+    }
 </style>
 
 <strong>+</strong><input class="pp-boundary" bind:value={expectedStr}/>
 <strong>pp: </strong>
 {#if !error.length}
-    <span>{rawPp}</span>
+    <span><Value value={rawPp} /></span>
     raw pp new play
+
+    <table>
+        <thead>
+        <tr>
+            {#each thresholds as threshold (threshold)}
+                <th>{threshold}%</th>
+            {/each}
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr>
+            {#each thresholds as threshold (threshold)}
+                <th><Value value={ rawPp / PP_PER_STAR / ppFromScore(threshold)} suffix="*" /></th>
+            {/each}
+        </tr>
+        </tbody>
+    </table>
 {:else}
     <span class="err">{error}</span>
 {/if}

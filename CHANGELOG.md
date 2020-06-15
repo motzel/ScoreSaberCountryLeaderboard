@@ -1,4 +1,7 @@
 # Changelog
+0.7.4
+ - add estimated map difficulty for several accuracies needed for get PP on player profile
+ 
 0.7.3
  - refresh component added to player profile
  
