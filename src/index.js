@@ -45,6 +45,7 @@ async function setupPlTable() {
         tblContainer["id"] = "sspl";
         tblContainer.style["display"] = "none";
         scoreTableNode.parentNode.appendChild(tblContainer);
+
         const songLeaderboard = new SongLeaderboard({
             target: tblContainer,
             props: {
@@ -57,6 +58,8 @@ async function setupPlTable() {
             songLeaderboard.$set({leaderboard});
         });
     }
+
+    return leaderboard;
 }
 
 async function setupLeaderboard() {
@@ -65,6 +68,9 @@ async function setupLeaderboard() {
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
+    const leaderboard = await setupPlTable();
+    if(!leaderboard || !leaderboard.length) return;
+
     const tabs = getBySelector('.tabs > ul');
     tabs.appendChild(
         generate_tab(
@@ -72,8 +78,6 @@ async function setupLeaderboard() {
             null === document.querySelector('.filter_tab')
         )
     );
-
-    await setupPlTable();
 
     document.addEventListener(
         'click',
@@ -98,6 +102,7 @@ async function setupLeaderboard() {
         { passive: true }
     );
 
+    // TODO: dont show when no user data is available
     const sseUserId = getMainUserId();
     if (sseUserId) {
         [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
@@ -115,6 +120,8 @@ async function setupLeaderboard() {
             }
         });
     }
+
+    log.info("Setup leaderboard page / Done")
 }
 
 async function setupProfile() {
@@ -248,7 +255,7 @@ async function setupProfile() {
     }
 
     const header = document.querySelector('.content .column h5');
-    if (header && data.users?.[profileId]) {
+    if (header) {
         const refreshDiv = document.createElement('div');
         refreshDiv.classList.add('refresh');
         header.appendChild(refreshDiv);
@@ -260,6 +267,8 @@ async function setupProfile() {
             window.location.reload(false);
         })
     }
+
+    log.info("Setup profile page / Done")
 }
 
 async function setupCountryRanking(diffOffset = 6) {
@@ -314,6 +323,8 @@ async function setupCountryRanking(diffOffset = 6) {
             users: mapUsersToObj(filterByCountry(users), users)
         }
     });
+
+    log.info("Setup country ranking / Done")
 }
 
 function generate_tab(css_id, has_offset) {

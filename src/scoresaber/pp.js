@@ -1,5 +1,6 @@
 import {getCacheAndConvertIfNeeded} from '../store';
 import {dateFromString} from "../utils/date";
+import {getRankedMaps} from "./rankeds";
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
@@ -78,16 +79,17 @@ export async function getUserSongScore(userId, leaderboardId)
 {
     return (await getUserScores(userId))?.[leaderboardId];
 }
-
-async function getRankedScores(userId) {
+``
+export async function getRankedScores(userId) {
+    const rankedMaps = await getRankedMaps();
     return Object.values((await getCacheAndConvertIfNeeded())?.users?.[userId].scores)
         ?.filter(s => s.pp > 0)
-        ?.map(s => Object.assign({}, s, {timeset: dateFromString(s.timeset), stars: Globals.data.rankedSongs?.[s.leaderboardId]?.stars, acc: s.score/s.maxScoreEx}))
+        ?.map(s => Object.assign({}, s, {timeset: dateFromString(s.timeset), stars: rankedMaps?.[s.leaderboardId]?.stars, acc: s.score/s.maxScoreEx}))
         ?.filter(s => s.stars);
 }
 
 // written by BaliBalo: https://github.com/BaliBalo/ScoreSaber/blob/master/pages/peepee.js
-function getScoreEstimate(stars, scores) {
+export function getScoreEstimate(stars, scores) {
     let now = Date.now();
     let decay = 1000 * 60 * 60 * 24 * 15;
     let maxStars = Math.max(...scores.map(e => e.stars));
