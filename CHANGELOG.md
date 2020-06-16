@@ -1,4 +1,7 @@
 # Changelog
+0.7.4.1/2
+ - hot bugfixes - refresh was broken when there was no data (first run), thx Majikkuu for bug report
+ 
 0.7.4
  - add estimated map difficulty for several accuracies needed for get PP on player profile
  

@@ -57,71 +57,74 @@
         const newlyRanked = await getNewlyRanked();
         if (!newlyRanked) return null;
 
-        const leaderboardsToUpdate = newlyRanked.newRanked
-                .map((s) => s.leaderboardId)
-                .concat(newlyRanked.changed.map((s) => s.leaderboardId));
+        // if not first fetch
+        if(newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length) {
+            const leaderboardsToUpdate = newlyRanked.newRanked
+                    .map((s) => s.leaderboardId)
+                    .concat(newlyRanked.changed.map((s) => s.leaderboardId));
 
-        const users = data.users;
+            const users = data.users;
 
-        // fetch all user pages that need to be fetched
-        // {userId: {pageId: [leaderboardId, leaderboardId...]}}
-        const usersToUpdate = Object.values(users).reduce((cum, u) => {
-            const userScoresToUpdate = Object.values(u.scores)
-                    .map((s) => ({
-                        leaderboardId: s.leaderboardId,
-                        timeset: dateFromString(s.timeset)
-                    }))
-                    .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
-                    .reduce((scum, s, idx) => {
-                        if (leaderboardsToUpdate.includes(s.leaderboardId)) {
-                            const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
-                            scum[page] = (scum && scum[page] ? scum[page] : []).concat([
-                                s.leaderboardId
-                            ]);
-                        }
-                        return scum;
-                    }, {});
+            // fetch all user pages that need to be fetched
+            // {userId: {pageId: [leaderboardId, leaderboardId...]}}
+            const usersToUpdate = Object.values(users).reduce((cum, u) => {
+                const userScoresToUpdate = Object.values(u.scores)
+                        .map((s) => ({
+                            leaderboardId: s.leaderboardId,
+                            timeset: dateFromString(s.timeset)
+                        }))
+                        .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
+                        .reduce((scum, s, idx) => {
+                            if (leaderboardsToUpdate.includes(s.leaderboardId)) {
+                                const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
+                                scum[page] = (scum && scum[page] ? scum[page] : []).concat([
+                                    s.leaderboardId
+                                ]);
+                            }
+                            return scum;
+                        }, {});
 
-            if (!isEmpty(userScoresToUpdate)) {
-                cum[u.id] = userScoresToUpdate;
-            }
+                if (!isEmpty(userScoresToUpdate)) {
+                    cum[u.id] = userScoresToUpdate;
+                }
 
-            return cum;
-        }, {});
+                return cum;
+            }, {});
 
-        label = "";
-        subLabel = 'Aktualizacja wyników nowych rankedów';
+            label = "";
+            subLabel = 'Aktualizacja wyników nowych rankedów';
 
-        const totalPages = Object.values(usersToUpdate).reduce((sum, u) => (sum += Object.keys(u).length), 0);
+            const totalPages = Object.values(usersToUpdate).reduce((sum, u) => (sum += Object.keys(u).length), 0);
 
-        let idxGlobal = 0;
-        for (const userId in usersToUpdate) {
-            let idxLocal = 0;
-            for (const page in usersToUpdate[userId]) {
-                const scores = convertArrayToObjectByKey(
-                        await fetchScores(
-                                userId,
-                                page,
-                                ...usersToUpdate[userId][page]
-                        ),
-                        'leaderboardId'
-                );
-                users[userId].scores = Object.assign(
-                        {},
-                        users[userId].scores,
-                        scores
-                );
+            let idxGlobal = 0;
+            for (const userId in usersToUpdate) {
+                let idxLocal = 0;
+                for (const page in usersToUpdate[userId]) {
+                    const scores = convertArrayToObjectByKey(
+                            await fetchScores(
+                                    userId,
+                                    page,
+                                    ...usersToUpdate[userId][page]
+                            ),
+                            'leaderboardId'
+                    );
+                    users[userId].scores = Object.assign(
+                            {},
+                            users[userId].scores,
+                            scores
+                    );
 
-                if (progressCallback)
-                    progressCallback({
-                        id: userId,
-                        name: users[userId].name,
-                        page: idxLocal + 1,
-                        percent: Math.floor((idxGlobal / totalPages) * 100)
-                    });
+                    if (progressCallback)
+                        progressCallback({
+                            id: userId,
+                            name: users[userId].name,
+                            page: idxLocal + 1,
+                            percent: Math.floor((idxGlobal / totalPages) * 100)
+                        });
 
-                idxLocal++;
-                idxGlobal++;
+                    idxLocal++;
+                    idxGlobal++;
+                }
             }
         }
 
@@ -143,18 +146,19 @@
         const sseUserId = getMainUserId();
         if (!sseUserId) return;
 
-        dispatch(
-            'new-rankeds',
-            newlyRanked.newRanked.concat(newlyRanked.changed)
-                .sort((a, b) => b.stars - a.stars)
-                .map((m) =>
-                        Object.assign({}, m, {
-                            pp: data && data.users && data.users[sseUserId] && data.users[sseUserId].scores && data.users[sseUserId].scores[m.leaderboardId]
-                                    ? data.users[sseUserId].scores[m.leaderboardId].pp
-                                    : null
-                        })
-                )
-        );
+        if (newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length)
+            dispatch(
+                    'new-rankeds',
+                    newlyRanked.newRanked.concat(newlyRanked.changed)
+                            .sort((a, b) => b.stars - a.stars)
+                            .map((m) =>
+                                    Object.assign({}, m, {
+                                        pp: data && data.users && data.users[sseUserId] && data.users[sseUserId].scores && data.users[sseUserId].scores[m.leaderboardId]
+                                                ? data.users[sseUserId].scores[m.leaderboardId].pp
+                                                : null
+                                    })
+                            )
+            );
     }
 
     async function refresh() {

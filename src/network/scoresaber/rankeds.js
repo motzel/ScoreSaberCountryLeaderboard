@@ -38,7 +38,7 @@ export async function getNewlyRanked() {
 
     const data = await getCacheAndConvertIfNeeded();
 
-    const oldRankedSongs = data.rankedSongs;
+    const oldRankedSongs = data.rankedSongs ? data.rankedSongs : {};
 
     // find differences between old and new ranked songs
     return {
