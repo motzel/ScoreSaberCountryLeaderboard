@@ -1,5 +1,5 @@
 # Changelog
-0.7.4.1/2
+0.7.4.1-3
  - hot bugfixes - refresh was broken when there was no data (first run), thx Majikkuu for bug report
  
 0.7.4

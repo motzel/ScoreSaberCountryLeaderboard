@@ -64,7 +64,5 @@ export async function getCacheAndConvertIfNeeded() {
 export async function setCache(value) {
     Globals.data = value;
 
-    window.localforage.setItem(CACHE_KEY, value);
-
-    return value;
+    return window.localforage.setItem(CACHE_KEY, value);
 }
