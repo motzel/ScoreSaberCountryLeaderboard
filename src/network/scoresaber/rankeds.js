@@ -14,7 +14,7 @@ export const convertFetchedRankedSongsToObj = (songs) =>
         : null;
 
 export const fetchRankedSongsArray = async () =>
-    fetchApiPage(queue.SCORESABER_API, SCORESABER_URL + '/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1')
+    fetchApiPage(queue.SCORESABER, SCORESABER_URL + '/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1')
         .then((songs) =>
             songs?.songs
                 ? songs?.songs.map((s) => ({
