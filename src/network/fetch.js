@@ -58,10 +58,9 @@ export async function queueFetch(queue, url, options) {
         queue,
         () => window.fetch(url, {...options, signal, mode: 'cors'})
             .then(async response => {
-                // TODO: try to get correct delay from headers
                 if (429 === response.status) {
-                    await delay(500);
-                    throw new Error("")
+                    await delay(10000); // x-ratelimit-reset header is not enabled by Umbra in CORS requests so just keep fingers crossed it would be enough
+                    throw new Error("Rate limit")
                 }
 
                 if ([404, 403].includes(response.status)) {

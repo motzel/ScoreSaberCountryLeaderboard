@@ -5,15 +5,15 @@ export default {
         concurrency: 3,
         timeout: 8000,
         throwOnTimeout: true,
-        intervalCap: 120,
+        intervalCap: 60,
         interval: 60 * 1000
     }),
     SCORESABER_API: new PQueue({
         concurrency: 8,
         timeout: 8000,
         throwOnTimeout: true,
-        intervalCap: 120,
-        interval: 10 * 1000
+        intervalCap: 60,
+        interval: 60 * 1000
     }),
     BEATSAVER: new PQueue({
         concurrency: 8,

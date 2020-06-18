@@ -1,4 +1,7 @@
 # Changelog
+0.7.5
+ - change rate limits for Score Saber API
+ 
 0.7.4.1-3
  - hot bugfixes - refresh was broken when there was no data (first run), thx Majikkuu for bug report
  

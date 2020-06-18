@@ -239,7 +239,7 @@
                 .then(_ => started = false)
                 .catch(e => {
                     started = false
-                    log.error("Can not refresh users")
+                    log.error("Can not refresh users", e)
                 })
         ;
     }
