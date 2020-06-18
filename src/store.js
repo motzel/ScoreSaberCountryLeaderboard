@@ -60,9 +60,14 @@ export async function getCacheAndConvertIfNeeded() {
 
     if(1.1 === cache.version) {
         // special case after SS API change - reset last updated in order to data be refetched
+        const resetDate = "2020-06-17T00:00:00.000Z";
+        const resetDateTimestamp = Date.parse(resetDate);
         flags.rankedSongsAvailable = true;
-        cache.lastUpdated = "2020-06-17T00:00:00.000Z";
-        Object.values(cache.users).map(u => u.lastUpdated = dateFromString("2020-06-17T00:00:00.000Z"))
+        if((dateFromString(cache.lastUpdated)).getTime() > resetDateTimestamp) {
+            cache.lastUpdated = resetDate;
+            const userLastUpdated = dateFromString(cache.lastUpdated);
+            Object.values(cache.users).map(u => u.lastUpdated = userLastUpdated)
+        }
         cache.version = 1.2;
     }
 
