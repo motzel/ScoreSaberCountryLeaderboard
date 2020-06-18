@@ -4,17 +4,6 @@ import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
 import {default as queue} from "../queue";
 
-const oldDiffFromNew = newDiff => {
-    switch(newDiff) {
-        case 7: return "_Expert_SoloStandard";
-        case 9: return "_ExpertPlus_SoloStandard";
-        case 5: return "_Hard_SoloStandard";
-        case 3: return "_Normal_SoloStandard";
-        case 1: return "_Easy_SoloStandard";
-        default: return "";
-    }
-}
-
 export const fetchScores = async (userId, page = 1, ...leaderboards) =>
     fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page).then((s) =>
         s && s.scores
@@ -39,7 +28,7 @@ export const fetchScores = async (userId, page = 1, ...leaderboards) =>
                     songSubName: s.songSubName,
                     songAuthorName: s.songAuthorName,
                     levelAuthorName: s.levelAuthorName,
-                    diff: oldDiffFromNew(s.difficulty),
+                    diff: s.difficultyRaw,
                     difficulty: s.difficulty,
                     maxScoreEx: s.maxScore,
                     rank: s.rank

@@ -1,4 +1,7 @@
 # Changelog
+0.7.5.2
+ - change SS API limit to 80 reqs/min according to latest API change
+ 
 0.7.5.1
  - hotfix after SS API data format change
  
