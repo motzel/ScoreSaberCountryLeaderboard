@@ -21,8 +21,10 @@ export async function getCacheAndConvertIfNeeded() {
 
     log.info("Data fetch from cache");
 
+    const CURRENT_CACHE_VERSION = 1.2;
+
     let cache = (await getCache()) ?? {
-        version: 1.1,
+        version: CURRENT_CACHE_VERSION,
         lastUpdated: null,
         users: {},
         rankedSongs: null,
@@ -30,6 +32,7 @@ export async function getCacheAndConvertIfNeeded() {
     };
 
     // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
+    // TODO: remove need for flags
     let flags = {
         rankHistoryAvailable: false,
         rankedSongsAvailable: false
@@ -38,34 +41,33 @@ export async function getCacheAndConvertIfNeeded() {
         flags.rankHistoryAvailable = true;
     }
 
-    switch(cache.version) {
-        case 1.1:
-            flags.rankedSongsAvailable = true;
-            cache.lastUpdated = "2020-06-17T00:00:00.000Z";
-            Object.values(cache.users).map(u => u.lastUpdated = dateFromString("2020-06-17T00:00:00.000Z"))
-            cache.version = 1.2;
-            break;
+    if(1 === cache.version) {
+        // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
+        const allRankeds = await fetchRankedSongsArray();
+        let nanomoriApproached = false;
+        cache.rankedSongs = convertFetchedRankedSongsToObj(
+            allRankeds.filter((s) => {
+                if (s.leaderboardId === 221711) nanomoriApproached = true;
+                return nanomoriApproached;
+            })
+        );
+        cache.version = 1.1;
+        cache.rankedSongsLastUpdated = JSON.parse(
+            JSON.stringify(new Date())
+        );
+        flags.rankedSongsAvailable = false;
+    }
 
-        case 1:
-            // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
-            const allRankeds = await fetchRankedSongsArray();
-            let nanomoriApproached = false;
-            cache.rankedSongs = convertFetchedRankedSongsToObj(
-                allRankeds.filter((s) => {
-                    if (s.leaderboardId === 221711) nanomoriApproached = true;
-                    return nanomoriApproached;
-                })
-            );
-            cache.version = 1.1;
-            cache.rankedSongsLastUpdated = JSON.parse(
-                JSON.stringify(new Date())
-            );
-            flags.rankedSongsAvailable = false;
-            break;
+    if(1.1 === cache.version) {
+        // special case after SS API change - reset last updated in order to data be refetched
+        flags.rankedSongsAvailable = true;
+        cache.lastUpdated = "2020-06-17T00:00:00.000Z";
+        Object.values(cache.users).map(u => u.lastUpdated = dateFromString("2020-06-17T00:00:00.000Z"))
+        cache.version = 1.2;
+    }
 
-        default:
-            flags.rankedSongsAvailable = true;
-            break;
+    if(1.2 === cache.version) {
+        flags.rankedSongsAvailable = true;
     }
 
     Globals.data = Object.assign(cache, {flags});
