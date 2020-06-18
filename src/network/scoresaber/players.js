@@ -29,8 +29,8 @@ export const fetchUsers = async (page = 1) =>
         Array.prototype.map.call(await getUserIds(page), async (userId) => {
             const info = await fetchPlayerInfo(userId);
             const {
-                name,
-                playerid,
+                playerName,
+                playerId,
                 role,
                 badges,
                 banned,
@@ -52,10 +52,10 @@ export const fetchUsers = async (page = 1) =>
 
             return Object.assign(
                 {
-                    id: playerid,
-                    name: name,
+                    id: playerId,
+                    name: playerName,
                     url: substituteVars(USER_PROFILE_URL, {
-                        userId: playerid
+                        userId: playerId
                     }),
                     lastUpdated: null,
 
