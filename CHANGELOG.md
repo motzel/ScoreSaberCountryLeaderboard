@@ -1,4 +1,7 @@
 # Changelog
+0.7.5.1
+ - hotfix after SS API data format change
+ 
 0.7.5
  - change rate limits for Score Saber API
  

@@ -4,14 +4,46 @@ import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
 import {default as queue} from "../queue";
 
+const oldDiffFromNew = newDiff => {
+    switch(newDiff) {
+        case 7: return "_Expert_SoloStandard";
+        case 9: return "_ExpertPlus_SoloStandard";
+        case 5: return "_Hard_SoloStandard";
+        case 3: return "_Normal_SoloStandard";
+        case 1: return "_Easy_SoloStandard";
+        default: return "";
+    }
+}
+
 export const fetchScores = async (userId, page = 1, ...leaderboards) =>
     fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page).then((s) =>
         s && s.scores
-            ? s.scores.filter(
-            (s) =>
-                !leaderboards.length ||
-                leaderboards.includes(s.leaderboardId)
-            )
+            ? s.scores
+                .filter(
+                    (s) =>
+                        !leaderboards.length ||
+                        leaderboards.includes(s.leaderboardId)
+                )
+                .map(s => ({
+                    scoreId: s.scoreId,
+                    leaderboardId: s.leaderboardId,
+                    score: s.score,
+                    uScore: s.unmodififiedScore,
+                    mods: s.mods,
+                    playerId: userId,
+                    timeset: s.timeSet,
+                    pp: s.pp,
+                    weight: s.weight,
+                    id: s.songHash,
+                    name: s.songName,
+                    songSubName: s.songSubName,
+                    songAuthorName: s.songAuthorName,
+                    levelAuthorName: s.levelAuthorName,
+                    diff: oldDiffFromNew(s.difficulty),
+                    difficulty: s.difficulty,
+                    maxScoreEx: s.maxScore,
+                    rank: s.rank
+                }))
             : null
     );
 

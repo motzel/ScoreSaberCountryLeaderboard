@@ -1,5 +1,6 @@
 import log from './utils/logger';
 import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
+import {dateFromString} from "./utils/date";
 
 const CACHE_KEY = 'sspl_users';
 
@@ -37,23 +38,34 @@ export async function getCacheAndConvertIfNeeded() {
         flags.rankHistoryAvailable = true;
     }
 
-    if (cache.version === 1) {
-        // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
-        const allRankeds = await fetchRankedSongsArray();
-        let nanomoriApproached = false;
-        cache.rankedSongs = convertFetchedRankedSongsToObj(
-            allRankeds.filter((s) => {
-                if (s.leaderboardId === 221711) nanomoriApproached = true;
-                return nanomoriApproached;
-            })
-        );
-        cache.version = 1.1;
-        cache.rankedSongsLastUpdated = JSON.parse(
-            JSON.stringify(new Date())
-        );
-        flags.rankedSongsAvailable = false;
-    } else {
-        flags.rankedSongsAvailable = true;
+    switch(cache.version) {
+        case 1.1:
+            flags.rankedSongsAvailable = true;
+            cache.lastUpdated = "2020-06-17T00:00:00.000Z";
+            Object.values(cache.users).map(u => u.lastUpdated = dateFromString("2020-06-17T00:00:00.000Z"))
+            cache.version = 1.2;
+            break;
+
+        case 1:
+            // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
+            const allRankeds = await fetchRankedSongsArray();
+            let nanomoriApproached = false;
+            cache.rankedSongs = convertFetchedRankedSongsToObj(
+                allRankeds.filter((s) => {
+                    if (s.leaderboardId === 221711) nanomoriApproached = true;
+                    return nanomoriApproached;
+                })
+            );
+            cache.version = 1.1;
+            cache.rankedSongsLastUpdated = JSON.parse(
+                JSON.stringify(new Date())
+            );
+            flags.rankedSongsAvailable = false;
+            break;
+
+        default:
+            flags.rankedSongsAvailable = true;
+            break;
     }
 
     Globals.data = Object.assign(cache, {flags});
