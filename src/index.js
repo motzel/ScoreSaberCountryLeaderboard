@@ -124,8 +124,76 @@ async function setupLeaderboard() {
     log.info("Setup leaderboard page / Done")
 }
 
+function setupChart() {
+    log.info("Setup chart");
+
+    const chart = document.getElementById('rankChart');
+    if(!chart) return;
+
+    const history = getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML);
+    if(!history) return;
+
+    chart.parentNode.innerHTML = '<canvas class="chartjs-render-monitor" id="rankChart"></canvas>';
+
+    let myChart = new Chart(document.getElementById("rankChart"), {
+        responsive: true,
+        onResize: function(chart, size){
+            chart.resize();
+            chart.render(true);
+        },
+        type: 'line',
+        data: {
+            labels: Array(50).fill(0).map((v,i) => 0===i ? 'now' : 1===i ? 'yesterday' : i + ' days ago').reverse(),
+            datasets: [{
+                data: history.split(','),
+                label: "Rank",
+                borderColor: "#3e95cd",
+                fill: false
+            },]
+        },
+        options: {
+            maintainAspectRatio: false,
+            title: {
+                display: false,
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        reverse: true,
+                        userCallback: function(label, index, labels) {
+                            if (Math.floor(label) === label) {
+                                return label;
+                            }
+                        },
+                    }
+                }],
+            }
+        }
+    });
+
+    log.info("Setup chart / Done")
+}
+
 async function setupProfile() {
     log.info("Setup profile page");
+
+    if (document.readyState == 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setupChart()
+        })
+    } else {
+        // DOM is ready
+        setupChart();
+    }
 
     const profileId = getProfileId();
     if (!profileId) return;
