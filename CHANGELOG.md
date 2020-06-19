@@ -1,4 +1,7 @@
 # Changelog
+0.7.7
+ - change the way the results are downloaded to maximise usage of the SS API rate limit
+ 
 0.7.6
  - increase the height of the rank graph on the player's profile
  

@@ -8,6 +8,7 @@
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
     import {filterByCountry} from "../../../scoresaber/players";
+    import Avatar from "../Common/Avatar.svelte";
 
     export let diff = 6;
     export let users = {};
@@ -26,21 +27,21 @@
     $: if (selectedDiff) {
         ranking = filterByCountry(users)
                 .reduce((cum, userId) => {
-                    const {id, name, country, pp, rank, history, userHistory} = users[userId];
+                    const {id, name, avatar, country, pp, rank, userHistory, weeklyDiff} = users[userId];
 
-                    const historicalRank = history && typeof (history[selectedDiff.value]) !== "undefined" ? history[selectedDiff.value] : null;
-                    const historicalTimestamp = userHistory ? getFirstNotNewerThan(toUTCDate(daysAgo(selectedDiff.value+1)), Object.keys(userHistory)) : null;
+                    const historicalTimestamp = userHistory ? getFirstNotNewerThan(toUTCDate(daysAgo(selectedDiff.value + 1)), Object.keys(userHistory)) : null;
 
                     cum.push({
                         id,
                         name,
+                        avatar,
                         country,
                         pp,
                         prevPp: userHistory && historicalTimestamp && pp !== userHistory[historicalTimestamp].pp ? userHistory[historicalTimestamp].pp : null,
                         rank,
                         history,
-                        change: rank && historicalRank && rank !== MAGIC_HISTORY_NUMBER && historicalRank !== MAGIC_HISTORY_NUMBER
-                                ? historicalRank - rank
+                        change: rank && weeklyDiff && rank !== MAGIC_HISTORY_NUMBER && weeklyDiff !== MAGIC_HISTORY_NUMBER
+                                ? weeklyDiff
                                 : null
                     });
 
@@ -51,27 +52,30 @@
     }
 </script>
 
+<style>
+    .sspl .picture {
+        padding: .5rem 0;
+        width: 1.5rem;
+    }
+</style>
+
 <table class="ranking global sspl">
     <thead>
     <tr>
+        <th class="picture"></th>
         <th class="rank">Pozycja</th>
         <th class="player">Gracz</th>
         <th class="pp">PPs</th>
-        <th class="diff">
-            <select bind:value={selectedDiff}>
-                {#each diffOptions as option}
-                    <option value={option} selected="{option.value === diff}">{option.text}</option>
-                {/each}
-            </select>
-        </th>
+        <th class="diff">Tydzień</th>
     </tr>
     </thead>
 
     <tbody>
     {#each ranking as user, idx (user.id)}
         <tr style="{mainUserId === user.id ? 'background-color: var(--color-highlight);' : ''}">
+            <td class="picture"><Avatar url={user.avatar}/></td>
             <td class="rank">
-                <Rank rank={idx+1} subRank={user.rank} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / PLAYERS_PER_PAGE))} />
+                <Rank rank={idx+1} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / PLAYERS_PER_PAGE))} />
             </td>
             <td class="player">
                 <Player {user} />

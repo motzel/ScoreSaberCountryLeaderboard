@@ -4,65 +4,82 @@ import {getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, SCORESABER_URL, USERS_URL} from "./consts";
 import {default as queue} from "../queue";
 import {default as config} from '../../temp';
+import {dayTrunc} from "../../utils/date";
+import {getCacheAndConvertIfNeeded} from "../../store";
 
 export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724']};
 
 export const getAdditionalPlayers = (country = config.COUNTRY) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
-export const fetchPlayerInfo = async (userId) => await fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId}));
-export const getUserIds = async (page = 1) => {
-    const usersIds = await Promise.all(
-        Array.prototype.map.call(
-            (await fetchHtmlPage(queue.SCORESABER, USERS_URL, page)).querySelectorAll(
-                '.ranking.global .player a'
-            ),
-            async (a) => getFirstRegexpMatch(/\/(\d+)$/, a.href)
-        )
-    );
-    if (!usersIds || !usersIds.length) throw new SsplError("Can not fetch users list");
+export const convertPlayerInfo = info => {
+    const {
+        playerName,
+        playerId,
+        role,
+        badges,
+        permissions,
+        banned,
+        history,
+        ...playerInfo
+    } = info.playerInfo;
 
-    return usersIds.concat(getAdditionalPlayers());
+    playerInfo.inactive = !!(playerInfo.inactive);
+
+    return Object.assign(
+        {
+            id: playerId,
+            name: playerName,
+            url: substituteVars(USER_PROFILE_URL, {
+                userId: playerId
+            }),
+            lastUpdated: null,
+            lastPlay: null,
+
+            userHistory: {},
+            scores: {}
+        },
+        playerInfo,
+        {stats: info.scoreStats}
+    );
+};
+export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId})).then(info => {
+    const history = info?.playerInfo?.history.split(',').reverse();
+    info.playerInfo.weeklyDiff =  history ? (history.length >= 7 ? history[6] - history[0] : 0) : null;
+    return info;
+})
+
+export const fetchUsers = async (page = 1) => {
+    const data = await getCacheAndConvertIfNeeded();
+
+    return await Promise.all(
+        [...(await fetchHtmlPage(queue.SCORESABER, USERS_URL, page)).querySelectorAll('.ranking.global .player a')]
+            .map(a => {
+                    const tr = a.closest("tr");
+
+                    return {
+                        playerInfo: {
+                            playerId: getFirstRegexpMatch(/\/(\d+)$/, a.href),
+                            playerName: a.querySelector('.songTop.pp').innerText,
+                            avatar: tr.querySelector('td.picture img').src,
+                            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+                            pp: parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
+                            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
+                            inactive: false,
+                            weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10)
+                        },
+                        scoreStats: {}
+                    }
+                }
+            )
+            .concat(getAdditionalPlayers().map(playerId => ({playerInfo: {playerId, inactive: false}})))
+            .map(async info => {
+                const lastUpdated = data.users?.[info.playerInfo.playerId]?.lastUpdated;
+
+                if (!info.scoreStats || !data.users?.[info.playerInfo.playerId] || !lastUpdated || dayTrunc(lastUpdated).getTime() !== dayTrunc(new Date()).getTime()) {
+                    return convertPlayerInfo(await fetchPlayerInfo(info.playerInfo.playerId));
+                }
+
+                return Object.assign({}, data.users[info.playerInfo.playerId], info);
+            })
+    )
 }
-
-export const fetchUsers = async (page = 1) =>
-    Promise.all(
-        Array.prototype.map.call(await getUserIds(page), async (userId) => {
-            const info = await fetchPlayerInfo(userId);
-            const {
-                playerName,
-                playerId,
-                role,
-                badges,
-                banned,
-                ...playerInfo
-            } = info.playerInfo;
-
-            playerInfo.inactive = !!(playerInfo.inactive);
-
-            // history is fetched as comma separated values string, let's make it a proper array
-            playerInfo.history = playerInfo.history
-                ? playerInfo.history
-                    .split(',')
-                    .map((rank) => {
-                        const i = parseInt(rank, 10);
-                        return !isNaN(i) ? i : null;
-                    })
-                    .reverse()
-                : null;
-
-            return Object.assign(
-                {
-                    id: playerId,
-                    name: playerName,
-                    url: substituteVars(USER_PROFILE_URL, {
-                        userId: playerId
-                    }),
-                    lastUpdated: null,
-
-                    scores: {}
-                },
-                playerInfo,
-                {stats: info.scoreStats}
-            );
-        })
-    );

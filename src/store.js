@@ -32,15 +32,6 @@ export async function getCacheAndConvertIfNeeded() {
     };
 
     // CONVERSION FROM OLDER CACHE VERSION IF NEEDED
-    // TODO: remove need for flags
-    let flags = {
-        rankHistoryAvailable: false,
-        rankedSongsAvailable: false
-    };
-    if (Object.values(cache?.users)?.[0]?.history?.length) {
-        flags.rankHistoryAvailable = true;
-    }
-
     if(1 === cache.version) {
         // special case - fetch scores for all ranked songs that was ranked/changed since first plugin version
         const allRankeds = await fetchRankedSongsArray();
@@ -55,14 +46,12 @@ export async function getCacheAndConvertIfNeeded() {
         cache.rankedSongsLastUpdated = JSON.parse(
             JSON.stringify(new Date())
         );
-        flags.rankedSongsAvailable = false;
     }
 
     if(1.1 === cache.version) {
         // special case after SS API change - reset last updated in order to data be refetched
         const resetDate = "2020-06-17T00:00:00.000Z";
         const resetDateTimestamp = Date.parse(resetDate);
-        flags.rankedSongsAvailable = true;
         if((dateFromString(cache.lastUpdated)).getTime() > resetDateTimestamp) {
             cache.lastUpdated = resetDate;
             const userLastUpdated = dateFromString(cache.lastUpdated);
@@ -71,11 +60,7 @@ export async function getCacheAndConvertIfNeeded() {
         cache.version = 1.2;
     }
 
-    if(1.2 === cache.version) {
-        flags.rankedSongsAvailable = true;
-    }
-
-    Globals.data = Object.assign(cache, {flags});
+    Globals.data = cache;
 
     return cache;
 }

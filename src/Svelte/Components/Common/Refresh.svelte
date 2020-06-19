@@ -141,7 +141,7 @@
 
         const data = await getCacheAndConvertIfNeeded();
 
-        if (!data.flags.rankedSongsAvailable || !newlyRanked) return;
+        if (!newlyRanked) return;
 
         const sseUserId = getMainUserId();
         if (!sseUserId) return;
@@ -206,7 +206,8 @@
                 })
 
                 cum.users[u.id] = Object.assign({}, u, {
-                    lastUpdated: newScores.lastUpdated,
+                    lastUpdated: new Date().toISOString(),
+                    recentPlay: newScores.lastUpdated,
                     scores: Object.assign(
                             {},
                             prevScores,

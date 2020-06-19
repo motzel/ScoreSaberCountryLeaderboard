@@ -13,8 +13,6 @@ import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 
-const getFlag = (name) => Globals.data?.flags?.[name];
-
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -275,7 +273,7 @@ async function setupCountryRanking(diffOffset = 6) {
     log.info("Setup country ranking");
 
     const users = (await getCacheAndConvertIfNeeded())?.users;
-    if (!users || !getFlag('rankHistoryAvailable')) return;
+    if (!users) return;
 
     const origTable = getBySelector('table.ranking.global');
 

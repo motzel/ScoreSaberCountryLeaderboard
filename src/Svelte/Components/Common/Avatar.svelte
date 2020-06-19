@@ -1,5 +1,9 @@
 <script>
+    import {NEW_SCORESABER_URL} from "../../../network/scoresaber/consts";
+
     export let url;
+
+    $: fullUrl = NEW_SCORESABER_URL + url;
 </script>
 
 <style>
@@ -9,5 +13,5 @@
 </style>
 
 {#if url}
-    <figure class="image is-24x24"><img src={url} style="border-radius: 50%"></figure>
+    <figure class="image is-24x24"><img src={fullUrl} style="border-radius: 50%"></figure>
 {/if}
