@@ -1,3 +1,4 @@
+<!--suppress JSUnfilteredForInLoop -->
 <script>
     import Progress from './Progress.svelte';
 
@@ -31,7 +32,7 @@
     function updateProgress(info) {
         progress = info.percent;
         label = escapeHtml(info.name);
-        subLabel = info.page.toString();
+        subLabel = info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString();
     }
 
     async function updateNewRankedsPpScores(progressCallback = null) {
@@ -100,10 +101,20 @@
             for (const userId in usersToUpdate) {
                 let idxLocal = 0;
                 for (const page in usersToUpdate[userId]) {
+                    const progressInfo = {
+                        id: userId,
+                        name: users[userId].name,
+                        page: idxLocal + 1,
+                        percent: Math.floor((idxGlobal / totalPages) * 100)
+                    };
+
                     const scores = convertArrayToObjectByKey(
                             await fetchScores(
                                     userId,
                                     page,
+                                    (time) => {
+                                        if (progressCallback) progressCallback(Object.assign({}, progressInfo, {wait: time}))
+                                    },
                                     ...usersToUpdate[userId][page]
                             ),
                             'leaderboardId'
@@ -114,13 +125,7 @@
                             scores
                     );
 
-                    if (progressCallback)
-                        progressCallback({
-                            id: userId,
-                            name: users[userId].name,
-                            page: idxLocal + 1,
-                            percent: Math.floor((idxGlobal / totalPages) * 100)
-                        });
+                    if (progressCallback) progressCallback(progressInfo);
 
                     idxLocal++;
                     idxGlobal++;

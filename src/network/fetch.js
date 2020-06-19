@@ -50,7 +50,7 @@ export async function queueRetriedPromise(queue, promiseReturningFunc, abortCont
     throw error;
 }
 
-export async function queueFetch(queue, url, options) {
+export async function queueFetch(queue, url, options, rateLimitCallback = null) {
     const controller = new AbortController();
     const signal = controller.signal;
 
@@ -62,7 +62,23 @@ export async function queueFetch(queue, url, options) {
                     const rateLimitReset = parseInt(response.headers.get('x-ratelimit-reset'), 10);
                     const waitTimeForLimitReset = rateLimitReset && !isNaN(rateLimitReset) ? (new Date(rateLimitReset * 1000)).getTime() - (new Date()).getTime() : null;
 
-                    if(waitTimeForLimitReset && waitTimeForLimitReset > 0) await delay(waitTimeForLimitReset);
+                    if(waitTimeForLimitReset && waitTimeForLimitReset > 0) {
+                        let intId;
+                        const rateLimitCallbackTick = 500;
+
+                        let timer = waitTimeForLimitReset;
+                        queue.pause();
+
+                        if (rateLimitCallback)
+                            intId = setInterval(_ => rateLimitCallback((timer = timer - rateLimitCallbackTick)), rateLimitCallbackTick)
+
+                        await delay(waitTimeForLimitReset);
+
+                        if(rateLimitCallback) clearInterval(intId);
+
+                        queue.start();
+                    }
+
                     throw new Error("Rate limit")
                 }
 
@@ -75,8 +91,8 @@ export async function queueFetch(queue, url, options) {
     );
 }
 
-export async function queueFetchJson(queue, url, options) {
-    return queueFetch(queue, url, options)
+export async function queueFetchJson(queue, url, options, rateLimitCallback = null) {
+    return queueFetch(queue, url, options, rateLimitCallback)
         .then(response => response.json())
 }
 
@@ -90,6 +106,6 @@ export const fetchHtmlPage = async (queue, url, page = 1) =>
     queueFetchHtml(queue, substituteVars(url, {page}))
         .catch(_ => new DOMParser().parseFromString('', 'text/html'));
 
-export const fetchApiPage = async (queue, url, page = 1) =>
-    queueFetchJson(queue, substituteVars(url, {page}))
+export const fetchApiPage = async (queue, url, page = 1, rateLimitCallback = null) =>
+    queueFetchJson(queue, substituteVars(url, {page}), {}, rateLimitCallback)
         .catch(_ => null);

@@ -4,8 +4,8 @@ import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
 import {default as queue} from "../queue";
 
-export const fetchScores = async (userId, page = 1, ...leaderboards) =>
-    fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page).then((s) =>
+export const fetchScores = async (userId, page = 1, rateLimitCallback = null, ...leaderboards) =>
+    fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page, rateLimitCallback).then((s) =>
         s && s.scores
             ? s.scores
                 .filter(
@@ -49,15 +49,18 @@ export async function fetchAllNewScores(
     let page = 0;
     let recentPlay = null;
     while (++page) {
-        if (progressCallback)
-            progressCallback({
-                id: user.id,
-                name: user.name,
-                page: page,
-                total: null
-            });
+        const progressInfo = {
+            id: user.id,
+            name: user.name,
+            page: page,
+            total: null
+        };
 
-        let scorePage = await fetchScores(user.id, page);
+        if (progressCallback) progressCallback(progressInfo);
+
+        let scorePage = await fetchScores(user.id, page, (time) => {
+            if (progressCallback) progressCallback(Object.assign({}, progressInfo, {wait: time}))
+        });
         if (!scorePage) break;
 
         // remember most recent play time
