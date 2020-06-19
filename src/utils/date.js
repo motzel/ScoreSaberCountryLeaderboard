@@ -8,6 +8,17 @@ export function toUTCDate(date) {
     return Date.UTC(year, month, day, 0, 0, 0, 0);
 }
 
+export function dayTrunc(date) {
+    date = date instanceof Date ? date : dateFromString(date);
+
+    date.setHours(0);
+    date.setMinutes(0);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+
+    return date;
+}
+
 export const daysAgo = days => new Date((new Date()).getTime() - days * DAY);
 
 export const getFirstNotNewerThan = (timestamp, arr) =>

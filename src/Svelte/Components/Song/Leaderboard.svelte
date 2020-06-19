@@ -138,7 +138,7 @@
     <tbody use:hoverable on:hover={onHover} on:unhover={onUnhover}>
     {#each leaderboard as item, idx (item.id)}
         <tr class={item.hidden ? 'hidden' : '', mainUserId === item.id ? 'main' : ''} data-id={item.id}>
-            <td class="picture"><Avatar url={NEW_SCORESABER_URL + item.avatar}/></td>
+            <td class="picture"><Avatar url={item.avatar}/></td>
             <td class="rank">
                 <Rank rank={idx+1} subRank={item.rank} url={'/leaderboard/' +
                             encodeURIComponent(leaderboardId) +

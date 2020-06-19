@@ -1,6 +1,9 @@
 # Changelog
+0.7.7
+ - change the way the results are downloaded to maximise usage of the SS API rate limit
+ 
 0.7.6
- - increase the height of the rank graph on the player's profile and disable pan & zooming. You're welcome, Drakonno ;-)
+ - increase the height of the rank graph on the player's profile
  
 0.7.5.2
  - change SS API limit to 80 reqs/min according to latest API change
