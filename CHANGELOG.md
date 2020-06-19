@@ -1,6 +1,7 @@
 # Changelog
 0.7.7
  - change the way the results are downloaded to maximise usage of the SS API rate limit
+ - add 429 http status handling - reading the x-ratelimit-reset header and waiting for further download possibility
  
 0.7.6
  - increase the height of the rank graph on the player's profile
