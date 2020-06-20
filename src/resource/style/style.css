@@ -22,7 +22,6 @@ table.ranking tbody tr.hidden {opacity: 0.05;}
 .tabs li.is-active {border-bottom: 1px solid #3273dc; margin-bottom: -1px;}
 img.bloodtrail {height:24px;}
 .sspl .rank small {font-size: .75rem; margin-left: .5rem; color: lightgray;}
-.sspl .rank span {display: inline-block; width: 1.5rem; text-align: right;}
 .text-center {text-align: center;}
 .offset_tab {margin-left: auto;}
 .sspl .inc {color: #42b129!important}

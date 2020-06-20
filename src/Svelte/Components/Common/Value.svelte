@@ -9,15 +9,18 @@
     export let suffix = "";
     export let withZeroSuffix = false;
     export let inline = false;
+    export let useColorsForValue = false;
 
-    $: formatted = (value ? formatNumber(value, digits, withSign) + suffix : zero + (withZeroSuffix ? suffix : ""));
+    $: minValue = Math.pow(10, -digits-1)
+    $: formatted = (Math.abs(value) > minValue ? formatNumber(value, digits, withSign) + suffix : zero + (withZeroSuffix ? suffix : ""));
     $: prevFormatted = prevValue ? formatNumber(prevValue, digits, withSign) + suffix : ""
     $: prevDiffFormatted = prevValue ? formatNumber(value - prevValue, digits, true) + suffix : ""
-    $: prevClass = (prevValue ? (value - prevValue > 0 ? "inc" : (value - prevValue < 0 ? "dec" : "zero")): "") + (!inline ? " block" : " inline");
+    $: prevClass = (prevValue ? (value - prevValue > minValue ? "inc" : (value - prevValue < -minValue ? "dec" : "zero")): "") + (!inline ? " block" : " inline");
+    $: mainClass = (useColorsForValue && value ? (value > minValue ? "inc" : (value < -minValue ? "dec" : "zero")): "");
 </script>
 
 <style>
     small.block {display: block;}
     small.inline {margin-left: .5rem;}
 </style>
-{formatted}{#if prevValue} <small class={prevClass} title={prevFormatted}>{prevDiffFormatted}</small>{/if}
+<span class={mainClass}>{formatted}</span>{#if prevValue} <small class={prevClass} title={prevFormatted}>{prevDiffFormatted}</small>{/if}

@@ -15,11 +15,24 @@ export function getDiffColor(diffInfo) {
     return colors[diffInfo.diff] ? colors[diffInfo.diff] : null;
 }
 
-export function getHumanDiffName(diffInfo) {
-    return (
-        capitalize(diffInfo.diff).replace('ExpertPlus', 'Expert+') +
-        (diffInfo.type !== 'Standard' ? '/' + diffInfo.type : '')
-    );
+export function getHumanDiffInfo(diffInfo) {
+    const name = capitalize(diffInfo.diff).replace('ExpertPlus', 'Expert+');
+    const typeSuffix = diffInfo.type !== 'Standard' ? '/' + diffInfo.type : '';
+
+    switch(name) {
+        case 'Easy':
+            return {name, type: diffInfo.type, fullName: name + typeSuffix, shortName: 'Es', difficulty: 1, color: getDiffColor(diffInfo)};
+        case 'Normal':
+            return {name, type: diffInfo.type, fullName: name + typeSuffix, shortName: 'N', difficulty: 3, color: getDiffColor(diffInfo)};
+        case 'Hard':
+            return {name, type: diffInfo.type, fullName: name + typeSuffix, shortName: 'H', difficulty: 5, color: getDiffColor(diffInfo)};
+        case 'Expert':
+            return {name, type: diffInfo.type, fullName: name + typeSuffix, shortName: 'Ex', difficulty: 7, color: getDiffColor(diffInfo)};
+        case 'Expert+':
+            return {name, type: diffInfo.type, fullName: name + typeSuffix, shortName: 'E+', difficulty: 9, color: getDiffColor(diffInfo)};
+
+        default: return null;
+    }
 }
 
 export const getMaxScore = (blocks, maxScorePerBlock = 115) =>

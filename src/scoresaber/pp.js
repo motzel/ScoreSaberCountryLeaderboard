@@ -80,16 +80,25 @@ export async function getUserSongScore(userId, leaderboardId)
     return (await getUserScores(userId))?.[leaderboardId];
 }
 ``
-export async function getRankedScores(userId) {
+
+export async function getAllRankedsWithUserScores(userId) {
     const rankedMaps = await getRankedMaps();
-    return Object.values((await getCacheAndConvertIfNeeded())?.users?.[userId].scores)
-        ?.filter(s => s.pp > 0)
-        ?.map(s => Object.assign({}, s, {timeset: dateFromString(s.timeset), stars: rankedMaps?.[s.leaderboardId]?.stars, acc: s.score/s.maxScoreEx}))
-        ?.filter(s => s.stars);
+    const userScores = (await getCacheAndConvertIfNeeded())?.users?.[userId]?.scores;
+    return userScores ? Object.values(userScores)
+            .filter(s => s.pp > 0)
+            .map(s => Object.assign({}, s, {
+                timeset: dateFromString(s.timeset),
+                stars: rankedMaps?.[s.leaderboardId]?.stars,
+                acc: s.score / s.maxScoreEx
+            }))
+            .filter(s => s.stars)
+            .sort((a, b) => b.pp - a.pp)
+        : []
+        ;
 }
 
 // written by BaliBalo: https://github.com/BaliBalo/ScoreSaber/blob/master/pages/peepee.js
-export function getScoreEstimate(stars, scores) {
+export function getEstimatedAcc(stars, scores) {
     let now = Date.now();
     let decay = 1000 * 60 * 60 * 24 * 15;
     let maxStars = Math.max(...scores.map(e => e.stars));

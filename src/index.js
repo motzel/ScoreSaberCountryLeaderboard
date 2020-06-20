@@ -4,14 +4,28 @@ import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
+import Comparator from './Svelte/Components/Song/Comparator.svelte';
 
 import log from './utils/logger';
 import {default as config, getMainUserId} from './temp';
 import {getCacheAndConvertIfNeeded, Globals} from "./store";
-import {getFirstRegexpMatch} from "./utils/js";
+import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
+
+import {getRankedMaps} from "./scoresaber/rankeds";
+import {
+    findRawPp,
+    getAllRankedsWithUserScores,
+    getEstimatedAcc,
+    PP_PER_STAR,
+    ppFromScore,
+    getWhatIfScore,
+    getTotalUserPp
+} from "./scoresaber/pp";
+import {dateFromString} from "./utils/date";
+import {formatNumber} from "./utils/format";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -318,6 +332,22 @@ async function setupProfile() {
                 profile: data.users?.[profileId] ?? null,
             }
         });
+
+        const level = document.querySelector('.content .box .level');
+        if(level) {
+            const box = document.createElement('div');
+            box.classList.add('box');
+            box.classList.add('has-shadow');
+            level.parentNode.parentNode.insertBefore(box, level.parentNode);
+
+            new Comparator({
+                target: box,
+                props: {
+                    playerId: profileId,
+                    snipedIds: ["76561198139207783", "76561198067674748"]
+                }
+            })
+        }
     }
 
     const header = document.querySelector('.content .column h5');

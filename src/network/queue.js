@@ -10,10 +10,10 @@ export default {
     }),
     SCORESABER_API: new PQueue({
         concurrency: 8,
-        timeout: 8000,
+        timeout: 60000,
         throwOnTimeout: true,
-        intervalCap: 80,
-        interval: 60 * 1000
+        // intervalCap: 80,
+        // interval: 60 * 1000
     }),
     BEATSAVER: new PQueue({
         concurrency: 8,

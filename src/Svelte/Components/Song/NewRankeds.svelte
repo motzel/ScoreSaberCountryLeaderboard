@@ -2,7 +2,7 @@
     import Song from "./Song.svelte";
     import Mapper from "./Mapper.svelte";
     import Pp from '../Common/Pp.svelte';
-    import Diff from '../Common/Diff.svelte';
+    import Difficulty from '../Common/Difficulty.svelte';
     import Stars from "./Stars.svelte";
 
     export let rankeds = [];
@@ -34,7 +34,7 @@
         <tr>
             <td><Song song={item} /></td>
             <td><Mapper name={item.levelAuthor} /></td>
-            <td><Diff diff={item.diff} /></td>
+            <td><Difficulty diff={item.diff} /></td>
             <td><Pp pp={item.pp} /></td>
             <td><Stars stars={item.stars} /></td>
             <td><Stars stars={item.oldStars} /></td>

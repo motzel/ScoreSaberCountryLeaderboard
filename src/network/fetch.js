@@ -1,6 +1,6 @@
 import {substituteVars} from "../utils/format";
 
-const delay = async (time, val) => new Promise((resolve) => setTimeout(_ => resolve(val), time));
+export const delay = async (time, val) => new Promise((resolve) => setTimeout(_ => resolve(val), time));
 
 export class SsplError extends Error {
     constructor(message) {
