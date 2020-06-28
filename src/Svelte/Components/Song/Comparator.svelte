@@ -29,6 +29,7 @@
     export let minPpPerMap = 1;
     export let withEstimate = true;
 
+    let calculating = true;
     let minPpDiff = 1;
 
     let currentPage = 0;
@@ -191,7 +192,9 @@
         return await getCachedTotalPlayerPp(playerId, bestScores);
     }
 
-    async function calc(playerId, snipedIds, minStarsPromise, minPpDiff = 1, withEstimate = withEstimate, sortedBy = sortBy) {
+    async function calc(playerId, snipedIds, minStarsPromise, minPpDiff = 1, withEstimate = withEstimate, sortedBy = sortBy, songType = songType) {
+        calculating = true;
+
         await delay(0);
 
         const minStars = await minStarsPromise;
@@ -286,6 +289,8 @@
         }
 
         console.log(filteredSongs, series);
+
+        calculating = false;
 
         return Object.assign(
                 {
@@ -404,6 +409,10 @@
     .filters > :global(*) {
         margin: 1.5rem 0 0 1.5rem;
     }
+
+    h2 {
+        text-align: center;
+    }
 </style>
 
 <div class="filters">
@@ -420,7 +429,7 @@
 </div>
 
 {#await pagedPromised}
-    <p>Obliczanie...</p>
+    <h2>Obliczanie...</h2>
 {:then calc}
     {#if calc.songs.length}
         <table class="ranking sspl">
@@ -523,4 +532,4 @@
     {/if}
 {/await}
 
-<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} />
+<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} hide={calculating} />

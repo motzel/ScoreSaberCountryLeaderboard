@@ -7,6 +7,7 @@
     export let currentPage = 0;
     export let itemsPerPage = 10;
     export let displayMax = 11;
+    export let hide = false;
 
     let displayStart = false;
     let displayEnd = false;
@@ -72,7 +73,7 @@
     }
 </style>
 
-{#if pagesTotal > 1}
+{#if pagesTotal > 1 && !hide}
 <nav class="pagination">
     <div>{startItem} - {endItem} / {totalItems}</div>
     <ul class="pagination-list">
