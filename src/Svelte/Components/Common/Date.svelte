@@ -14,4 +14,4 @@
 <style>
     small {display: block}
 </style>
-<span title={dateObj.toLocaleString()}>{formatted}</span>{#if prevDateObj }<small title={prevDateObj.toLocaleString()}>{prevFormatted}</small>{/if}
+<span title={dateObj ? dateObj.toLocaleString() : ''}>{formatted}</span>{#if prevDateObj }<small title={prevDateObj.toLocaleString()}>{prevFormatted}</small>{/if}

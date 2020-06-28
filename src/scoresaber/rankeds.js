@@ -1,3 +1,3 @@
 import {getCacheAndConvertIfNeeded} from "../store";
 
-export const getRankedMaps = async _ => (await getCacheAndConvertIfNeeded()).rankedSongs;
+export const getRankedSongs = async _ => (await getCacheAndConvertIfNeeded()).rankedSongs;

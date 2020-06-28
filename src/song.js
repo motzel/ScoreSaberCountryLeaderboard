@@ -16,6 +16,8 @@ export function getDiffColor(diffInfo) {
 }
 
 export function getHumanDiffInfo(diffInfo) {
+    if (!diffInfo || !diffInfo.diff) return null;
+
     const name = capitalize(diffInfo.diff).replace('ExpertPlus', 'Expert+');
     const typeSuffix = diffInfo.type !== 'Standard' ? '/' + diffInfo.type : '';
 
@@ -57,10 +59,8 @@ export function extractDiffAndType(ssDiff) {
     };
 }
 
-export function findDiffInfo(characteristics, ssDiff) {
-    if (!characteristics) return null;
-    const diffAndType = extractDiffAndType(ssDiff);
-    if (!diffAndType) return null;
+export function findDiffInfoWithDiffAndType(characteristics, diffAndType) {
+    if (!characteristics || !diffAndType) return null;
 
     return characteristics.reduce((cum, ch) => {
         if (ch.name === diffAndType.type) {
@@ -69,6 +69,9 @@ export function findDiffInfo(characteristics, ssDiff) {
 
         return cum;
     }, null);
+}
+export function findDiffInfo(characteristics, ssDiff) {
+    return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
 }
 
 export async function getLeaderboard(songHash, leaderboardId) {
@@ -148,6 +151,14 @@ export async function getSongMaxScore(hash, diff) {
     const songInfo = await getSongByHash(hash);
     const songCharacteristics = songInfo?.metadata?.characteristics;
     const diffInfo = findDiffInfo(songCharacteristics, diff);
+
+    return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
+}
+
+export async function getSongMaxScoreWithDiffAndType(hash, diffAndType, cacheOnly = false, forceUpdate = false) {
+    const songInfo = await getSongByHash(hash, forceUpdate, cacheOnly);
+    const songCharacteristics = songInfo?.metadata?.characteristics;
+    const diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffAndType);
 
     return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
 }

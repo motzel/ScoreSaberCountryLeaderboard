@@ -1,7 +1,7 @@
 import {getAdditionalPlayers} from "../network/scoresaber/players";
 import {default as config} from '../temp';
 import {getCacheAndConvertIfNeeded} from "../store";
-import {getRankedMaps} from "./rankeds";
+import {getRankedSongs} from "./rankeds";
 
 export const isActiveCountryUser = (u, country = config.COUNTRY) => !u.inactive && (getAdditionalPlayers().includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
@@ -25,7 +25,7 @@ export const getPlayerScores = async playerId => {
 
 export const getPlayerRankedScores = async playerId => {
     const scores = await getPlayerScores(playerId);
-    const rankedMaps = await getRankedMaps();
+    const rankedMaps = await getRankedSongs();
     return scores
         ? Object.values(scores)
             .filter(s => s.pp > 0)

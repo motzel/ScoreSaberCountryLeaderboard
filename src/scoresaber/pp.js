@@ -1,6 +1,6 @@
 import {getCacheAndConvertIfNeeded} from '../store';
 import {dateFromString} from "../utils/date";
-import {getRankedMaps} from "./rankeds";
+import {getRankedSongs} from "./rankeds";
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
@@ -59,6 +59,18 @@ export async function getTotalUserPp(userId, modifiedScores = {}) {
     );
 }
 
+export function getWeightedPp(scores, leaderboardId, alreadySortedArray = false) {
+    const sortedScores = alreadySortedArray
+        ? scores
+        : Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp)
+
+    for (const idx in sortedScores) {
+        if (sortedScores[idx].leaderboardId === leaderboardId) return Math.pow(0.965, idx) * sortedScores[idx].pp;
+    }
+
+    return null;
+}
+
 export async function getWhatIfScore(userId, leaderboardId, pp) {
     const currentTotalPp = await getTotalUserPp(userId);
     const newTotalPp = await getTotalUserPp(userId, {
@@ -82,7 +94,7 @@ export async function getUserSongScore(userId, leaderboardId)
 ``
 
 export async function getAllRankedsWithUserScores(userId) {
-    const rankedMaps = await getRankedMaps();
+    const rankedMaps = await getRankedSongs();
     const userScores = (await getCacheAndConvertIfNeeded())?.users?.[userId]?.scores;
     return userScores ? Object.values(userScores)
             .filter(s => s.pp > 0)

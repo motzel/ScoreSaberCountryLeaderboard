@@ -4,7 +4,7 @@ import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
-import Comparator from './Svelte/Components/Song/Comparator.svelte';
+import Comparator from './Svelte/Components/Song/Browser.svelte';
 
 import log from './utils/logger';
 import {default as config, getMainUserId} from './temp';
@@ -14,7 +14,7 @@ import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 
-import {getRankedMaps} from "./scoresaber/rankeds";
+import {getRankedSongs} from "./scoresaber/rankeds";
 import {
     findRawPp,
     getAllRankedsWithUserScores,

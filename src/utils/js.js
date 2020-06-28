@@ -18,3 +18,4 @@ export const escapeHtml = unsafe => unsafe
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+export const isDateObject = date => date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);

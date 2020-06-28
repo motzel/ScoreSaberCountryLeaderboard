@@ -8,11 +8,13 @@ const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
 const SONG_BY_KEY_URL = BEATSAVER_API_URL + '/maps/detail/${key}'
 
-export const getSongByHash = async (hash, forceUpdate = false) => {
+export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false) => {
     hash = hash.toLowerCase();
 
     const data = await getCacheAndConvertIfNeeded();
     if (!forceUpdate && data.beatSaver && data.beatSaver.hashes && data.beatSaver.hashes[hash]) return Promise.resolve(data.beatSaver.hashes[hash]);
+
+    if(cacheOnly) return null;
 
     const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash}));
     if (!songInfo) {
