@@ -182,6 +182,15 @@
         return bestIdx;
     }
 
+    async function getPlayerTotalPpWithBestScores(songs, key = 'bestRealPp') {
+        const bestScores = convertArrayToObjectByKey(songs.filter(s => s[key]).map(s => ({
+            leaderboardId: s.leaderboardId,
+            pp: s[key]
+        })), 'leaderboardId');
+
+        return await getCachedTotalPlayerPp(playerId, bestScores);
+    }
+
     async function calc(playerId, snipedIds, minStarsPromise, minPpDiff = 1, withEstimate = withEstimate, sortedBy = sortBy) {
         await delay(0);
 
@@ -269,13 +278,11 @@
             p.prevTotalPp = series[0].totalPp;
         }
 
-        let bestTotalRealPp = 0;
+        let bestTotalRealPp = 0
+        let bestTotalPp = 0;
         if (snipedIds.length > 1) {
-            const bestScores = convertArrayToObjectByKey(filteredSongs.filter(s => s.bestRealPp).map(s => ({
-                leaderboardId: s.leaderboardId,
-                pp: s.bestRealPp
-            })), 'leaderboardId');
-            bestTotalRealPp = await getCachedTotalPlayerPp(playerId, bestScores);
+            bestTotalRealPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestRealPp');
+            bestTotalPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestPp');
         }
 
         console.log(filteredSongs, series);
@@ -292,7 +299,10 @@
                     return cum;
                 }, {playerSeries: 0, otherSeries: 0}),
 
-                {bestTotalRealPp: bestTotalRealPp}
+                {
+                    bestTotalRealPp,
+                    bestTotalPp
+                }
         )
     }
 
@@ -483,7 +493,7 @@
                 <th class="song" rowspan="2" colspan="2">Razem dla {calc.series[0].name}</th>
                 {#each calc.series as series, idx (series.id+'_'+series.estimateId)}
                     {#if columnsQty > 0 && !(columnsQty === 1 && series.id === playerId && showColumns.diffPp)}
-                        <th class="left" rowspan={series.id !== playerId && series.estimateId !== playerId ? 1 : 2}
+                        <th class="left" rowspan={series.id !== playerId ? 1 : 2}
                             colspan={series.id !== playerId ? columnsQty : columnsQty - (showColumns.diffPp ? 1 : 0)}>
                             <Value value={series.totalPp} prevValue={showColumns.diff ? series.prevTotalPp : null} suffix="pp"/>
                         </th>
@@ -491,6 +501,12 @@
                 {/each}
             </tr>
             <tr>
+                {#if withEstimate}
+                    <th class="pp left top" colspan={columnsQty}>
+                        <Value value={calc.bestTotalPp} prevValue={showColumns.diff ? calc.series[0].totalPp : null }
+                               suffix="pp"/>
+                    </th>
+                {/if}
                 {#if calc.otherSeries && snipedIds.length > 1}
                     <th class="pp left top" colspan={calc.otherSeries * columnsQty}>
                         <Value value={calc.bestTotalRealPp} prevValue={showColumns.diff ? calc.series[0].totalPp: null} suffix="pp"/>
