@@ -269,13 +269,13 @@
             p.prevTotalPp = series[0].totalPp;
         }
 
-        let bestTotalPp = 0;
+        let bestTotalRealPp = 0;
         if (snipedIds.length > 1) {
-            const bestScores = convertArrayToObjectByKey(filteredSongs.filter(s => s.bestPp).map(s => ({
+            const bestScores = convertArrayToObjectByKey(filteredSongs.filter(s => s.bestRealPp).map(s => ({
                 leaderboardId: s.leaderboardId,
-                pp: s.bestPp
+                pp: s.bestRealPp
             })), 'leaderboardId');
-            bestTotalPp = await getCachedTotalPlayerPp(playerId, bestScores);
+            bestTotalRealPp = await getCachedTotalPlayerPp(playerId, bestScores);
         }
 
         console.log(filteredSongs, series);
@@ -292,7 +292,7 @@
                     return cum;
                 }, {playerSeries: 0, otherSeries: 0}),
 
-                {bestTotalPp}
+                {bestTotalRealPp: bestTotalRealPp}
         )
     }
 
@@ -493,7 +493,7 @@
             <tr>
                 {#if calc.otherSeries && snipedIds.length > 1}
                     <th class="pp left top" colspan={calc.otherSeries * columnsQty}>
-                        <Value value={calc.bestTotalPp} prevValue={showColumns.diff ? calc.series[0].totalPp: null} suffix="pp"/>
+                        <Value value={calc.bestTotalRealPp} prevValue={showColumns.diff ? calc.series[0].totalPp: null} suffix="pp"/>
                     </th>
                 {/if}
             </tr>
