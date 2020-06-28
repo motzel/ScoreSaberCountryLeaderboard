@@ -356,14 +356,14 @@
         border-top-width: 1px;
     }
 
-    th.right, td.right {
-        border-right-style: solid;
-        border-right-width: 1px;
+    th.left, td.left {
+        border-left-style: solid;
+        border-left-width: 1px;
     }
 
-    th.right.middle, td.right.middle {
-        border-right-style: dotted;
-        border-right-width: 1px;
+    th.left.middle, td.left.middle {
+        border-left-style: dotted;
+        border-left-width: 1px;
     }
 
     tbody td.song small {
@@ -401,11 +401,11 @@
 
     <div>
         <div>Pokazuj</div>
-        <input type="checkbox" bind:checked={withEstimate}/> Potencjał
-        <input type="checkbox" bind:checked={showColumns.acc} /> Acc
-        <input type="checkbox" bind:checked={showColumns.pp} /> PP
-        <input type="checkbox" bind:checked={showColumns.diffPp}/> +PP
-        <input type="checkbox" bind:checked={showColumns.diff} /> Różnice
+        <label><input type="checkbox" bind:checked={withEstimate}/> Potencjał</label>
+        <label><input type="checkbox" bind:checked={showColumns.acc} /> Acc</label>
+        <label><input type="checkbox" bind:checked={showColumns.pp} /> PP</label>
+        <label><input type="checkbox" bind:checked={showColumns.diffPp}/> +PP</label>
+        <label><input type="checkbox" bind:checked={showColumns.diff} /> Różnice</label>
     </div>
 </div>
 
@@ -416,11 +416,11 @@
         <table class="ranking sspl">
             <thead>
             <tr>
-                <th class="song right" rowspan="2" colspan="2">Nuta</th>
+                <th class="song" rowspan="2" colspan="2">Nuta</th>
                 {#each calc.series as series (series.id+'_'+series.estimateId)}
                     {#if columnsQty > 0 && !(columnsQty === 1 && series.id === playerId && showColumns.diffPp)}
                         <th colspan={series.id !== playerId ? columnsQty : columnsQty - (showColumns.diffPp ? 1 : 0)}
-                            class="series right">{series.name}</th>
+                            class="series left">{series.name}</th>
                     {/if}
                 {/each}
             </tr>
@@ -428,11 +428,11 @@
             <tr>
                 {#each calc.series as series (series.id+'_'+series.estimateId)}
                     {#if showColumns.acc}
-                        <th class="acc right middle">Acc</th>{/if}
+                        <th class="acc left">Acc</th>{/if}
                     {#if showColumns.pp}
-                        <th class={'pp right' + (series.id !== playerId ? ' middle' : '')}>PP</th>{/if}
+                        <th class={'pp left' + (showColumns.acc ? ' middle' : '')}>PP</th>{/if}
                     {#if showColumns.diffPp && series.id !== playerId }
-                        <th class="pp right">+PP</th>
+                        <th class={'pp left' + (showColumns.acc || showColumns.pp ? ' middle' : '')}>+PP</th>
                     {/if}
                 {/each}
             </tr>
@@ -444,7 +444,7 @@
                     <td class="diff">
                         <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
                     </td>
-                    <td class="song right">
+                    <td class="song">
                         <Song song={song}>
                             {song.name}
                             <div>
@@ -454,21 +454,21 @@
                     </td>
                     {#each calc.series as series, idx (series.id+'_'+series.estimateId)}
                         {#if showColumns.acc}
-                            <td class={'acc right middle' + (series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId].best ? ' best' : '')}>
+                            <td class={'acc left' + (series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId].best ? ' best' : '')}>
                                 <Value value={series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId].acc : null}
                                        prevValue={showColumns.diff && series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId].prevAcc : null}
                                        zero="-" suffix="%"/>
                             </td>
                         {/if}
                         {#if showColumns.pp}
-                            <td class={'pp right' + (series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId].best ? ' best' : '') + (series.id !== playerId ? ' middle' : '')}>
+                            <td class={'pp left' + (series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId].best ? ' best' : '') + (showColumns.acc ? ' middle' : '')}>
                                 <Value value={series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId].pp : null}
                                        prevValue={showColumns.diff && series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId].prevPp : null}
                                        zero="-" suffix="pp"/>
                             </td>
                         {/if}
                         {#if showColumns.diffPp && series.id !== playerId }
-                            <td class={'pp right' + (series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId].best ? ' best' : '')}>
+                            <td class={'pp left' + (series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId].best ? ' best' : '') + (showColumns.acc || showColumns.pp ? ' middle' : '')}>
                                 <Value value={series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId].diff : null}
                                        withSign={true} useColorsForValue={true} zero="-" suffix="pp"/>
                             </td>
@@ -480,10 +480,10 @@
 
             <tfoot>
             <tr>
-                <th class="song right" rowspan="2" colspan="2">Razem dla {calc.series[0].name}</th>
+                <th class="song" rowspan="2" colspan="2">Razem dla {calc.series[0].name}</th>
                 {#each calc.series as series, idx (series.id+'_'+series.estimateId)}
                     {#if columnsQty > 0 && !(columnsQty === 1 && series.id === playerId && showColumns.diffPp)}
-                        <th class="right" rowspan={series.id !== playerId && series.estimateId !== playerId ? 1 : 2}
+                        <th class="left" rowspan={series.id !== playerId && series.estimateId !== playerId ? 1 : 2}
                             colspan={series.id !== playerId ? columnsQty : columnsQty - (showColumns.diffPp ? 1 : 0)}>
                             <Value value={series.totalPp} prevValue={showColumns.diff ? series.prevTotalPp : null} suffix="pp"/>
                         </th>
@@ -492,7 +492,7 @@
             </tr>
             <tr>
                 {#if calc.otherSeries && snipedIds.length > 1}
-                    <th class="pp right top" colspan={calc.otherSeries * columnsQty}>
+                    <th class="pp left top" colspan={calc.otherSeries * columnsQty}>
                         <Value value={calc.bestTotalPp} prevValue={showColumns.diff ? calc.series[0].totalPp: null} suffix="pp"/>
                     </th>
                 {/if}
