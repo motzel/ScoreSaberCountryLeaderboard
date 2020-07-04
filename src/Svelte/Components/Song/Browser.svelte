@@ -299,7 +299,7 @@
         );
     }
     const getSeriesSong = (leaderboardId, series) => series && series.scores && series.scores[leaderboardId] ? series.scores[leaderboardId] : null;
-    const findBestInSeries = (series, leaderboardId, withEstimated = true, key = 'acc') => {
+    const findBestInSeries = (series, leaderboardId, withEstimated = true, key = 'score') => {
         let bestIdx = null;
         let bestValue = null;
 
@@ -674,6 +674,55 @@
                                     mapHasStars(s, allFilters.starsFilter.from, allFilters.starsFilter.to)
                             )
                     )
+                    //TODO: fill in acc when sniper mode is on to
+
+                    .map(s => {
+                        s.bestAcc = 0;
+                        s.bestRealAcc = 0;
+                        s.bestScore = 0;
+                        s.bestRealScore = 0;
+                        s.bestPp = 0;
+                        s.bestRealPp = 0;
+                        s.bestDiff = 0;
+                        s.bestRealDiff = 0;
+
+                        const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, true, 'score');
+                        if (null !== bestIdx) {
+                            const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
+                            const isBestEstimated = playersSeries[bestIdx];
+
+                            if (bestSeries) {
+                                bestSeries.best = !isBestEstimated;
+
+                                s.bestAcc = bestSeries.acc;
+                                s.bestScore = bestSeries.score;
+                                s.bestPp = bestSeries.pp;
+                                s.bestDiff = bestSeries.diff;
+
+                                s.bestRealAcc = bestSeries.acc;
+                                s.bestRealScore = bestSeries.score;
+                                s.bestRealPp = bestSeries.pp;
+                                s.bestRealDiff = bestSeries.diff;
+                            }
+
+                            if (isBestEstimated) {
+                                const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, false, 'score');
+                                if (null !== bestIdx) {
+                                    const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
+                                    if (bestSeries) {
+                                        bestSeries.best = true;
+
+                                        s.bestRealAcc = bestSeries.acc;
+                                        s.bestRealScore = bestSeries.score;
+                                        s.bestRealPp = bestSeries.pp;
+                                        s.bestRealDiff = bestSeries.diff;
+                                    }
+                                }
+                            }
+                        }
+
+                        return s;
+                    })
 
                     // TODO: temp only
                     .sort((a, b) => {
@@ -686,6 +735,8 @@
                     })
 
             console.timeEnd("calc");
+
+            console.log(songsToFilter[1], playersSeries.map(p => p.scores[190817]));
 
             console.warn("calculatingEnd", playersSeries, songsToFilter)
 
@@ -806,7 +857,7 @@
                     {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}<td class="maxPp left middle"><Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-" /></td>{/if}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
-                            <td class="left compact">
+                            <td class="left compact" class:best={getScoreValueByKey(series, song, 'best')}>
                                 {#if getScoreValueByKey(series, song, 'score')}
                                     {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                         {#if col.key === 'timeset'}
@@ -832,7 +883,7 @@
                             </td>
                         {:else}
                             {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                <td class={'left ' + col.key} class:middle={idx > 0}>
+                                <td class={'left ' + col.key} class:middle={idx > 0} class:best={getScoreValueByKey(series, song, 'best')}>
                                     {#if col.key === 'timeset'}
                                         <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                     {:else}
