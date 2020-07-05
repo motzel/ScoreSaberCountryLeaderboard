@@ -497,7 +497,7 @@
                             // filter by type & stars
                             (
                                     (songIsUnranked(s) && ['unrankeds', 'all'].includes(allFilters.songType.id)) ||
-                                    mapHasStars(s, allFilters.starsFilter.from, allFilters.starsFilter.to)
+                                    (allFilters.songType.id !== 'unrankeds' && mapHasStars(s, allFilters.starsFilter.from, allFilters.starsFilter.to))
                             )
                     )
 
