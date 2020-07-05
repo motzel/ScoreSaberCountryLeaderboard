@@ -345,7 +345,7 @@
                 getObjectFromArrayByKey(allColumns, 'pp').selected = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
+                // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
@@ -357,7 +357,7 @@
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
+                // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
                 allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
@@ -370,7 +370,7 @@
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
+                // getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper,1);
                 allFilters.sortBy =  {type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc'}
@@ -384,7 +384,7 @@
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
+                // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
                 allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
