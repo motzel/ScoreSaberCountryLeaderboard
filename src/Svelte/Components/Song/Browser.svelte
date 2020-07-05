@@ -51,7 +51,7 @@
         name: "",
         starsFilter: {from: 0, to: maxStars},
         minPpDiff: 1,
-        sortBy: {type: 'series', subtype: 0, field: 'timeset'}
+        sortBy: {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     let allRankeds = {};
@@ -346,6 +346,8 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
+
+                allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
 
             case 'all':
@@ -358,6 +360,7 @@
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
+                allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
 
             case 'rankeds_with_not_played':
@@ -370,6 +373,7 @@
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper,1);
+                allFilters.sortBy =  {type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc'}
                 break;
 
             case 'rankeds':
@@ -383,6 +387,7 @@
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
+                allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
         }
 
@@ -648,14 +653,25 @@
                     )
 
 
-                    // TODO: temp only
-                    .sort((a, b) => {
-                        const sortedBy = 0;
-                        const key = 'timeset';
-                        const scoreA = playersSeries[sortedBy] && playersSeries[sortedBy].scores && playersSeries[sortedBy].scores[a.leaderboardId] ? playersSeries[sortedBy].scores[a.leaderboardId] : null
-                        const scoreB = playersSeries[sortedBy] && playersSeries[sortedBy].scores && playersSeries[sortedBy].scores[a.leaderboardId] ? playersSeries[sortedBy].scores[b.leaderboardId] : null
+                    .sort((songA, songB) => {
+                        let a, b;
 
-                        return (scoreB ? scoreB[key] : 0) - (scoreA ? scoreA[key] : 0)
+                        switch(allFilters.sortBy.type) {
+                            case 'song':
+                                a = songA[allFilters.sortBy.field]
+                                b = songB[allFilters.sortBy.field]
+                                break;
+
+                            case 'series':
+                            default:
+                                const sortIdx = allFilters.sortBy.subtype;
+                                const field = allFilters.sortBy.field;
+                                a = playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[songA.leaderboardId] ? playersSeries[sortIdx].scores[songA.leaderboardId][field] : null
+                                b = playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[songB.leaderboardId] ? playersSeries[sortIdx].scores[songB.leaderboardId][field] : null
+                                break;
+                        }
+
+                        return allFilters.sortBy.order === 'asc' ? a - b : b - a;
                     })
 
             console.timeEnd("calc");
