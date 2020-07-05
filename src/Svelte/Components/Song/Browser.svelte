@@ -56,6 +56,10 @@
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     let allRankeds = {};
 
+    const getAllScoresByType = async (playerId, rankedOnly = true) => {
+        return rankedOnly ? await getPlayerRankedScores(playerId) : await getPlayerScores();
+    }
+    const getCachedAllScoresByType = memoize(getAllScoresByType);
     const getMinStars = async (playerId, boundary = minPpPerMap, maxAcc = 95) => {
         const playerPpScores = (await getCachedAllScoresByType(playerId, true))
                 .sort((a, b) => b.pp - a.pp)
@@ -111,6 +115,16 @@
             valueProps: {prevValue: null}
         },
         {
+            label: 'PP do globala',
+            compactLabel: 'Ranking',
+            name: '+PP',
+            key: 'diffPp',
+            selected: false,
+            isColumn: true,
+            displayed: false,
+            valueProps: {zero: "-", suffix: "pp", withSign: true, useColorsForValue: true}
+        },
+        {
             label: 'PP',
             name: 'PP',
             key: 'pp',
@@ -128,16 +142,6 @@
             isColumn: true,
             displayed: true,
             valueProps: {zero: "-", suffix: "pp"}
-        },
-        {
-            label: 'PP do globala',
-            compactLabel: 'Ranking',
-            name: '+PP',
-            key: 'diffPp',
-            selected: false,
-            isColumn: true,
-            displayed: false,
-            valueProps: {zero: "-", suffix: "pp", withSign: true, useColorsForValue: true}
         },
         {
             label: 'Dokładność',
@@ -183,52 +187,12 @@
     let viewType = viewTypes[0];
 
     const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
-    const getAllScoresByType = async (playerId, rankedOnly = true) => {
-        return rankedOnly ? await getPlayerRankedScores(playerId) : await getPlayerScores();
-    }
-    const getCachedAllScoresByType = memoize(getAllScoresByType);
+
     const getCachedTotalPlayerPp = memoize(getTotalUserPp);
-    const getCachedPlayerSongScore = memoize(getPlayerSongScore);
     const getScoreWithNewPp = async (playerId, newSongPp) => {
         return await getCachedTotalPlayerPp(playerId, newSongPp) - await getCachedTotalPlayerPp(playerId);
     }
     const getCachedScoreWithNewPp = memoize(getScoreWithNewPp);
-    const getSeriesSongScore = async (playerId, leaderboardId, withDiffToPlayerId = null, isRanked = true) => {
-        const score = await getCachedPlayerSongScore(playerId, leaderboardId);
-        const prevScore = withDiffToPlayerId ? await getCachedPlayerSongScore(withDiffToPlayerId, leaderboardId) : null;
-        if (score) {
-            const percent = score.maxScoreEx ? score.score / score.maxScoreEx : null;
-            const prevPercent = prevScore && prevScore.maxScoreEx ? prevScore.score / prevScore.maxScoreEx : null
-
-            return {
-                leaderboardId,
-                acc: percent * 100,
-                prevAcc: prevPercent ? prevPercent * 100 : null,
-                score: score.score,
-                prevScore: prevScore ? prevScore.score : null,
-                pp: score.pp,
-                prevPp: prevScore ? prevScore.pp : null,
-                timeset: dateFromString(score.timeset),
-                diff: isRanked && withDiffToPlayerId ? await getCachedScoreWithNewPp(withDiffToPlayerId, {[leaderboardId]: {pp: score.pp}}) : null,
-                best: false,
-                maxScoreEx: score.maxScoreEx ? score.maxScoreEx : null
-            }
-        } else {
-            return {
-                leaderboardId,
-                acc: null,
-                prevAcc: null,
-                score: null,
-                prevScore: null,
-                pp: null,
-                prevPp: null,
-                timeset: null,
-                diff: null,
-                best: false,
-                maxScoreEx: null
-            }
-        }
-    }
     const getPlayerSongEstimate = async (playerId, leaderboardId, stars) => {
         const userScore = await getCachedSeriesSongScore(playerId, leaderboardId, null)
         const userRankedScores = await getAllRankedsWithUserScores(playerId);
@@ -255,49 +219,7 @@
             best: false
         }
     }
-    const getCachedSeriesSongScore = memoize(getSeriesSongScore);
     const getCachedPlayerSongEstimate = memoize(getPlayerSongEstimate);
-    const getSeries = async (playerId, songs, comparePlayerId = null, estimated = true, estimateName = 'Potencjał') => {
-        const data = await getCacheAndConvertIfNeeded();
-
-        return {
-            id: estimated ? null : playerId,
-            estimateId: estimated ? playerId : null,
-            name: estimated ? estimateName : (data.users && data.users[playerId] ? data.users[playerId].name : null),
-            totalPp: 0,
-            prevTotalPp: 0,
-            scores: convertArrayToObjectByKey(await Promise.all(songs.map(async song => estimated
-                    ? (song.stars ? await getCachedPlayerSongEstimate(playerId, song.leaderboardId, song.stars) : {})
-                    : await getCachedSeriesSongScore(playerId, song.leaderboardId, comparePlayerId, null !== song.stars)
-            )), 'leaderboardId')
-        }
-    }
-    const getAllSeries = async (playersIds, songs, comparePlayerId = null, withEstimate = [playerId], estimateName = 'Potencjał') => {
-        return Promise.all(
-            playersIds
-                    .reduce((cum, pId) => {
-                        const shouldBeEstimated = withEstimate && withEstimate.includes(pId);
-
-                        cum.push({
-                            id: pId,
-                            comparePlayerId: pId !== comparePlayerId ? comparePlayerId : null,
-                            estimated: false,
-                            estimateName
-                        })
-
-                        if (shouldBeEstimated)
-                            cum.push({
-                                id: pId,
-                                comparePlayerId: pId,
-                                estimated: shouldBeEstimated,
-                                estimateName
-                            })
-
-                        return cum;
-                    }, [])
-                    .map(async p => getSeries(p.id, songs, p.comparePlayerId, p.estimated, p.estimateName))
-        );
-    }
     const getSeriesSong = (leaderboardId, series) => series && series.scores && series.scores[leaderboardId] ? series.scores[leaderboardId] : null;
     const findBestInSeries = (series, leaderboardId, withEstimated = true, key = 'score') => {
         let bestIdx = null;
@@ -337,7 +259,7 @@
     // const noPlayerScore = r => !r?.user?.acc;
 
     // post-filters
-    const bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiff && song.bestDiff > minPpDiff;
+    const bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiffPp && song.bestDiffPp > minPpDiff;
     const playerIsNotTheBest = (leaderboardId, series) => !getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best
     const playerAccIsLowerThanEstimated = (leaderboardId, playerSeries, estSeries, minDiff = 1) => {
         const playerScore = getSeriesSong(leaderboardId, playerSeries);
@@ -422,6 +344,7 @@
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
+                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
                 break;
 
@@ -431,6 +354,7 @@
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
+                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
@@ -442,6 +366,7 @@
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = true;
+                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper,1);
@@ -454,6 +379,7 @@
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').selected = false;
+                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
@@ -462,6 +388,8 @@
 
         // force refresh
         allColumns = allColumns.splice(0);
+
+        console.log(allColumns);
 
         forceFiltersChanged()
     }
@@ -472,53 +400,6 @@
 
     async function promiseGetData(playerId, snipedIds, minStarsForSniperPromise, starsFilter, minPpDiff = 1, withEstimate = true, sortedBy = sortBy, songType = songType, filterName = "") {
         /*
-        const series = await getAllSeries(playerIds, songs, playerId, withEstimate ? [playerId] : null);
-
-        songs.forEach(s => {
-            s.bestAcc = 0;
-            s.bestRealAcc = 0;
-            s.bestScore = 0;
-            s.bestRealScore = 0;
-            s.bestPp = 0;
-            s.bestRealPp = 0;
-            s.bestDiff = 0;
-            s.bestRealDiff = 0;
-
-            const bestIdx = findBestInSeries(series, s.leaderboardId, true, 'acc');
-            if (null !== bestIdx) {
-                const bestSeries = series[bestIdx].scores[s.leaderboardId];
-                const isBestEstimated = series[bestIdx].estimateId !== null;
-
-                if (bestSeries) {
-                    bestSeries.best = !isBestEstimated;
-
-                    s.bestAcc = bestSeries.acc;
-                    s.bestScore = bestSeries.score;
-                    s.bestPp = bestSeries.pp;
-                    s.bestDiff = bestSeries.diff;
-
-                    s.bestRealAcc = bestSeries.acc;
-                    s.bestRealScore = bestSeries.score;
-                    s.bestRealPp = bestSeries.pp;
-                    s.bestRealDiff = bestSeries.diff;
-                }
-
-                if (isBestEstimated) {
-                    const bestIdx = findBestInSeries(series, s.leaderboardId, false, 'acc');
-                    if (null !== bestIdx) {
-                        const bestSeries = series[bestIdx].scores[s.leaderboardId];
-                        if (bestSeries) {
-                            bestSeries.best = true;
-
-                            s.bestRealAcc = bestSeries.acc;
-                            s.bestRealScore = bestSeries.score;
-                            s.bestRealPp = bestSeries.pp;
-                            s.bestRealDiff = bestSeries.diff;
-                        }
-                    }
-                }
-            }
-        })
 
         const filteredSongs = songs
                 .filter(s =>
@@ -600,6 +481,11 @@
 
         calculating = true;
 
+        await delay(0);
+
+        // TODO: ?
+        const compareToIdx = 0;
+
         try {
             let playerIds = [playerId].concat(snipedIds);
             let sortedRandkeds = {}
@@ -656,7 +542,7 @@
                                     })
                     )
 
-            const songsToFilter = (
+            const songsToFilter = (await Promise.all((
                     allFilters.songType.id === 'rankeds_with_not_played'
                             ? Object.values(Object.assign(
                             convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
@@ -674,17 +560,27 @@
                                     mapHasStars(s, allFilters.starsFilter.from, allFilters.starsFilter.to)
                             )
                     )
-                    //TODO: fill in acc when sniper mode is on to
 
-                    .map(s => {
+                    .map(async s => {
+                        s.bestIdx = null;
+                        s.bestRealIdx = null;
                         s.bestAcc = 0;
                         s.bestRealAcc = 0;
                         s.bestScore = 0;
                         s.bestRealScore = 0;
                         s.bestPp = 0;
                         s.bestRealPp = 0;
-                        s.bestDiff = 0;
-                        s.bestRealDiff = 0;
+                        s.bestDiffPp = 0;
+                        s.bestRealDiffPp = 0;
+
+                        if(s.maxScoreEx) {
+                            playersSeries.forEach((series, idx) => {
+                                if(series.scores[s.leaderboardId]) {
+                                    series.scores[s.leaderboardId].acc = series.scores[s.leaderboardId].score / s.maxScoreEx * 100;
+                                    series.scores[s.leaderboardId].diffPp = null;
+                                }
+                            })
+                        }
 
                         const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, true, 'score');
                         if (null !== bestIdx) {
@@ -694,15 +590,17 @@
                             if (bestSeries) {
                                 bestSeries.best = !isBestEstimated;
 
+                                s.bestIdx = bestIdx;
                                 s.bestAcc = bestSeries.acc;
                                 s.bestScore = bestSeries.score;
                                 s.bestPp = bestSeries.pp;
-                                s.bestDiff = bestSeries.diff;
+                                s.bestDiffPp = bestSeries.diffPp;
 
+                                s.bestRealIdx = bestIdx;
                                 s.bestRealAcc = bestSeries.acc;
                                 s.bestRealScore = bestSeries.score;
                                 s.bestRealPp = bestSeries.pp;
-                                s.bestRealDiff = bestSeries.diff;
+                                s.bestRealDiffPp = bestSeries.diffPp;
                             }
 
                             if (isBestEstimated) {
@@ -712,17 +610,43 @@
                                     if (bestSeries) {
                                         bestSeries.best = true;
 
+                                        s.bestRealIdx = bestIdx;
                                         s.bestRealAcc = bestSeries.acc;
                                         s.bestRealScore = bestSeries.score;
                                         s.bestRealPp = bestSeries.pp;
-                                        s.bestRealDiff = bestSeries.diff;
+                                        s.bestRealDiffPp = bestSeries.diffPp;
                                     }
                                 }
                             }
                         }
 
+                        if (allFilters.songType.id === 'rankeds_with_not_played') {
+                            for (const idx in playersSeries) {
+                                // skip calculating if player is the best - will be filtered belowe
+                                if (playersSeries[compareToIdx].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
+
+                                const series = playersSeries[idx];
+
+                                if (series.scores[s.leaderboardId]) {
+                                    series.scores[s.leaderboardId].diffPp = series.scores[s.leaderboardId].pp > 0 && idx !== compareToIdx
+                                            ? await getCachedScoreWithNewPp(playersSeries[compareToIdx].id, {[s.leaderboardId]: {pp: series.scores[s.leaderboardId].pp}})
+                                            : null;
+                                }
+                            }
+
+                            if(s.bestIdx) s.bestDiffPp = playersSeries[s.bestIdx].scores[s.leaderboardId].diffPp;
+                            if(s.bestRealIdx) s.bestRealDiffPp = playersSeries[s.bestRealIdx].scores[s.leaderboardId].diffPp;
+                        }
+
                         return s;
-                    })
+                    })))
+
+                    // filter when sniper mode, player is the best and diff > minPpDiff
+                    .filter(s =>
+                            allFilters.songType.id !== 'rankeds_with_not_played' ||
+                            (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, allFilters.minPpDiff))
+                    )
+
 
                     // TODO: temp only
                     .sort((a, b) => {
@@ -736,7 +660,7 @@
 
             console.timeEnd("calc");
 
-            console.log(songsToFilter[1], playersSeries.map(p => p.scores[190817]));
+            console.log(songsToFilter[1]); console.table(playersSeries.map(p => p.scores[190817]));console.table(playersSeries.map(p => p.scores[182350]));
 
             console.warn("calculatingEnd", playersSeries, songsToFilter)
 
@@ -1061,6 +985,9 @@
 
     .compact-timeset-val {
         border-bottom: 1px dashed #666;
+    }
+    .compact-diffPp-val {
+        font-size: 1.25em;
     }
     .compact-pp-val {
         font-size: 1.15em;
