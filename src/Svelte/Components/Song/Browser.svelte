@@ -260,7 +260,9 @@
 
     // post-filters
     const bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiffPp && song.bestDiffPp > minPpDiff;
+    const playerDoesNotPlaySongYet = (leaderboardId, series) => !getSeriesSong(leaderboardId, series)
     const playerIsNotTheBest = (leaderboardId, series) => !getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best
+    const nobodyPlayedItYet = song => song.bestIdx === null;
     const playerAccIsLowerThanEstimated = (leaderboardId, playerSeries, estSeries, minDiff = 1) => {
         const playerScore = getSeriesSong(leaderboardId, playerSeries);
         const estScore = getSeriesSong(leaderboardId, estSeries);
@@ -286,8 +288,6 @@
 
         const data = await promised;
         if(!data) return;
-
-        console.warn("paged", data)
 
         pagerTotal = data.songs.length;
 
@@ -394,8 +394,6 @@
         // force refresh
         allColumns = allColumns.splice(0);
 
-        console.log(allColumns);
-
         forceFiltersChanged()
     }
 
@@ -403,106 +401,30 @@
     const onFilterStarsChange = debounce(e => allFilters.starsFilter = Object.assign({}, allFilters.starsFilter), DEBOUNCE_DELAY);
     const onFilterMinPlusPpChanged = debounce(e => allFilters.minPpDiff = e.detail, DEBOUNCE_DELAY * 2);
 
-    async function promiseGetData(playerId, snipedIds, minStarsForSniperPromise, starsFilter, minPpDiff = 1, withEstimate = true, sortedBy = sortBy, songType = songType, filterName = "") {
-        /*
-
-        const filteredSongs = songs
-                .filter(s =>
-                        (songType.id !== 'rankeds' || bestSeriesGivesAtLeastMinPpDiff(s, minPpDiff)) &&
-                        (songType.id !== 'unrankeds' || songIsUnranked(s)) &&
-                        (
-                                playerIsNotTheBest(s.leaderboardId, series[0])
-                                || (withEstimate && playerAccIsLowerThanEstimated(s.leaderboardId, series[0], series[1]))
-                                || songIsUnranked(s)
-                        )
-                )
-                .sort((a, b) => {
-                    const key = songType.id === 'rankeds' ? 'diff' : 'acc';
-
-                    if (typeof sortedBy === 'number') {
-                        const scoreA = series[sortedBy] && series[sortedBy].scores && series[sortedBy].scores[a.leaderboardId] ? series[sortedBy].scores[a.leaderboardId] : null
-                        const scoreB = series[sortedBy] && series[sortedBy].scores && series[sortedBy].scores[a.leaderboardId] ? series[sortedBy].scores[b.leaderboardId] : null
-
-                        return (scoreB ? scoreB[key] : 0) - (scoreA ? scoreA[key] : 0)
-
-                    }
-
-                    return songType.id === 'rankeds' ? b.bestDiff - a.bestDiff : a.name.localeCompare(b.name);
-                })
-        ;
-
-        const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
-        for (const p of series) {
-            if (p.id === playerId) {
-                p.totalPp = await getCachedTotalPlayerPp(p.id);
-                continue;
-            }
-
-            const betterScores = convertArrayToObjectByKey(
-                    Object.values(p.scores)
-                            .filter(s => filteredSongsIds.includes(s.leaderboardId) && (!series[0].scores[s.leaderboardId] || s.pp > series[0].scores[s.leaderboardId].pp))
-                            .map(s => ({leaderboardId: s.leaderboardId, pp: s.pp})),
-                    'leaderboardId'
-            );
-            p.totalPp = await getCachedTotalPlayerPp(playerId, betterScores);
-            p.prevTotalPp = series[0].totalPp;
-        }
-
-        let bestTotalRealPp = 0
-        let bestTotalPp = 0;
-        if (snipedIds.length > 1) {
-            bestTotalRealPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestRealPp');
-            bestTotalPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestPp');
-        }
-
-        console.log(filteredSongs, series);
-
-        calculating = false;
-
-        console.timeEnd("calc")
-
-        return Object.assign(
-                {
-                    songs: filteredSongs,
-                    series
-                },
-
-                series.reduce((cum, s) => {
-                    if (s.id === playerId || s.estimateId === playerId) cum.playerSeries++;
-                    else cum.otherSeries++;
-                    return cum;
-                }, {playerSeries: 0, otherSeries: 0}),
-
-                {
-                    bestTotalRealPp,
-                    bestTotalPp
-                }
-        )
-         */
-    }
     async function calculate(playerId, snipedIds, filters) {
-        console.warn("calculating...", allFilters);
-        console.time("calc");
-
         calculating = true;
 
         await delay(0);
 
-        // TODO: ?
+        // main player series index
         const compareToIdx = 0;
 
         try {
+            const sortedRankeds = {};
+
             let playerIds = [playerId].concat(snipedIds);
-            let sortedRandkeds = {}
+
             const playerInfos = (await Promise.all(playerIds.map(async pId => getPlayerInfo(pId))))
-            const playersSeries = playerInfos
-                    .map(pInfo => {
+            const playersSeries = await Promise.all(playerInfos
+                    .map(async pInfo => {
                         const {lastPlay, recentPlay, scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
-                        // lets precache sorted rankeds
-                        sortedRandkeds[pInfo.id] = Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp);
+                        // set all players total pp to main player's total pp
+                        const shouldCalculateTotalPp = allFilters.songType.id === 'rankeds_with_not_played';
+                        playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
+                        playerInfo.totalPp = playerInfo.prevTotalPp;
 
-                        playerInfo.totalPp = sortedRandkeds[pInfo.id].reduce((cum, song, idx) => cum + Math.pow(0.965, idx) * song.pp, 0)
+                        if(!sortedRankeds[pInfo.id]) sortedRankeds[pInfo.id] = Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp);
 
                         return Object.assign(
                                 {},
@@ -516,7 +438,7 @@
                                                         score.timeset = dateFromString(s.timeset);
 
                                                         if (score.pp > 0 && !score.weightedPp) {
-                                                            score.weightedPp = getWeightedPp(sortedRandkeds[playerId], s.leaderboardId, true);
+                                                            score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);
                                                             s.weightedPp = score.weightedPp; // in order to cache for next iteration
                                                         }
 
@@ -526,7 +448,7 @@
                                     )
                                 }
                         )
-                    })
+                    }))
             const allPlayedSongs =
                     await Promise.all(
                             Object.values(playerInfos.reduce((cum, player) => Object.assign({}, cum, player.scores), {}))
@@ -547,7 +469,7 @@
                                     })
                     )
 
-            const songsToFilter = (await Promise.all((
+            const filteredSongs = (await Promise.all((
                     allFilters.songType.id === 'rankeds_with_not_played'
                             ? Object.values(Object.assign(
                             convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
@@ -628,7 +550,7 @@
                         if (allFilters.songType.id === 'rankeds_with_not_played') {
                             for (const idx in playersSeries) {
                                 // skip calculating if player is the best - will be filtered belowe
-                                if (playersSeries[compareToIdx].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
+                                if (playersSeries[0].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
 
                                 const series = playersSeries[idx];
 
@@ -650,8 +572,8 @@
                     .filter(s =>
                             allFilters.songType.id !== 'rankeds_with_not_played' ||
                             (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, allFilters.minPpDiff))
+                            || (allFilters.songType.id === 'rankeds_with_not_played' && nobodyPlayedItYet(s))
                     )
-
 
                     .sort((songA, songB) => {
                         let a, b;
@@ -674,15 +596,31 @@
                         return allFilters.sortBy.order === 'asc' ? a - b : b - a;
                     })
 
-            console.timeEnd("calc");
+            let bestTotalRealPp = 0
+            let bestTotalPp = 0;
 
-            console.log(songsToFilter[1]); console.table(playersSeries.map(p => p.scores[190817]));console.table(playersSeries.map(p => p.scores[182350]));
+            if (allFilters.songType.id === 'rankeds_with_not_played') {
+                const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
+                for (const p of playersSeries) {
+                    const betterScores = convertArrayToObjectByKey(
+                            Object.values(p.scores)
+                                    .filter(s => filteredSongsIds.includes(s.leaderboardId) && (!playersSeries[compareToIdx].scores[s.leaderboardId] || s.pp > playersSeries[compareToIdx].scores[s.leaderboardId].pp))
+                                    .map(s => ({leaderboardId: s.leaderboardId, pp: s.pp})),
+                            'leaderboardId'
+                    );
+                    p.totalPp = await getCachedTotalPlayerPp(playerId, betterScores);
+                }
 
-            console.warn("calculatingEnd", playersSeries, songsToFilter)
+
+                if (snipedIds.length > 1) {
+                    bestTotalRealPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestRealPp');
+                    bestTotalPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestPp');
+                }
+            }
 
             calculating = false;
 
-            return {songs: songsToFilter, series: playersSeries}
+            return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
         } catch(err) {
             console.error(err)
         }
@@ -691,10 +629,9 @@
     $: shownColumns = allColumns.filter(c => c.displayed)
     $: columnsQty = allColumns.reduce((sum, c) => sum + (c.isColumn && c.selected ? 1 : 0), 0);
     $: selectedCols = allColumns.filter(c => c.isColumn && c.selected)
-    $: shouldCalculateTotalPp = getObjectFromArrayByKey(allColumns, 'diffPp').selected && ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)
+    $: shouldCalculateTotalPp = getObjectFromArrayByKey(allColumns, 'diffPp').selected && 'rankeds_with_not_played' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters) : null;
     // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;
-    // $: promised = promiseGetData(playerId, snipedIds, getCachedMinStars(playerId, minPpPerMap), starsFilter, minPpDiff, getObjectFromArrayByKey(allColumns, 'estimate').selected, sortBy, allFilters.songType, debouncedFilterName);
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
 </script>
 
@@ -863,10 +800,8 @@
             </tr>
             <tr>
                 {#if selectedCols.length}
-                    <th class="left"
-                        colspan={selectedCols.length * (songsPage.series.length - 1)}>
-                        BEST VAL
-                        <!--                    <Value value={series.totalPp} prevValue={showColumns.diff ? series.prevTotalPp : null} suffix="pp"/>-->
+                    <th class="left" colspan={selectedCols.length * (songsPage.series.length - 1)}>
+                        <Value value={songsPage.bestTotalRealPp} prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? songsPage.series[0].totalPp : null} suffix="pp"/>
                     </th>
                 {/if}
             </tr>
