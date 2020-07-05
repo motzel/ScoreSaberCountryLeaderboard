@@ -661,9 +661,9 @@
                 }
 
 
-                if (snipedIds.length > 1) {
-                    bestTotalRealPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestRealPp');
-                    bestTotalPp = await getPlayerTotalPpWithBestScores(filteredSongs, 'bestPp');
+                if (snipedIds.length >= 1) {
+                    bestTotalRealPp = snipedIds.length === 1 ? playersSeries[1].totalPp : await getPlayerTotalPpWithBestScores(filteredSongs, 'bestRealPp');
+                    bestTotalPp = snipedIds.length === 1 ? playersSeries[1].totalPp : await getPlayerTotalPpWithBestScores(filteredSongs, 'bestPp');
                 }
             }
 
@@ -855,13 +855,13 @@
             {#if shouldCalculateTotalPp}
                 <tfoot>
                 <tr>
-                    <th class="song" rowspan="2"
+                    <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                         colspan={allFilters.songType.id !== 'unrankeds' ? 2 + (getObjectFromArrayByKey(allColumns, 'stars').selected ? 1 : 0) + (getObjectFromArrayByKey(allColumns, 'maxPp').selected ? 1 : 0) : 2}>
                         Razem dla {songsPage.series[0].name}</th>
                     {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'tabular'}
                             {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
-                                <th class="left" rowspan={series.id !== playerId ? 1 : 2}
+                                <th class="left" rowspan={series.id !== playerId ? 1 : (songsPage.series.length > 2 ? 2 : 1)}
                                     colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}>
                                     <Value value={series.totalPp}
                                            prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? series.prevTotalPp : null}
@@ -878,7 +878,7 @@
                     {/each}
                 </tr>
                 <tr>
-                    {#if selectedCols.length}
+                    {#if selectedCols.length && songsPage.series.length > 2}
                         <th class="left" colspan={selectedCols.length * (songsPage.series.length - 1)}>
                             <Value value={songsPage.bestTotalRealPp}
                                    prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? songsPage.series[0].totalPp : null}
