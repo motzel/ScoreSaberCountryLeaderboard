@@ -31,6 +31,7 @@
     import MultiRange from "../Common/MultiRange.svelte";
     import {tick} from "svelte";
     import {round} from "../../../utils/format";
+    import WhatIfPp from "./WhatIfPp.svelte";
 
     export let playerId = getMainUserId();
     export let snipedIds = [];
@@ -291,6 +292,7 @@
     function getEmptyNewPages() {
         return {songs: [], series: []}
     }
+
     function completeFetchingNewPage(data) {
         songsPage = data;
     }
@@ -800,6 +802,7 @@
                                                     </strong>
                                                 </div>
                                             {/if}
+                                            {#if col.key === 'pp' && allFilters.songType.id !== 'rankeds_with_not_played'}<WhatIfPp leaderboardId={song.leaderboardId} pp={getScoreValueByKey(series, song, col.key)} />{/if}
                                         {/if}
                                     {/if}{/each}
                                 {:else}
@@ -973,6 +976,10 @@
     }
     tfoot th.song {
         text-align: left !important;
+    }
+
+    tbody td {
+        position: relative;
     }
 
     tbody td.best {
