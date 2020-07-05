@@ -327,12 +327,14 @@
 
                     if (song.maxScoreEx) {
                         series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx * 100;
+                        series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx * 100 : null;
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         getSongMaxScoreWithDiffAndType(song.id, song.diff, false, true).then(async maxScoreEx => {
                             if (maxScoreEx) {
                                 song.maxScoreEx = maxScoreEx;
                                 series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx * 100;
+                                series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx * 100 : null;
 
                                 // if page has not been changed during song fetch
                                 if (current === currentPage) completeFetchingNewPage(songPage)
@@ -419,6 +421,8 @@
 
         await delay(0);
 
+        console.time("calc")
+
         // main player series index
         const compareToIdx = 0;
 
@@ -482,6 +486,8 @@
                                     })
                     )
 
+            const allPlayedSongsObj = convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId')
+
             const filteredSongs = (await Promise.all((
                     filters.songType.id === 'rankeds_with_not_played'
                             ? Object.values(Object.assign(
@@ -513,35 +519,38 @@
                         s.bestDiffPp = 0;
                         s.bestRealDiffPp = 0;
 
-                        if(s.maxScoreEx) {
-                            playersSeries.forEach((series, idx) => {
-                                if(series.scores[s.leaderboardId]) {
-                                    series.scores[s.leaderboardId].acc = series.scores[s.leaderboardId].score / s.maxScoreEx * 100;
-                                    series.scores[s.leaderboardId].diffPp = null;
 
-                                    // get previous player scores
-                                    if(idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
-                                        series.prevLabel = "Poprzednio";
+                        playersSeries.forEach((series, idx) => {
+                            if(series.scores[s.leaderboardId]) {
+                                const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
+                                const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
 
-                                        ["pp", "score", "uScore"].forEach(key => {
-                                            series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
-                                        })
-                                        series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
-                                        series.scores[s.leaderboardId].prevAcc = series.scores[s.leaderboardId].prevScore / s.maxScoreEx * 100;
-                                    }
+                                series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx * 100 : null;
 
-                                    if(idx > 0) {
-                                        // get player score to compare
-                                        series.prevLabel = playersSeries[0].name;
+                                series.scores[s.leaderboardId].diffPp = null;
 
-                                        const playerScoreToCompare = playersSeries[0].scores[s.leaderboardId];
-                                        ["acc", "pp", "score", "timeset", "uScore"].forEach(key => {
-                                            series.scores[s.leaderboardId]['prev' + capitalize(key)] = playerScoreToCompare ? playerScoreToCompare[key] : null;
-                                        })
-                                    }
+                                // get previous player scores
+                                if(idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
+                                    series.prevLabel = "Poprzednio";
+
+                                    ["pp", "score", "uScore"].forEach(key => {
+                                        series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
+                                    })
+                                    series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
+                                    series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx * 100 : null;
                                 }
-                            })
-                        }
+
+                                if(idx > 0) {
+                                    // get player score to compare
+                                    series.prevLabel = playersSeries[0].name;
+
+                                    const playerScoreToCompare = playersSeries[0].scores[s.leaderboardId];
+                                    ["acc", "pp", "score", "timeset", "uScore"].forEach(key => {
+                                        series.scores[s.leaderboardId]['prev' + capitalize(key)] = playerScoreToCompare ? playerScoreToCompare[key] : null;
+                                    })
+                                }
+                            }
+                        })
 
                         const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, true, 'score');
                         if (null !== bestIdx) {
@@ -654,6 +663,7 @@
 
             calculating = false;
 
+            console.timeEnd("calc")
             console.warn(filteredSongs, playersSeries, bestTotalRealPp, bestTotalPp)
 
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
