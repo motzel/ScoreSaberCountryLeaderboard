@@ -699,6 +699,7 @@
 {:then calc}
     {#if songsPage.songs.length}
         <table class="ranking sspl">
+            {#if viewType.id !== 'compact' || songsPage.series.length > 1}
             <thead>
             <tr>
                 <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
@@ -730,6 +731,7 @@
                 </tr>
             {/if}
             </thead>
+            {/if}
 
             <tbody>
             {#each songsPage.songs as song (song.leaderboardId)}
@@ -749,7 +751,7 @@
                     {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}<td class="maxPp left middle"><Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-" /></td>{/if}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
-                            <td class="left compact" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                            <td class="left compact series-{songsPage.series.length}" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                 {#if getScoreValueByKey(series, song, 'score')}
                                     {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                         {#if col.key === 'timeset'}
@@ -947,6 +949,9 @@
 
     tbody td.compact {
         width: 12rem;
+    }
+    tbody td.compact.left.series-1 {
+        border-left: none;
     }
 
     .compact-timeset-val {
