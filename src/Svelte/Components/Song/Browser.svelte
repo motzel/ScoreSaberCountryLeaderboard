@@ -410,6 +410,8 @@
                 break;
         }
 
+        currentPage = 0;
+
         // force refresh
         allColumns = allColumns.splice(0);
 
