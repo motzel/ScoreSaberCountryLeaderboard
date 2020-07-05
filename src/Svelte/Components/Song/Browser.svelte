@@ -926,8 +926,8 @@
         text-align: left !important;
     }
 
-    td.best {
-        background-color: #555;
+    tbody td.best {
+        background: linear-gradient(90deg, rgba(51,51,51,1) 0%, rgba(85,85,85,1) 50%, rgba(51,51,51,1) 100%);
     }
 
     tbody td.compact {
