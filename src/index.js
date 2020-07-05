@@ -4,7 +4,7 @@ import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
-import Comparator from './Svelte/Components/Song/Browser.svelte';
+import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 
 import log from './utils/logger';
 import {default as config, getMainUserId} from './temp';
@@ -340,11 +340,10 @@ async function setupProfile() {
             box.classList.add('has-shadow');
             level.parentNode.parentNode.insertBefore(box, level.parentNode);
 
-            new Comparator({
+            new SongBrowser({
                 target: box,
                 props: {
-                    playerId: profileId,
-                    snipedIds: ["76561198139207783", "76561198067674748"]
+                    playerId: profileId
                 }
             })
         }

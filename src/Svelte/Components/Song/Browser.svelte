@@ -16,6 +16,7 @@
     import Difficulty from "../Common/Difficulty.svelte";
     import Value from "../Common/Value.svelte";
     import {
+        getCountryRanking,
         getPlayerInfo,
         getPlayerRankedScores,
         getPlayerScores,
@@ -38,6 +39,8 @@
     const DEBOUNCE_DELAY = 400;
 
     let initialized = false;
+    let countryRanking = [];
+    let sniperModeIds = [];
     let minStarsForSniper = 0;
     let maxStars = 100;
     let songTypes = [
@@ -74,8 +77,18 @@
     const getMaxScoreExFromPlayersScores = async leaderboardId => Object.values((await getCacheAndConvertIfNeeded()).users).reduce((maxScore, player) => !maxScore && player.scores && player.scores[leaderboardId] && player.scores[leaderboardId].maxScoreEx ? player.scores[leaderboardId].maxScoreEx : maxScore, null)
     const getCachedMaxScoreExFromPlayersScores = memoize(getMaxScoreExFromPlayersScores);
 
-            // initialize async values
+    // initialize async values
     (async () => {
+        // add snipeds if not defined
+        if(!snipedIds || !snipedIds.length) {
+            countryRanking = await getCountryRanking();
+            const player = countryRanking.find(p => p.id === playerId)
+            if (player) {
+                if(player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
+                if(player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
+            }
+        }
+
         allRankeds = await getRankedSongs();
         maxStars = (await Promise.all(
                 Object.values(allRankeds)
@@ -596,8 +609,8 @@
                         return allFilters.sortBy.order === 'asc' ? a - b : b - a;
                     })
 
-            let bestTotalRealPp = 0
-            let bestTotalPp = 0;
+            let bestTotalRealPp = playersSeries[compareToIdx].totalPp
+            let bestTotalPp = playersSeries[compareToIdx].totalPp;
 
             if (allFilters.songType.id === 'rankeds_with_not_played') {
                 const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
@@ -620,6 +633,8 @@
 
             calculating = false;
 
+            console.warn(filteredSongs, playersSeries, bestTotalRealPp, bestTotalPp)
+
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
         } catch(err) {
             console.error(err)
@@ -630,7 +645,7 @@
     $: columnsQty = allColumns.reduce((sum, c) => sum + (c.isColumn && c.selected ? 1 : 0), 0);
     $: selectedCols = allColumns.filter(c => c.isColumn && c.selected)
     $: shouldCalculateTotalPp = getObjectFromArrayByKey(allColumns, 'diffPp').selected && 'rankeds_with_not_played' === allFilters.songType.id
-    $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters) : null;
+    $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
     // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
 </script>

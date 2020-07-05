@@ -13,6 +13,21 @@ export const mapUsersToObj = (playerIds, players) => playerIds.reduce((cum, play
     return cum;
 }, {})
 
+export const getCountryRanking = async (country = config.COUNTRY) => {
+    const players = (await getCacheAndConvertIfNeeded())?.users;
+    return players
+        ? Object.values(players)
+            .filter(p => isActiveCountryUser(p, country))
+            .sort((a,b) => b.pp - a.pp)
+            .map((p, idx) => {
+                p.countryRank = idx + 1
+
+                return p;
+            })
+            .slice(0, 50)
+        : null;
+}
+
 export const getPlayerInfo = async playerId => {
     const data = await getCacheAndConvertIfNeeded();
     return data?.users?.[playerId] ? data.users[playerId] : null;
