@@ -344,6 +344,7 @@ async function setupProfile() {
                 target: box,
                 props: {
                     playerId: profileId
+                    ,snipedIds: ["76561198139207783", "76561198067674748"]
                 }
             })
         }

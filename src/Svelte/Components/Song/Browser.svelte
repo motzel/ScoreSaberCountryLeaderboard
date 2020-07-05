@@ -518,6 +518,27 @@
                                 if(series.scores[s.leaderboardId]) {
                                     series.scores[s.leaderboardId].acc = series.scores[s.leaderboardId].score / s.maxScoreEx * 100;
                                     series.scores[s.leaderboardId].diffPp = null;
+
+                                    // get previous player scores
+                                    if(idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
+                                        series.prevLabel = "Poprzednio";
+
+                                        ["pp", "score", "uScore"].forEach(key => {
+                                            series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
+                                        })
+                                        series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
+                                        series.scores[s.leaderboardId].prevAcc = series.scores[s.leaderboardId].prevScore / s.maxScoreEx * 100;
+                                    }
+
+                                    if(idx > 0) {
+                                        // get player score to compare
+                                        series.prevLabel = playersSeries[0].name;
+
+                                        const playerScoreToCompare = playersSeries[0].scores[s.leaderboardId];
+                                        ["acc", "pp", "score", "timeset", "uScore"].forEach(key => {
+                                            series.scores[s.leaderboardId]['prev' + capitalize(key)] = playerScoreToCompare ? playerScoreToCompare[key] : null;
+                                        })
+                                    }
                                 }
                             })
                         }
@@ -751,7 +772,7 @@
                     {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}<td class="maxPp left middle"><Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-" /></td>{/if}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
-                            <td class="left compact series-{songsPage.series.length}" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                            <td class="left compact series-{songsPage.series.length}" class:with-cols={getObjectFromArrayByKey(allColumns, 'stars').selected || getObjectFromArrayByKey(allColumns, 'maxPp').selected} class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                 {#if getScoreValueByKey(series, song, 'score')}
                                     {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                         {#if col.key === 'timeset'}
@@ -762,8 +783,8 @@
                                                     {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}:{/if}
                                                     <strong class={'compact-' + col.key + '-val'}>
                                                         <Value value={getScoreValueByKey(series, song, col.key)}
-                                                               prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? getScoreValueByKey(songsPage.series[0], song, col.key) : null}
-                                                               prevLabel={songsPage.series[0].name} inline={true}
+                                                               prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                               prevLabel={series.prevLabel} inline={true}
                                                                {...col.valueProps}
                                                         />
                                                     </strong>
@@ -782,7 +803,8 @@
                                         <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                     {:else}
                                         <Value value={getScoreValueByKey(series, song, col.key)}
-                                           prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? getScoreValueByKey(songsPage.series[0], song, col.key) : null}
+                                           prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                           prevLabel={series.prevLabel}
                                             {...col.valueProps}
                                            />
                                     {/if}
@@ -950,7 +972,7 @@
     tbody td.compact {
         width: 12rem;
     }
-    tbody td.compact.left.series-1 {
+    tbody td.compact.left.series-1:not(.with-cols) {
         border-left: none;
     }
 
