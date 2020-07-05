@@ -433,7 +433,7 @@
                         const {lastPlay, recentPlay, scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
                         // set all players total pp to main player's total pp
-                        const shouldCalculateTotalPp = allFilters.songType.id === 'rankeds_with_not_played';
+                        const shouldCalculateTotalPp = filters.songType.id === 'rankeds_with_not_played';
                         playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
                         playerInfo.totalPp = playerInfo.prevTotalPp;
 
@@ -483,7 +483,7 @@
                     )
 
             const filteredSongs = (await Promise.all((
-                    allFilters.songType.id === 'rankeds_with_not_played'
+                    filters.songType.id === 'rankeds_with_not_played'
                             ? Object.values(Object.assign(
                             convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
                             allRankeds
@@ -492,12 +492,12 @@
             )
                     .filter(s =>
                             // filter by name
-                            (!allFilters.name.length || filterBySongName(s, allFilters.name)) &&
+                            (!filters.name.length || filterBySongName(s, filters.name)) &&
 
                             // filter by type & stars
                             (
-                                    (songIsUnranked(s) && ['unrankeds', 'all'].includes(allFilters.songType.id)) ||
-                                    (allFilters.songType.id !== 'unrankeds' && mapHasStars(s, allFilters.starsFilter.from, allFilters.starsFilter.to))
+                                    (songIsUnranked(s) && ['unrankeds', 'all'].includes(filters.songType.id)) ||
+                                    (filters.songType.id !== 'unrankeds' && mapHasStars(s, filters.starsFilter.from, filters.starsFilter.to))
                             )
                     )
 
@@ -581,7 +581,7 @@
                             }
                         }
 
-                        if (allFilters.songType.id === 'rankeds_with_not_played') {
+                        if (filters.songType.id === 'rankeds_with_not_played') {
                             for (const idx in playersSeries) {
                                 // skip calculating if player is the best - will be filtered belowe
                                 if (playersSeries[0].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
@@ -604,36 +604,36 @@
 
                     // filter when sniper mode, player is the best and diff > minPpDiff
                     .filter(s =>
-                            allFilters.songType.id !== 'rankeds_with_not_played' ||
-                            (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, allFilters.minPpDiff))
-                            || (allFilters.songType.id === 'rankeds_with_not_played' && nobodyPlayedItYet(s))
+                            filters.songType.id !== 'rankeds_with_not_played' ||
+                            (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                            || (filters.songType.id === 'rankeds_with_not_played' && nobodyPlayedItYet(s))
                     )
 
                     .sort((songA, songB) => {
                         let a, b;
 
-                        switch(allFilters.sortBy.type) {
+                        switch(filters.sortBy.type) {
                             case 'song':
-                                a = songA[allFilters.sortBy.field]
-                                b = songB[allFilters.sortBy.field]
+                                a = songA[filters.sortBy.field]
+                                b = songB[filters.sortBy.field]
                                 break;
 
                             case 'series':
                             default:
-                                const sortIdx = allFilters.sortBy.subtype;
-                                const field = allFilters.sortBy.field;
+                                const sortIdx = filters.sortBy.subtype;
+                                const field = filters.sortBy.field;
                                 a = playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[songA.leaderboardId] ? playersSeries[sortIdx].scores[songA.leaderboardId][field] : null
                                 b = playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[songB.leaderboardId] ? playersSeries[sortIdx].scores[songB.leaderboardId][field] : null
                                 break;
                         }
 
-                        return allFilters.sortBy.order === 'asc' ? a - b : b - a;
+                        return filters.sortBy.order === 'asc' ? a - b : b - a;
                     })
 
             let bestTotalRealPp = playersSeries[compareToIdx].totalPp
             let bestTotalPp = playersSeries[compareToIdx].totalPp;
 
-            if (allFilters.songType.id === 'rankeds_with_not_played') {
+            if (filters.songType.id === 'rankeds_with_not_played') {
                 const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
                 for (const p of playersSeries) {
                     const betterScores = convertArrayToObjectByKey(
