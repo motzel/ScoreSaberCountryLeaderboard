@@ -81,12 +81,12 @@
     // initialize async values
     (async () => {
         // add snipeds if not defined
-        if(!snipedIds || !snipedIds.length) {
+        if (!snipedIds || !snipedIds.length) {
             countryRanking = await getCountryRanking();
             const player = countryRanking.find(p => p.id === playerId)
             if (player) {
-                if(player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
-                if(player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
+                if (player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
+                if (player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
             }
         }
 
@@ -252,6 +252,7 @@
 
         return bestIdx;
     }
+
     async function getPlayerTotalPpWithBestScores(songs, key = 'bestRealPp') {
         const bestScores = convertArrayToObjectByKey(songs.filter(s => s[key]).map(s => ({
             leaderboardId: s.leaderboardId,
@@ -297,12 +298,13 @@
         songsPage = data;
     }
 
-    let songsPage = getEmptyNewPages();``
+    let songsPage = getEmptyNewPages();
+
     async function promiseGetPage(promised, current, itemsPerPage) {
         completeFetchingNewPage(getEmptyNewPages());
 
         const data = await promised;
-        if(!data) return;
+        if (!data) return;
 
         pagerTotal = data.songs.length;
 
@@ -364,7 +366,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+                allFilters.sortBy = {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
 
             case 'all':
@@ -377,7 +379,7 @@
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
-                allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+                allFilters.sortBy = {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
 
             case 'rankeds_with_not_played':
@@ -389,8 +391,8 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
-                allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper,1);
-                allFilters.sortBy =  {type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc'}
+                allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper, 1);
+                allFilters.sortBy = {type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc'}
                 break;
 
             case 'rankeds':
@@ -404,7 +406,7 @@
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
-                allFilters.sortBy =  {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+                allFilters.sortBy = {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
                 break;
         }
 
@@ -443,7 +445,7 @@
                         playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
                         playerInfo.totalPp = playerInfo.prevTotalPp;
 
-                        if(!sortedRankeds[pInfo.id]) sortedRankeds[pInfo.id] = Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp);
+                        if (!sortedRankeds[pInfo.id]) sortedRankeds[pInfo.id] = Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp);
 
                         return Object.assign(
                                 {},
@@ -523,7 +525,7 @@
 
 
                         playersSeries.forEach((series, idx) => {
-                            if(series.scores[s.leaderboardId]) {
+                            if (series.scores[s.leaderboardId]) {
                                 const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
                                 const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
 
@@ -532,7 +534,7 @@
                                 series.scores[s.leaderboardId].diffPp = null;
 
                                 // get previous player scores
-                                if(idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
+                                if (idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
                                     series.prevLabel = "Poprzednio";
 
                                     ["pp", "score", "uScore"].forEach(key => {
@@ -542,7 +544,7 @@
                                     series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx * 100 : null;
                                 }
 
-                                if(idx > 0) {
+                                if (idx > 0) {
                                     // get player score to compare
                                     series.prevLabel = playersSeries[0].name;
 
@@ -606,8 +608,8 @@
                                 }
                             }
 
-                            if(s.bestIdx) s.bestDiffPp = playersSeries[s.bestIdx].scores[s.leaderboardId].diffPp;
-                            if(s.bestRealIdx) s.bestRealDiffPp = playersSeries[s.bestRealIdx].scores[s.leaderboardId].diffPp;
+                            if (s.bestIdx) s.bestDiffPp = playersSeries[s.bestIdx].scores[s.leaderboardId].diffPp;
+                            if (s.bestRealIdx) s.bestRealDiffPp = playersSeries[s.bestRealIdx].scores[s.leaderboardId].diffPp;
                         }
 
                         return s;
@@ -623,7 +625,7 @@
                     .sort((songA, songB) => {
                         let a, b;
 
-                        switch(filters.sortBy.type) {
+                        switch (filters.sortBy.type) {
                             case 'song':
                                 a = songA[filters.sortBy.field]
                                 b = songB[filters.sortBy.field]
@@ -669,7 +671,7 @@
             console.warn(filteredSongs, playersSeries, bestTotalRealPp, bestTotalPp)
 
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
-        } catch(err) {
+        } catch (err) {
             console.error(err)
         }
     }
@@ -694,16 +696,20 @@
     </div>
 
     <div class="filter-name">
-        <input type="text" placeholder="Nazwa nutki..." on:input={onFilterNameChange} />
+        <input type="text" placeholder="Nazwa nutki..." on:input={onFilterNameChange}/>
     </div>
 
     <div style="display: {allFilters.songType.id === 'rankeds_with_not_played' ? 'block' : 'none'}">
-        <Range label="+PP > " value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp" on:change={onFilterMinPlusPpChanged} />
+        <Range label="+PP > " value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp"
+               on:change={onFilterMinPlusPpChanged}/>
     </div>
 
     <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'block' : 'none'}">
         <header>Gwiazdki</header>
-        <MultiRange label="Gwiazdki" value={allFilters.starsFilter} min={allFilters.songType.id === 'rankeds_with_not_played' ? round(minStarsForSniper,1) : 0} max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true} on:change={onFilterStarsChange}/>
+        <MultiRange label="Gwiazdki" value={allFilters.starsFilter}
+                    min={allFilters.songType.id === 'rankeds_with_not_played' ? round(minStarsForSniper,1) : 0}
+                    max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true}
+                    on:change={onFilterStarsChange}/>
     </div>
 
     <div>
@@ -733,37 +739,37 @@
     {#if songsPage.songs.length}
         <table class="ranking sspl">
             {#if viewType.id !== 'compact' || songsPage.series.length > 1}
-            <thead>
-            <tr>
-                <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
-                {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}
-                    <th class="stars left middle" rowspan={viewType.id === 'compact' ? 1 : 2}>*</th>
-                {/if}
-                {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}
-                    <th class="maxPp left middle" rowspan={viewType.id === 'compact' ? 1 : 2}>Max PP</th>
-                {/if}
-                {#each songsPage.series as series (series.id+'_'+series.estimateId)}
-                    {#if viewType.id === 'compact'}
-                        <th class="left down">{series.name}</th>
-                    {:else}
-                        {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
-                            <th colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}
-                                class="series left">{series.name}</th>
-                        {/if}
-                    {/if}
-                {/each}
-            </tr>
-
-            {#if viewType.id !== 'compact'}
+                <thead>
                 <tr>
+                    <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
+                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}
+                        <th class="stars left middle" rowspan={viewType.id === 'compact' ? 1 : 2}>*</th>
+                    {/if}
+                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}
+                        <th class="maxPp left middle" rowspan={viewType.id === 'compact' ? 1 : 2}>Max PP</th>
+                    {/if}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
-                        {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                            <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
-                        {/if}{/each}
+                        {#if viewType.id === 'compact'}
+                            <th class="left down">{series.name}</th>
+                        {:else}
+                            {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
+                                <th colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}
+                                    class="series left">{series.name}</th>
+                            {/if}
+                        {/if}
                     {/each}
                 </tr>
-            {/if}
-            </thead>
+
+                {#if viewType.id !== 'compact'}
+                    <tr>
+                        {#each songsPage.series as series (series.id+'_'+series.estimateId)}
+                            {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
+                            {/if}{/each}
+                        {/each}
+                    </tr>
+                {/if}
+                </thead>
             {/if}
 
             <tbody>
@@ -780,19 +786,31 @@
                             </div>
                         </Song>
                     </td>
-                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}<td class="stars left middle"><Value value={song.stars} suffix="*" zero="" /></td>{/if}
-                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}<td class="maxPp left middle"><Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-" /></td>{/if}
+                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}
+                        <td class="stars left middle">
+                            <Value value={song.stars} suffix="*" zero=""/>
+                        </td>{/if}
+                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}
+                        <td class="maxPp left middle">
+                            <Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-"/>
+                        </td>{/if}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
-                            <td class="left compact series-{songsPage.series.length}" class:with-cols={getObjectFromArrayByKey(allColumns, 'stars').selected || getObjectFromArrayByKey(allColumns, 'maxPp').selected} class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                            <td class="left compact series-{songsPage.series.length}"
+                                class:with-cols={getObjectFromArrayByKey(allColumns, 'stars').selected || getObjectFromArrayByKey(allColumns, 'maxPp').selected}
+                                class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                 {#if getScoreValueByKey(series, song, 'score')}
                                     {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                         {#if col.key === 'timeset'}
-                                            <strong class={'compact-' + col.key + '-val'}><Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/></strong>
+                                            <strong class={'compact-' + col.key + '-val'}>
+                                                <Date date={getScoreValueByKey(series, song, col.key)}
+                                                      {...col.valueProps}/>
+                                            </strong>
                                         {:else}
                                             {#if getScoreValueByKey(series, song, col.key)}
                                                 <div>
-                                                    {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}:{/if}
+                                                    {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
+                                                        :{/if}
                                                     <strong class={'compact-' + col.key + '-val'}>
                                                         <Value value={getScoreValueByKey(series, song, col.key)}
                                                                prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
@@ -802,7 +820,9 @@
                                                     </strong>
                                                 </div>
                                             {/if}
-                                            {#if col.key === 'pp' && allFilters.songType.id !== 'rankeds_with_not_played'}<WhatIfPp leaderboardId={song.leaderboardId} pp={getScoreValueByKey(series, song, col.key)} />{/if}
+                                            {#if col.key === 'pp' && allFilters.songType.id !== 'rankeds_with_not_played'}
+                                                <WhatIfPp leaderboardId={song.leaderboardId}
+                                                          pp={getScoreValueByKey(series, song, col.key)}/>{/if}
                                         {/if}
                                     {/if}{/each}
                                 {:else}
@@ -811,15 +831,16 @@
                             </td>
                         {:else}
                             {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                <td class={'left ' + col.key} class:middle={idx > 0} class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                                <td class={'left ' + col.key} class:middle={idx > 0}
+                                    class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                     {#if col.key === 'timeset'}
                                         <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                     {:else}
                                         <Value value={getScoreValueByKey(series, song, col.key)}
-                                           prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
-                                           prevLabel={series.prevLabel}
-                                            {...col.valueProps}
-                                           />
+                                               prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                               prevLabel={series.prevLabel}
+                                               {...col.valueProps}
+                                        />
                                     {/if}
                                 </td>
                             {/if}{/each}
@@ -830,34 +851,40 @@
             </tbody>
 
             {#if shouldCalculateTotalPp}
-            <tfoot>
-            <tr>
-                <th class="song" rowspan="2" colspan={allFilters.songType.id !== 'unrankeds' ? 2 + (getObjectFromArrayByKey(allColumns, 'stars').selected ? 1 : 0) + (getObjectFromArrayByKey(allColumns, 'maxPp').selected ? 1 : 0) : 2}>Razem dla {songsPage.series[0].name}</th>
-                {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
-                    {#if viewType.id === 'tabular'}
-                        {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
-                            <th class="left" rowspan={series.id !== playerId ? 1 : 2}
-                                colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}>
-                                <Value value={series.totalPp} prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? series.prevTotalPp : null}
+                <tfoot>
+                <tr>
+                    <th class="song" rowspan="2"
+                        colspan={allFilters.songType.id !== 'unrankeds' ? 2 + (getObjectFromArrayByKey(allColumns, 'stars').selected ? 1 : 0) + (getObjectFromArrayByKey(allColumns, 'maxPp').selected ? 1 : 0) : 2}>
+                        Razem dla {songsPage.series[0].name}</th>
+                    {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
+                        {#if viewType.id === 'tabular'}
+                            {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
+                                <th class="left" rowspan={series.id !== playerId ? 1 : 2}
+                                    colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}>
+                                    <Value value={series.totalPp}
+                                           prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? series.prevTotalPp : null}
+                                           suffix="pp"/>
+                                </th>
+                            {/if}
+                        {:else}
+                            <th class="left">
+                                <Value value={series.totalPp}
+                                       prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? series.prevTotalPp : null}
                                        suffix="pp"/>
                             </th>
                         {/if}
-                    {:else}
-                        <th class="left">
-                            <Value value={series.totalPp} prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? series.prevTotalPp : null}
+                    {/each}
+                </tr>
+                <tr>
+                    {#if selectedCols.length}
+                        <th class="left" colspan={selectedCols.length * (songsPage.series.length - 1)}>
+                            <Value value={songsPage.bestTotalRealPp}
+                                   prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? songsPage.series[0].totalPp : null}
                                    suffix="pp"/>
                         </th>
                     {/if}
-                {/each}
-            </tr>
-            <tr>
-                {#if selectedCols.length}
-                    <th class="left" colspan={selectedCols.length * (songsPage.series.length - 1)}>
-                        <Value value={songsPage.bestTotalRealPp} prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? songsPage.series[0].totalPp : null} suffix="pp"/>
-                    </th>
-                {/if}
-            </tr>
-            </tfoot>
+                </tr>
+                </tfoot>
             {/if}
         </table>
     {:else}
@@ -868,12 +895,13 @@
     {/if}
 {/await}
 
-<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} hide={calculating} />
+<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} hide={calculating}/>
 
 <style>
     .columns label {
         margin-right: .25rem;
     }
+
     table.ranking.sspl {
         font-size: 0.875rem;
         border-width: 1px;
@@ -974,6 +1002,7 @@
         vertical-align: middle !important;
         border-top-width: 2px;
     }
+
     tfoot th.song {
         text-align: left !important;
     }
@@ -983,12 +1012,13 @@
     }
 
     tbody td.best {
-        background: linear-gradient(90deg, rgba(51,51,51,1) 0%, rgba(85,85,85,1) 50%, rgba(51,51,51,1) 100%);
+        background: linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%);
     }
 
     tbody td.compact {
         width: 12rem;
     }
+
     tbody td.compact.left.series-1:not(.with-cols) {
         border-left: none;
     }
@@ -996,13 +1026,16 @@
     .compact-timeset-val {
         border-bottom: 1px dashed #666;
     }
+
     .compact-diffPp-val {
         font-size: 1.25em;
     }
+
     .compact-pp-val {
         font-size: 1.15em;
         color: var(--ppColour) !important;
     }
+
     .compact-acc-val {
         font-size: 1.1em;
     }
@@ -1014,6 +1047,7 @@
         width: calc(100% + 1.5rem);
         align-items: flex-end;
     }
+
     .filters > :global(*) {
         margin: 1.5rem 0 0 1.5rem;
     }
@@ -1040,8 +1074,8 @@
     select, input {
         font-size: 1rem;
         border: none;
-        color: var(--textColor,#000);
-        background-color: var(--foreground,#fff);
+        color: var(--textColor, #000);
+        background-color: var(--foreground, #fff);
         outline: none;
     }
 
