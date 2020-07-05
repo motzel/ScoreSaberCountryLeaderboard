@@ -734,7 +734,7 @@
                     {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}<td class="maxPp left middle"><Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-" /></td>{/if}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
-                            <td class="left compact" class:best={getScoreValueByKey(series, song, 'best')}>
+                            <td class="left compact" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                 {#if getScoreValueByKey(series, song, 'score')}
                                     {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                         {#if col.key === 'timeset'}
@@ -760,7 +760,7 @@
                             </td>
                         {:else}
                             {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                <td class={'left ' + col.key} class:middle={idx > 0} class:best={getScoreValueByKey(series, song, 'best')}>
+                                <td class={'left ' + col.key} class:middle={idx > 0} class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                     {#if col.key === 'timeset'}
                                         <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                     {:else}
