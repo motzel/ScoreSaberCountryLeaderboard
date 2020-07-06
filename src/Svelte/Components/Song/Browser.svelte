@@ -29,7 +29,7 @@
     import {extractDiffAndType, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "../../../song";
     import Date from "../Common/Date.svelte";
     import MultiRange from "../Common/MultiRange.svelte";
-    import {tick} from "svelte";
+    import {onMount, tick} from "svelte";
     import {round} from "../../../utils/format";
     import WhatIfPp from "./WhatIfPp.svelte";
 
@@ -38,6 +38,11 @@
     export let minPpPerMap = 1;
 
     const DEBOUNCE_DELAY = 400;
+
+    let lightMode = false;
+    onMount(() => {
+        lightMode = getComputedStyle(document.documentElement).getPropertyValue('--background') === 'white';
+    })
 
     let initialized = false;
     let countryRanking = [];
@@ -729,7 +734,7 @@
             calculating = false;
 
             console.timeEnd("calc")
-            console.warn(filteredSongs, playersSeries, bestTotalRealPp, bestTotalPp, playersSeries[0].scores[86492])
+            console.warn(filteredSongs, playersSeries, await getCacheAndConvertIfNeeded())
 
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
         } catch (err) {
@@ -818,7 +823,7 @@
     </div>
 {:then calc}
     {#if songsPage.songs.length}
-        <table class="ranking sspl">
+        <table class="ranking sspl" class:light={lightMode}>
             {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                 <thead>
                 <tr>
@@ -861,10 +866,13 @@
                     </td>
                     <td class="song">
                         <Song song={song}>
-                            {song.name}
-                            <div>
-                                {song.songAuthor} <small>{song.levelAuthor}</small>
-                            </div>
+                            <figure>
+                                <img src="/imports/images/songs/{song.id}.png" />
+                                <div class="songinfo">
+                                    <span class="name">{song.name}</span>
+                                    <div class="author">{song.songAuthor} <small>{song.levelAuthor}</small></div>
+                                </div>
+                            </figure>
                         </Song>
                     </td>
                     {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}
@@ -1053,7 +1061,7 @@
         border-top-width: 1px;
     }
 
-    th.down, td.down {
+    td.down {
         border-bottom-style: solid;
         border-bottom-width: 1px;
     }
@@ -1071,6 +1079,24 @@
     th.left.middle, td.left.middle {
         border-left-style: dotted;
         border-left-width: 1px;
+    }
+
+    tbody td.song figure {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin: 0;
+    }
+
+    tbody td.song img {
+        flex: 0 1 40px;
+        width: 40px;
+        height: 40px;
+        margin: 0 1em 0 .5em;
+    }
+
+    tbody td.song .songinfo {
+        text-align: left;
     }
 
     tbody td.song small {
@@ -1094,6 +1120,10 @@
 
     tbody td.best {
         background: linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%);
+    }
+
+    table.light tbody td.best {
+        background: linear-gradient(90deg, rgba(201, 201, 201, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 201, 201, 1) 100%);
     }
 
     tbody td.compact {
