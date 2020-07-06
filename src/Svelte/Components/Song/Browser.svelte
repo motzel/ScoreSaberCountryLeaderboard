@@ -159,6 +159,7 @@
     let currentPage = 0;
     let itemsPerPage = 10;
     let pagerTotal = 0;
+    const itemsPerPageList = [5, 10, 15, 20, 25, 50]
 
     let allColumns = [
         {label: 'Gwiazdki', name: '*', key: 'stars', selected: false, isColumn: false, displayed: true},
@@ -354,7 +355,7 @@
         pagerTotal = data.songs.length;
 
         const songPage = Object.assign({}, data, {
-            songs: data.songs.slice(current * itemsPerPage, (current + 1) * itemsPerPage - 1),
+            songs: data.songs.slice(current * itemsPerPage, (current + 1) * itemsPerPage),
             total: pagerTotal
         });
 
@@ -800,6 +801,15 @@
             {/each}
         </select>
     </div>
+
+    <div>
+        <header>Wyniki / stronę</header>
+        <select bind:value={itemsPerPage}>
+            {#each itemsPerPageList as ipp}
+                <option value={ipp}>{ipp}</option>
+            {/each}
+        </select>
+    </div>
 </div>
 
 {#await pagedPromised}
@@ -980,7 +990,7 @@
 
     th, td {
         vertical-align: middle !important;
-        padding: 0.5em !important;
+        padding: 0.25em !important;
         border-color: #666 !important;
     }
 
