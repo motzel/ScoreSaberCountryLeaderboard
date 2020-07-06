@@ -50,12 +50,55 @@
         {id: 'unrankeds', text: 'Tylko nierankingowe'},
         {id: 'rankeds_with_not_played', text: 'Tryb snajpera'},
     ]
+    let sortTypes = [
+        {name: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
+    ]
+    const generateSortTypes = async _ => {
+        const types = [];
+
+        const data = (await getCacheAndConvertIfNeeded());
+
+        if(allFilters.songType.id === 'rankeds_with_not_played')
+            types.push({name: '+PP', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
+
+        if (data && data.users) {
+            const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []));
+            userIds.forEach((pId, idx) => {
+                const name = data.users[pId] ? data.users[pId].name : null;
+                if (name) {
+                    [
+                        {field: "timeset", name: "Data zagrania"},
+                        {field: "pp", name: "PP"},
+                        {field: "acc", name: "ACC"},
+                    ].forEach(field => {
+                        if ('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id))
+                            types.push({
+                                name: name + ': ' + field.name,
+                                type: 'series',
+                                subtype: idx,
+                                field: field.field,
+                                order: 'desc',
+                                enabled: true
+                            })
+                    })
+                }
+            })
+        }
+
+        types.push({name: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
+
+        sortTypes = types;
+        allFilters.sortBy = types[0];
+    }
+
+    const findSort = (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field);
+
     let allFilters = {
         songType: songTypes[0],
         name: "",
         starsFilter: {from: 0, to: maxStars},
         minPpDiff: 1,
-        sortBy: {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+        sortBy: sortTypes[0]
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     let allRankeds = {};
@@ -106,6 +149,8 @@
 
         minStarsForSniper = await getCachedMinStars(playerId, minPpPerMap)
 
+        await generateSortTypes();
+
         initialized = true;
     })();
 
@@ -123,7 +168,7 @@
             compactLabel: null,
             name: 'Data',
             key: 'timeset',
-            selected: false,
+            selected: true,
             isColumn: true,
             displayed: true,
             valueProps: {prevValue: null}
@@ -330,15 +375,22 @@
                     }
 
                     if (song.maxScoreEx) {
-                        series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx * 100;
-                        series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx * 100 : null;
+                        const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
+                        const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
+
+                        series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
+                        series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         getSongMaxScoreWithDiffAndType(song.id, song.diff, false, true).then(async maxScoreEx => {
                             if (maxScoreEx) {
                                 song.maxScoreEx = maxScoreEx;
-                                series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx * 100;
-                                series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx * 100 : null;
+
+                                const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
+                                const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
+
+                                series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
+                                series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
 
                                 // if page has not been changed during song fetch
                                 if (current === currentPage) completeFetchingNewPage(songPage)
@@ -355,10 +407,9 @@
         return songPage;
     }
 
-    function onSongTypeChange() {
+    async function onSongTypeChange() {
         switch (allFilters.songType.id) {
             case 'unrankeds':
-                getObjectFromArrayByKey(allColumns, 'timeset').selected = false;
                 getObjectFromArrayByKey(allColumns, 'score').selected = true;
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = false;
@@ -366,11 +417,11 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                allFilters.sortBy = {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+                 // TODO: set from sortTypes
+                generateSortTypes();
                 break;
 
             case 'all':
-                getObjectFromArrayByKey(allColumns, 'timeset').selected = false;
                 getObjectFromArrayByKey(allColumns, 'score').selected = true;
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
@@ -379,11 +430,12 @@
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
-                allFilters.sortBy = {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+
+                // TODO: set from sortTypes
+                generateSortTypes();
                 break;
 
             case 'rankeds_with_not_played':
-                getObjectFromArrayByKey(allColumns, 'timeset').selected = true;
                 getObjectFromArrayByKey(allColumns, 'score').selected = false;
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
@@ -392,12 +444,12 @@
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper, 1);
-                allFilters.sortBy = {type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc'}
+
+                generateSortTypes();
                 break;
 
             case 'rankeds':
             default:
-                getObjectFromArrayByKey(allColumns, 'timeset').selected = false;
                 getObjectFromArrayByKey(allColumns, 'score').selected = false;
                 getObjectFromArrayByKey(allColumns, 'acc').selected = true;
                 getObjectFromArrayByKey(allColumns, 'pp').selected = true;
@@ -406,7 +458,8 @@
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 allFilters.starsFilter.from = 0;
-                allFilters.sortBy = {type: 'series', subtype: 0, field: 'timeset', order: 'desc'}
+
+                generateSortTypes();
                 break;
         }
 
@@ -464,6 +517,8 @@
                                                             score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);
                                                             s.weightedPp = score.weightedPp; // in order to cache for next iteration
                                                         }
+
+                                                        s.scoreMult = score.uScore ? score.score / score.uScore : 1;
 
                                                         return score;
                                                     }),
@@ -531,7 +586,8 @@
                                 const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
                                 const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
 
-                                series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx * 100 : null;
+                                const scoreMult = series.scores[s.leaderboardId].scoreMult ? series.scores[s.leaderboardId].scoreMult : 1
+                                series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx / scoreMult * 100 : null;
 
                                 series.scores[s.leaderboardId].diffPp = null;
 
@@ -543,7 +599,9 @@
                                         series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
                                     })
                                     series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
-                                    series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx * 100 : null;
+
+                                    series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
+                                    series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
                                 }
 
                                 if (idx > 0) {
@@ -670,7 +728,7 @@
             calculating = false;
 
             console.timeEnd("calc")
-            console.warn(filteredSongs, playersSeries, bestTotalRealPp, bestTotalPp)
+            console.warn(filteredSongs, playersSeries, bestTotalRealPp, bestTotalPp, playersSeries[0].scores[86492])
 
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
         } catch (err) {
@@ -725,11 +783,22 @@
 
     <div class="columns">
         <div>
+            <header>Pokazuj</header>
+
             {#each shownColumns as col (col.key)}
                 <label title={col.label ? col.label: ''}><input type="checkbox" bind:checked={col.selected}/> {col.name}
                 </label>
             {/each}
         </div>
+    </div>
+
+    <div>
+        <header>Sortowanie</header>
+        <select bind:value={allFilters.sortBy}>
+            {#each sortTypes as st}
+                <option value={st} disabled={!st.enabled}>{st.name}</option>
+            {/each}
+        </select>
     </div>
 </div>
 
