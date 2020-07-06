@@ -1,4 +1,5 @@
 <script>
+    import log from '../../../utils/logger';
     import {
         findRawPp, getEstimatedAcc,
         getAllRankedsWithUserScores,
@@ -486,8 +487,6 @@
 
         await delay(0);
 
-        console.time("calc")
-
         // main player series index
         const compareToIdx = 0;
 
@@ -733,12 +732,9 @@
 
             calculating = false;
 
-            console.timeEnd("calc")
-            console.warn(filteredSongs, playersSeries)
-
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
         } catch (err) {
-            console.error(err)
+            log.error(err)
         }
     }
 
