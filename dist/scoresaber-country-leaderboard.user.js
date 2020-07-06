@@ -319,17 +319,17 @@
                         div.style.marginTop = "1em", div.style.textAlign = "center";
                         var button = document.createElement("button");
                         button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" focusable="false" width="1.04em" height="1em" style="-ms-transform: rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);" preserveAspectRatio="xMidYMid meet" viewBox="0 0 1056 1024"><path d="M1037 429L934 276l51-179q5-18-8.5-31.5T945 57l-178 52L612 6q-15-11-32-2.5T562 31l-5 186l-147 115q-6 5-9.5 13t-1.5 17q0 3 1.5 6.5t3 6t4 5t5.5 4.5t6 3l138 49q-3 2-3 3L23 969q-6 6-8 14.5t0 16.5t8 15q10 9 23 9t23-9l530-531q3-3 5-7l54 148q7 17 25 20q3 1 5 1q16 0 26-13l113-147l184-7q9 0 16.5-4.5T1039 462q8-17-2-33zm-227-6q-15 0-24 12l-88 113l-49-134q-5-14-19-19l-134-49l112-88q4-3 6.5-6.5t4-8t1.5-9.5l5-143l118 80q13 8 27 4l137-40l-39 137q-1 3-1 6v5.5l.5 5.5l2 5.5l2.5 4.5l81 118z" fill="#626262"/><rect x="0" y="0" width="1056" height="1024" fill="rgba(0, 0, 0, 0)" /></svg> &nbsp;Transformuj', 
-                        button.addEventListener("click", () => {
-                            var level = document.querySelector(".content .box .level");
-                            if (level) {
+                        button.addEventListener("click", e => {
+                            var content = document.querySelector(".content .box .rankChart").closest(".content"), songBox = content.querySelector(".box:nth-child(2)");
+                            if (songBox) {
                                 var box = document.createElement("div");
-                                box.classList.add("box"), box.classList.add("has-shadow"), level.parentNode.parentNode.insertBefore(box, level.parentNode), 
+                                box.classList.add("box"), box.classList.add("has-shadow"), content.insertBefore(box, songBox), 
                                 new _Svelte_Components_Song_Browser_svelte__WEBPACK_IMPORTED_MODULE_6__.default({
                                     target: box,
                                     props: {
                                         playerId: profileId
                                     }
-                                }), column.closest(".content").querySelector(".box:nth-child(3)").remove();
+                                }), songBox.remove(), e.target.remove();
                             }
                         }), div.appendChild(button), column.appendChild(div);
                     }
@@ -6853,9 +6853,9 @@
                 label = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label"), input = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input"), 
                 t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t1_value), 
                 t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "checkbox"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "title", label_title_value = ctx[78].label ? ctx[78].label : ""), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-1bvl7gs"), 
                 this.first = label;
             },
             m(target, anchor, remount) {
@@ -6967,7 +6967,7 @@
         return {
             c() {
                 div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), div.innerHTML = "<h3>Strasznie tu pusto</h3> \n            <p>Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?</p>", 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
@@ -6994,8 +6994,8 @@
                 t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), tbody = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tbody");
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block1 && if_block1.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tbody, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(table, "class", "ranking sspl svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tbody, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(table, "class", "ranking sspl svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(table, "light", ctx[1]);
             },
             m(target, anchor) {
@@ -7057,9 +7057,9 @@
                 t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block2 && if_block2.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", "2"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(thead, "class", "svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", "2"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(thead, "class", "svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, thead, anchor), 
@@ -7098,7 +7098,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("*"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "stars left middle svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "stars left middle svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2);
             },
             m(target, anchor) {
@@ -7118,7 +7118,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("Max PP"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "maxPp left middle svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "maxPp left middle svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2);
             },
             m(target, anchor) {
@@ -7139,7 +7139,7 @@
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[70].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[20](ctx[10], "diffPp").selected ? 1 : 0)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "series left svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "series left svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
@@ -7159,7 +7159,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left down svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left down svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
@@ -7236,7 +7236,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t0_value), 
-                t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key + (ctx[72] > 0 ? " middle" : "")) + " svelte-1hfuxor");
+                t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key + (ctx[72] > 0 ? " middle" : "")) + " svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
@@ -7244,7 +7244,7 @@
             },
             p(ctx, dirty) {
                 16384 & dirty[0] && t0_value !== (t0_value = ctx[78].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, t0_value), 
-                16384 & dirty[0] && th_class_value !== (th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key + (ctx[72] > 0 ? " middle" : "")) + " svelte-1hfuxor") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value);
+                16384 & dirty[0] && th_class_value !== (th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key + (ctx[72] > 0 ? " middle" : "")) + " svelte-1bvl7gs") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(th), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1);
@@ -7320,12 +7320,12 @@
                 div0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t3_value), 
                 t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), small = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("small"), 
                 t5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t5_value), img.src !== (img_src_value = "/imports/images/songs/" + ctx[73].id + ".png") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "src", img_src_value), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "class", "svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "name"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(small, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(small, "class", "svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "author"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "songinfo svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(figure, "class", "svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "songinfo svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(figure, "class", "svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, figure, anchor), 
@@ -7359,7 +7359,7 @@
         return {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "stars left middle svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "stars left middle svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, td, anchor), 
@@ -7395,7 +7395,7 @@
         return {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "maxPp left middle svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "maxPp left middle svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, td, anchor), 
@@ -7470,7 +7470,7 @@
         {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), if_block.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = "left compact series-" + ctx[12].series.length + " svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = "left compact series-" + ctx[12].series.length + " svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "with-cols", ctx[20](ctx[10], "stars").selected || ctx[20](ctx[10], "maxPp").selected), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
             },
@@ -7486,7 +7486,7 @@
                 }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)(), if_block = if_blocks[current_block_type_index], 
                 if_block || (if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
                 if_block.c()), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
-                if_block.m(td, null)), (!current || 4096 & dirty[0] && td_class_value !== (td_class_value = "left compact series-" + ctx[12].series.length + " svelte-1hfuxor")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
+                if_block.m(td, null)), (!current || 4096 & dirty[0] && td_class_value !== (td_class_value = "left compact series-" + ctx[12].series.length + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
                 1053696 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "with-cols", ctx[20](ctx[10], "stars").selected || ctx[20](ctx[10], "maxPp").selected), 
                 2101248 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
             },
@@ -7512,7 +7512,7 @@
         {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), if_block.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key) + " svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key) + " svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "middle", ctx[72] > 0), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
             },
@@ -7528,7 +7528,7 @@
                 }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)(), if_block = if_blocks[current_block_type_index], 
                 if_block || (if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
                 if_block.c()), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
-                if_block.m(td, null)), (!current || 16384 & dirty[0] && td_class_value !== (td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key) + " svelte-1hfuxor")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
+                if_block.m(td, null)), (!current || 16384 & dirty[0] && td_class_value !== (td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key) + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
                 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "middle", ctx[72] > 0), 
                 2117632 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
             },
@@ -7813,7 +7813,7 @@
             c() {
                 strong = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("strong"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(date.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, strong, anchor), 
@@ -7824,7 +7824,7 @@
                 const date_changes = 2117632 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(date_spread_levels, [ {
                     date: ctx[21](ctx[70], ctx[73], ctx[78].key)
                 }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[78].valueProps) ]) : {};
-                date.$set(date_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1hfuxor")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
+                date.$set(date_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(date.$$.fragment, local), 
@@ -7861,7 +7861,7 @@
                 div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), if_block && if_block.c(), 
                 t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), strong = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("strong"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor), 
@@ -7879,7 +7879,7 @@
                 }, 4096 & dirty[0] && {
                     prevLabel: ctx[70].prevLabel
                 }, value_spread_levels[3], 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[78].valueProps) ]) : {};
-                value.$set(value_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1hfuxor")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
+                value.$set(value_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(value.$$.fragment, local), 
@@ -8068,8 +8068,8 @@
                 t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block1 && if_block1.c(), 
                 t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-                t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td0, "class", "diff svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td1, "class", "song svelte-1hfuxor"), 
+                t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td0, "class", "diff svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td1, "class", "song svelte-1bvl7gs"), 
                 this.first = tr;
             },
             m(target, anchor) {
@@ -8148,10 +8148,10 @@
                 t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t1_value), t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), tr1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tr"), 
-                if_block && if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-1hfuxor"), 
+                if_block && if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = ctx[12].series.length > 2 ? 2 : 1), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = "unrankeds" !== ctx[5].songType.id ? 2 + (ctx[20](ctx[10], "stars").selected ? 1 : 0) + (ctx[20](ctx[10], "maxPp").selected ? 1 : 0) : 2), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tfoot, "class", "svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tfoot, "class", "svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, tfoot, anchor), 
@@ -8208,7 +8208,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1hfuxor");
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
@@ -8276,7 +8276,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1hfuxor"), 
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = ctx[70].id !== ctx[0] ? 1 : ctx[12].series.length > 2 ? 2 : 1), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[70].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[20](ctx[10], "diffPp").selected ? 1 : 0));
             },
@@ -8359,7 +8359,7 @@
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[14].length * (ctx[12].series.length - 1));
             },
             m(target, anchor) {
@@ -8390,7 +8390,7 @@
         return {
             c() {
                 div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), div.innerHTML = "<h3>Transformacja wszechświata w toku...</h3>", 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-1bvl7gs");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
@@ -8504,28 +8504,28 @@
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t19 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), info.block.c(), 
                 t20 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(pager.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header0, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select0, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header0, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select0, "class", "svelte-1bvl7gs"), 
                 void 0 === ctx[5].songType && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[62].call(select0)), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "text"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "placeholder", "Nazwa nutki..."), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "filter-name svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "filter-name svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_style)(div2, "display", "rankeds_with_not_played" === ctx[5].songType.id ? "block" : "none"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header1, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header1, "class", "svelte-1bvl7gs"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_style)(div3, "display", "unrankeds" !== ctx[5].songType.id ? "block" : "none"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header2, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select1, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header2, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select1, "class", "svelte-1bvl7gs"), 
                 void 0 === ctx[11] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[63].call(select1)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header3, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div6, "class", "columns svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header4, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select2, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header3, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div6, "class", "columns svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header4, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select2, "class", "svelte-1bvl7gs"), 
                 void 0 === ctx[5].sortBy && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[65].call(select2)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header5, "class", "svelte-1hfuxor"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select3, "class", "svelte-1hfuxor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header5, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select3, "class", "svelte-1bvl7gs"), 
                 void 0 === ctx[8] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[66].call(select3)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div9, "class", "filters svelte-1hfuxor");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div9, "class", "filters svelte-1bvl7gs");
             },
             m(target, anchor, remount) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div9, anchor), 
@@ -9151,8 +9151,8 @@
     class Browser extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
         constructor(options) {
             var style;
-            super(), document_1.getElementById("svelte-1hfuxor-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-1hfuxor-style", 
-            style.textContent = ".columns.svelte-1hfuxor label.svelte-1hfuxor{margin-right:.25rem}table.ranking.sspl.svelte-1hfuxor.svelte-1hfuxor{font-size:0.875rem;border-width:1px}th.svelte-1hfuxor.svelte-1hfuxor,td.svelte-1hfuxor.svelte-1hfuxor{vertical-align:middle !important;padding:0.25em !important;border-color:#666 !important}thead.svelte-1hfuxor th.svelte-1hfuxor{text-align:center;vertical-align:bottom !important;border-bottom-width:2px}thead.svelte-1hfuxor th.song.svelte-1hfuxor,thead.svelte-1hfuxor th.stars.svelte-1hfuxor{vertical-align:middle !important}thead.svelte-1hfuxor th.song.svelte-1hfuxor,thead.svelte-1hfuxor th.maxPp.svelte-1hfuxor{vertical-align:middle !important}th.diff.svelte-1hfuxor.svelte-1hfuxor,td.diff.svelte-1hfuxor.svelte-1hfuxor{width:1.5rem;padding:0}thead.svelte-1hfuxor th.series.svelte-1hfuxor{width:6rem;overflow-x:hidden;border-bottom-style:dotted;border-bottom-width:1px}thead.svelte-1hfuxor th.stars.svelte-1hfuxor{width:2rem}thead.svelte-1hfuxor th.maxPp.svelte-1hfuxor{width:3rem}thead.svelte-1hfuxor th.acc.svelte-1hfuxor,thead.svelte-1hfuxor th.pp.svelte-1hfuxor,thead.svelte-1hfuxor th.diffPp.svelte-1hfuxor,thead.svelte-1hfuxor th.score.svelte-1hfuxor,thead.svelte-1hfuxor th.weightedPp.svelte-1hfuxor{width:3rem}thead.svelte-1hfuxor th.timeset.svelte-1hfuxor{width:5.5rem}tbody.svelte-1hfuxor td.acc.svelte-1hfuxor,tbody.svelte-1hfuxor td.pp.svelte-1hfuxor,tbody.svelte-1hfuxor td.diffPp.svelte-1hfuxor,tbody.svelte-1hfuxor td.score.svelte-1hfuxor,tbody.svelte-1hfuxor td.weightedPp.svelte-1hfuxor,tbody.svelte-1hfuxor td.timeset.svelte-1hfuxor{text-align:center}tbody.svelte-1hfuxor td.stars.svelte-1hfuxor{text-align:center}tbody.svelte-1hfuxor td.maxPp.svelte-1hfuxor{text-align:center}th.top.svelte-1hfuxor.svelte-1hfuxor,td.top.svelte-1hfuxor.svelte-1hfuxor{border-top-style:solid;border-top-width:1px}td.down.svelte-1hfuxor.svelte-1hfuxor{border-bottom-style:solid;border-bottom-width:1px}th.series.down.svelte-1hfuxor.svelte-1hfuxor{border-bottom-width:2px;border-bottom-style:solid}th.left.svelte-1hfuxor.svelte-1hfuxor,td.left.svelte-1hfuxor.svelte-1hfuxor{border-left-style:solid;border-left-width:1px}th.left.middle.svelte-1hfuxor.svelte-1hfuxor,td.left.middle.svelte-1hfuxor.svelte-1hfuxor{border-left-style:dotted;border-left-width:1px}tbody.svelte-1hfuxor td.song figure.svelte-1hfuxor{display:flex;justify-content:flex-start;align-items:center;margin:0}tbody.svelte-1hfuxor td.song img.svelte-1hfuxor{flex:0 1 40px;width:40px;height:40px;margin:0 1em 0 .5em}tbody.svelte-1hfuxor td.song .songinfo.svelte-1hfuxor{text-align:left}tbody.svelte-1hfuxor td.song small.svelte-1hfuxor{font-size:0.75em;color:#888}tfoot.svelte-1hfuxor th.svelte-1hfuxor{text-align:center !important;vertical-align:middle !important;border-top-width:2px}tfoot.svelte-1hfuxor th.song.svelte-1hfuxor{text-align:left !important}tbody.svelte-1hfuxor td.svelte-1hfuxor{position:relative}tbody.svelte-1hfuxor td.best.svelte-1hfuxor{background:linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%)}table.light.svelte-1hfuxor tbody td.best.svelte-1hfuxor{background:linear-gradient(90deg, rgba(201, 201, 201, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 201, 201, 1) 100%)}tbody.svelte-1hfuxor td.compact.svelte-1hfuxor{width:12rem}tbody.svelte-1hfuxor td.compact.left.series-1.svelte-1hfuxor:not(.with-cols){border-left:none}.compact-timeset-val.svelte-1hfuxor.svelte-1hfuxor{border-bottom:1px dashed #666}.compact-diffPp-val.svelte-1hfuxor.svelte-1hfuxor{font-size:1.25em}.compact-pp-val.svelte-1hfuxor.svelte-1hfuxor{font-size:1.15em;color:var(--ppColour) !important}.compact-acc-val.svelte-1hfuxor.svelte-1hfuxor{font-size:1.1em}.filters.svelte-1hfuxor.svelte-1hfuxor{display:flex;flex-wrap:wrap;margin:-1.5rem 0 1rem -1.5rem;width:calc(100% + 1.5rem);align-items:flex-end}.filters.svelte-1hfuxor.svelte-1hfuxor>*{margin:1.5rem 0 0 1.5rem}.filters.svelte-1hfuxor header.svelte-1hfuxor{display:block;text-align:center;color:#888}.filters.svelte-1hfuxor .filter-name.svelte-1hfuxor{width:12rem}.filters.svelte-1hfuxor .filter-name input.svelte-1hfuxor{width:100%}div.info.svelte-1hfuxor.svelte-1hfuxor{padding-top:2rem;text-align:center}select.svelte-1hfuxor.svelte-1hfuxor,input.svelte-1hfuxor.svelte-1hfuxor{font-size:1rem;border:none;color:var(--textColor, #000);background-color:var(--foreground, #fff);outline:none}input.svelte-1hfuxor.svelte-1hfuxor{border-bottom:1px solid var(--textColor, #000)}input.svelte-1hfuxor.svelte-1hfuxor::placeholder{color:#666;opacity:1}", 
+            super(), document_1.getElementById("svelte-1bvl7gs-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-1bvl7gs-style", 
+            style.textContent = ".columns.svelte-1bvl7gs label.svelte-1bvl7gs{margin-right:.25rem}table.ranking.sspl.svelte-1bvl7gs.svelte-1bvl7gs{font-size:0.875rem;border-width:1px}th.svelte-1bvl7gs.svelte-1bvl7gs,td.svelte-1bvl7gs.svelte-1bvl7gs{vertical-align:middle !important;padding:0.25em !important;border-color:#666 !important}thead.svelte-1bvl7gs th.svelte-1bvl7gs{text-align:center;vertical-align:bottom !important;border-bottom-width:2px}thead.svelte-1bvl7gs th.song.svelte-1bvl7gs,thead.svelte-1bvl7gs th.stars.svelte-1bvl7gs{vertical-align:middle !important}thead.svelte-1bvl7gs th.song.svelte-1bvl7gs,thead.svelte-1bvl7gs th.maxPp.svelte-1bvl7gs{vertical-align:middle !important}th.diff.svelte-1bvl7gs.svelte-1bvl7gs,td.diff.svelte-1bvl7gs.svelte-1bvl7gs{width:1.5rem;padding:0}thead.svelte-1bvl7gs th.series.svelte-1bvl7gs{width:6rem;overflow-x:hidden;border-bottom-style:dotted;border-bottom-width:1px}thead.svelte-1bvl7gs th.stars.svelte-1bvl7gs{width:2rem}thead.svelte-1bvl7gs th.maxPp.svelte-1bvl7gs{width:3rem}thead.svelte-1bvl7gs th.acc.svelte-1bvl7gs,thead.svelte-1bvl7gs th.pp.svelte-1bvl7gs,thead.svelte-1bvl7gs th.diffPp.svelte-1bvl7gs,thead.svelte-1bvl7gs th.score.svelte-1bvl7gs,thead.svelte-1bvl7gs th.weightedPp.svelte-1bvl7gs{width:3rem}thead.svelte-1bvl7gs th.timeset.svelte-1bvl7gs{width:5.5rem}tbody.svelte-1bvl7gs td.acc.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.pp.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.diffPp.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.score.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.weightedPp.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.timeset.svelte-1bvl7gs{text-align:center}tbody.svelte-1bvl7gs td.stars.svelte-1bvl7gs{text-align:center}tbody.svelte-1bvl7gs td.maxPp.svelte-1bvl7gs{text-align:center}th.top.svelte-1bvl7gs.svelte-1bvl7gs,td.top.svelte-1bvl7gs.svelte-1bvl7gs{border-top-style:solid;border-top-width:1px}td.down.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom-style:solid;border-bottom-width:1px}th.series.down.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom-width:2px;border-bottom-style:solid}th.left.svelte-1bvl7gs.svelte-1bvl7gs,td.left.svelte-1bvl7gs.svelte-1bvl7gs{border-left-style:solid;border-left-width:1px}th.left.middle.svelte-1bvl7gs.svelte-1bvl7gs,td.left.middle.svelte-1bvl7gs.svelte-1bvl7gs{border-left-style:dotted;border-left-width:1px}tbody.svelte-1bvl7gs td.song figure.svelte-1bvl7gs{display:flex;justify-content:flex-start;align-items:center;margin:0}tbody.svelte-1bvl7gs td.song img.svelte-1bvl7gs{flex:0 1 40px;width:40px;height:40px;margin:0 1em 0 .5em}tbody.svelte-1bvl7gs td.song .songinfo.svelte-1bvl7gs{text-align:left}tbody.svelte-1bvl7gs td.song small.svelte-1bvl7gs{font-size:0.75em;color:#888}tfoot.svelte-1bvl7gs th.svelte-1bvl7gs{text-align:center !important;vertical-align:middle !important;border-top-width:2px}tfoot.svelte-1bvl7gs th.song.svelte-1bvl7gs{text-align:left !important}tbody.svelte-1bvl7gs td.svelte-1bvl7gs{position:relative}tbody.svelte-1bvl7gs td.best.svelte-1bvl7gs{background:linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%)}table.light.svelte-1bvl7gs tbody td.best.svelte-1bvl7gs{background:linear-gradient(90deg, rgba(201, 201, 201, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 201, 201, 1) 100%)}tbody.svelte-1bvl7gs td.compact.svelte-1bvl7gs{width:12rem;text-align:center}tbody.svelte-1bvl7gs td.compact.left.series-1.svelte-1bvl7gs:not(.with-cols){border-left:none}.compact-timeset-val.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom:1px dashed #666}.compact-diffPp-val.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1.25em}.compact-pp-val.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1.15em;color:var(--ppColour) !important}.compact-acc-val.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1.1em}.filters.svelte-1bvl7gs.svelte-1bvl7gs{display:flex;flex-wrap:wrap;margin:-1.5rem 0 1rem -1.5rem;width:calc(100% + 1.5rem);align-items:flex-end}.filters.svelte-1bvl7gs.svelte-1bvl7gs>*{margin:1.5rem 0 0 1.5rem}.filters.svelte-1bvl7gs header.svelte-1bvl7gs{display:block;text-align:center;color:#888}.filters.svelte-1bvl7gs .filter-name.svelte-1bvl7gs{width:12rem}.filters.svelte-1bvl7gs .filter-name input.svelte-1bvl7gs{width:100%}div.info.svelte-1bvl7gs.svelte-1bvl7gs{padding-top:2rem;text-align:center}select.svelte-1bvl7gs.svelte-1bvl7gs,input.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1rem;border:none;color:var(--textColor, #000);background-color:var(--foreground, #fff);outline:none}input.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom:1px solid var(--textColor, #000)}input.svelte-1bvl7gs.svelte-1bvl7gs::placeholder{color:#666;opacity:1}", 
             Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(document_1.head, style)), 
             Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, {
                 playerId: 0,

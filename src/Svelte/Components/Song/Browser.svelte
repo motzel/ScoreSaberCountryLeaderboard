@@ -1124,6 +1124,7 @@
 
     tbody td.compact {
         width: 12rem;
+        text-align: center;
     }
 
     tbody td.compact.left.series-1:not(.with-cols) {
