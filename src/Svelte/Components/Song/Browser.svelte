@@ -79,7 +79,7 @@
                     ].forEach(field => {
                         if ('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id))
                             types.push({
-                                name: name + ': ' + field.name,
+                                name: (userIds.length > 1 ? name + ': ' : '') + field.name,
                                 type: 'series',
                                 subtype: idx,
                                 field: field.field,
