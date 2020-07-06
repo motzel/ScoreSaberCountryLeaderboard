@@ -314,7 +314,7 @@
     }
 
     // pre-filters
-    const mapHasStars = (song, minStars, maxStars = null) => song.stars && song.stars > minStars && (!maxStars || song.stars < maxStars);
+    const mapHasStars = (song, minStars, maxStars = null) => song.stars && song.stars >= minStars && (!maxStars || song.stars <= maxStars);
     const filterBySongName = (song, name) => {
         if (!name.length) return true;
 
@@ -734,7 +734,7 @@
             calculating = false;
 
             console.timeEnd("calc")
-            console.warn(filteredSongs, playersSeries, await getCacheAndConvertIfNeeded())
+            console.warn(filteredSongs, playersSeries)
 
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
         } catch (err) {
