@@ -230,8 +230,6 @@
         date = cache.lastUpdated;
 
         await setCache(cache);
-
-        dispatch('data-refreshed', {})
     }
 
     async function onRefresh() {
@@ -243,6 +241,7 @@
                 .then(_ => updateNewRankedsPpScores(updateProgress))
                 .then(newlyRanked => updateNewRankeds(newlyRanked))
                 .then(_ => started = false)
+                .then(_ => dispatch('data-refreshed', {}))
                 .catch(e => {
                     started = false
                     log.error("Can not refresh users", e)

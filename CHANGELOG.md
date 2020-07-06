@@ -1,4 +1,8 @@
 # Changelog
+0.8
+ - add new song browser with advanced filtering
+ - fix bug when refreshing from player profile
+ 
 0.7.7
  - change the way the results are downloaded to maximise usage of the SS API rate limit
  - add 429 http status handling - reading the x-ratelimit-reset header and waiting for further download possibility with progress
