@@ -100,6 +100,7 @@ export async function getLeaderboard(songHash, leaderboardId) {
             const { scores, ...user } = data.users[userId];
             const {
                 score,
+                uScore,
                 timeset,
                 rank,
                 mods,
@@ -118,13 +119,14 @@ export async function getLeaderboard(songHash, leaderboardId) {
                     {
                         timeset: new Date(h.timestamp),
                         percent: maxSongScore
-                            ? h.score / maxSongScore
+                            ? h.score / maxSongScore / (h.uScore ? h.score / h.uScore : 1)
                             : (maxScoreEx
-                                ? h.score / maxScoreEx
+                                ? h.score / maxScoreEx / (h.uScore ? h.score / h.uScore : 1)
                                 : null)
                     }
                 ));
 
+            const scoreMult = uScore && score ? score / uScore : 1
             cum.push(
                 Object.assign({}, user, {
                     score,
@@ -134,9 +136,9 @@ export async function getLeaderboard(songHash, leaderboardId) {
                     pp,
                     playHistory,
                     percent: maxSongScore
-                        ? score / maxSongScore
+                        ? score / maxSongScore / scoreMult
                         : (maxScoreEx
-                            ? score / maxScoreEx
+                            ? score / maxScoreEx / scoreMult
                             : null)
                 })
             );

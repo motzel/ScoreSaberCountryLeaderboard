@@ -1,4 +1,7 @@
 # Changelog
+0.8.1
+ - fix bug with acc calc on song leaderboard when mods were in use
+ 
 0.8
  - add new song browser with advanced filtering
  - fix bug when refreshing from player profile

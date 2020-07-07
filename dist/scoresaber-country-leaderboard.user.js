@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ScoreSaber country leaderboard
 // @namespace    https://motzel.dev
-// @version      0.8
+// @version      0.8.1
 // @description  Add country leaderboard tab
 // @author       motzel
 // @icon         https://scoresaber.com/imports/images/logo.ico
@@ -2626,7 +2626,7 @@
         return headerString.push("// ==/UserScript=="), headerString.push(""), headerString.join("\n");
     };
 }, function(module) {
-    module.exports = JSON.parse('{"name":"ScoreSaber country leaderboard","namespace":"https://motzel.dev","version":"0.8","description":"Add country leaderboard tab","author":"motzel","icon":"https://scoresaber.com/imports/images/logo.ico","updateURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","downloadURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","supportURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/issues","match":["https://scoresaber.com/leaderboard/*","https://scoresaber.com/u/*"],"include":["/^https://scoresaber\\\\.com\\\\/global(\\\\/\\\\d+&country=pl|\\\\?country=pl)/"],"require":["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],"grant":["GM_addStyle","GM_info","GM_xmlhttpRequest"],"run-at":"document-end"}');
+    module.exports = JSON.parse('{"name":"ScoreSaber country leaderboard","namespace":"https://motzel.dev","version":"0.8.1","description":"Add country leaderboard tab","author":"motzel","icon":"https://scoresaber.com/imports/images/logo.ico","updateURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","downloadURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js","supportURL":"https://github.com/motzel/ScoreSaberCountryLeaderboard/issues","match":["https://scoresaber.com/leaderboard/*","https://scoresaber.com/u/*"],"include":["/^https://scoresaber\\\\.com\\\\/global(\\\\/\\\\d+&country=pl|\\\\?country=pl)/"],"require":["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],"grant":["GM_addStyle","GM_info","GM_xmlhttpRequest"],"run-at":"document-end"}');
 }, function(module, __webpack_exports__, __webpack_require__) {
     "use strict";
     __webpack_require__.r(__webpack_exports__), __webpack_require__.d(__webpack_exports__, "convertFetchedRankedSongsToObj", (function() {
@@ -3560,11 +3560,11 @@
                 var _diffInfo, _diffInfo2;
                 maxSongScore || cum.length || (diffInfo = findDiffInfo(songCharacteristics, data.users[userId].scores[leaderboardId].diff), 
                 maxSongScore = (null === (_diffInfo = diffInfo) || void 0 === _diffInfo ? void 0 : _diffInfo.length) && (null === (_diffInfo2 = diffInfo) || void 0 === _diffInfo2 ? void 0 : _diffInfo2.notes) ? getMaxScore(diffInfo.notes) : 0);
-                var _data$users$userId = data.users[userId], {scores: scores} = _data$users$userId, user = _objectWithoutProperties(_data$users$userId, [ "scores" ]), _data$users$userId$sc = data.users[userId].scores[leaderboardId], {score: score, timeset: timeset, rank: rank, mods: mods, pp: pp, maxScoreEx: maxScoreEx, diff: diff, history: history} = _data$users$userId$sc, playHistory = (_objectWithoutProperties(_data$users$userId$sc, [ "score", "timeset", "rank", "mods", "pp", "maxScoreEx", "diff", "history" ]), 
+                var _data$users$userId = data.users[userId], {scores: scores} = _data$users$userId, user = _objectWithoutProperties(_data$users$userId, [ "scores" ]), _data$users$userId$sc = data.users[userId].scores[leaderboardId], {score: score, uScore: uScore, timeset: timeset, rank: rank, mods: mods, pp: pp, maxScoreEx: maxScoreEx, diff: diff, history: history} = _data$users$userId$sc, playHistory = (_objectWithoutProperties(_data$users$userId$sc, [ "score", "uScore", "timeset", "rank", "mods", "pp", "maxScoreEx", "diff", "history" ]), 
                 (history || []).sort((a, b) => b.timestamp - a.timestamp).map(h => Object.assign({}, h, {
                     timeset: new Date(h.timestamp),
-                    percent: maxSongScore ? h.score / maxSongScore : maxScoreEx ? h.score / maxScoreEx : null
-                })));
+                    percent: maxSongScore ? h.score / maxSongScore / (h.uScore ? h.score / h.uScore : 1) : maxScoreEx ? h.score / maxScoreEx / (h.uScore ? h.score / h.uScore : 1) : null
+                }))), scoreMult = uScore && score ? score / uScore : 1;
                 return cum.push(Object.assign({}, user, {
                     score: score,
                     timeset: timeset,
@@ -3572,7 +3572,7 @@
                     mods: mods,
                     pp: pp,
                     playHistory: playHistory,
-                    percent: maxSongScore ? score / maxSongScore : maxScoreEx ? score / maxScoreEx : null
+                    percent: maxSongScore ? score / maxSongScore / scoreMult : maxScoreEx ? score / maxScoreEx / scoreMult : null
                 })), cum;
             }, []).map(u => Object.assign({}, u, {
                 hidden: Object(_eastereggs__WEBPACK_IMPORTED_MODULE_2__.shouldBeHidden)(u)
