@@ -27,12 +27,14 @@
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
     import Range from "../Common/Range.svelte";
-    import {extractDiffAndType, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "../../../song";
+    import {extractDiffAndType, getHumanDiffInfo, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "../../../song";
     import Date from "../Common/Date.svelte";
     import MultiRange from "../Common/MultiRange.svelte";
     import {onMount, tick} from "svelte";
     import {round} from "../../../utils/format";
     import WhatIfPp from "./WhatIfPp.svelte";
+
+    import {generateCsv, downloadCsv} from '../../../utils/csv';
 
     export let playerId = getMainUserId();
     export let snipedIds = [];
@@ -737,6 +739,55 @@
         }
     }
 
+    async function exportCsv() {
+        const headers = [
+            {field: 'leaderboardId', label: 'ID'},
+            {field: 'name', label: 'Song'},
+            {field: 'songAuthor', label: 'Song author'},
+            {field: 'levelAuthor', label: 'Level author'},
+            {field: 'stars', label: 'Stars'},
+            {field: 'difficulty', label: 'Difficulty'},
+            {field: 'maxScore', label: 'Max score'},
+            {field: 'timeset', label: 'Date'},
+            {field: 'score', label: 'Score'},
+            {field: 'mods', label: 'Mods'},
+            {field: 'uScore', label: 'Score w/mod'},
+            {field: 'pp', label: 'PP'},
+            {field: 'weightedPp', label: 'Weighted PP'},
+        ]
+        const data = await calcPromised;
+        const transformedData = await Promise.all(
+                data.songs.map(async s => {
+                    const diffInfo = getHumanDiffInfo(s.diff);
+
+                    let maxScore = s.maxScoreEx;
+                    if (!maxScore) {
+                        try {
+                            // try to get max score from cache
+                            maxScore = await getSongMaxScoreWithDiffAndType(s.id, s.diff, true);
+                        } catch (e) {
+                            // swallow error
+                        }
+                    }
+
+                    return Object.assign({}, s, {
+                        difficulty: diffInfo ? diffInfo.name : '',
+                        maxScore: maxScore ? maxScore : '',
+                        timeset: getScoreValueByKey(data.series[0], s, 'timeset'),
+                        score: getScoreValueByKey(data.series[0], s, 'score'),
+                        mods: getScoreValueByKey(data.series[0], s, 'mods'),
+                        uScore: getScoreValueByKey(data.series[0], s, 'uScore'),
+                        pp: getScoreValueByKey(data.series[0], s, 'pp'),
+                        weightedPp: getScoreValueByKey(data.series[0], s, 'weightedPp'),
+                    })
+                })
+                )
+        ;
+        const csv = generateCsv(transformedData, headers);
+
+        downloadCsv("scores.csv", csv);
+    }
+
     $: shownColumns = allColumns.filter(c => c.displayed)
     $: columnsQty = allColumns.reduce((sum, c) => sum + (c.isColumn && c.selected ? 1 : 0), 0);
     $: selectedCols = allColumns.filter(c => c.isColumn && c.selected)
@@ -972,6 +1023,15 @@
 
 <Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
 
+{#if !calculating}
+<div class="actions">
+    <button on:click={exportCsv}>
+        <svg fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        CSV
+    </button>
+</div>
+{/if}
+
 <style>
     .columns label {
         margin-right: .25rem;
@@ -1184,5 +1244,16 @@
     input::placeholder {
         color: #666;
         opacity: 1;
+    }
+
+    .actions button {
+        padding: 2px .5rem 2px .25rem;
+        font-weight: 500;
+    }
+    .actions svg {
+        width: 16px;
+        height: 16px;
+        position: relative;
+        top: 2px;
     }
 </style>

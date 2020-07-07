@@ -318,8 +318,8 @@
                         var div = document.createElement("div");
                         div.style.marginTop = "1em", div.style.textAlign = "center";
                         var button = document.createElement("button");
-                        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" focusable="false" width="1.04em" height="1em" style="-ms-transform: rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);" preserveAspectRatio="xMidYMid meet" viewBox="0 0 1056 1024"><path d="M1037 429L934 276l51-179q5-18-8.5-31.5T945 57l-178 52L612 6q-15-11-32-2.5T562 31l-5 186l-147 115q-6 5-9.5 13t-1.5 17q0 3 1.5 6.5t3 6t4 5t5.5 4.5t6 3l138 49q-3 2-3 3L23 969q-6 6-8 14.5t0 16.5t8 15q10 9 23 9t23-9l530-531q3-3 5-7l54 148q7 17 25 20q3 1 5 1q16 0 26-13l113-147l184-7q9 0 16.5-4.5T1039 462q8-17-2-33zm-227-6q-15 0-24 12l-88 113l-49-134q-5-14-19-19l-134-49l112-88q4-3 6.5-6.5t4-8t1.5-9.5l5-143l118 80q13 8 27 4l137-40l-39 137q-1 3-1 6v5.5l.5 5.5l2 5.5l2.5 4.5l81 118z" fill="#626262"/><rect x="0" y="0" width="1056" height="1024" fill="rgba(0, 0, 0, 0)" /></svg> &nbsp;Transformuj', 
-                        button.addEventListener("click", e => {
+                        button.innerHTML = '<svg style="width:16px;height:16px;position:relative;top:2px;" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> &nbsp;Transformuj', 
+                        div.appendChild(button), column.appendChild(div), button.addEventListener("click", e => {
                             var content = document.querySelector(".content .box .rankChart").closest(".content"), songBox = content.querySelector(".box:nth-child(2)");
                             if (songBox) {
                                 var box = document.createElement("div");
@@ -329,9 +329,9 @@
                                     props: {
                                         playerId: profileId
                                     }
-                                }), songBox.remove(), e.target.remove();
+                                }), songBox.remove(), button.remove();
                             }
-                        }), div.appendChild(button), column.appendChild(div);
+                        });
                     }
                 }
                 var header = document.querySelector(".content .column h5");
@@ -389,14 +389,14 @@
         var a = document.createElement("a");
         a.classList.add("has-text-info");
         var img = document.createElement("img");
-        return img.classList.add("bloodtrail"), img.src = __webpack_require__(57).default, 
+        return img.classList.add("bloodtrail"), img.src = __webpack_require__(58).default, 
         a.appendChild(img), li.appendChild(a), a.addEventListener("click", () => {
             document.querySelectorAll(".tabs > ul .filter_tab").forEach(x => x.classList.remove("is-active")), 
             assert(document.getElementById(css_id)).classList.add("is-active");
         }), li;
     }
     function setupStyles() {
-        _utils_logger__WEBPACK_IMPORTED_MODULE_7__.default.info("Setup styles"), (GM_addStyle || (() => {}))(__webpack_require__(58).toString());
+        _utils_logger__WEBPACK_IMPORTED_MODULE_7__.default.info("Setup styles"), (GM_addStyle || (() => {}))(__webpack_require__(59).toString());
         (getComputedStyle(document.documentElement).getPropertyValue("--foreground").length ? [ [ "hover", "#444" ] ] : [ [ "background", "white" ], [ "foreground", "white" ], [ "textColor", "#4a4a4a" ], [ "ppColour", "#6772E5" ], [ "alternate", "#3273dc" ], [ "hover", "#ddd" ] ]).map(s => document.documentElement.style.setProperty("--" + s[0], s[1]));
     }
     function setupDelayed() {
@@ -5400,35 +5400,44 @@
     __webpack_require__.r(__webpack_exports__);
     var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2), _Progress_svelte__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(41), _utils_format__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(4), _store__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(9), _network_scoresaber_consts__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(16), _temp__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5), _utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(15), _utils_logger__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(10), svelte__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(43), _network_scoresaber_rankeds__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(13), _network_scoresaber_scores__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(44), _network_scoresaber_players__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(28), _utils_date__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(6);
     function create_else_block(ctx) {
-        let button, t0, t1, strong, t3, span, t4, dispose, t4_value = (ctx[4] ? Object(_utils_format__WEBPACK_IMPORTED_MODULE_2__.formatDate)(ctx[4]) : "-") + "";
+        let button, svg, path, t0, strong, t2, span, t3, dispose, t3_value = (ctx[4] ? Object(_utils_format__WEBPACK_IMPORTED_MODULE_2__.formatDate)(ctx[4]) : "-") + "";
         return {
             c() {
                 button = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button"), 
-                t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("↻"), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
-                strong = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("strong"), 
-                strong.textContent = "Data pobrania:", t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
-                span = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span"), t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t4_value), 
+                svg = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.svg_element)("svg"), path = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.svg_element)("path"), 
+                t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), strong = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("strong"), 
+                strong.textContent = "Data pobrania:", t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
+                span = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("span"), t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t3_value), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(path, "d", "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "fill", "none"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "stroke-linecap", "round"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "stroke-linejoin", "round"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "stroke-width", "2"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "viewBox", "0 0 24 24"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "stroke", "currentColor"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(svg, "class", "svelte-aznvb2"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "title", "Odśwież"), 
-                button.disabled = ctx[3];
+                button.disabled = ctx[3], Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "svelte-aznvb2");
             },
             m(target, anchor, remount) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, button, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, t0), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t1, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(button, svg), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(svg, path), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t0, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, strong, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t3, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t2, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, span, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t4), remount && dispose(), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(span, t3), remount && dispose(), 
                 dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", ctx[5]);
             },
             p(ctx, dirty) {
-                8 & dirty && (button.disabled = ctx[3]), 16 & dirty && t4_value !== (t4_value = (ctx[4] ? Object(_utils_format__WEBPACK_IMPORTED_MODULE_2__.formatDate)(ctx[4]) : "-") + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t4, t4_value);
+                8 & dirty && (button.disabled = ctx[3]), 16 & dirty && t3_value !== (t3_value = (ctx[4] ? Object(_utils_format__WEBPACK_IMPORTED_MODULE_2__.formatDate)(ctx[4]) : "-") + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t3, t3_value);
             },
             i: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
             o: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(button), 
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(strong), 
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t3), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span), 
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t0), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(strong), 
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t2), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(span), 
                 dispose();
             }
         };
@@ -5622,7 +5631,11 @@
     }
     class Refresh extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
         constructor(options) {
-            super(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, {});
+            var style;
+            super(), document.getElementById("svelte-aznvb2-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-aznvb2-style", 
+            style.textContent = "button.svelte-aznvb2{padding:2px}svg.svelte-aznvb2{width:1rem;height:1rem;position:relative;top:2px}", 
+            Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(document.head, style)), 
+            Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, {});
         }
     }
     __webpack_exports__.default = Refresh;
@@ -6751,84 +6764,62 @@
 }, function(module, __webpack_exports__, __webpack_require__) {
     "use strict";
     __webpack_require__.r(__webpack_exports__);
-    var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2), _utils_logger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(10), _scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8), _scoresaber_rankeds__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(29), _network_fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(14), _temp__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5), _store__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(9), _utils_date__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(6), _utils_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(15), _utils_debounce__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(52), _Common_Difficulty_svelte__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(48), _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(30), _scoresaber_players__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(27), _utils_memoize__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(53), _Song_svelte__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(46), _Common_Pager_svelte__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(54), _Common_Range_svelte__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(55), _song__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(24), _Common_Date_svelte__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(38), _Common_MultiRange_svelte__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(56), svelte__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(43), _utils_format__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(4), _WhatIfPp_svelte__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(39);
+    var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2), _utils_logger__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(10), _scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(8), _scoresaber_rankeds__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(29), _network_fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(14), _temp__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(5), _store__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(9), _utils_date__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(6), _utils_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(15), _utils_debounce__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(52), _Common_Difficulty_svelte__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(48), _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(30), _scoresaber_players__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(27), _utils_memoize__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(53), _Song_svelte__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(46), _Common_Pager_svelte__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(54), _Common_Range_svelte__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(55), _song__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(24), _Common_Date_svelte__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(38), _Common_MultiRange_svelte__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(56), svelte__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(43), _utils_format__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(4), _WhatIfPp_svelte__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(39), _utils_csv__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(57);
     const {document: document_1} = svelte_internal__WEBPACK_IMPORTED_MODULE_0__.globals;
     function get_each_context(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[70] = list[i], child_ctx[72] = i, child_ctx;
+        return child_ctx[69] = list[i], child_ctx[71] = i, child_ctx;
     }
     function get_each_context_4(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[78] = list[i], child_ctx[72] = i, child_ctx;
+        return child_ctx[77] = list[i], child_ctx[71] = i, child_ctx;
     }
     function get_each_context_3(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[78] = list[i], child_ctx[72] = i, child_ctx;
+        return child_ctx[77] = list[i], child_ctx[71] = i, child_ctx;
     }
     function get_each_context_2(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[70] = list[i], child_ctx;
+        return child_ctx[69] = list[i], child_ctx;
     }
     function get_each_context_1(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[73] = list[i], child_ctx;
+        return child_ctx[72] = list[i], child_ctx;
     }
     function get_each_context_6(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[78] = list[i], child_ctx[72] = i, child_ctx;
+        return child_ctx[77] = list[i], child_ctx[71] = i, child_ctx;
     }
     function get_each_context_5(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[70] = list[i], child_ctx;
+        return child_ctx[69] = list[i], child_ctx;
     }
     function get_each_context_7(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[70] = list[i], child_ctx;
+        return child_ctx[69] = list[i], child_ctx;
     }
     function get_each_context_8(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[86] = list[i], child_ctx;
+        return child_ctx[85] = list[i], child_ctx;
     }
     function get_each_context_9(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[89] = list[i], child_ctx;
+        return child_ctx[77] = list[i], child_ctx[88] = list, child_ctx[89] = i, child_ctx;
     }
     function get_each_context_10(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[78] = list[i], child_ctx[92] = list, child_ctx[93] = i, child_ctx;
+        return child_ctx[90] = list[i], child_ctx;
     }
     function get_each_context_11(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[94] = list[i], child_ctx;
-    }
-    function get_each_context_12(ctx, list, i) {
-        const child_ctx = ctx.slice();
-        return child_ctx[89] = list[i], child_ctx;
-    }
-    function create_each_block_12(ctx) {
-        let option, t, option_value_value, t_value = ctx[89].text + "";
-        return {
-            c() {
-                option = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option"), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[89], 
-                option.value = option.__value;
-            },
-            m(target, anchor) {
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
-            },
-            p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
-            d(detaching) {
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
-            }
-        };
+        return child_ctx[85] = list[i], child_ctx;
     }
     function create_each_block_11(ctx) {
-        let option, t, option_value_value, t_value = ctx[94].text + "";
+        let option, t, option_value_value, t_value = ctx[85].text + "";
         return {
             c() {
                 option = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option"), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[94], 
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[85], 
                 option.value = option.__value;
             },
             m(target, anchor) {
@@ -6841,10 +6832,28 @@
             }
         };
     }
-    function create_each_block_10(key_1, ctx) {
-        let label, input, t0, t1, t2, label_title_value, dispose, t1_value = ctx[78].name + "";
+    function create_each_block_10(ctx) {
+        let option, t, option_value_value, t_value = ctx[90].text + "";
+        return {
+            c() {
+                option = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option"), 
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[90], 
+                option.value = option.__value;
+            },
+            m(target, anchor) {
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
+            },
+            p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+            d(detaching) {
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
+            }
+        };
+    }
+    function create_each_block_9(key_1, ctx) {
+        let label, input, t0, t1, t2, label_title_value, dispose, t1_value = ctx[77].name + "";
         function input_change_handler() {
-            ctx[64].call(input, ctx[78]);
+            ctx[64].call(input, ctx[77]);
         }
         return {
             key: key_1,
@@ -6853,21 +6862,21 @@
                 label = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("label"), input = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input"), 
                 t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t1_value), 
                 t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "checkbox"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "title", label_title_value = ctx[78].label ? ctx[78].label : ""), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "title", label_title_value = ctx[77].label ? ctx[77].label : ""), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "class", "svelte-10yfywr"), 
                 this.first = label;
             },
             m(target, anchor, remount) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, label, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label, input), input.checked = ctx[78].selected, 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label, input), input.checked = ctx[77].selected, 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label, t0), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label, t1), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(label, t2), remount && dispose(), 
                 dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "change", input_change_handler);
             },
             p(new_ctx, dirty) {
-                ctx = new_ctx, 8192 & dirty[0] && (input.checked = ctx[78].selected), 8192 & dirty[0] && t1_value !== (t1_value = ctx[78].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value), 
-                8192 & dirty[0] && label_title_value !== (label_title_value = ctx[78].label ? ctx[78].label : "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "title", label_title_value);
+                ctx = new_ctx, 8192 & dirty[0] && (input.checked = ctx[77].selected), 8192 & dirty[0] && t1_value !== (t1_value = ctx[77].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value), 
+                8192 & dirty[0] && label_title_value !== (label_title_value = ctx[77].label ? ctx[77].label : "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(label, "title", label_title_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(label), 
@@ -6875,41 +6884,23 @@
             }
         };
     }
-    function create_each_block_9(ctx) {
-        let option, t, option_value_value, option_disabled_value, t_value = ctx[89].name + "";
+    function create_each_block_8(ctx) {
+        let option, t, option_value_value, option_disabled_value, t_value = ctx[85].name + "";
         return {
             c() {
                 option = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option"), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[89], 
-                option.value = option.__value, option.disabled = option_disabled_value = !ctx[89].enabled;
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[85], 
+                option.value = option.__value, option.disabled = option_disabled_value = !ctx[85].enabled;
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
             },
             p(ctx, dirty) {
-                16 & dirty[0] && t_value !== (t_value = ctx[89].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
-                16 & dirty[0] && option_value_value !== (option_value_value = ctx[89]) && (option.__value = option_value_value), 
-                option.value = option.__value, 16 & dirty[0] && option_disabled_value !== (option_disabled_value = !ctx[89].enabled) && (option.disabled = option_disabled_value);
+                16 & dirty[0] && t_value !== (t_value = ctx[85].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
+                16 & dirty[0] && option_value_value !== (option_value_value = ctx[85]) && (option.__value = option_value_value), 
+                option.value = option.__value, 16 & dirty[0] && option_disabled_value !== (option_disabled_value = !ctx[85].enabled) && (option.disabled = option_disabled_value);
             },
-            d(detaching) {
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
-            }
-        };
-    }
-    function create_each_block_8(ctx) {
-        let option, t, option_value_value, t_value = ctx[86] + "";
-        return {
-            c() {
-                option = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option"), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[86], 
-                option.value = option.__value;
-            },
-            m(target, anchor) {
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
-            },
-            p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
             }
@@ -6927,7 +6918,7 @@
     }
     function create_then_block(ctx) {
         let current_block_type_index, if_block, if_block_anchor, current;
-        const if_block_creators = [ create_if_block, create_else_block_5 ], if_blocks = [];
+        const if_block_creators = [ create_if_block_1, create_else_block_5 ], if_blocks = [];
         function select_block_type(ctx, dirty) {
             return ctx[12].songs.length ? 0 : 1;
         }
@@ -6967,7 +6958,7 @@
         return {
             c() {
                 div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), div.innerHTML = "<h3>Strasznie tu pusto</h3> \n            <p>Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?</p>", 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
@@ -6980,22 +6971,22 @@
             }
         };
     }
-    function create_if_block(ctx) {
-        let table, t0, tbody, t1, current, each_blocks = [], each_1_lookup = new Map, if_block0 = ("compact" !== ctx[11].id || ctx[12].series.length > 1) && create_if_block_16(ctx), each_value_1 = ctx[12].songs;
-        const get_key = ctx => ctx[73].leaderboardId;
+    function create_if_block_1(ctx) {
+        let table, t0, tbody, t1, current, each_blocks = [], each_1_lookup = new Map, if_block0 = ("compact" !== ctx[11].id || ctx[12].series.length > 1) && create_if_block_17(ctx), each_value_1 = ctx[12].songs;
+        const get_key = ctx => ctx[72].leaderboardId;
         for (let i = 0; i < each_value_1.length; i += 1) {
             let child_ctx = get_each_context_1(ctx, each_value_1, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_1(key, child_ctx));
         }
-        let if_block1 = ctx[15] && create_if_block_1(ctx);
+        let if_block1 = ctx[15] && create_if_block_2(ctx);
         return {
             c() {
                 table = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("table"), if_block0 && if_block0.c(), 
                 t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), tbody = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tbody");
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block1 && if_block1.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tbody, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(table, "class", "ranking sspl svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tbody, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(table, "class", "ranking sspl svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(table, "light", ctx[1]);
             },
             m(target, anchor) {
@@ -7007,14 +6998,14 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                if ("compact" !== ctx[11].id || ctx[12].series.length > 1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_16(ctx), 
+                if ("compact" !== ctx[11].id || ctx[12].series.length > 1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_17(ctx), 
                 if_block0.c(), if_block0.m(table, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-                3169313 & dirty[0]) {
+                1596449 & dirty[0]) {
                     const each_value_1 = ctx[12].songs;
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), each_blocks = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks, dirty, get_key, 1, ctx, each_value_1, each_1_lookup, tbody, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.outro_and_destroy_block, create_each_block_1, null, get_each_context_1), 
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)();
                 }
-                ctx[15] ? if_block1 ? (if_block1.p(ctx, dirty), 32768 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1)) : (if_block1 = create_if_block_1(ctx), 
+                ctx[15] ? if_block1 ? (if_block1.p(ctx, dirty), 32768 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1)) : (if_block1 = create_if_block_2(ctx), 
                 if_block1.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1), 
                 if_block1.m(table, null)) : if_block1 && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block1, 1, 1, () => {
@@ -7040,14 +7031,14 @@
             }
         };
     }
-    function create_if_block_16(ctx) {
-        let thead, tr, th, t0, th_rowspan_value, t1, t2, t3, t4, show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "stars").selected, show_if = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "maxPp").selected, each_blocks = [], each_1_lookup = new Map, if_block0 = show_if_1 && create_if_block_22(ctx), if_block1 = show_if && create_if_block_21(ctx), each_value_7 = ctx[12].series;
-        const get_key = ctx => ctx[70].id + "_" + ctx[70].estimateId;
+    function create_if_block_17(ctx) {
+        let thead, tr, th, t0, th_rowspan_value, t1, t2, t3, t4, show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "stars").selected, show_if = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "maxPp").selected, each_blocks = [], each_1_lookup = new Map, if_block0 = show_if_1 && create_if_block_23(ctx), if_block1 = show_if && create_if_block_22(ctx), each_value_7 = ctx[12].series;
+        const get_key = ctx => ctx[69].id + "_" + ctx[69].estimateId;
         for (let i = 0; i < each_value_7.length; i += 1) {
             let child_ctx = get_each_context_7(ctx, each_value_7, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_7(key, child_ctx));
         }
-        let if_block2 = "compact" !== ctx[11].id && create_if_block_17(ctx);
+        let if_block2 = "compact" !== ctx[11].id && create_if_block_18(ctx);
         return {
             c() {
                 thead = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("thead"), tr = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tr"), 
@@ -7057,9 +7048,9 @@
                 t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block2 && if_block2.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", "2"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(thead, "class", "svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", "2"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(thead, "class", "svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, thead, anchor), 
@@ -7072,17 +7063,17 @@
             },
             p(ctx, dirty) {
                 if (2048 & dirty[0] && th_rowspan_value !== (th_rowspan_value = "compact" === ctx[11].id ? 1 : 2) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value), 
-                1056 & dirty[0] && (show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "stars").selected), 
-                show_if_1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_22(ctx), 
+                1056 & dirty[0] && (show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "stars").selected), 
+                show_if_1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_23(ctx), 
                 if_block0.c(), if_block0.m(tr, t2)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-                1056 & dirty[0] && (show_if = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "maxPp").selected), 
-                show_if ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_21(ctx), 
+                1056 & dirty[0] && (show_if = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "maxPp").selected), 
+                show_if ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_22(ctx), 
                 if_block1.c(), if_block1.m(tr, t3)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-                1072129 & dirty[0]) {
+                547841 & dirty[0]) {
                     const each_value_7 = ctx[12].series;
                     each_blocks = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks, dirty, get_key, 1, ctx, each_value_7, each_1_lookup, tr, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_block, create_each_block_7, null, get_each_context_7);
                 }
-                "compact" !== ctx[11].id ? if_block2 ? if_block2.p(ctx, dirty) : (if_block2 = create_if_block_17(ctx), 
+                "compact" !== ctx[11].id ? if_block2 ? if_block2.p(ctx, dirty) : (if_block2 = create_if_block_18(ctx), 
                 if_block2.c(), if_block2.m(thead, null)) : if_block2 && (if_block2.d(1), if_block2 = null);
             },
             d(detaching) {
@@ -7093,12 +7084,32 @@
             }
         };
     }
-    function create_if_block_22(ctx) {
+    function create_if_block_23(ctx) {
         let th, t, th_rowspan_value;
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("*"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "stars left middle svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "stars left middle svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2);
+            },
+            m(target, anchor) {
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(th, t);
+            },
+            p(ctx, dirty) {
+                2048 & dirty[0] && th_rowspan_value !== (th_rowspan_value = "compact" === ctx[11].id ? 1 : 2) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value);
+            },
+            d(detaching) {
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(th);
+            }
+        };
+    }
+    function create_if_block_22(ctx) {
+        let th, t, th_rowspan_value;
+        return {
+            c() {
+                th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("Max PP"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "maxPp left middle svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2);
             },
             m(target, anchor) {
@@ -7114,19 +7125,20 @@
         };
     }
     function create_if_block_21(ctx) {
-        let th, t, th_rowspan_value;
+        let th, t, th_colspan_value, t_value = ctx[69].name + "";
         return {
             c() {
-                th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("Max PP"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "maxPp left middle svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = "compact" === ctx[11].id ? 1 : 2);
+                th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[69].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[19](ctx[10], "diffPp").selected ? 1 : 0)), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "series left svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(th, t);
             },
             p(ctx, dirty) {
-                2048 & dirty[0] && th_rowspan_value !== (th_rowspan_value = "compact" === ctx[11].id ? 1 : 2) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value);
+                4096 & dirty[0] && t_value !== (t_value = ctx[69].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
+                21505 & dirty[0] && th_colspan_value !== (th_colspan_value = ctx[69].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[19](ctx[10], "diffPp").selected ? 1 : 0)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(th);
@@ -7134,39 +7146,18 @@
         };
     }
     function create_if_block_20(ctx) {
-        let th, t, th_colspan_value, t_value = ctx[70].name + "";
+        let th, t, t_value = ctx[69].name + "";
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[70].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[20](ctx[10], "diffPp").selected ? 1 : 0)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "series left svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left down svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(th, t);
             },
             p(ctx, dirty) {
-                4096 & dirty[0] && t_value !== (t_value = ctx[70].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
-                21505 & dirty[0] && th_colspan_value !== (th_colspan_value = ctx[70].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[20](ctx[10], "diffPp").selected ? 1 : 0)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value);
-            },
-            d(detaching) {
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(th);
-            }
-        };
-    }
-    function create_if_block_19(ctx) {
-        let th, t, t_value = ctx[70].name + "";
-        return {
-            c() {
-                th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left down svelte-1bvl7gs");
-            },
-            m(target, anchor) {
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(th, t);
-            },
-            p(ctx, dirty) {
-                4096 & dirty[0] && t_value !== (t_value = ctx[70].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value);
+                4096 & dirty[0] && t_value !== (t_value = ctx[69].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(th);
@@ -7176,8 +7167,8 @@
     function create_each_block_7(key_1, ctx) {
         let first, show_if, if_block_anchor;
         function select_block_type_1(ctx, dirty) {
-            return "compact" === ctx[11].id ? create_if_block_19 : ((null == show_if || 21505 & dirty[0]) && (show_if = !(!(ctx[14].length > 0) || 1 === ctx[14].length && ctx[70].id === ctx[0] && ctx[20](ctx[10], "diffPp").selected)), 
-            show_if ? create_if_block_20 : void 0);
+            return "compact" === ctx[11].id ? create_if_block_20 : ((null == show_if || 21505 & dirty[0]) && (show_if = !(!(ctx[14].length > 0) || 1 === ctx[14].length && ctx[69].id === ctx[0] && ctx[19](ctx[10], "diffPp").selected)), 
+            show_if ? create_if_block_21 : void 0);
         }
         let current_block_type = select_block_type_1(ctx, [ -1 ]), if_block = current_block_type && current_block_type(ctx);
         return {
@@ -7203,9 +7194,9 @@
             }
         };
     }
-    function create_if_block_17(ctx) {
+    function create_if_block_18(ctx) {
         let tr, each_blocks = [], each_1_lookup = new Map, each_value_5 = ctx[12].series;
-        const get_key = ctx => ctx[70].id + "_" + ctx[70].estimateId;
+        const get_key = ctx => ctx[69].id + "_" + ctx[69].estimateId;
         for (let i = 0; i < each_value_5.length; i += 1) {
             let child_ctx = get_each_context_5(ctx, each_value_5, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_5(key, child_ctx));
@@ -7231,20 +7222,20 @@
             }
         };
     }
-    function create_if_block_18(ctx) {
-        let th, t0, th_class_value, t1, t0_value = ctx[78].name + "";
+    function create_if_block_19(ctx) {
+        let th, t0, th_class_value, t1, t0_value = ctx[77].name + "";
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t0_value), 
-                t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key + (ctx[72] > 0 ? " middle" : "")) + " svelte-1bvl7gs");
+                t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[77].key + (ctx[71] > 0 ? " middle" : "")) + " svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(th, t0), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t1, anchor);
             },
             p(ctx, dirty) {
-                16384 & dirty[0] && t0_value !== (t0_value = ctx[78].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, t0_value), 
-                16384 & dirty[0] && th_class_value !== (th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key + (ctx[72] > 0 ? " middle" : "")) + " svelte-1bvl7gs") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value);
+                16384 & dirty[0] && t0_value !== (t0_value = ctx[77].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, t0_value), 
+                16384 & dirty[0] && th_class_value !== (th_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[77].key + (ctx[71] > 0 ? " middle" : "")) + " svelte-10yfywr") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", th_class_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(th), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1);
@@ -7252,7 +7243,7 @@
         };
     }
     function create_each_block_6(key_1, ctx) {
-        let first, if_block_anchor, if_block = ("diffPp" !== ctx[78].key || ctx[70].id !== ctx[0]) && create_if_block_18(ctx);
+        let first, if_block_anchor, if_block = ("diffPp" !== ctx[77].key || ctx[69].id !== ctx[0]) && create_if_block_19(ctx);
         return {
             key: key_1,
             first: null,
@@ -7266,7 +7257,7 @@
                 if_block && if_block.m(target, anchor), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, if_block_anchor, anchor);
             },
             p(ctx, dirty) {
-                "diffPp" !== ctx[78].key || ctx[70].id !== ctx[0] ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block_18(ctx), 
+                "diffPp" !== ctx[77].key || ctx[69].id !== ctx[0] ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block_19(ctx), 
                 if_block.c(), if_block.m(if_block_anchor.parentNode, if_block_anchor)) : if_block && (if_block.d(1), 
                 if_block = null);
             },
@@ -7278,7 +7269,7 @@
     }
     function create_each_block_5(key_1, ctx) {
         let first, each_1_anchor, each_blocks = [], each_1_lookup = new Map, each_value_6 = ctx[14];
-        const get_key = ctx => ctx[78].key;
+        const get_key = ctx => ctx[77].key;
         for (let i = 0; i < each_value_6.length; i += 1) {
             let child_ctx = get_each_context_6(ctx, each_value_6, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_6(key, child_ctx));
@@ -7310,7 +7301,7 @@
         };
     }
     function create_default_slot(ctx) {
-        let figure, img, img_src_value, t0, div1, span, t1, t2, div0, t3, t4, small, t5, t1_value = ctx[73].name + "", t3_value = ctx[73].songAuthor + "", t5_value = ctx[73].levelAuthor + "";
+        let figure, img, img_src_value, t0, div1, span, t1, t2, div0, t3, t4, small, t5, t1_value = ctx[72].name + "", t3_value = ctx[72].songAuthor + "", t5_value = ctx[72].levelAuthor + "";
         return {
             c() {
                 figure = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("figure"), 
@@ -7319,13 +7310,13 @@
                 t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t1_value), t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 div0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t3_value), 
                 t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), small = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("small"), 
-                t5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t5_value), img.src !== (img_src_value = "/imports/images/songs/" + ctx[73].id + ".png") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "src", img_src_value), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "class", "svelte-1bvl7gs"), 
+                t5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t5_value), img.src !== (img_src_value = "/imports/images/songs/" + ctx[72].id + ".png") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "src", img_src_value), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "class", "svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(span, "class", "name"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(small, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(small, "class", "svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "author"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "songinfo svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(figure, "class", "svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "songinfo svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(figure, "class", "svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, figure, anchor), 
@@ -7337,21 +7328,21 @@
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(small, t5);
             },
             p(ctx, dirty) {
-                4096 & dirty[0] && img.src !== (img_src_value = "/imports/images/songs/" + ctx[73].id + ".png") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "src", img_src_value), 
-                4096 & dirty[0] && t1_value !== (t1_value = ctx[73].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value), 
-                4096 & dirty[0] && t3_value !== (t3_value = ctx[73].songAuthor + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t3, t3_value), 
-                4096 & dirty[0] && t5_value !== (t5_value = ctx[73].levelAuthor + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t5, t5_value);
+                4096 & dirty[0] && img.src !== (img_src_value = "/imports/images/songs/" + ctx[72].id + ".png") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(img, "src", img_src_value), 
+                4096 & dirty[0] && t1_value !== (t1_value = ctx[72].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value), 
+                4096 & dirty[0] && t3_value !== (t3_value = ctx[72].songAuthor + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t3, t3_value), 
+                4096 & dirty[0] && t5_value !== (t5_value = ctx[72].levelAuthor + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t5, t5_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(figure);
             }
         };
     }
-    function create_if_block_15(ctx) {
+    function create_if_block_16(ctx) {
         let td, current;
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
             props: {
-                value: ctx[73].stars,
+                value: ctx[72].stars,
                 suffix: "*",
                 zero: ""
             }
@@ -7359,7 +7350,7 @@
         return {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "stars left middle svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "stars left middle svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, td, anchor), 
@@ -7368,7 +7359,7 @@
             },
             p(ctx, dirty) {
                 const value_changes = {};
-                4096 & dirty[0] && (value_changes.value = ctx[73].stars), value.$set(value_changes);
+                4096 & dirty[0] && (value_changes.value = ctx[72].stars), value.$set(value_changes);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(value.$$.fragment, local), 
@@ -7383,11 +7374,11 @@
             }
         };
     }
-    function create_if_block_14(ctx) {
+    function create_if_block_15(ctx) {
         let td, current;
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
             props: {
-                value: ctx[73].stars * _scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.PP_PER_STAR * Object(_scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.ppFromScore)(100),
+                value: ctx[72].stars * _scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.PP_PER_STAR * Object(_scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.ppFromScore)(100),
                 suffix: "pp",
                 zero: "-"
             }
@@ -7395,7 +7386,7 @@
         return {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "maxPp left middle svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", "maxPp left middle svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, td, anchor), 
@@ -7404,7 +7395,7 @@
             },
             p(ctx, dirty) {
                 const value_changes = {};
-                4096 & dirty[0] && (value_changes.value = ctx[73].stars * _scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.PP_PER_STAR * Object(_scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.ppFromScore)(100)), 
+                4096 & dirty[0] && (value_changes.value = ctx[72].stars * _scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.PP_PER_STAR * Object(_scoresaber_pp__WEBPACK_IMPORTED_MODULE_2__.ppFromScore)(100)), 
                 value.$set(value_changes);
             },
             i(local) {
@@ -7422,7 +7413,7 @@
     }
     function create_else_block_3(ctx) {
         let each_1_anchor, current, each_blocks = [], each_1_lookup = new Map, each_value_4 = ctx[14];
-        const get_key = ctx => ctx[78].key;
+        const get_key = ctx => ctx[77].key;
         for (let i = 0; i < each_value_4.length; i += 1) {
             let child_ctx = get_each_context_4(ctx, each_value_4, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_4(key, child_ctx));
@@ -7438,7 +7429,7 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                if (3167265 & dirty[0]) {
+                if (1594401 & dirty[0]) {
                     const each_value_4 = ctx[14];
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), each_blocks = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks, dirty, get_key, 1, ctx, each_value_4, each_1_lookup, each_1_anchor.parentNode, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.outro_and_destroy_block, create_each_block_4, each_1_anchor, get_each_context_4), 
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)();
@@ -7460,19 +7451,19 @@
             }
         };
     }
-    function create_if_block_5(ctx) {
+    function create_if_block_6(ctx) {
         let td, show_if, current_block_type_index, if_block, td_class_value, current;
-        const if_block_creators = [ create_if_block_6, create_else_block_2 ], if_blocks = [];
+        const if_block_creators = [ create_if_block_7, create_else_block_2 ], if_blocks = [];
         function select_block_type_3(ctx, dirty) {
-            return 4096 & dirty[0] && (show_if = !!ctx[21](ctx[70], ctx[73], "score")), show_if ? 0 : 1;
+            return 4096 & dirty[0] && (show_if = !!ctx[20](ctx[69], ctx[72], "score")), show_if ? 0 : 1;
         }
         return current_block_type_index = select_block_type_3(ctx, [ -1 ]), if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
         {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), if_block.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = "left compact series-" + ctx[12].series.length + " svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "with-cols", ctx[20](ctx[10], "stars").selected || ctx[20](ctx[10], "maxPp").selected), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = "left compact series-" + ctx[12].series.length + " svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "with-cols", ctx[19](ctx[10], "stars").selected || ctx[19](ctx[10], "maxPp").selected), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[20](ctx[69], ctx[72], "best") && ctx[12].series.length > 1);
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, td, anchor), 
@@ -7486,9 +7477,9 @@
                 }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)(), if_block = if_blocks[current_block_type_index], 
                 if_block || (if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
                 if_block.c()), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
-                if_block.m(td, null)), (!current || 4096 & dirty[0] && td_class_value !== (td_class_value = "left compact series-" + ctx[12].series.length + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
-                1053696 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "with-cols", ctx[20](ctx[10], "stars").selected || ctx[20](ctx[10], "maxPp").selected), 
-                2101248 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
+                if_block.m(td, null)), (!current || 4096 & dirty[0] && td_class_value !== (td_class_value = "left compact series-" + ctx[12].series.length + " svelte-10yfywr")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
+                529408 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "with-cols", ctx[19](ctx[10], "stars").selected || ctx[19](ctx[10], "maxPp").selected), 
+                1052672 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[20](ctx[69], ctx[72], "best") && ctx[12].series.length > 1);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block), 
@@ -7502,19 +7493,19 @@
             }
         };
     }
-    function create_if_block_12(ctx) {
+    function create_if_block_13(ctx) {
         let td, current_block_type_index, if_block, td_class_value, current;
-        const if_block_creators = [ create_if_block_13, create_else_block_4 ], if_blocks = [];
+        const if_block_creators = [ create_if_block_14, create_else_block_4 ], if_blocks = [];
         function select_block_type_5(ctx, dirty) {
-            return "timeset" === ctx[78].key ? 0 : 1;
+            return "timeset" === ctx[77].key ? 0 : 1;
         }
         return current_block_type_index = select_block_type_5(ctx), if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
         {
             c() {
                 td = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("td"), if_block.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key) + " svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "middle", ctx[72] > 0), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[77].key) + " svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "middle", ctx[71] > 0), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[20](ctx[69], ctx[72], "best") && ctx[12].series.length > 1);
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, td, anchor), 
@@ -7528,9 +7519,9 @@
                 }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)(), if_block = if_blocks[current_block_type_index], 
                 if_block || (if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
                 if_block.c()), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
-                if_block.m(td, null)), (!current || 16384 & dirty[0] && td_class_value !== (td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[78].key) + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
-                16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "middle", ctx[72] > 0), 
-                2117632 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[21](ctx[70], ctx[73], "best") && ctx[12].series.length > 1);
+                if_block.m(td, null)), (!current || 16384 & dirty[0] && td_class_value !== (td_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("left " + ctx[77].key) + " svelte-10yfywr")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td, "class", td_class_value), 
+                16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "middle", ctx[71] > 0), 
+                1069056 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.toggle_class)(td, "best", ctx[20](ctx[69], ctx[72], "best") && ctx[12].series.length > 1);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block), 
@@ -7547,12 +7538,12 @@
     function create_else_block_4(ctx) {
         let current;
         const value_spread_levels = [ {
-            value: ctx[21](ctx[70], ctx[73], ctx[78].key)
+            value: ctx[20](ctx[69], ctx[72], ctx[77].key)
         }, {
-            prevValue: !ctx[20](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[70].id === ctx[0] ? null : ctx[21](ctx[70], ctx[73], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[78].key))
+            prevValue: !ctx[19](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[69].id === ctx[0] ? null : ctx[20](ctx[69], ctx[72], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[77].key))
         }, {
-            prevLabel: ctx[70].prevLabel
-        }, ctx[78].valueProps ];
+            prevLabel: ctx[69].prevLabel
+        }, ctx[77].valueProps ];
         let value_props = {};
         for (let i = 0; i < value_spread_levels.length; i += 1) value_props = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.assign)(value_props, value_spread_levels[i]);
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
@@ -7567,13 +7558,13 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                const value_changes = 3167265 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(value_spread_levels, [ 2117632 & dirty[0] && {
-                    value: ctx[21](ctx[70], ctx[73], ctx[78].key)
+                const value_changes = 1594401 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(value_spread_levels, [ 1069056 & dirty[0] && {
+                    value: ctx[20](ctx[69], ctx[72], ctx[77].key)
                 }, {
-                    prevValue: !ctx[20](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[70].id === ctx[0] ? null : ctx[21](ctx[70], ctx[73], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[78].key))
+                    prevValue: !ctx[19](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[69].id === ctx[0] ? null : ctx[20](ctx[69], ctx[72], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[77].key))
                 }, 4096 & dirty[0] && {
-                    prevLabel: ctx[70].prevLabel
-                }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[78].valueProps) ]) : {};
+                    prevLabel: ctx[69].prevLabel
+                }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[77].valueProps) ]) : {};
                 value.$set(value_changes);
             },
             i(local) {
@@ -7589,11 +7580,11 @@
             }
         };
     }
-    function create_if_block_13(ctx) {
+    function create_if_block_14(ctx) {
         let current;
         const date_spread_levels = [ {
-            date: ctx[21](ctx[70], ctx[73], ctx[78].key)
-        }, ctx[78].valueProps ];
+            date: ctx[20](ctx[69], ctx[72], ctx[77].key)
+        }, ctx[77].valueProps ];
         let date_props = {};
         for (let i = 0; i < date_spread_levels.length; i += 1) date_props = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.assign)(date_props, date_spread_levels[i]);
         const date = new _Common_Date_svelte__WEBPACK_IMPORTED_MODULE_18__.default({
@@ -7608,9 +7599,9 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                const date_changes = 2117632 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(date_spread_levels, [ {
-                    date: ctx[21](ctx[70], ctx[73], ctx[78].key)
-                }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[78].valueProps) ]) : {};
+                const date_changes = 1069056 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(date_spread_levels, [ {
+                    date: ctx[20](ctx[69], ctx[72], ctx[77].key)
+                }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[77].valueProps) ]) : {};
                 date.$set(date_changes);
             },
             i(local) {
@@ -7627,7 +7618,7 @@
         };
     }
     function create_each_block_4(key_1, ctx) {
-        let first, if_block_anchor, current, if_block = ("diffPp" !== ctx[78].key || ctx[70].id !== ctx[0]) && create_if_block_12(ctx);
+        let first, if_block_anchor, current, if_block = ("diffPp" !== ctx[77].key || ctx[69].id !== ctx[0]) && create_if_block_13(ctx);
         return {
             key: key_1,
             first: null,
@@ -7642,8 +7633,8 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                "diffPp" !== ctx[78].key || ctx[70].id !== ctx[0] ? if_block ? (if_block.p(ctx, dirty), 
-                20481 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_12(ctx), 
+                "diffPp" !== ctx[77].key || ctx[69].id !== ctx[0] ? if_block ? (if_block.p(ctx, dirty), 
+                20481 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_13(ctx), 
                 if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
                 if_block.m(if_block_anchor.parentNode, if_block_anchor)) : if_block && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block, 1, 1, () => {
@@ -7680,9 +7671,9 @@
             }
         };
     }
-    function create_if_block_6(ctx) {
+    function create_if_block_7(ctx) {
         let each_1_anchor, current, each_blocks = [], each_1_lookup = new Map, each_value_3 = ctx[14];
-        const get_key = ctx => ctx[78].key;
+        const get_key = ctx => ctx[77].key;
         for (let i = 0; i < each_value_3.length; i += 1) {
             let child_ctx = get_each_context_3(ctx, each_value_3, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_3(key, child_ctx));
@@ -7698,7 +7689,7 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                if (3167265 & dirty[0]) {
+                if (1594401 & dirty[0]) {
                     const each_value_3 = ctx[14];
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), each_blocks = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks, dirty, get_key, 1, ctx, each_value_3, each_1_lookup, each_1_anchor.parentNode, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.outro_and_destroy_block, create_each_block_3, each_1_anchor, get_each_context_3), 
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)();
@@ -7720,11 +7711,11 @@
             }
         };
     }
-    function create_if_block_7(ctx) {
+    function create_if_block_8(ctx) {
         let current_block_type_index, if_block, if_block_anchor, current;
-        const if_block_creators = [ create_if_block_8, create_else_block_1 ], if_blocks = [];
+        const if_block_creators = [ create_if_block_9, create_else_block_1 ], if_blocks = [];
         function select_block_type_4(ctx, dirty) {
-            return "timeset" === ctx[78].key ? 0 : 1;
+            return "timeset" === ctx[77].key ? 0 : 1;
         }
         return current_block_type_index = select_block_type_4(ctx), if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx), 
         {
@@ -7758,7 +7749,7 @@
         };
     }
     function create_else_block_1(ctx) {
-        let t, if_block1_anchor, current, show_if = ctx[21](ctx[70], ctx[73], ctx[78].key), if_block0 = show_if && create_if_block_10(ctx), if_block1 = "pp" === ctx[78].key && "rankeds_with_not_played" !== ctx[5].songType.id && create_if_block_9(ctx);
+        let t, if_block1_anchor, current, show_if = ctx[20](ctx[69], ctx[72], ctx[77].key), if_block0 = show_if && create_if_block_11(ctx), if_block1 = "pp" === ctx[77].key && "rankeds_with_not_played" !== ctx[5].songType.id && create_if_block_10(ctx);
         return {
             c() {
                 if_block0 && if_block0.c(), t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
@@ -7770,14 +7761,14 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                20480 & dirty[0] && (show_if = ctx[21](ctx[70], ctx[73], ctx[78].key)), show_if ? if_block0 ? (if_block0.p(ctx, dirty), 
-                20480 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block0, 1)) : (if_block0 = create_if_block_10(ctx), 
+                20480 & dirty[0] && (show_if = ctx[20](ctx[69], ctx[72], ctx[77].key)), show_if ? if_block0 ? (if_block0.p(ctx, dirty), 
+                20480 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block0, 1)) : (if_block0 = create_if_block_11(ctx), 
                 if_block0.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block0, 1), 
                 if_block0.m(t.parentNode, t)) : if_block0 && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block0, 1, 1, () => {
                     if_block0 = null;
-                }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)()), "pp" === ctx[78].key && "rankeds_with_not_played" !== ctx[5].songType.id ? if_block1 ? (if_block1.p(ctx, dirty), 
-                16416 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1)) : (if_block1 = create_if_block_9(ctx), 
+                }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)()), "pp" === ctx[77].key && "rankeds_with_not_played" !== ctx[5].songType.id ? if_block1 ? (if_block1.p(ctx, dirty), 
+                16416 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1)) : (if_block1 = create_if_block_10(ctx), 
                 if_block1.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1), 
                 if_block1.m(if_block1_anchor.parentNode, if_block1_anchor)) : if_block1 && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block1, 1, 1, () => {
@@ -7799,11 +7790,11 @@
             }
         };
     }
-    function create_if_block_8(ctx) {
+    function create_if_block_9(ctx) {
         let strong, strong_class_value, current;
         const date_spread_levels = [ {
-            date: ctx[21](ctx[70], ctx[73], ctx[78].key)
-        }, ctx[78].valueProps ];
+            date: ctx[20](ctx[69], ctx[72], ctx[77].key)
+        }, ctx[77].valueProps ];
         let date_props = {};
         for (let i = 0; i < date_spread_levels.length; i += 1) date_props = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.assign)(date_props, date_spread_levels[i]);
         const date = new _Common_Date_svelte__WEBPACK_IMPORTED_MODULE_18__.default({
@@ -7813,7 +7804,7 @@
             c() {
                 strong = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("strong"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(date.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[77].key + "-val") + " svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, strong, anchor), 
@@ -7821,10 +7812,10 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                const date_changes = 2117632 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(date_spread_levels, [ {
-                    date: ctx[21](ctx[70], ctx[73], ctx[78].key)
-                }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[78].valueProps) ]) : {};
-                date.$set(date_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
+                const date_changes = 1069056 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(date_spread_levels, [ {
+                    date: ctx[20](ctx[69], ctx[72], ctx[77].key)
+                }, 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[77].valueProps) ]) : {};
+                date.$set(date_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[77].key + "-val") + " svelte-10yfywr")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(date.$$.fragment, local), 
@@ -7840,17 +7831,17 @@
             }
         };
     }
-    function create_if_block_10(ctx) {
-        let div, t, strong, strong_class_value, current, if_block = ctx[78].compactLabel && create_if_block_11(ctx);
+    function create_if_block_11(ctx) {
+        let div, t, strong, strong_class_value, current, if_block = ctx[77].compactLabel && create_if_block_12(ctx);
         const value_spread_levels = [ {
-            value: ctx[21](ctx[70], ctx[73], ctx[78].key)
+            value: ctx[20](ctx[69], ctx[72], ctx[77].key)
         }, {
-            prevValue: !ctx[20](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[70].id === ctx[0] ? null : ctx[21](ctx[70], ctx[73], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[78].key))
+            prevValue: !ctx[19](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[69].id === ctx[0] ? null : ctx[20](ctx[69], ctx[72], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[77].key))
         }, {
-            prevLabel: ctx[70].prevLabel
+            prevLabel: ctx[69].prevLabel
         }, {
             inline: !0
-        }, ctx[78].valueProps ];
+        }, ctx[77].valueProps ];
         let value_props = {};
         for (let i = 0; i < value_spread_levels.length; i += 1) value_props = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.assign)(value_props, value_spread_levels[i]);
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
@@ -7861,7 +7852,7 @@
                 div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), if_block && if_block.c(), 
                 t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), strong = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("strong"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[77].key + "-val") + " svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor), 
@@ -7870,16 +7861,16 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                ctx[78].compactLabel ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block_11(ctx), 
+                ctx[77].compactLabel ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block_12(ctx), 
                 if_block.c(), if_block.m(div, t)) : if_block && (if_block.d(1), if_block = null);
-                const value_changes = 3167265 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(value_spread_levels, [ 2117632 & dirty[0] && {
-                    value: ctx[21](ctx[70], ctx[73], ctx[78].key)
+                const value_changes = 1594401 & dirty[0] ? Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_update)(value_spread_levels, [ 1069056 & dirty[0] && {
+                    value: ctx[20](ctx[69], ctx[72], ctx[77].key)
                 }, {
-                    prevValue: !ctx[20](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[70].id === ctx[0] ? null : ctx[21](ctx[70], ctx[73], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[78].key))
+                    prevValue: !ctx[19](ctx[10], "diff").selected || "rankeds_with_not_played" === ctx[5].songType.id && ctx[69].id === ctx[0] ? null : ctx[20](ctx[69], ctx[72], "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(ctx[77].key))
                 }, 4096 & dirty[0] && {
-                    prevLabel: ctx[70].prevLabel
-                }, value_spread_levels[3], 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[78].valueProps) ]) : {};
-                value.$set(value_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[78].key + "-val") + " svelte-1bvl7gs")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
+                    prevLabel: ctx[69].prevLabel
+                }, value_spread_levels[3], 16384 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.get_spread_object)(ctx[77].valueProps) ]) : {};
+                value.$set(value_changes), (!current || 16384 & dirty[0] && strong_class_value !== (strong_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("compact-" + ctx[77].key + "-val") + " svelte-10yfywr")) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(strong, "class", strong_class_value);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(value.$$.fragment, local), 
@@ -7895,8 +7886,8 @@
             }
         };
     }
-    function create_if_block_11(ctx) {
-        let t0, t1, t2, t0_value = ctx[78].compactLabel + "", t1_value = "acc" === ctx[78].key && ctx[21](ctx[70], ctx[73], "mods") ? " (" + ctx[21](ctx[70], ctx[73], "mods") + ")" : "";
+    function create_if_block_12(ctx) {
+        let t0, t1, t2, t0_value = ctx[77].compactLabel + "", t1_value = "acc" === ctx[77].key && ctx[20](ctx[69], ctx[72], "mods") ? " (" + ctx[20](ctx[69], ctx[72], "mods") + ")" : "";
         return {
             c() {
                 t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t0_value), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t1_value), 
@@ -7908,8 +7899,8 @@
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t2, anchor);
             },
             p(ctx, dirty) {
-                16384 & dirty[0] && t0_value !== (t0_value = ctx[78].compactLabel + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, t0_value), 
-                20480 & dirty[0] && t1_value !== (t1_value = "acc" === ctx[78].key && ctx[21](ctx[70], ctx[73], "mods") ? " (" + ctx[21](ctx[70], ctx[73], "mods") + ")" : "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value);
+                16384 & dirty[0] && t0_value !== (t0_value = ctx[77].compactLabel + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, t0_value), 
+                20480 & dirty[0] && t1_value !== (t1_value = "acc" === ctx[77].key && ctx[20](ctx[69], ctx[72], "mods") ? " (" + ctx[20](ctx[69], ctx[72], "mods") + ")" : "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t0), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1), 
@@ -7917,12 +7908,12 @@
             }
         };
     }
-    function create_if_block_9(ctx) {
+    function create_if_block_10(ctx) {
         let current;
         const whatifpp = new _WhatIfPp_svelte__WEBPACK_IMPORTED_MODULE_22__.default({
             props: {
-                leaderboardId: ctx[73].leaderboardId,
-                pp: ctx[21](ctx[70], ctx[73], ctx[78].key)
+                leaderboardId: ctx[72].leaderboardId,
+                pp: ctx[20](ctx[69], ctx[72], ctx[77].key)
             }
         });
         return {
@@ -7935,7 +7926,7 @@
             },
             p(ctx, dirty) {
                 const whatifpp_changes = {};
-                4096 & dirty[0] && (whatifpp_changes.leaderboardId = ctx[73].leaderboardId), 20480 & dirty[0] && (whatifpp_changes.pp = ctx[21](ctx[70], ctx[73], ctx[78].key)), 
+                4096 & dirty[0] && (whatifpp_changes.leaderboardId = ctx[72].leaderboardId), 20480 & dirty[0] && (whatifpp_changes.pp = ctx[20](ctx[69], ctx[72], ctx[77].key)), 
                 whatifpp.$set(whatifpp_changes);
             },
             i(local) {
@@ -7952,7 +7943,7 @@
         };
     }
     function create_each_block_3(key_1, ctx) {
-        let first, if_block_anchor, current, if_block = ("diffPp" !== ctx[78].key || ctx[70].id !== ctx[0]) && create_if_block_7(ctx);
+        let first, if_block_anchor, current, if_block = ("diffPp" !== ctx[77].key || ctx[69].id !== ctx[0]) && create_if_block_8(ctx);
         return {
             key: key_1,
             first: null,
@@ -7967,8 +7958,8 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                "diffPp" !== ctx[78].key || ctx[70].id !== ctx[0] ? if_block ? (if_block.p(ctx, dirty), 
-                20481 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_7(ctx), 
+                "diffPp" !== ctx[77].key || ctx[69].id !== ctx[0] ? if_block ? (if_block.p(ctx, dirty), 
+                20481 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_8(ctx), 
                 if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
                 if_block.m(if_block_anchor.parentNode, if_block_anchor)) : if_block && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block, 1, 1, () => {
@@ -7990,7 +7981,7 @@
     }
     function create_each_block_2(key_1, ctx) {
         let first, current_block_type_index, if_block, if_block_anchor, current;
-        const if_block_creators = [ create_if_block_5, create_else_block_3 ], if_blocks = [];
+        const if_block_creators = [ create_if_block_6, create_else_block_3 ], if_blocks = [];
         function select_block_type_2(ctx, dirty) {
             return "compact" === ctx[11].id ? 0 : 1;
         }
@@ -8032,16 +8023,16 @@
         };
     }
     function create_each_block_1(key_1, ctx) {
-        let tr, td0, t0, td1, t1, t2, t3, t4, current, show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "stars").selected, show_if = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "maxPp").selected, each_blocks = [], each_1_lookup = new Map;
+        let tr, td0, t0, td1, t1, t2, t3, t4, current, show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "stars").selected, show_if = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "maxPp").selected, each_blocks = [], each_1_lookup = new Map;
         const difficulty = new _Common_Difficulty_svelte__WEBPACK_IMPORTED_MODULE_10__.default({
             props: {
-                diff: ctx[73].diff,
+                diff: ctx[72].diff,
                 useShortName: !0,
                 reverseColors: !0
             }
         }), song = new _Song_svelte__WEBPACK_IMPORTED_MODULE_14__.default({
             props: {
-                song: ctx[73],
+                song: ctx[72],
                 $$slots: {
                     default: [ create_default_slot ]
                 },
@@ -8050,8 +8041,8 @@
                 }
             }
         });
-        let if_block0 = show_if_1 && create_if_block_15(ctx), if_block1 = show_if && create_if_block_14(ctx), each_value_2 = ctx[12].series;
-        const get_key = ctx => ctx[70].id + "_" + ctx[70].estimateId;
+        let if_block0 = show_if_1 && create_if_block_16(ctx), if_block1 = show_if && create_if_block_15(ctx), each_value_2 = ctx[12].series;
+        const get_key = ctx => ctx[69].id + "_" + ctx[69].estimateId;
         for (let i = 0; i < each_value_2.length; i += 1) {
             let child_ctx = get_each_context_2(ctx, each_value_2, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block_2(key, child_ctx));
@@ -8068,8 +8059,8 @@
                 t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block1 && if_block1.c(), 
                 t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-                t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td0, "class", "diff svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td1, "class", "song svelte-1bvl7gs"), 
+                t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td0, "class", "diff svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(td1, "class", "song svelte-10yfywr"), 
                 this.first = tr;
             },
             m(target, anchor) {
@@ -8085,24 +8076,24 @@
             },
             p(ctx, dirty) {
                 const difficulty_changes = {};
-                4096 & dirty[0] && (difficulty_changes.diff = ctx[73].diff), difficulty.$set(difficulty_changes);
+                4096 & dirty[0] && (difficulty_changes.diff = ctx[72].diff), difficulty.$set(difficulty_changes);
                 const song_changes = {};
-                if (4096 & dirty[0] && (song_changes.song = ctx[73]), 4096 & dirty[0] | 64 & dirty[3] && (song_changes.$$scope = {
+                if (4096 & dirty[0] && (song_changes.song = ctx[72]), 4096 & dirty[0] | 4 & dirty[3] && (song_changes.$$scope = {
                     dirty: dirty,
                     ctx: ctx
-                }), song.$set(song_changes), 1056 & dirty[0] && (show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "stars").selected), 
-                show_if_1 ? if_block0 ? (if_block0.p(ctx, dirty), 1056 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block0, 1)) : (if_block0 = create_if_block_15(ctx), 
+                }), song.$set(song_changes), 1056 & dirty[0] && (show_if_1 = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "stars").selected), 
+                show_if_1 ? if_block0 ? (if_block0.p(ctx, dirty), 1056 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block0, 1)) : (if_block0 = create_if_block_16(ctx), 
                 if_block0.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block0, 1), 
                 if_block0.m(tr, t2)) : if_block0 && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block0, 1, 1, () => {
                     if_block0 = null;
-                }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)()), 1056 & dirty[0] && (show_if = "unrankeds" !== ctx[5].songType.id && ctx[20](ctx[10], "maxPp").selected), 
-                show_if ? if_block1 ? (if_block1.p(ctx, dirty), 1056 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1)) : (if_block1 = create_if_block_14(ctx), 
+                }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)()), 1056 & dirty[0] && (show_if = "unrankeds" !== ctx[5].songType.id && ctx[19](ctx[10], "maxPp").selected), 
+                show_if ? if_block1 ? (if_block1.p(ctx, dirty), 1056 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1)) : (if_block1 = create_if_block_15(ctx), 
                 if_block1.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block1, 1), 
                 if_block1.m(tr, t3)) : if_block1 && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block1, 1, 1, () => {
                     if_block1 = null;
-                }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)()), 3169313 & dirty[0]) {
+                }), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)()), 1596449 & dirty[0]) {
                     const each_value_2 = ctx[12].series;
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), each_blocks = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks, dirty, get_key, 1, ctx, each_value_2, each_1_lookup, tr, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.outro_and_destroy_block, create_each_block_2, t4, get_each_context_2), 
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)();
@@ -8133,14 +8124,14 @@
             }
         };
     }
-    function create_if_block_1(ctx) {
+    function create_if_block_2(ctx) {
         let tfoot, tr0, th, t0, t1, th_rowspan_value, th_colspan_value, t2, t3, tr1, current, t1_value = ctx[12].series[0].name + "", each_blocks = [], each_1_lookup = new Map, each_value = ctx[12].series;
-        const get_key = ctx => ctx[70].id + "_" + ctx[70].estimateId;
+        const get_key = ctx => ctx[69].id + "_" + ctx[69].estimateId;
         for (let i = 0; i < each_value.length; i += 1) {
             let child_ctx = get_each_context(ctx, each_value, i), key = get_key(child_ctx);
             each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
         }
-        let if_block = ctx[14].length && ctx[12].series.length > 2 && create_if_block_2(ctx);
+        let if_block = ctx[14].length && ctx[12].series.length > 2 && create_if_block_3(ctx);
         return {
             c() {
                 tfoot = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tfoot"), tr0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tr"), 
@@ -8148,10 +8139,10 @@
                 t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t1_value), t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
                 t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), tr1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("tr"), 
-                if_block && if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-1bvl7gs"), 
+                if_block && if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "song svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = ctx[12].series.length > 2 ? 2 : 1), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = "unrankeds" !== ctx[5].songType.id ? 2 + (ctx[20](ctx[10], "stars").selected ? 1 : 0) + (ctx[20](ctx[10], "maxPp").selected ? 1 : 0) : 2), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tfoot, "class", "svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = "unrankeds" !== ctx[5].songType.id ? 2 + (ctx[19](ctx[10], "stars").selected ? 1 : 0) + (ctx[19](ctx[10], "maxPp").selected ? 1 : 0) : 2), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(tfoot, "class", "svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, tfoot, anchor), 
@@ -8165,14 +8156,14 @@
             p(ctx, dirty) {
                 if ((!current || 4096 & dirty[0]) && t1_value !== (t1_value = ctx[12].series[0].name + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t1, t1_value), 
                 (!current || 4096 & dirty[0] && th_rowspan_value !== (th_rowspan_value = ctx[12].series.length > 2 ? 2 : 1)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value), 
-                (!current || 1056 & dirty[0] && th_colspan_value !== (th_colspan_value = "unrankeds" !== ctx[5].songType.id ? 2 + (ctx[20](ctx[10], "stars").selected ? 1 : 0) + (ctx[20](ctx[10], "maxPp").selected ? 1 : 0) : 2)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value), 
-                1072129 & dirty[0]) {
+                (!current || 1056 & dirty[0] && th_colspan_value !== (th_colspan_value = "unrankeds" !== ctx[5].songType.id ? 2 + (ctx[19](ctx[10], "stars").selected ? 1 : 0) + (ctx[19](ctx[10], "maxPp").selected ? 1 : 0) : 2)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value), 
+                547841 & dirty[0]) {
                     const each_value = ctx[12].series;
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), each_blocks = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, tr0, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.outro_and_destroy_block, create_each_block, null, get_each_context), 
                     Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.check_outros)();
                 }
                 ctx[14].length && ctx[12].series.length > 2 ? if_block ? (if_block.p(ctx, dirty), 
-                20480 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_2(ctx), 
+                20480 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_3(ctx), 
                 if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
                 if_block.m(tr1, null)) : if_block && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block, 1, 1, () => {
@@ -8200,15 +8191,15 @@
         let th, t, current;
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
             props: {
-                value: ctx[70].totalPp,
-                prevValue: ctx[20](ctx[10], "diff").selected ? ctx[70].prevTotalPp : null,
+                value: ctx[69].totalPp,
+                prevValue: ctx[19](ctx[10], "diff").selected ? ctx[69].prevTotalPp : null,
                 suffix: "pp"
             }
         });
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1bvl7gs");
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
@@ -8217,7 +8208,7 @@
             },
             p(ctx, dirty) {
                 const value_changes = {};
-                4096 & dirty[0] && (value_changes.value = ctx[70].totalPp), 5120 & dirty[0] && (value_changes.prevValue = ctx[20](ctx[10], "diff").selected ? ctx[70].prevTotalPp : null), 
+                4096 & dirty[0] && (value_changes.value = ctx[69].totalPp), 5120 & dirty[0] && (value_changes.prevValue = ctx[19](ctx[10], "diff").selected ? ctx[69].prevTotalPp : null), 
                 value.$set(value_changes);
             },
             i(local) {
@@ -8233,8 +8224,8 @@
             }
         };
     }
-    function create_if_block_3(ctx) {
-        let if_block_anchor, current, show_if = ctx[14].length > 0 && !(1 === ctx[14].length && ctx[70].id === ctx[0] && ctx[20](ctx[10], "diffPp").selected), if_block = show_if && create_if_block_4(ctx);
+    function create_if_block_4(ctx) {
+        let if_block_anchor, current, show_if = ctx[14].length > 0 && !(1 === ctx[14].length && ctx[69].id === ctx[0] && ctx[19](ctx[10], "diffPp").selected), if_block = show_if && create_if_block_5(ctx);
         return {
             c() {
                 if_block && if_block.c(), if_block_anchor = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.empty)();
@@ -8244,8 +8235,8 @@
                 current = !0;
             },
             p(ctx, dirty) {
-                21505 & dirty[0] && (show_if = ctx[14].length > 0 && !(1 === ctx[14].length && ctx[70].id === ctx[0] && ctx[20](ctx[10], "diffPp").selected)), 
-                show_if ? if_block ? (if_block.p(ctx, dirty), 21505 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_4(ctx), 
+                21505 & dirty[0] && (show_if = ctx[14].length > 0 && !(1 === ctx[14].length && ctx[69].id === ctx[0] && ctx[19](ctx[10], "diffPp").selected)), 
+                show_if ? if_block ? (if_block.p(ctx, dirty), 21505 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1)) : (if_block = create_if_block_5(ctx), 
                 if_block.c(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(if_block, 1), 
                 if_block.m(if_block_anchor.parentNode, if_block_anchor)) : if_block && (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.group_outros)(), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_out)(if_block, 1, 1, () => {
@@ -8264,21 +8255,21 @@
             }
         };
     }
-    function create_if_block_4(ctx) {
+    function create_if_block_5(ctx) {
         let th, t, th_rowspan_value, th_colspan_value, current;
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
             props: {
-                value: ctx[70].totalPp,
-                prevValue: ctx[20](ctx[10], "diff").selected ? ctx[70].prevTotalPp : null,
+                value: ctx[69].totalPp,
+                prevValue: ctx[19](ctx[10], "diff").selected ? ctx[69].prevTotalPp : null,
                 suffix: "pp"
             }
         });
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = ctx[70].id !== ctx[0] ? 1 : ctx[12].series.length > 2 ? 2 : 1), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[70].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[20](ctx[10], "diffPp").selected ? 1 : 0));
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value = ctx[69].id !== ctx[0] ? 1 : ctx[12].series.length > 2 ? 2 : 1), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[69].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[19](ctx[10], "diffPp").selected ? 1 : 0));
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, th, anchor), 
@@ -8287,9 +8278,9 @@
             },
             p(ctx, dirty) {
                 const value_changes = {};
-                4096 & dirty[0] && (value_changes.value = ctx[70].totalPp), 5120 & dirty[0] && (value_changes.prevValue = ctx[20](ctx[10], "diff").selected ? ctx[70].prevTotalPp : null), 
-                value.$set(value_changes), (!current || 4097 & dirty[0] && th_rowspan_value !== (th_rowspan_value = ctx[70].id !== ctx[0] ? 1 : ctx[12].series.length > 2 ? 2 : 1)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value), 
-                (!current || 21505 & dirty[0] && th_colspan_value !== (th_colspan_value = ctx[70].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[20](ctx[10], "diffPp").selected ? 1 : 0))) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value);
+                4096 & dirty[0] && (value_changes.value = ctx[69].totalPp), 5120 & dirty[0] && (value_changes.prevValue = ctx[19](ctx[10], "diff").selected ? ctx[69].prevTotalPp : null), 
+                value.$set(value_changes), (!current || 4097 & dirty[0] && th_rowspan_value !== (th_rowspan_value = ctx[69].id !== ctx[0] ? 1 : ctx[12].series.length > 2 ? 2 : 1)) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "rowspan", th_rowspan_value), 
+                (!current || 21505 & dirty[0] && th_colspan_value !== (th_colspan_value = ctx[69].id !== ctx[0] ? ctx[14].length : ctx[14].length - (ctx[19](ctx[10], "diffPp").selected ? 1 : 0))) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value);
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(value.$$.fragment, local), 
@@ -8306,7 +8297,7 @@
     }
     function create_each_block(key_1, ctx) {
         let first, current_block_type_index, if_block, if_block_anchor, current;
-        const if_block_creators = [ create_if_block_3, create_else_block ], if_blocks = [];
+        const if_block_creators = [ create_if_block_4, create_else_block ], if_blocks = [];
         function select_block_type_6(ctx, dirty) {
             return "tabular" === ctx[11].id ? 0 : 1;
         }
@@ -8347,19 +8338,19 @@
             }
         };
     }
-    function create_if_block_2(ctx) {
+    function create_if_block_3(ctx) {
         let th, th_colspan_value, current;
         const value = new _Common_Value_svelte__WEBPACK_IMPORTED_MODULE_11__.default({
             props: {
                 value: ctx[12].bestTotalRealPp,
-                prevValue: ctx[20](ctx[10], "diff").selected ? ctx[12].series[0].totalPp : null,
+                prevValue: ctx[19](ctx[10], "diff").selected ? ctx[12].series[0].totalPp : null,
                 suffix: "pp"
             }
         });
         return {
             c() {
                 th = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("th"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(value.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "class", "left svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value = ctx[14].length * (ctx[12].series.length - 1));
             },
             m(target, anchor) {
@@ -8369,7 +8360,7 @@
             },
             p(ctx, dirty) {
                 const value_changes = {};
-                4096 & dirty[0] && (value_changes.value = ctx[12].bestTotalRealPp), 5120 & dirty[0] && (value_changes.prevValue = ctx[20](ctx[10], "diff").selected ? ctx[12].series[0].totalPp : null), 
+                4096 & dirty[0] && (value_changes.value = ctx[12].bestTotalRealPp), 5120 & dirty[0] && (value_changes.prevValue = ctx[19](ctx[10], "diff").selected ? ctx[12].series[0].totalPp : null), 
                 value.$set(value_changes), (!current || 20480 & dirty[0] && th_colspan_value !== (th_colspan_value = ctx[14].length * (ctx[12].series.length - 1))) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(th, "colspan", th_colspan_value);
             },
             i(local) {
@@ -8390,7 +8381,7 @@
         return {
             c() {
                 div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), div.innerHTML = "<h3>Transformacja wszechświata w toku...</h3>", 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "info svelte-10yfywr");
             },
             m(target, anchor) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor);
@@ -8403,9 +8394,29 @@
             }
         };
     }
+    function create_if_block(ctx) {
+        let div, button, dispose;
+        return {
+            c() {
+                div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), button = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("button"), 
+                button.innerHTML = '<svg fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor" class="svelte-10yfywr"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>\n        CSV\n    ', 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(button, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div, "class", "actions svelte-10yfywr");
+            },
+            m(target, anchor, remount) {
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, button), remount && dispose(), 
+                dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(button, "click", ctx[25]);
+            },
+            p: svelte_internal__WEBPACK_IMPORTED_MODULE_0__.noop,
+            d(detaching) {
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div), dispose();
+            }
+        };
+    }
     function create_fragment(ctx) {
-        let div9, div0, header0, t1, select0, t2, div1, input, t3, div2, t4, div3, header1, t6, t7, div4, header2, t9, select1, t10, div6, div5, header3, t12, t13, div7, header4, t15, select2, t16, div8, header5, t18, select3, t19, promise, t20, updating_currentPage, updating_itemsPerPage, current, dispose, each_blocks_2 = [], each2_lookup = new Map, each_value_12 = ctx[17], each_blocks_4 = [];
-        for (let i = 0; i < each_value_12.length; i += 1) each_blocks_4[i] = create_each_block_12(get_each_context_12(ctx, each_value_12, i));
+        let div8, div0, header0, t1, select0, t2, div1, input, t3, div2, t4, div3, header1, t6, t7, div4, header2, t9, select1, t10, div6, div5, header3, t12, t13, div7, header4, t15, select2, t16, promise, t17, updating_currentPage, updating_itemsPerPage, t18, if_block_anchor, current, dispose, each_blocks_1 = [], each2_lookup = new Map, each_value_11 = ctx[17], each_blocks_3 = [];
+        for (let i = 0; i < each_value_11.length; i += 1) each_blocks_3[i] = create_each_block_11(get_each_context_11(ctx, each_value_11, i));
         const range = new _Common_Range_svelte__WEBPACK_IMPORTED_MODULE_16__.default({
             props: {
                 label: "+PP > ",
@@ -8416,7 +8427,7 @@
                 suffix: "pp"
             }
         });
-        range.$on("change", ctx[25]);
+        range.$on("change", ctx[24]);
         const multirange = new _Common_MultiRange_svelte__WEBPACK_IMPORTED_MODULE_19__.default({
             props: {
                 label: "Gwiazdki",
@@ -8429,18 +8440,16 @@
                 disableDirectEditing: !0
             }
         });
-        multirange.$on("change", ctx[24]);
-        let each_value_11 = ctx[19], each_blocks_3 = [];
-        for (let i = 0; i < each_value_11.length; i += 1) each_blocks_3[i] = create_each_block_11(get_each_context_11(ctx, each_value_11, i));
-        let each_value_10 = ctx[13];
-        const get_key = ctx => ctx[78].key;
-        for (let i = 0; i < each_value_10.length; i += 1) {
-            let child_ctx = get_each_context_10(ctx, each_value_10, i), key = get_key(child_ctx);
-            each2_lookup.set(key, each_blocks_2[i] = create_each_block_10(key, child_ctx));
+        multirange.$on("change", ctx[23]);
+        let each_value_10 = ctx[18], each_blocks_2 = [];
+        for (let i = 0; i < each_value_10.length; i += 1) each_blocks_2[i] = create_each_block_10(get_each_context_10(ctx, each_value_10, i));
+        let each_value_9 = ctx[13];
+        const get_key = ctx => ctx[77].key;
+        for (let i = 0; i < each_value_9.length; i += 1) {
+            let child_ctx = get_each_context_9(ctx, each_value_9, i), key = get_key(child_ctx);
+            each2_lookup.set(key, each_blocks_1[i] = create_each_block_9(key, child_ctx));
         }
-        let each_value_9 = ctx[4], each_blocks_1 = [];
-        for (let i = 0; i < each_value_9.length; i += 1) each_blocks_1[i] = create_each_block_9(get_each_context_9(ctx, each_value_9, i));
-        let each_value_8 = ctx[18], each_blocks = [];
+        let each_value_8 = ctx[4], each_blocks = [];
         for (let i = 0; i < each_value_8.length; i += 1) each_blocks[i] = create_each_block_8(get_each_context_8(ctx, each_value_8, i));
         let info = {
             ctx: ctx,
@@ -8449,33 +8458,35 @@
             pending: create_pending_block,
             then: create_then_block,
             catch: create_catch_block,
-            value: 69,
+            value: 68,
             blocks: [ , , ,  ]
         };
         function pager_currentPage_binding(value) {
-            ctx[67].call(null, value);
+            ctx[66].call(null, value);
         }
         function pager_itemsPerPage_binding(value) {
-            ctx[68].call(null, value);
+            ctx[67].call(null, value);
         }
         Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.handle_promise)(promise = ctx[16], info);
         let pager_props = {
             totalItems: ctx[9],
+            itemsPerPageValues: [ 5, 10, 15, 20, 25, 50 ],
             hide: ctx[6]
         };
         void 0 !== ctx[7] && (pager_props.currentPage = ctx[7]), void 0 !== ctx[8] && (pager_props.itemsPerPage = ctx[8]);
         const pager = new _Common_Pager_svelte__WEBPACK_IMPORTED_MODULE_15__.default({
             props: pager_props
         });
-        return svelte_internal__WEBPACK_IMPORTED_MODULE_0__.binding_callbacks.push(() => Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.bind)(pager, "currentPage", pager_currentPage_binding)), 
-        svelte_internal__WEBPACK_IMPORTED_MODULE_0__.binding_callbacks.push(() => Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.bind)(pager, "itemsPerPage", pager_itemsPerPage_binding)), 
-        {
+        svelte_internal__WEBPACK_IMPORTED_MODULE_0__.binding_callbacks.push(() => Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.bind)(pager, "currentPage", pager_currentPage_binding)), 
+        svelte_internal__WEBPACK_IMPORTED_MODULE_0__.binding_callbacks.push(() => Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.bind)(pager, "itemsPerPage", pager_itemsPerPage_binding));
+        let if_block = !ctx[6] && create_if_block(ctx);
+        return {
             c() {
-                div9 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), div0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
+                div8 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), div0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
                 header0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("header"), 
                 header0.textContent = "Rodzaj", t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 select0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
-                for (let i = 0; i < each_blocks_4.length; i += 1) each_blocks_4[i].c();
+                for (let i = 0; i < each_blocks_3.length; i += 1) each_blocks_3[i].c();
                 t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), div1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
                 input = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("input"), t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 div2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(range.$$.fragment), 
@@ -8487,94 +8498,85 @@
                 header2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("header"), 
                 header2.textContent = "Widok", t9 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 select1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
-                for (let i = 0; i < each_blocks_3.length; i += 1) each_blocks_3[i].c();
+                for (let i = 0; i < each_blocks_2.length; i += 1) each_blocks_2[i].c();
                 t10 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), div6 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
                 div5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), header3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("header"), 
                 header3.textContent = "Pokazuj", t12 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-                for (let i = 0; i < each_blocks_2.length; i += 1) each_blocks_2[i].c();
+                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
                 t13 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), div7 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
                 header4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("header"), 
                 header4.textContent = "Sortowanie", t15 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 select2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
-                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
-                t16 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), div8 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
-                header5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("header"), 
-                header5.textContent = "Wyniki / stronę", t18 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
-                select3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
                 for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-                t19 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), info.block.c(), 
-                t20 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(pager.$$.fragment), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header0, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select0, "class", "svelte-1bvl7gs"), 
+                t16 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), info.block.c(), 
+                t17 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.create_component)(pager.$$.fragment), 
+                t18 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block && if_block.c(), 
+                if_block_anchor = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.empty)(), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header0, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select0, "class", "svelte-10yfywr"), 
                 void 0 === ctx[5].songType && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[62].call(select0)), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "type", "text"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "placeholder", "Nazwa nutki..."), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "filter-name svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(input, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "filter-name svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_style)(div2, "display", "rankeds_with_not_played" === ctx[5].songType.id ? "block" : "none"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header1, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header1, "class", "svelte-10yfywr"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_style)(div3, "display", "unrankeds" !== ctx[5].songType.id ? "block" : "none"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header2, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select1, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header2, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select1, "class", "svelte-10yfywr"), 
                 void 0 === ctx[11] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[63].call(select1)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header3, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div6, "class", "columns svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header4, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select2, "class", "svelte-1bvl7gs"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header3, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div6, "class", "columns svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header4, "class", "svelte-10yfywr"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select2, "class", "svelte-10yfywr"), 
                 void 0 === ctx[5].sortBy && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[65].call(select2)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(header5, "class", "svelte-1bvl7gs"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select3, "class", "svelte-1bvl7gs"), 
-                void 0 === ctx[8] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[66].call(select3)), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div9, "class", "filters svelte-1bvl7gs");
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div8, "class", "filters svelte-10yfywr");
             },
             m(target, anchor, remount) {
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div9, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div0), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, header0), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, div8, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div0), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, header0), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t1), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, select0);
-                for (let i = 0; i < each_blocks_4.length; i += 1) each_blocks_4[i].m(select0, null);
+                for (let i = 0; i < each_blocks_3.length; i += 1) each_blocks_3[i].m(select0, null);
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select0, ctx[5].songType), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t2), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div1), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, input), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t3), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div2), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.mount_component)(range, div2, null), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t4), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div3), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t2), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div1), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, input), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t3), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div2), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.mount_component)(range, div2, null), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t4), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div3), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, header1), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div3, t6), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.mount_component)(multirange, div3, null), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t7), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div4), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t7), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div4), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div4, header2), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div4, t9), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div4, select1);
-                for (let i = 0; i < each_blocks_3.length; i += 1) each_blocks_3[i].m(select1, null);
+                for (let i = 0; i < each_blocks_2.length; i += 1) each_blocks_2[i].m(select1, null);
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select1, ctx[11]), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t10), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div6), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t10), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div6), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div6, div5), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div5, header3), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div5, t12);
-                for (let i = 0; i < each_blocks_2.length; i += 1) each_blocks_2[i].m(div5, null);
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t13), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div7), 
+                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].m(div5, null);
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t13), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, div7), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div7, header4), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div7, t15), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div7, select2);
-                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].m(select2, null);
+                for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(select2, null);
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select2, ctx[5].sortBy), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, t16), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div9, div8), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, header5), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, t18), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div8, select3);
-                for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(select3, null);
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select3, ctx[8]), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t19, anchor), 
-                info.block.m(target, info.anchor = anchor), info.mount = () => t20.parentNode, info.anchor = t20, 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t20, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t16, anchor), 
+                info.block.m(target, info.anchor = anchor), info.mount = () => t17.parentNode, info.anchor = t17, 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t17, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.mount_component)(pager, target, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t18, anchor), 
+                if_block && if_block.m(target, anchor), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, if_block_anchor, anchor), 
                 current = !0, remount && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.run_all)(dispose), 
-                dispose = [ Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select0, "change", ctx[62]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select0, "change", ctx[22]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "input", ctx[23]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select1, "change", ctx[63]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select2, "change", ctx[65]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select3, "change", ctx[66]) ];
+                dispose = [ Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select0, "change", ctx[62]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select0, "change", ctx[21]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(input, "input", ctx[22]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select1, "change", ctx[63]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select2, "change", ctx[65]) ];
             },
             p(new_ctx, dirty) {
                 if (ctx = new_ctx, 131072 & dirty[0]) {
                     let i;
-                    for (each_value_12 = ctx[17], i = 0; i < each_value_12.length; i += 1) {
-                        const child_ctx = get_each_context_12(ctx, each_value_12, i);
-                        each_blocks_4[i] ? each_blocks_4[i].p(child_ctx, dirty) : (each_blocks_4[i] = create_each_block_12(child_ctx), 
-                        each_blocks_4[i].c(), each_blocks_4[i].m(select0, null));
+                    for (each_value_11 = ctx[17], i = 0; i < each_value_11.length; i += 1) {
+                        const child_ctx = get_each_context_11(ctx, each_value_11, i);
+                        each_blocks_3[i] ? each_blocks_3[i].p(child_ctx, dirty) : (each_blocks_3[i] = create_each_block_11(child_ctx), 
+                        each_blocks_3[i].c(), each_blocks_3[i].m(select0, null));
                     }
-                    for (;i < each_blocks_4.length; i += 1) each_blocks_4[i].d(1);
-                    each_blocks_4.length = each_value_12.length;
+                    for (;i < each_blocks_3.length; i += 1) each_blocks_3[i].d(1);
+                    each_blocks_3.length = each_value_11.length;
                 }
                 32 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select0, ctx[5].songType);
                 const range_changes = {};
@@ -8584,46 +8586,35 @@
                 if (32 & dirty[0] && (multirange_changes.value = ctx[5].starsFilter), 36 & dirty[0] && (multirange_changes.min = "rankeds_with_not_played" === ctx[5].songType.id ? Object(_utils_format__WEBPACK_IMPORTED_MODULE_21__.round)(ctx[2], 1) : 0), 
                 8 & dirty[0] && (multirange_changes.max = ctx[3]), multirange.$set(multirange_changes), 
                 (!current || 32 & dirty[0]) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_style)(div3, "display", "unrankeds" !== ctx[5].songType.id ? "block" : "none"), 
-                524288 & dirty[0]) {
+                262144 & dirty[0]) {
                     let i;
-                    for (each_value_11 = ctx[19], i = 0; i < each_value_11.length; i += 1) {
-                        const child_ctx = get_each_context_11(ctx, each_value_11, i);
-                        each_blocks_3[i] ? each_blocks_3[i].p(child_ctx, dirty) : (each_blocks_3[i] = create_each_block_11(child_ctx), 
-                        each_blocks_3[i].c(), each_blocks_3[i].m(select1, null));
+                    for (each_value_10 = ctx[18], i = 0; i < each_value_10.length; i += 1) {
+                        const child_ctx = get_each_context_10(ctx, each_value_10, i);
+                        each_blocks_2[i] ? each_blocks_2[i].p(child_ctx, dirty) : (each_blocks_2[i] = create_each_block_10(child_ctx), 
+                        each_blocks_2[i].c(), each_blocks_2[i].m(select1, null));
                     }
-                    for (;i < each_blocks_3.length; i += 1) each_blocks_3[i].d(1);
-                    each_blocks_3.length = each_value_11.length;
+                    for (;i < each_blocks_2.length; i += 1) each_blocks_2[i].d(1);
+                    each_blocks_2.length = each_value_10.length;
                 }
                 if (2048 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select1, ctx[11]), 
                 8192 & dirty[0]) {
-                    const each_value_10 = ctx[13];
-                    each_blocks_2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks_2, dirty, get_key, 1, ctx, each_value_10, each2_lookup, div5, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_block, create_each_block_10, null, get_each_context_10);
+                    const each_value_9 = ctx[13];
+                    each_blocks_1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.update_keyed_each)(each_blocks_1, dirty, get_key, 1, ctx, each_value_9, each2_lookup, div5, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_block, create_each_block_9, null, get_each_context_9);
                 }
                 if (16 & dirty[0]) {
                     let i;
-                    for (each_value_9 = ctx[4], i = 0; i < each_value_9.length; i += 1) {
-                        const child_ctx = get_each_context_9(ctx, each_value_9, i);
-                        each_blocks_1[i] ? each_blocks_1[i].p(child_ctx, dirty) : (each_blocks_1[i] = create_each_block_9(child_ctx), 
-                        each_blocks_1[i].c(), each_blocks_1[i].m(select2, null));
-                    }
-                    for (;i < each_blocks_1.length; i += 1) each_blocks_1[i].d(1);
-                    each_blocks_1.length = each_value_9.length;
-                }
-                if (32 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select2, ctx[5].sortBy), 
-                262144 & dirty[0]) {
-                    let i;
-                    for (each_value_8 = ctx[18], i = 0; i < each_value_8.length; i += 1) {
+                    for (each_value_8 = ctx[4], i = 0; i < each_value_8.length; i += 1) {
                         const child_ctx = get_each_context_8(ctx, each_value_8, i);
                         each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block_8(child_ctx), 
-                        each_blocks[i].c(), each_blocks[i].m(select3, null));
+                        each_blocks[i].c(), each_blocks[i].m(select2, null));
                     }
                     for (;i < each_blocks.length; i += 1) each_blocks[i].d(1);
                     each_blocks.length = each_value_8.length;
                 }
-                if (256 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select3, ctx[8]), 
+                if (32 & dirty[0] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select2, ctx[5].sortBy), 
                 info.ctx = ctx, 65536 & dirty[0] && promise !== (promise = ctx[16]) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.handle_promise)(promise, info)) ; else {
                     const child_ctx = ctx.slice();
-                    child_ctx[69] = info.resolved, info.block.p(child_ctx, dirty);
+                    child_ctx[68] = info.resolved, info.block.p(child_ctx, dirty);
                 }
                 const pager_changes = {};
                 512 & dirty[0] && (pager_changes.totalItems = ctx[9]), 64 & dirty[0] && (pager_changes.hide = ctx[6]), 
@@ -8631,7 +8622,8 @@
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_flush_callback)(() => updating_currentPage = !1)), 
                 !updating_itemsPerPage && 256 & dirty[0] && (updating_itemsPerPage = !0, pager_changes.itemsPerPage = ctx[8], 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_flush_callback)(() => updating_itemsPerPage = !1)), 
-                pager.$set(pager_changes);
+                pager.$set(pager_changes), ctx[6] ? if_block && (if_block.d(1), if_block = null) : if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block(ctx), 
+                if_block.c(), if_block.m(if_block_anchor.parentNode, if_block_anchor));
             },
             i(local) {
                 current || (Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.transition_in)(range.$$.fragment, local), 
@@ -8651,16 +8643,17 @@
                 current = !1;
             },
             d(detaching) {
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div9), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_4, detaching), 
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(div8), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_3, detaching), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_component)(range), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_component)(multirange), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_3, detaching);
-                for (let i = 0; i < each_blocks_2.length; i += 1) each_blocks_2[i].d();
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_1, detaching), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_2, detaching);
+                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].d();
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching), 
-                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t19), info.block.d(detaching), 
-                info.token = null, info = null, detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t20), 
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t16), info.block.d(detaching), 
+                info.token = null, info = null, detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t17), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_component)(pager, detaching), 
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t18), if_block && if_block.d(detaching), 
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(if_block_anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.run_all)(dispose);
             }
         };
@@ -8763,9 +8756,7 @@
             }), allFilters), $$invalidate(2, minStarsForSniper = await getCachedMinStars(playerId, minPpPerMap)), 
             await generateSortTypes(), $$invalidate(28, initialized = !0);
         })();
-        let calculating = !0, currentPage = 0, itemsPerPage = 10, pagerTotal = 0;
-        const itemsPerPageList = [ 5, 10, 15, 20, 25, 50 ];
-        let allColumns = [ {
+        let calculating = !0, currentPage = 0, itemsPerPage = 10, pagerTotal = 0, allColumns = [ {
             label: "Gwiazdki",
             name: "*",
             key: "stars",
@@ -8911,6 +8902,10 @@
             if (!name.length) return !0;
             return (song.name + " " + song.songAuthor + " " + song.levelAuthor).toLowerCase().includes(name.toLowerCase());
         }, songIsUnranked = song => !song.stars, bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiffPp && song.bestDiffPp > minPpDiff, playerIsNotTheBest = (leaderboardId, series) => !getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best, nobodyPlayedItYet = song => null === song.bestIdx;
+        function getScoreValueByKey(series, song, key, prev = !1) {
+            const valueKey = prev ? "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(key) : key;
+            return series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId][valueKey] ? series.scores[song.leaderboardId][valueKey] : null;
+        }
         function completeFetchingNewPage(data) {
             $$invalidate(12, songsPage = data);
         }
@@ -9089,12 +9084,9 @@
             1024 & $$self.$$.dirty[0] && (columnsQty = allColumns.reduce((sum, c) => sum + (c.isColumn && c.selected ? 1 : 0), 0)), 
             1024 & $$self.$$.dirty[0] && $$invalidate(14, selectedCols = allColumns.filter(c => c.isColumn && c.selected)), 
             1056 & $$self.$$.dirty[0] && $$invalidate(15, shouldCalculateTotalPp = getObjectFromArrayByKey(allColumns, "diffPp").selected && "rankeds_with_not_played" === allFilters.songType.id), 
-            335544353 & $$self.$$.dirty[0] && $$invalidate(32, calcPromised = initialized ? calculate(playerId, snipedIds.concat(snipedIds.length || "rankeds_with_not_played" !== allFilters.songType.id ? [] : sniperModeIds), allFilters) : null), 
-            384 & $$self.$$.dirty[0] | 2 & $$self.$$.dirty[1] && $$invalidate(16, pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage));
-        }, [ playerId, lightMode, minStarsForSniper, maxStars, sortTypes, allFilters, calculating, currentPage, itemsPerPage, pagerTotal, allColumns, viewType, songsPage, shownColumns, selectedCols, shouldCalculateTotalPp, pagedPromised, songTypes, itemsPerPageList, viewTypes, getObjectFromArrayByKey, function(series, song, key, prev = !1) {
-            const valueKey = prev ? "prev" + Object(_utils_js__WEBPACK_IMPORTED_MODULE_8__.capitalize)(key) : key;
-            return series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId][valueKey] ? series.scores[song.leaderboardId][valueKey] : null;
-        }, async function() {
+            335544353 & $$self.$$.dirty[0] && $$invalidate(31, calcPromised = initialized ? calculate(playerId, snipedIds.concat(snipedIds.length || "rankeds_with_not_played" !== allFilters.songType.id ? [] : sniperModeIds), allFilters) : null), 
+            384 & $$self.$$.dirty[0] | 1 & $$self.$$.dirty[1] && $$invalidate(16, pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage));
+        }, [ playerId, lightMode, minStarsForSniper, maxStars, sortTypes, allFilters, calculating, currentPage, itemsPerPage, pagerTotal, allColumns, viewType, songsPage, shownColumns, selectedCols, shouldCalculateTotalPp, pagedPromised, songTypes, viewTypes, getObjectFromArrayByKey, getScoreValueByKey, async function() {
             switch (allFilters.songType.id) {
               case "unrankeds":
                 getObjectFromArrayByKey(allColumns, "score").selected = !0, getObjectFromArrayByKey(allColumns, "acc").selected = !0, 
@@ -9125,7 +9117,65 @@
             }
             $$invalidate(7, currentPage = 0), $$invalidate(10, allColumns = allColumns.splice(0)), 
             forceFiltersChanged();
-        }, onFilterNameChange, onFilterStarsChange, onFilterMinPlusPpChanged, snipedIds, minPpPerMap, initialized, countryRanking, allRankeds, columnsQty, calcPromised, sniperModeIds, generateSortTypes, (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field), forceFiltersChanged, getAllScoresByType, getCachedAllScoresByType, getMinStars, getCachedMinStars, getMaxScoreExFromPlayersScores, getCachedMaxScoreExFromPlayersScores, getCachedTotalPlayerPp, getScoreWithNewPp, getCachedScoreWithNewPp, getPlayerSongEstimate, getCachedPlayerSongEstimate, getSeriesSong, findBestInSeries, getPlayerTotalPpWithBestScores, mapHasStars, filterBySongName, songIsUnranked, bestSeriesGivesAtLeastMinPpDiff, (leaderboardId, series) => !getSeriesSong(leaderboardId, series), playerIsNotTheBest, nobodyPlayedItYet, (leaderboardId, playerSeries, estSeries, minDiff = 1) => {
+        }, onFilterNameChange, onFilterStarsChange, onFilterMinPlusPpChanged, async function() {
+            const data = await calcPromised, transformedData = await Promise.all(data.songs.map(async s => {
+                const diffInfo = Object(_song__WEBPACK_IMPORTED_MODULE_17__.getHumanDiffInfo)(s.diff);
+                let maxScore = s.maxScoreEx;
+                if (!maxScore) try {
+                    maxScore = await Object(_song__WEBPACK_IMPORTED_MODULE_17__.getSongMaxScoreWithDiffAndType)(s.id, s.diff, !0);
+                } catch (e) {}
+                return Object.assign({}, s, {
+                    difficulty: diffInfo ? diffInfo.name : "",
+                    maxScore: maxScore || "",
+                    timeset: getScoreValueByKey(data.series[0], s, "timeset"),
+                    score: getScoreValueByKey(data.series[0], s, "score"),
+                    mods: getScoreValueByKey(data.series[0], s, "mods"),
+                    uScore: getScoreValueByKey(data.series[0], s, "uScore"),
+                    pp: getScoreValueByKey(data.series[0], s, "pp"),
+                    weightedPp: getScoreValueByKey(data.series[0], s, "weightedPp")
+                });
+            })), csv = Object(_utils_csv__WEBPACK_IMPORTED_MODULE_23__.generateCsv)(transformedData, [ {
+                field: "leaderboardId",
+                label: "ID"
+            }, {
+                field: "name",
+                label: "Song"
+            }, {
+                field: "songAuthor",
+                label: "Song author"
+            }, {
+                field: "levelAuthor",
+                label: "Level author"
+            }, {
+                field: "stars",
+                label: "Stars"
+            }, {
+                field: "difficulty",
+                label: "Difficulty"
+            }, {
+                field: "maxScore",
+                label: "Max score"
+            }, {
+                field: "timeset",
+                label: "Date"
+            }, {
+                field: "score",
+                label: "Score"
+            }, {
+                field: "mods",
+                label: "Mods"
+            }, {
+                field: "uScore",
+                label: "Score w/mod"
+            }, {
+                field: "pp",
+                label: "PP"
+            }, {
+                field: "weightedPp",
+                label: "Weighted PP"
+            } ]);
+            Object(_utils_csv__WEBPACK_IMPORTED_MODULE_23__.downloadCsv)("scores.csv", csv);
+        }, snipedIds, minPpPerMap, initialized, countryRanking, allRankeds, calcPromised, columnsQty, sniperModeIds, generateSortTypes, (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field), forceFiltersChanged, getAllScoresByType, getCachedAllScoresByType, getMinStars, getCachedMinStars, getMaxScoreExFromPlayersScores, getCachedMaxScoreExFromPlayersScores, getCachedTotalPlayerPp, getScoreWithNewPp, getCachedScoreWithNewPp, getPlayerSongEstimate, getCachedPlayerSongEstimate, getSeriesSong, findBestInSeries, getPlayerTotalPpWithBestScores, mapHasStars, filterBySongName, songIsUnranked, bestSeriesGivesAtLeastMinPpDiff, (leaderboardId, series) => !getSeriesSong(leaderboardId, series), playerIsNotTheBest, nobodyPlayedItYet, (leaderboardId, playerSeries, estSeries, minDiff = 1) => {
             const playerScore = getSeriesSong(leaderboardId, playerSeries), estScore = getSeriesSong(leaderboardId, estSeries);
             return !playerScore || estScore && playerScore.acc < estScore.acc && estScore.diff > minDiff;
         }, completeFetchingNewPage, promiseGetPage, calculate, function() {
@@ -9133,15 +9183,12 @@
             $$invalidate(5, allFilters), $$invalidate(17, songTypes);
         }, function() {
             viewType = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this), 
-            $$invalidate(11, viewType), $$invalidate(19, viewTypes);
+            $$invalidate(11, viewType), $$invalidate(18, viewTypes);
         }, function(col) {
             col.selected = this.checked, $$invalidate(13, shownColumns), $$invalidate(10, allColumns);
         }, function() {
             allFilters.sortBy = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this), 
             $$invalidate(5, allFilters), $$invalidate(17, songTypes);
-        }, function() {
-            itemsPerPage = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this), 
-            $$invalidate(8, itemsPerPage), $$invalidate(18, itemsPerPageList);
         }, function(value) {
             currentPage = value, $$invalidate(7, currentPage);
         }, function(value) {
@@ -9151,8 +9198,8 @@
     class Browser extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
         constructor(options) {
             var style;
-            super(), document_1.getElementById("svelte-1bvl7gs-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-1bvl7gs-style", 
-            style.textContent = ".columns.svelte-1bvl7gs label.svelte-1bvl7gs{margin-right:.25rem}table.ranking.sspl.svelte-1bvl7gs.svelte-1bvl7gs{font-size:0.875rem;border-width:1px}th.svelte-1bvl7gs.svelte-1bvl7gs,td.svelte-1bvl7gs.svelte-1bvl7gs{vertical-align:middle !important;padding:0.25em !important;border-color:#666 !important}thead.svelte-1bvl7gs th.svelte-1bvl7gs{text-align:center;vertical-align:bottom !important;border-bottom-width:2px}thead.svelte-1bvl7gs th.song.svelte-1bvl7gs,thead.svelte-1bvl7gs th.stars.svelte-1bvl7gs{vertical-align:middle !important}thead.svelte-1bvl7gs th.song.svelte-1bvl7gs,thead.svelte-1bvl7gs th.maxPp.svelte-1bvl7gs{vertical-align:middle !important}th.diff.svelte-1bvl7gs.svelte-1bvl7gs,td.diff.svelte-1bvl7gs.svelte-1bvl7gs{width:1.5rem;padding:0}thead.svelte-1bvl7gs th.series.svelte-1bvl7gs{width:6rem;overflow-x:hidden;border-bottom-style:dotted;border-bottom-width:1px}thead.svelte-1bvl7gs th.stars.svelte-1bvl7gs{width:2rem}thead.svelte-1bvl7gs th.maxPp.svelte-1bvl7gs{width:3rem}thead.svelte-1bvl7gs th.acc.svelte-1bvl7gs,thead.svelte-1bvl7gs th.pp.svelte-1bvl7gs,thead.svelte-1bvl7gs th.diffPp.svelte-1bvl7gs,thead.svelte-1bvl7gs th.score.svelte-1bvl7gs,thead.svelte-1bvl7gs th.weightedPp.svelte-1bvl7gs{width:3rem}thead.svelte-1bvl7gs th.timeset.svelte-1bvl7gs{width:5.5rem}tbody.svelte-1bvl7gs td.acc.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.pp.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.diffPp.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.score.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.weightedPp.svelte-1bvl7gs,tbody.svelte-1bvl7gs td.timeset.svelte-1bvl7gs{text-align:center}tbody.svelte-1bvl7gs td.stars.svelte-1bvl7gs{text-align:center}tbody.svelte-1bvl7gs td.maxPp.svelte-1bvl7gs{text-align:center}th.top.svelte-1bvl7gs.svelte-1bvl7gs,td.top.svelte-1bvl7gs.svelte-1bvl7gs{border-top-style:solid;border-top-width:1px}td.down.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom-style:solid;border-bottom-width:1px}th.series.down.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom-width:2px;border-bottom-style:solid}th.left.svelte-1bvl7gs.svelte-1bvl7gs,td.left.svelte-1bvl7gs.svelte-1bvl7gs{border-left-style:solid;border-left-width:1px}th.left.middle.svelte-1bvl7gs.svelte-1bvl7gs,td.left.middle.svelte-1bvl7gs.svelte-1bvl7gs{border-left-style:dotted;border-left-width:1px}tbody.svelte-1bvl7gs td.song figure.svelte-1bvl7gs{display:flex;justify-content:flex-start;align-items:center;margin:0}tbody.svelte-1bvl7gs td.song img.svelte-1bvl7gs{flex:0 1 40px;width:40px;height:40px;margin:0 1em 0 .5em}tbody.svelte-1bvl7gs td.song .songinfo.svelte-1bvl7gs{text-align:left}tbody.svelte-1bvl7gs td.song small.svelte-1bvl7gs{font-size:0.75em;color:#888}tfoot.svelte-1bvl7gs th.svelte-1bvl7gs{text-align:center !important;vertical-align:middle !important;border-top-width:2px}tfoot.svelte-1bvl7gs th.song.svelte-1bvl7gs{text-align:left !important}tbody.svelte-1bvl7gs td.svelte-1bvl7gs{position:relative}tbody.svelte-1bvl7gs td.best.svelte-1bvl7gs{background:linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%)}table.light.svelte-1bvl7gs tbody td.best.svelte-1bvl7gs{background:linear-gradient(90deg, rgba(201, 201, 201, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 201, 201, 1) 100%)}tbody.svelte-1bvl7gs td.compact.svelte-1bvl7gs{width:12rem;text-align:center}tbody.svelte-1bvl7gs td.compact.left.series-1.svelte-1bvl7gs:not(.with-cols){border-left:none}.compact-timeset-val.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom:1px dashed #666}.compact-diffPp-val.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1.25em}.compact-pp-val.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1.15em;color:var(--ppColour) !important}.compact-acc-val.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1.1em}.filters.svelte-1bvl7gs.svelte-1bvl7gs{display:flex;flex-wrap:wrap;margin:-1.5rem 0 1rem -1.5rem;width:calc(100% + 1.5rem);align-items:flex-end}.filters.svelte-1bvl7gs.svelte-1bvl7gs>*{margin:1.5rem 0 0 1.5rem}.filters.svelte-1bvl7gs header.svelte-1bvl7gs{display:block;text-align:center;color:#888}.filters.svelte-1bvl7gs .filter-name.svelte-1bvl7gs{width:12rem}.filters.svelte-1bvl7gs .filter-name input.svelte-1bvl7gs{width:100%}div.info.svelte-1bvl7gs.svelte-1bvl7gs{padding-top:2rem;text-align:center}select.svelte-1bvl7gs.svelte-1bvl7gs,input.svelte-1bvl7gs.svelte-1bvl7gs{font-size:1rem;border:none;color:var(--textColor, #000);background-color:var(--foreground, #fff);outline:none}input.svelte-1bvl7gs.svelte-1bvl7gs{border-bottom:1px solid var(--textColor, #000)}input.svelte-1bvl7gs.svelte-1bvl7gs::placeholder{color:#666;opacity:1}", 
+            super(), document_1.getElementById("svelte-10yfywr-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-10yfywr-style", 
+            style.textContent = ".columns.svelte-10yfywr label.svelte-10yfywr{margin-right:.25rem}table.ranking.sspl.svelte-10yfywr.svelte-10yfywr{font-size:0.875rem;border-width:1px}th.svelte-10yfywr.svelte-10yfywr,td.svelte-10yfywr.svelte-10yfywr{vertical-align:middle !important;padding:0.25em !important;border-color:#666 !important}thead.svelte-10yfywr th.svelte-10yfywr{text-align:center;vertical-align:bottom !important;border-bottom-width:2px}thead.svelte-10yfywr th.song.svelte-10yfywr,thead.svelte-10yfywr th.stars.svelte-10yfywr{vertical-align:middle !important}thead.svelte-10yfywr th.song.svelte-10yfywr,thead.svelte-10yfywr th.maxPp.svelte-10yfywr{vertical-align:middle !important}th.diff.svelte-10yfywr.svelte-10yfywr,td.diff.svelte-10yfywr.svelte-10yfywr{width:1.5rem;padding:0}thead.svelte-10yfywr th.series.svelte-10yfywr{width:6rem;overflow-x:hidden;border-bottom-style:dotted;border-bottom-width:1px}thead.svelte-10yfywr th.stars.svelte-10yfywr{width:2rem}thead.svelte-10yfywr th.maxPp.svelte-10yfywr{width:3rem}thead.svelte-10yfywr th.acc.svelte-10yfywr,thead.svelte-10yfywr th.pp.svelte-10yfywr,thead.svelte-10yfywr th.diffPp.svelte-10yfywr,thead.svelte-10yfywr th.score.svelte-10yfywr,thead.svelte-10yfywr th.weightedPp.svelte-10yfywr{width:3rem}thead.svelte-10yfywr th.timeset.svelte-10yfywr{width:5.5rem}tbody.svelte-10yfywr td.acc.svelte-10yfywr,tbody.svelte-10yfywr td.pp.svelte-10yfywr,tbody.svelte-10yfywr td.diffPp.svelte-10yfywr,tbody.svelte-10yfywr td.score.svelte-10yfywr,tbody.svelte-10yfywr td.weightedPp.svelte-10yfywr,tbody.svelte-10yfywr td.timeset.svelte-10yfywr{text-align:center}tbody.svelte-10yfywr td.stars.svelte-10yfywr{text-align:center}tbody.svelte-10yfywr td.maxPp.svelte-10yfywr{text-align:center}th.top.svelte-10yfywr.svelte-10yfywr,td.top.svelte-10yfywr.svelte-10yfywr{border-top-style:solid;border-top-width:1px}td.down.svelte-10yfywr.svelte-10yfywr{border-bottom-style:solid;border-bottom-width:1px}th.series.down.svelte-10yfywr.svelte-10yfywr{border-bottom-width:2px;border-bottom-style:solid}th.left.svelte-10yfywr.svelte-10yfywr,td.left.svelte-10yfywr.svelte-10yfywr{border-left-style:solid;border-left-width:1px}th.left.middle.svelte-10yfywr.svelte-10yfywr,td.left.middle.svelte-10yfywr.svelte-10yfywr{border-left-style:dotted;border-left-width:1px}tbody.svelte-10yfywr td.song figure.svelte-10yfywr{display:flex;justify-content:flex-start;align-items:center;margin:0}tbody.svelte-10yfywr td.song img.svelte-10yfywr{flex:0 1 40px;width:40px;height:40px;margin:0 1em 0 .5em}tbody.svelte-10yfywr td.song .songinfo.svelte-10yfywr{text-align:left}tbody.svelte-10yfywr td.song small.svelte-10yfywr{font-size:0.75em;color:#888}tfoot.svelte-10yfywr th.svelte-10yfywr{text-align:center !important;vertical-align:middle !important;border-top-width:2px}tfoot.svelte-10yfywr th.song.svelte-10yfywr{text-align:left !important}tbody.svelte-10yfywr td.svelte-10yfywr{position:relative}tbody.svelte-10yfywr td.best.svelte-10yfywr{background:linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%)}table.light.svelte-10yfywr tbody td.best.svelte-10yfywr{background:linear-gradient(90deg, rgba(201, 201, 201, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 201, 201, 1) 100%)}tbody.svelte-10yfywr td.compact.svelte-10yfywr{width:12rem;text-align:center}tbody.svelte-10yfywr td.compact.left.series-1.svelte-10yfywr:not(.with-cols){border-left:none}.compact-timeset-val.svelte-10yfywr.svelte-10yfywr{border-bottom:1px dashed #666}.compact-diffPp-val.svelte-10yfywr.svelte-10yfywr{font-size:1.25em}.compact-pp-val.svelte-10yfywr.svelte-10yfywr{font-size:1.15em;color:var(--ppColour) !important}.compact-acc-val.svelte-10yfywr.svelte-10yfywr{font-size:1.1em}.filters.svelte-10yfywr.svelte-10yfywr{display:flex;flex-wrap:wrap;margin:-1.5rem 0 1rem -1.5rem;width:calc(100% + 1.5rem);align-items:flex-end}.filters.svelte-10yfywr.svelte-10yfywr>*{margin:1.5rem 0 0 1.5rem}.filters.svelte-10yfywr header.svelte-10yfywr{display:block;text-align:center;color:#888}.filters.svelte-10yfywr .filter-name.svelte-10yfywr{width:12rem}.filters.svelte-10yfywr .filter-name input.svelte-10yfywr{width:100%}div.info.svelte-10yfywr.svelte-10yfywr{padding-top:2rem;text-align:center}select.svelte-10yfywr.svelte-10yfywr,input.svelte-10yfywr.svelte-10yfywr{font-size:1rem;border:none;color:var(--textColor, #000);background-color:var(--foreground, #fff);outline:none}input.svelte-10yfywr.svelte-10yfywr{border-bottom:1px solid var(--textColor, #000)}input.svelte-10yfywr.svelte-10yfywr::placeholder{color:#666;opacity:1}.actions.svelte-10yfywr button.svelte-10yfywr{padding:2px .5rem 2px .25rem;font-weight:500}.actions.svelte-10yfywr svg.svelte-10yfywr{width:16px;height:16px;position:relative;top:2px}", 
             Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(document_1.head, style)), 
             Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, {
                 playerId: 0,
@@ -9211,58 +9258,88 @@
     var svelte_internal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(2), svelte__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(43);
     function get_each_context(ctx, list, i) {
         const child_ctx = ctx.slice();
-        return child_ctx[19] = list[i], child_ctx;
+        return child_ctx[23] = list[i], child_ctx;
+    }
+    function get_each_context_1(ctx, list, i) {
+        const child_ctx = ctx.slice();
+        return child_ctx[26] = list[i], child_ctx;
     }
     function create_if_block(ctx) {
-        let nav, div, t0, t1, t2, t3, t4, t5, ul, t6, t7, if_block0 = ctx[3] && create_if_block_2(ctx), each_value = ctx[6], each_blocks = [];
+        let nav, div0, t0, t1, t2, t3, t4, t5, ul, t6, t7, t8, div1, select, dispose, if_block0 = ctx[5] && create_if_block_2(ctx), each_value_1 = ctx[8], each_blocks_1 = [];
+        for (let i = 0; i < each_value_1.length; i += 1) each_blocks_1[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
+        let if_block1 = ctx[6] && create_if_block_1(ctx), each_value = ctx[3], each_blocks = [];
         for (let i = 0; i < each_value.length; i += 1) each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
-        let if_block1 = ctx[4] && create_if_block_1(ctx);
         return {
             c() {
-                nav = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("nav"), div = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
-                t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[7]), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(" - "), 
-                t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[8]), t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(" / "), 
-                t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[1]), t5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
+                nav = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("nav"), div0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
+                t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[9]), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(" - "), 
+                t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[10]), t3 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(" / "), 
+                t4 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[2]), t5 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 ul = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("ul"), if_block0 && if_block0.c(), 
                 t6 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)();
-                for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
+                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
                 t7 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), if_block1 && if_block1.c(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(ul, "class", "pagination-list svelte-1xz6d9m"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(nav, "class", "pagination svelte-1xz6d9m");
+                t8 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), div1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("div"), 
+                select = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("select");
+                for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div0, "class", "position svelte-1raf4s"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(ul, "class", "pagination-list svelte-1raf4s"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(select, "class", "svelte-1raf4s"), 
+                void 0 === ctx[1] && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.add_render_callback)(() => ctx[22].call(select)), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(div1, "class", "items-per-page svelte-1raf4s"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(nav, "class", "pagination svelte-1raf4s");
             },
-            m(target, anchor) {
+            m(target, anchor, remount) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, nav, anchor), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(nav, div), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t0), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t1), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t2), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t3), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div, t4), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(nav, div0), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t0), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t1), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t2), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t3), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div0, t4), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(nav, t5), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(nav, ul), 
                 if_block0 && if_block0.m(ul, null), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(ul, t6);
-                for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(ul, null);
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(ul, t7), if_block1 && if_block1.m(ul, null);
+                for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].m(ul, null);
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(ul, t7), if_block1 && if_block1.m(ul, null), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(nav, t8), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(nav, div1), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(div1, select);
+                for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(select, null);
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, ctx[1]), 
+                remount && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.run_all)(dispose), 
+                dispose = [ Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select, "change", ctx[22]), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(select, "change", ctx[12]) ];
             },
             p(ctx, dirty) {
-                if (128 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, ctx[7]), 
-                256 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t2, ctx[8]), 
-                2 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t4, ctx[1]), 
-                ctx[3] ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_2(ctx), 
+                if (512 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t0, ctx[9]), 
+                1024 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t2, ctx[10]), 
+                4 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t4, ctx[2]), 
+                ctx[5] ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_2(ctx), 
                 if_block0.c(), if_block0.m(ul, t6)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-                577 & dirty) {
+                2305 & dirty) {
                     let i;
-                    for (each_value = ctx[6], i = 0; i < each_value.length; i += 1) {
+                    for (each_value_1 = ctx[8], i = 0; i < each_value_1.length; i += 1) {
+                        const child_ctx = get_each_context_1(ctx, each_value_1, i);
+                        each_blocks_1[i] ? each_blocks_1[i].p(child_ctx, dirty) : (each_blocks_1[i] = create_each_block_1(child_ctx), 
+                        each_blocks_1[i].c(), each_blocks_1[i].m(ul, t7));
+                    }
+                    for (;i < each_blocks_1.length; i += 1) each_blocks_1[i].d(1);
+                    each_blocks_1.length = each_value_1.length;
+                }
+                if (ctx[6] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
+                if_block1.c(), if_block1.m(ul, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
+                8 & dirty) {
+                    let i;
+                    for (each_value = ctx[3], i = 0; i < each_value.length; i += 1) {
                         const child_ctx = get_each_context(ctx, each_value, i);
                         each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block(child_ctx), 
-                        each_blocks[i].c(), each_blocks[i].m(ul, t7));
+                        each_blocks[i].c(), each_blocks[i].m(select, null));
                     }
                     for (;i < each_blocks.length; i += 1) each_blocks[i].d(1);
                     each_blocks.length = each_value.length;
                 }
-                ctx[4] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
-                if_block1.c(), if_block1.m(ul, null)) : if_block1 && (if_block1.d(1), if_block1 = null);
+                2 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_option)(select, ctx[1]);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(nav), if_block0 && if_block0.d(), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching), 
-                if_block1 && if_block1.d();
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks_1, detaching), 
+                if_block1 && if_block1.d(), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.destroy_each)(each_blocks, detaching), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.run_all)(dispose);
             }
         };
     }
@@ -9273,7 +9350,7 @@
                 li0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("li"), a = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("a"), 
                 t0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)("1"), t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), 
                 li1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("li"), li1.innerHTML = '<span class="pagination-ellipsis">…</span>', 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "href", "#"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (0 === ctx[0] ? " is-current" : "")) + " svelte-1xz6d9m"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "href", "#"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (0 === ctx[0] ? " is-current" : "")) + " svelte-1raf4s"), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li0, "data-page", li0_data_page_value = 0);
             },
             m(target, anchor, remount) {
@@ -9281,10 +9358,10 @@
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(li0, a), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(a, t0), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t1, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, li1, anchor), 
-                remount && dispose(), dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(a, "click", Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.prevent_default)(ctx[16]));
+                remount && dispose(), dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(a, "click", Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.prevent_default)(ctx[19]));
             },
             p(ctx, dirty) {
-                1 & dirty && a_class_value !== (a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (0 === ctx[0] ? " is-current" : "")) + " svelte-1xz6d9m") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value);
+                1 & dirty && a_class_value !== (a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (0 === ctx[0] ? " is-current" : "")) + " svelte-1raf4s") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(li0), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1), 
@@ -9292,17 +9369,17 @@
             }
         };
     }
-    function create_each_block(ctx) {
-        let li, a, t, a_class_value, li_data_page_value, dispose, t_value = ctx[19] + "";
+    function create_each_block_1(ctx) {
+        let li, a, t, a_class_value, li_data_page_value, dispose, t_value = ctx[26] + "";
         function click_handler_1(...args) {
-            return ctx[17](ctx[19], ...args);
+            return ctx[20](ctx[26], ...args);
         }
         return {
             c() {
                 li = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("li"), a = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("a"), 
                 t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "href", "#"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[19] - 1 ? " is-current" : "")) + " svelte-1xz6d9m"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li, "data-page", li_data_page_value = ctx[19]);
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[26] - 1 ? " is-current" : "")) + " svelte-1raf4s"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li, "data-page", li_data_page_value = ctx[26]);
             },
             m(target, anchor, remount) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, li, anchor), 
@@ -9310,9 +9387,9 @@
                 remount && dispose(), dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(a, "click", Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.prevent_default)(click_handler_1));
             },
             p(new_ctx, dirty) {
-                ctx = new_ctx, 64 & dirty && t_value !== (t_value = ctx[19] + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
-                65 & dirty && a_class_value !== (a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[19] - 1 ? " is-current" : "")) + " svelte-1xz6d9m") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value), 
-                64 & dirty && li_data_page_value !== (li_data_page_value = ctx[19]) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li, "data-page", li_data_page_value);
+                ctx = new_ctx, 256 & dirty && t_value !== (t_value = ctx[26] + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
+                257 & dirty && a_class_value !== (a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[26] - 1 ? " is-current" : "")) + " svelte-1raf4s") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value), 
+                256 & dirty && li_data_page_value !== (li_data_page_value = ctx[26]) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li, "data-page", li_data_page_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(li), dispose();
@@ -9325,21 +9402,21 @@
             c() {
                 li0 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("li"), li0.innerHTML = '<span class="pagination-ellipsis">…</span>', 
                 t1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.space)(), li1 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("li"), 
-                a = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("a"), t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[5]), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "href", "#"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[5] - 1 ? " is-current" : "")) + " svelte-1xz6d9m"), 
-                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li1, "data-page", li1_data_page_value = ctx[5] - 1);
+                a = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("a"), t2 = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(ctx[7]), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "href", "#"), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[7] - 1 ? " is-current" : "")) + " svelte-1raf4s"), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li1, "data-page", li1_data_page_value = ctx[7] - 1);
             },
             m(target, anchor, remount) {
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, li0, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, t1, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, li1, anchor), 
                 Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(li1, a), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(a, t2), 
-                remount && dispose(), dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(a, "click", Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.prevent_default)(ctx[18]));
+                remount && dispose(), dispose = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.listen)(a, "click", Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.prevent_default)(ctx[21]));
             },
             p(ctx, dirty) {
-                32 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t2, ctx[5]), 
-                33 & dirty && a_class_value !== (a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[5] - 1 ? " is-current" : "")) + " svelte-1xz6d9m") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value), 
-                32 & dirty && li1_data_page_value !== (li1_data_page_value = ctx[5] - 1) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li1, "data-page", li1_data_page_value);
+                128 & dirty && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t2, ctx[7]), 
+                129 & dirty && a_class_value !== (a_class_value = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.null_to_empty)("pagination-link" + (ctx[0] === ctx[7] - 1 ? " is-current" : "")) + " svelte-1raf4s") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(a, "class", a_class_value), 
+                128 & dirty && li1_data_page_value !== (li1_data_page_value = ctx[7] - 1) && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.attr)(li1, "data-page", li1_data_page_value);
             },
             d(detaching) {
                 detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(li0), detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(t1), 
@@ -9347,8 +9424,30 @@
             }
         };
     }
+    function create_each_block(ctx) {
+        let option, t, option_value_value, t_value = ctx[23] + "";
+        return {
+            c() {
+                option = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("option"), 
+                t = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.text)(t_value), option.__value = option_value_value = ctx[23], 
+                option.value = option.__value;
+            },
+            m(target, anchor) {
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, option, anchor), 
+                Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(option, t);
+            },
+            p(ctx, dirty) {
+                8 & dirty && t_value !== (t_value = ctx[23] + "") && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.set_data)(t, t_value), 
+                8 & dirty && option_value_value !== (option_value_value = ctx[23]) && (option.__value = option_value_value), 
+                option.value = option.__value;
+            },
+            d(detaching) {
+                detaching && Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.detach)(option);
+            }
+        };
+    }
     function create_fragment(ctx) {
-        let if_block_anchor, if_block = ctx[5] > 1 && !ctx[2] && create_if_block(ctx);
+        let if_block_anchor, if_block = ctx[7] > 1 && !ctx[4] && create_if_block(ctx);
         return {
             c() {
                 if_block && if_block.c(), if_block_anchor = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.empty)();
@@ -9357,7 +9456,7 @@
                 if_block && if_block.m(target, anchor), Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.insert)(target, if_block_anchor, anchor);
             },
             p(ctx, [dirty]) {
-                ctx[5] > 1 && !ctx[2] ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block(ctx), 
+                ctx[7] > 1 && !ctx[4] ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block(ctx), 
                 if_block.c(), if_block.m(if_block_anchor.parentNode, if_block_anchor)) : if_block && (if_block.d(1), 
                 if_block = null);
             },
@@ -9370,7 +9469,7 @@
     }
     function instance($$self, $$props, $$invalidate) {
         const dispatch = Object(svelte__WEBPACK_IMPORTED_MODULE_1__.createEventDispatcher)();
-        let {totalItems: totalItems = 0} = $$props, {currentPage: currentPage = 0} = $$props, {itemsPerPage: itemsPerPage = 10} = $$props, {displayMax: displayMax = 11} = $$props, {hide: hide = !1} = $$props, displayStart = !1, displayEnd = !1;
+        let {totalItems: totalItems = 0} = $$props, {currentPage: currentPage = 0} = $$props, {itemsPerPage: itemsPerPage = 10} = $$props, {itemsPerPageValues: itemsPerPageValues = [ 5, 10, 15, 20, 25 ]} = $$props, {displayMax: displayMax = 11} = $$props, {hide: hide = !1} = $$props, displayStart = !1, displayEnd = !1, prevItemsPerPage = itemsPerPage;
         function dispatchEvent(initial = !1) {
             let to = (currentPage + 1) * itemsPerPage - 1;
             to > totalItems - 1 && (to = totalItems - 1), dispatch("page-changed", {
@@ -9387,8 +9486,8 @@
         }
         function calcPages(total, current, max) {
             const needToDisplayFacetedPages = total > max, middle = Math.floor(max / 2), startPage = current > middle && needToDisplayFacetedPages ? current - middle + 1 : 0;
-            return $$invalidate(3, displayStart = current > middle && needToDisplayFacetedPages), 
-            $$invalidate(4, displayEnd = current + middle + 1 < total && needToDisplayFacetedPages), 
+            return $$invalidate(5, displayStart = current > middle && needToDisplayFacetedPages), 
+            $$invalidate(6, displayEnd = current + middle + 1 < total && needToDisplayFacetedPages), 
             currentPage > pagesTotal - 1 && $$invalidate(0, currentPage = pagesTotal - 1), currentPage < 0 && $$invalidate(0, currentPage = 0), 
             allPages.slice(startPage - (needToDisplayFacetedPages && !displayEnd ? middle - total + current + 1 : 0), startPage + max - (displayStart ? 1 : 0) - (displayEnd ? 1 : 0));
         }
@@ -9397,32 +9496,40 @@
         });
         let pagesTotal, allPages, displayedPages, startItem, endItem;
         return $$self.$set = $$props => {
-            "totalItems" in $$props && $$invalidate(1, totalItems = $$props.totalItems), "currentPage" in $$props && $$invalidate(0, currentPage = $$props.currentPage), 
-            "itemsPerPage" in $$props && $$invalidate(10, itemsPerPage = $$props.itemsPerPage), 
-            "displayMax" in $$props && $$invalidate(11, displayMax = $$props.displayMax), "hide" in $$props && $$invalidate(2, hide = $$props.hide);
+            "totalItems" in $$props && $$invalidate(2, totalItems = $$props.totalItems), "currentPage" in $$props && $$invalidate(0, currentPage = $$props.currentPage), 
+            "itemsPerPage" in $$props && $$invalidate(1, itemsPerPage = $$props.itemsPerPage), 
+            "itemsPerPageValues" in $$props && $$invalidate(3, itemsPerPageValues = $$props.itemsPerPageValues), 
+            "displayMax" in $$props && $$invalidate(13, displayMax = $$props.displayMax), "hide" in $$props && $$invalidate(4, hide = $$props.hide);
         }, $$self.$$.update = () => {
-            1026 & $$self.$$.dirty && $$invalidate(5, pagesTotal = Math.ceil(totalItems / itemsPerPage)), 
-            32 & $$self.$$.dirty && (allPages = Array(pagesTotal).fill(null).map((val, idx) => idx + 1)), 
-            2081 & $$self.$$.dirty && $$invalidate(6, displayedPages = calcPages(pagesTotal, currentPage, displayMax)), 
-            1025 & $$self.$$.dirty && $$invalidate(7, startItem = currentPage * itemsPerPage + 1), 
-            1027 & $$self.$$.dirty && $$invalidate(8, endItem = function(currentPage, itemsPerPage, totalItems) {
+            6 & $$self.$$.dirty && $$invalidate(7, pagesTotal = Math.ceil(totalItems / itemsPerPage)), 
+            128 & $$self.$$.dirty && (allPages = Array(pagesTotal).fill(null).map((val, idx) => idx + 1)), 
+            8321 & $$self.$$.dirty && $$invalidate(8, displayedPages = calcPages(pagesTotal, currentPage, displayMax)), 
+            3 & $$self.$$.dirty && $$invalidate(9, startItem = currentPage * itemsPerPage + 1), 
+            7 & $$self.$$.dirty && $$invalidate(10, endItem = function(currentPage, itemsPerPage, totalItems) {
                 const end = (currentPage + 1) * itemsPerPage;
                 return end > totalItems ? totalItems : end;
             }(currentPage, itemsPerPage, totalItems));
-        }, [ currentPage, totalItems, hide, displayStart, displayEnd, pagesTotal, displayedPages, startItem, endItem, onPageChanged, itemsPerPage, displayMax, allPages, dispatch, dispatchEvent, calcPages, () => onPageChanged(0), page => onPageChanged(page - 1), () => onPageChanged(pagesTotal - 1) ];
+        }, [ currentPage, itemsPerPage, totalItems, itemsPerPageValues, hide, displayStart, displayEnd, pagesTotal, displayedPages, startItem, endItem, onPageChanged, function() {
+            const firstItem = prevItemsPerPage * currentPage;
+            prevItemsPerPage = itemsPerPage, $$invalidate(0, currentPage = Math.floor(firstItem / itemsPerPage));
+        }, displayMax, prevItemsPerPage, allPages, dispatch, dispatchEvent, calcPages, () => onPageChanged(0), page => onPageChanged(page - 1), () => onPageChanged(pagesTotal - 1), function() {
+            itemsPerPage = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.select_value)(this), 
+            $$invalidate(1, itemsPerPage), $$invalidate(3, itemsPerPageValues);
+        } ];
     }
     class Pager extends svelte_internal__WEBPACK_IMPORTED_MODULE_0__.SvelteComponent {
         constructor(options) {
             var style;
-            super(), document.getElementById("svelte-1xz6d9m-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-1xz6d9m-style", 
-            style.textContent = ".pagination.svelte-1xz6d9m{margin-top:1rem}.pagination-list.svelte-1xz6d9m{max-width:none !important;justify-content:center;margin-top:0}.pagination-link.svelte-1xz6d9m:focus{border-color:#dbdbdb !important}", 
+            super(), document.getElementById("svelte-1raf4s-style") || ((style = Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.element)("style")).id = "svelte-1raf4s-style", 
+            style.textContent = "select.svelte-1raf4s{font-size:1em;border:none;color:var(--textColor, #000);background-color:var(--foreground, #fff);outline:none}.pagination.svelte-1raf4s{margin-top:1em}.pagination-list.svelte-1raf4s{max-width:none !important;justify-content:center;margin-top:0}.pagination-link.svelte-1raf4s:focus{border-color:#dbdbdb !important}.position.svelte-1raf4s{order:0\n    }.pagination-list.svelte-1raf4s{order:1\n    }.items-per-page.svelte-1raf4s{order:2\n    }", 
             Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.append)(document.head, style)), 
             Object(svelte_internal__WEBPACK_IMPORTED_MODULE_0__.init)(this, options, instance, create_fragment, svelte_internal__WEBPACK_IMPORTED_MODULE_0__.safe_not_equal, {
-                totalItems: 1,
+                totalItems: 2,
                 currentPage: 0,
-                itemsPerPage: 10,
-                displayMax: 11,
-                hide: 2
+                itemsPerPage: 1,
+                itemsPerPageValues: 3,
+                displayMax: 13,
+                hide: 4
             });
         }
     }
@@ -9616,9 +9723,48 @@
     __webpack_exports__.default = MultiRange;
 }, function(module, __webpack_exports__, __webpack_require__) {
     "use strict";
+    __webpack_require__.r(__webpack_exports__), __webpack_require__.d(__webpack_exports__, "generateCsv", (function() {
+        return generateCsv;
+    })), __webpack_require__.d(__webpack_exports__, "downloadCsv", (function() {
+        return downloadCsv;
+    }));
+    var processRow = function(row, headers) {
+        var delimiter = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : ",";
+        return headers.map(h => {
+            var val = row[h.field] ? row[h.field] : "";
+            switch (!0) {
+              case val instanceof Date:
+                val = val.toISOString();
+                break;
+
+              case null == val:
+                val = "";
+                break;
+
+              default:
+                val = val.toString();
+            }
+            return (val = val.replace(/"/g, '""')).match(/("|,|\\n)/) ? '"'.concat(val, '"') : val;
+        }).join(delimiter);
+    }, generateCsv = function(data, headers) {
+        var delimiter = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : ",", headersRow = headers.reduce((cum, h) => (cum[h.field] = h.label, 
+        cum), {});
+        return processRow(headersRow, headers, delimiter) + "\n" + data.map(row => processRow(row, headers, delimiter)).join("\n");
+    }, downloadCsv = (filename, csv) => {
+        var link = document.createElement("a");
+        if (void 0 === link.download) return !1;
+        var blob = new Blob([ csv ], {
+            type: "text/csv;charset=utf-8;"
+        });
+        return link.setAttribute("href", URL.createObjectURL(blob)), link.setAttribute("download", filename), 
+        link.style.visibility = "hidden", document.body.appendChild(link), link.click(), 
+        document.body.removeChild(link), !0;
+    };
+}, function(module, __webpack_exports__, __webpack_require__) {
+    "use strict";
     __webpack_require__.r(__webpack_exports__), __webpack_exports__.default = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAYCAYAAAACqyaBAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH5AUGEAksU7ZXQgAAAAFvck5UAc+id5oAAAmGSURBVEjHZdXpc5SHYcfx73Ps8zx7a3UskkAckpCELK0kHJAMSDEGQzCGOnISEjtXDzeexu2LdpLpZPqimabNJJ1hJtNm2pmYxI7DTA7bIBibwxTLBmIjTskWQhwSrM5d7Wp3tcez++xz9EVmMqX5/QOf+b36Chc++IAdAwP86/e/z5l33+XCyAgA/9j6Gb73QGCsdIU7b/yyPbkY65+ZiTpz0RkW5mdZisXIZ1dwLAdJkgWXpjrByiqhvmHNUuTxx+90b+tdem7fgaX+2ga770ufR89mefW11/i/ExzHIewP8J+vHQm9cfRo9bq167pk23kuNTfvTYzfdcRYUthYGd7gD4W6ynoRo6DjVCtInQqCpGPnLYzrJna8gKi4cCmujIgQTWOlc+HAgrdlwy+ae7ecTUZn7H8/fPhRvNal8fyff/1AdGLyFTOW7K20RWX97n53S1Mz9vg9vOk81R9PEiqYSKKIK6zg/tZTCPt24XYLCKZB7rcTlF49iZ3OYmFj4GBVB5neVM9v83P3Mlb5gEuSbv/3kSOsW7/+j7j8m3KRH3x89aXtD1b2bNu8hca9nyW8YwvZDau4dfsWNV4/80fexH3iCi7HRtuqoDRNYVpNWHTjrVmH9VQ19tAlSOcQfT60p7bi//I+Gjc2cP6H/7Lhk3Pnwslk4raqqo88FwfYS2lp2e6vWUuktY3a5/agRlopFnUkQWAhk8LZ+TiBwV0Ifi+O3IEx34UTS+LKnEUy57D9PlbcMvftArFdPSj/9BKuXX2IlRVUhELiwcHBrclcntq6OurDYYxSiffOnEHGlUGpqjCSq2pw79lGKZ3ho/u3mZy6TyhUQXNzM3XtHfh6enEyOcoTc9iTCYSgQ/mlvVg1GvfnoxzXcjxoUrh/8Tg7/8Pgb779CtU1NVRUhATNrR38yeHD5xPJ5I6qqqoPXYoyurGlxZFcfz2IUF3RuXHfUwPtz+4R3h+7zrGhY3ww/D6/PnoUnz/A9m39KOEqhKCX0olh7KlZRFPGs3cfwvp1vPb6z0kIZSy/hwuXLnJ3cpKOzi5aWlu5fu0q+XyuYmFhYX8yvvTC3VsT3e+dOTt05fLlgnjy7bepCoXimflFs5TK8P7wMLcnb5NMJBBFkasjV5i6P00hV0B8rBnXY82guNAGd+Hu7cA2LWKLcY69+TveOX4ct6qiaRrx+BKZ1Aq2DQ8fPgy2trY1/f03/hJv0epJrKT+7MALh4Ly5fgszwQC6ooqCYJbxe124/P62P/Ms3g8XgLBILlsjlLJQDZtkGWUlnWoe7ZhuzXI67RsaCIgq9g+Hz6/n1XhOmrDdZhlE5csMz01RV/fE/iDQdpC1erE9Rs/OvzKPxyQASzHzjiqyxYDXp58cicvvPgioVCI2EIcl6JQKBTJzcySf+8jjGIO+eVBynUhrIVFSqUyfY9FaN7+LP5IK0JvhKLtEIl0oSgKW3t7CQT9RLq6Kbplvvl3f8v0j39WefjciYPy4I4nmZmayje0R2yXYVG3up7Tp09jm2Xcbg/lkoHl2GSno0yfHqautZma6ATG5A1kVSWXSuOSZWTRwHVrHEMsYsoSwUCATe3tdPf00L25B6NkMDF6E3sujVeU8SMiF1vXKM6lTz4f6dqhOaaJqqq89ebv8GgqX/nqi+wY2I4/EOTE229zKjPLK33P88I3vkY2k0Fze0gnkuRLOotPLDExfot3hoZILafYuXMXoiSRzeYRRRFNU6jxBWD+Dr50gYgSQNYnH+zc09GzteWJreDRqKKGp5/ew8TEOOVymVBliIqKEM8cPEiouobOSIT61ath9WrAYV3jem59+ill0yAU8CMIAvv272djSwuqpqIBRb2EXtTRKoOEGtbwIH2acdVCGmjrOPnc4GDz6qZGiskMks/HY5FOvB4PmUwGQRCorq6mtq6ezkgntXW1SJKM4wAI4IBRKlIoFBAEh7q6NTz//JcIh8OUjTKaW6OUL6BPz4JeYhydK4tR/WE+MyT8qLnP+cLGLqSeNjx7tqF2tKB43WRXskQfPuTKyAgLC3OoLhd+QUK0wevzIiouFE0js5TATKRIFXWatveybfsOvF4/Hq+bXDaPKIkk4nGmr960b545N3fXLpy5PXXvLbOgj8g9WgVKYwNxr0J5KsqaSBumYSJLMo2NzTQ0rCWTyTA9Nc1yNIq0mCBbKDITncXl1mhau55w7RrqQ1VUPfEZPBUBVtJZCnkd0zS5NPwhly5dXMjrhZ+uaqh615uVP7138lY5sqkd+Wo6NlVz+kJjwacQ/Odvg1vFSq1g5Aq4QgFUTaNGUamsqkJoaUNxSRhelVQqDQ5UVlYRCgWwYssYLgldLyJKIpIkIYkiD6en7fPn3vtObW390ab6NaSTy1y7O8lHFy4i313l/XHLVOx7/sp1a0urazDSOfSL13E2NSKKEiKgZ3NgWgj3oihbOlH8Hnz+IDgOtmNjOVCWRYyPx8j7PGiNa1Arg4CDJIj2Uix+z7Zsfn91hJOnTvHTI6/+oWrZr+5+9UaV61v/4y2/np5dyOTeOEE5kaKUyiCVy9hFA/P+DPrlMURVoSgKlIsGRr6AgI1glHFsG0vTsGwbxu9hxZKIgD0bw86sWI4sCaZtcfLUqUeTqg6PWhtdvtMPZOu/9J8cTZvXxin7PAgXbyI4Dnp0nqXxSWLTD0n4FOJLS8TGJ0l+dIN0PEni4xvM3Z8im88itzchLa9gX7gGRhl9dJLi2d+XbMMw7UyO/z/56NAxFju6kWYtqSgLorC9D/v4eVyVQcy8TmHoPImbY9xcG+D0d9/KedzuMblo5DVBQgpXCtbMQu9fvPyyv/tzT+MEFRxVwTgxTGlLB8XpWZYnp+SyXhCLovGnOEBZc2HZsqrnikr5xDBSLInTv5mVX70DvzlDi8+D3N3KWWf0emdX55d/8G8/XBAEQQDUQ+2Pnw3fme+X+/KYooCgF3GiC+RfH8JeWKJomaotIFk4f4JLAF1d3Shet1oRTXxWTmZWFRxLysbipK6OEc+keGAX9VuVin43mzz2+hu/Or571y6y6TRLA51sxjvgi2c6nQ+vCYJHxVxfy/LIKIuXbzK3OL/yiWyM3rbyRzVJXl4xH30vAGxu2sj1e3fYv7att3G52LxKdHndjkDZcVhyykyg51JNdfkde3ePlg3jQX//ALZt88VDh/irLx7aUPzw2m6PIH4tH67YLG9q1PxzyeHqsemhWcWZz7atHctlc3dHRq+zhPUI/r/tqWm1gKHlswAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMC0wNS0wNlQxNjowOTo0NCswMDowMNB9vSQAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjAtMDUtMDZUMTY6MDk6NDQrMDA6MDChIAWYAAAAAElFTkSuQmCC";
 }, function(module, exports, __webpack_require__) {
-    (exports = __webpack_require__(59)(!1)).push([ module.i, '.navbar-brand .navbar-item b{background:#fff;background:-webkit-gradient(left top,left bottom,color-stop(0,#fff),color-stop(55%,#fff),color-stop(55%,red),color-stop(100%,#ff1500));background:linear-gradient(180deg,#fff 0,#fff 55%,red 0,#ff1500);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#ff1500",GradientType=0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sspl .player-name{font-size:1.1rem;font-weight:700}.sspl .diff.inc{color:#42b129!important}.sspl .diff.dec{color:#f94022!important}.what-if{position:absolute;top:1em;right:0;font-weight:700;padding:0}table.ranking.songs th.score,table.ranking td.pp{position:relative}table.ranking tbody tr.hidden{opacity:.05}.content table.ranking.global.sspl .diff,.content table.ranking.global.sspl .pp{text-align:center}.box .tabs a{border-bottom:none}.box .tabs li:hover{border-bottom:1px solid #000;margin-bottom:-1px}.tabs li.is-active{border-bottom:1px solid #3273dc;margin-bottom:-1px}img.bloodtrail{height:24px}.sspl .rank small{font-size:.75rem;margin-left:.5rem;color:#d3d3d3}.text-center{text-align:center}.offset_tab{margin-left:auto}.sspl .inc{color:#42b129!important}.sspl .dec{color:#f94022!important}table.ranking.songs.sspl th.score{min-width:11rem}.content .column h5 .refresh{position:absolute;top:.5rem;right:.5rem;font-size:1rem}.pagination select.type,.sspl select,.sspl thead .diff select{font-size:1rem;font-weight:700;border:none;color:var(--textColor,#000);background-color:var(--background,#fff);outline:none}.pp-boundary{color:var(--textColor,#000)}.sspl tbody tr.main{background-color:var(--color-highlight)}table.ranking tbody tr:hover{background-color:var(--hover)!important}section.rankChart{height:300px!important}table.ranking.songs{max-width:none!important}', "" ]), 
+    (exports = __webpack_require__(60)(!1)).push([ module.i, '.navbar-brand .navbar-item b{background:#fff;background:-webkit-gradient(left top,left bottom,color-stop(0,#fff),color-stop(55%,#fff),color-stop(55%,red),color-stop(100%,#ff1500));background:linear-gradient(180deg,#fff 0,#fff 55%,red 0,#ff1500);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#ff1500",GradientType=0);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sspl .player-name{font-size:1.1rem;font-weight:700}.sspl .diff.inc{color:#42b129!important}.sspl .diff.dec{color:#f94022!important}.what-if{position:absolute;top:1em;right:0;font-weight:700;padding:0}table.ranking.songs th.score,table.ranking td.pp{position:relative}table.ranking tbody tr.hidden{opacity:.05}.content table.ranking.global.sspl .diff,.content table.ranking.global.sspl .pp{text-align:center}.box .tabs a{border-bottom:none}.box .tabs li:hover{border-bottom:1px solid #000;margin-bottom:-1px}.tabs li.is-active{border-bottom:1px solid #3273dc;margin-bottom:-1px}img.bloodtrail{height:24px}.sspl .rank small{font-size:.75rem;margin-left:.5rem;color:#d3d3d3}.text-center{text-align:center}.offset_tab{margin-left:auto}.sspl .inc{color:#42b129!important}.sspl .dec{color:#f94022!important}table.ranking.songs.sspl th.score{min-width:11rem}.content .column h5 .refresh{position:absolute;top:.5rem;right:.5rem;font-size:1rem}.pagination select.type,.sspl select,.sspl thead .diff select{font-size:1rem;font-weight:700;border:none;color:var(--textColor,#000);background-color:var(--background,#fff);outline:none}.pp-boundary{color:var(--textColor,#000)}.sspl tbody tr.main{background-color:var(--color-highlight)}table.ranking tbody tr:hover{background-color:var(--hover)!important}section.rankChart{height:300px!important}table.ranking.songs{max-width:none!important}', "" ]), 
     module.exports = exports;
 }, function(module, exports, __webpack_require__) {
     "use strict";

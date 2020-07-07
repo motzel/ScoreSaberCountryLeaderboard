@@ -1,5 +1,6 @@
 # Changelog
 0.8.1
+ - add CSV export
  - fix bug with acc calc on song leaderboard when mods were in use
  
 0.8
