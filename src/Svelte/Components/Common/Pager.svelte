@@ -12,6 +12,7 @@
 
     let displayStart = false;
     let displayEnd = false;
+    let prevItemsPerPage = itemsPerPage;
 
     function dispatchEvent(initial = false)
     {
@@ -53,6 +54,13 @@
         return end > totalItems ? totalItems : end;
     }
 
+    function onItemsPerPageChanged() {
+        const firstItem = prevItemsPerPage * currentPage
+
+        prevItemsPerPage = itemsPerPage;
+        currentPage = Math.floor(firstItem / itemsPerPage);
+    }
+
     $: pagesTotal = Math.ceil(totalItems / itemsPerPage);
     $: allPages = Array(pagesTotal).fill(null).map((val, idx) => idx + 1)
     $: displayedPages = calcPages(pagesTotal, currentPage, displayMax);
@@ -83,7 +91,7 @@
             </li>
         {/if}
     </ul>
-    <div class="items-per-page"><select bind:value={itemsPerPage}>{#each itemsPerPageValues as ipp}<option value={ipp}>{ipp}</option>{/each}</select></div>
+    <div class="items-per-page"><select bind:value={itemsPerPage} on:change={onItemsPerPageChanged}>{#each itemsPerPageValues as ipp}<option value={ipp}>{ipp}</option>{/each}</select></div>
 </nav>
 {/if}
 
