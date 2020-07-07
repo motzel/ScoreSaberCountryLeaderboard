@@ -6,6 +6,7 @@
     export let totalItems = 0;
     export let currentPage = 0;
     export let itemsPerPage = 10;
+    export let itemsPerPageValues = [5, 10, 15, 20, 25];
     export let displayMax = 11;
     export let hide = false;
 
@@ -59,23 +60,9 @@
     $: endItem = getEnd(currentPage, itemsPerPage, totalItems);
 </script>
 
-<style>
-    .pagination {
-        margin-top: 1rem;
-    }
-    .pagination-list {
-        max-width: none !important;
-        justify-content: center;
-        margin-top: 0;
-    }
-    .pagination-link:focus {
-        border-color: #dbdbdb !important;
-    }
-</style>
-
 {#if pagesTotal > 1 && !hide}
 <nav class="pagination">
-    <div>{startItem} - {endItem} / {totalItems}</div>
+    <div class="position">{startItem} - {endItem} / {totalItems}</div>
     <ul class="pagination-list">
         {#if displayStart}
             <li data-page={0}><a href="#" on:click|preventDefault={() => onPageChanged(0)}
@@ -96,5 +83,37 @@
             </li>
         {/if}
     </ul>
+    <div class="items-per-page"><select bind:value={itemsPerPage}>{#each itemsPerPageValues as ipp}<option value={ipp}>{ipp}</option>{/each}</select></div>
 </nav>
 {/if}
+
+<style>
+    select {
+        font-size: 1em;
+        border: none;
+        color: var(--textColor, #000);
+        background-color: var(--foreground, #fff);
+        outline: none;
+    }
+
+    .pagination {
+        margin-top: 1em;
+    }
+    .pagination-list {
+        max-width: none !important;
+        justify-content: center;
+        margin-top: 0;
+    }
+    .pagination-link:focus {
+        border-color: #dbdbdb !important;
+    }
+    .position {
+        order: 0
+    }
+    .pagination-list {
+        order: 1
+    }
+    .items-per-page {
+        order: 2
+    }
+</style>

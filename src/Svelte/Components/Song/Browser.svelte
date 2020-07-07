@@ -165,7 +165,6 @@
     let currentPage = 0;
     let itemsPerPage = 10;
     let pagerTotal = 0;
-    const itemsPerPageList = [5, 10, 15, 20, 25, 50]
 
     let allColumns = [
         {label: 'Gwiazdki', name: '*', key: 'stars', selected: false, isColumn: false, displayed: true},
@@ -802,15 +801,6 @@
             {/each}
         </select>
     </div>
-
-    <div>
-        <header>Wyniki / stronę</header>
-        <select bind:value={itemsPerPage}>
-            {#each itemsPerPageList as ipp}
-                <option value={ipp}>{ipp}</option>
-            {/each}
-        </select>
-    </div>
 </div>
 
 {#await pagedPromised}
@@ -980,7 +970,7 @@
     {/if}
 {/await}
 
-<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} hide={calculating}/>
+<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
 
 <style>
     .columns label {
