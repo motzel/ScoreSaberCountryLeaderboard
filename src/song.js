@@ -164,3 +164,22 @@ export async function getSongMaxScoreWithDiffAndType(hash, diffAndType, cacheOnl
 
     return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
 }
+
+export async function getSongDiffInfo(hash, diffAndType, cacheOnly = false) {
+    const songInfo = await getSongByHash(hash, false, cacheOnly);
+    if (!songInfo) return null;
+
+    const songMetadata = songInfo.metadata;
+    if (!songMetadata) return null;
+
+    const songCharacteristics = songMetadata.characteristics;
+    if (!songCharacteristics) return null;
+
+    const diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffAndType);
+    if (!diffInfo) return null;
+
+    return Object.assign(
+        {bpm: songMetadata.bpm, maxScore: diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0},
+        diffInfo
+    );
+}

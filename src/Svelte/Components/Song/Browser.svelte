@@ -27,7 +27,13 @@
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
     import Range from "../Common/Range.svelte";
-    import {extractDiffAndType, getHumanDiffInfo, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "../../../song";
+    import {
+        extractDiffAndType,
+        getHumanDiffInfo,
+        getSongDiffInfo,
+        getSongMaxScore,
+        getSongMaxScoreWithDiffAndType
+    } from "../../../song";
     import Date from "../Common/Date.svelte";
     import MultiRange from "../Common/MultiRange.svelte";
     import {onMount, tick} from "svelte";
@@ -35,6 +41,7 @@
     import WhatIfPp from "./WhatIfPp.svelte";
 
     import {generateCsv, downloadCsv} from '../../../utils/csv';
+    import Duration from "../Common/Duration.svelte";
 
     export let playerId = getMainUserId();
     export let snipedIds = [];
@@ -66,7 +73,7 @@
 
         const data = (await getCacheAndConvertIfNeeded());
 
-        if(allFilters.songType.id === 'rankeds_with_not_played')
+        if (allFilters.songType.id === 'rankeds_with_not_played')
             types.push({name: '+PP', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
 
         if (data && data.users) {
@@ -169,15 +176,74 @@
     let pagerTotal = 0;
 
     let allColumns = [
-        {label: 'Gwiazdki', name: '*', key: 'stars', selected: false, isColumn: false, displayed: true},
-        {label: 'Max PP', name: 'Max PP', key: 'maxPp', selected: false, isColumn: false, displayed: true},
+        {
+            label: 'Gwiazdki',
+            name: '*',
+            key: 'stars',
+            selected: false,
+            isSongColumn: true,
+            isSeriesColumn: false,
+            displayed: true,
+            valueProps: {zero: "-", suffix: "*"}
+        },
+        {
+            label: 'Max PP',
+            name: 'Max PP',
+            key: 'maxPp',
+            selected: false,
+            isSongColumn: true,
+            isSeriesColumn: false,
+            displayed: true,
+            valueProps: {zero: "-", suffix: "pp"}
+        },
+        {
+            label: 'BPM',
+            name: 'BPM',
+            key: 'bpm',
+            selected: false,
+            isSongColumn: true,
+            isSeriesColumn: false,
+            displayed: true,
+            valueProps: {zero: "-", suffix: " BPM", digits: 0}
+        },
+        {
+            label: 'NJS',
+            name: 'NJS',
+            key: 'njs',
+            selected: false,
+            isSongColumn: true,
+            isSeriesColumn: false,
+            displayed: true,
+            valueProps: {zero: "-", suffix: " NJS", digits: 0}
+        },
+        {
+            label: 'NPS',
+            name: 'NPS',
+            key: 'nps',
+            selected: false,
+            isSongColumn: true,
+            isSeriesColumn: false,
+            displayed: true,
+            valueProps: {zero: "-", suffix: " NPS"}
+        },
+        {
+            label: 'Czas',
+            name: 'Czas',
+            key: 'length',
+            selected: false,
+            isSongColumn: true,
+            isSeriesColumn: false,
+            displayed: true,
+            valueProps: {zero: "-"}
+        },
         {
             label: 'Data zagrania',
             compactLabel: null,
             name: 'Data',
             key: 'timeset',
             selected: true,
-            isColumn: true,
+            isSongColumn: false,
+            isSeriesColumn: true,
             displayed: true,
             valueProps: {prevValue: null}
         },
@@ -187,7 +253,8 @@
             name: '+PP',
             key: 'diffPp',
             selected: false,
-            isColumn: true,
+            isSongColumn: false,
+            isSeriesColumn: true,
             displayed: false,
             valueProps: {zero: "-", suffix: "pp", withSign: true, useColorsForValue: true}
         },
@@ -196,7 +263,8 @@
             name: 'PP',
             key: 'pp',
             selected: true,
-            isColumn: true,
+            isSongColumn: false,
+            isSeriesColumn: true,
             valueProps: {zero: "-", suffix: "pp"},
             displayed: true
         },
@@ -206,7 +274,8 @@
             name: 'wPP',
             key: 'weightedPp',
             selected: false,
-            isColumn: true,
+            isSongColumn: false,
+            isSeriesColumn: true,
             displayed: true,
             valueProps: {zero: "-", suffix: "pp"}
         },
@@ -216,7 +285,8 @@
             name: 'Acc',
             key: 'acc',
             selected: true,
-            isColumn: true,
+            isSongColumn: false,
+            isSeriesColumn: true,
             displayed: true,
             valueProps: {zero: "-", suffix: "%"}
         },
@@ -226,7 +296,8 @@
             name: 'Wynik',
             key: 'score',
             selected: true,
-            isColumn: true,
+            isSongColumn: false,
+            isSeriesColumn: true,
             displayed: true,
             valueProps: {digits: 0, zero: "-"}
         },
@@ -235,7 +306,8 @@
             name: 'Różnice',
             key: 'diff',
             selected: true,
-            isColumn: false,
+            isSongColumn: false,
+            isSeriesColumn: false,
             displayed: true
         },
         {
@@ -243,7 +315,8 @@
             name: 'Potencjał',
             key: 'estimate',
             selected: true,
-            isColumn: false,
+            isSongColumn: false,
+            isSeriesColumn: false,
             displayed: false
         },
     ]
@@ -338,6 +411,10 @@
         return !playerScore || (estScore && playerScore.acc < estScore.acc && estScore.diff > minDiff);
     }
 
+    function getSongValueByKey(song, key) {
+        return song[key] ? song[key] : null;
+    }
+
     function getScoreValueByKey(series, song, key, prev = false) {
         const valueKey = prev ? 'prev' + capitalize(key) : key;
         return series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId][valueKey] ? series.scores[song.leaderboardId][valueKey] : null
@@ -366,49 +443,79 @@
             total: pagerTotal
         });
 
-        for (const songsKey in songPage.songs) {
-            const song = songPage.songs[songsKey];
+        const promisesToResolve = [];
 
-            for (const seriesKey in songPage.series) {
-                const series = songPage.series[seriesKey];
+        function updateAccFromMaxScore(song, allSeries) {
+            for (const seriesKey in allSeries) {
+                const series = allSeries[seriesKey];
 
-                if (series.scores[song.leaderboardId]) {
-                    if (!song.maxScoreEx) {
-                        try {
-                            // try to get max score from cache
-                            song.maxScoreEx = await getSongMaxScoreWithDiffAndType(song.id, song.diff, true);
-                        } catch (e) {
-                            // swallow error
-                        }
-                    }
+                if (series.scores[song.leaderboardId] && song.maxScoreEx) {
+                    const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
+                    const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
 
-                    if (song.maxScoreEx) {
-                        const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
-                        const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
-
-                        series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
-                        series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
-                    } else {
-                        // try to fetch song info from beat saver and populate it later
-                        getSongMaxScoreWithDiffAndType(song.id, song.diff, false, true).then(async maxScoreEx => {
-                            if (maxScoreEx) {
-                                song.maxScoreEx = maxScoreEx;
-
-                                const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
-                                const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
-
-                                series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
-                                series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
-
-                                // if page has not been changed during song fetch
-                                if (current === currentPage) completeFetchingNewPage(songPage)
-                            }
-                        }).catch(e => {
-                        })
-                    }
+                    series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
+                    series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
                 }
             }
         }
+
+        for (const songsKey in songPage.songs) {
+            const song = songPage.songs[songsKey];
+
+            song.maxPp = song.stars * PP_PER_STAR * ppFromScore(100);
+
+            if (!song.maxScoreEx || !song.bpm) {
+                try {
+                    // try to get max score from cache
+                    const songInfo = await getSongDiffInfo(song.id, song.diff, true);
+                    if (songInfo) {
+                        song.maxScoreEx = songInfo.maxScore;
+                        song.bpm = songInfo.bpm;
+                        song.njs = songInfo.njs;
+                        song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
+                        song.length = songInfo.length;
+                    } else {
+                        // try to fetch song info from beat saver and populate it later
+                        promisesToResolve.push({
+                            promise: getSongDiffInfo(song.id, song.diff, false),
+                            song,
+                            current
+                        })
+                    }
+                } catch (e) {
+                    // swallow error
+                }
+            }
+
+            updateAccFromMaxScore(song, songPage.series);
+        }
+
+        // wait for resolve all song diff info promises
+        if (promisesToResolve.length)
+            Promise.allSettled(promisesToResolve.map(arr => arr.promise)).then(all => {
+                all.forEach((result, idx) => {
+                    if (result.status === 'fulfilled') {
+                        const songInfo = result.value;
+                        const song = promisesToResolve[idx].song;
+
+                        if (songInfo) {
+                            song.maxScoreEx = songInfo.maxScore;
+                            song.bpm = songInfo.bpm;
+                            song.njs = songInfo.njs;
+                            song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
+                            song.length = songInfo.length;
+
+                            updateAccFromMaxScore(song, songPage.series);
+                        }
+                    }
+                })
+
+                return all;
+            }).then(_ => {
+                if (promisesToResolve.length && promisesToResolve[0].current === currentPage) {
+                    completeFetchingNewPage(songPage)
+                }
+            });
 
         completeFetchingNewPage(songPage);
 
@@ -425,7 +532,6 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                 // TODO: set from sortTypes
                 generateSortTypes();
                 break;
 
@@ -439,7 +545,6 @@
 
                 allFilters.starsFilter.from = 0;
 
-                // TODO: set from sortTypes
                 generateSortTypes();
                 break;
 
@@ -789,8 +894,8 @@
     }
 
     $: shownColumns = allColumns.filter(c => c.displayed)
-    $: columnsQty = allColumns.reduce((sum, c) => sum + (c.isColumn && c.selected ? 1 : 0), 0);
-    $: selectedCols = allColumns.filter(c => c.isColumn && c.selected)
+    $: selectedSongCols = allColumns.filter(c => c.isSongColumn && c.selected)
+    $: selectedSeriesCols = allColumns.filter(c => c.isSeriesColumn && c.selected)
     $: shouldCalculateTotalPp = getObjectFromArrayByKey(allColumns, 'diffPp').selected && 'rankeds_with_not_played' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
     // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;
@@ -865,18 +970,17 @@
                 <thead>
                 <tr>
                     <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
-                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}
-                        <th class="stars left middle" rowspan={viewType.id === 'compact' ? 1 : 2}>*</th>
+                    {#each selectedSongCols as col,idx (col.key)}
+                    {#if getObjectFromArrayByKey(allColumns, col.key).selected}
+                        <th class={"left middle " + col.key} rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
                     {/if}
-                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}
-                        <th class="maxPp left middle" rowspan={viewType.id === 'compact' ? 1 : 2}>Max PP</th>
-                    {/if}
+                    {/each}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
                             <th class="left down">{series.name}</th>
                         {:else}
-                            {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
-                                <th colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}
+                            {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
+                                <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}
                                     class="series left">{series.name}</th>
                             {/if}
                         {/if}
@@ -886,7 +990,7 @@
                 {#if viewType.id !== 'compact'}
                     <tr>
                         {#each songsPage.series as series (series.id+'_'+series.estimateId)}
-                            {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                            {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                 <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
                             {/if}{/each}
                         {/each}
@@ -912,21 +1016,24 @@
                             </figure>
                         </Song>
                     </td>
-                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'stars').selected}
-                        <td class="stars left middle">
-                            <Value value={song.stars} suffix="*" zero=""/>
-                        </td>{/if}
-                    {#if allFilters.songType.id !== 'unrankeds' && getObjectFromArrayByKey(allColumns, 'maxPp').selected}
-                        <td class="maxPp left middle">
-                            <Value value={song.stars * PP_PER_STAR * ppFromScore(100)} suffix="pp" zero="-"/>
-                        </td>{/if}
+                    {#each selectedSongCols as col,idx (col.key)}
+                    {#if getObjectFromArrayByKey(allColumns, col.key).selected}
+                        <td class={"left middle " + col.key}>
+                            {#if col.key === 'length'}
+                                <Duration value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
+                            {:else}
+                                <Value value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
+                            {/if}
+                        </td>
+                    {/if}
+                    {/each}
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
                             <td class="left compact series-{songsPage.series.length}"
-                                class:with-cols={getObjectFromArrayByKey(allColumns, 'stars').selected || getObjectFromArrayByKey(allColumns, 'maxPp').selected}
+                                class:with-cols={selectedSongCols.length > 0}
                                 class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                 {#if getScoreValueByKey(series, song, 'score')}
-                                    {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                    {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                         {#if col.key === 'timeset'}
                                             <strong class={'compact-' + col.key + '-val'}>
                                                 <Date date={getScoreValueByKey(series, song, col.key)}
@@ -956,7 +1063,7 @@
                                 {/if}
                             </td>
                         {:else}
-                            {#each selectedCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                            {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                 <td class={'left ' + col.key} class:middle={idx > 0}
                                     class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                     {#if col.key === 'timeset'}
@@ -980,13 +1087,13 @@
                 <tfoot>
                 <tr>
                     <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
-                        colspan={allFilters.songType.id !== 'unrankeds' ? 2 + (getObjectFromArrayByKey(allColumns, 'stars').selected ? 1 : 0) + (getObjectFromArrayByKey(allColumns, 'maxPp').selected ? 1 : 0) : 2}>
+                        colspan={2 + selectedSongCols.length}>
                         Razem dla {songsPage.series[0].name}</th>
                     {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'tabular'}
-                            {#if selectedCols.length > 0 && !(selectedCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
+                            {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && getObjectFromArrayByKey(allColumns, 'diffPp').selected)}
                                 <th class="left" rowspan={series.id !== playerId ? 1 : (songsPage.series.length > 2 ? 2 : 1)}
-                                    colspan={series.id !== playerId ? selectedCols.length : selectedCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}>
+                                    colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (getObjectFromArrayByKey(allColumns, 'diffPp').selected ? 1 : 0)}>
                                     <Value value={series.totalPp}
                                            prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? series.prevTotalPp : null}
                                            suffix="pp"/>
@@ -1002,8 +1109,8 @@
                     {/each}
                 </tr>
                 <tr>
-                    {#if selectedCols.length && songsPage.series.length > 2}
-                        <th class="left" colspan={selectedCols.length * (songsPage.series.length - 1)}>
+                    {#if selectedSeriesCols.length && songsPage.series.length > 2}
+                        <th class="left" colspan={selectedSeriesCols.length * (songsPage.series.length - 1)}>
                             <Value value={songsPage.bestTotalRealPp}
                                    prevValue={getObjectFromArrayByKey(allColumns, 'diff').selected ? songsPage.series[0].totalPp : null}
                                    suffix="pp"/>
@@ -1058,7 +1165,7 @@
         vertical-align: middle !important;
     }
 
-    thead th.song, thead th.maxPp {
+    thead th.song, thead th.maxPp, thead th.bpm, thead th.njs, thead th.nps, thead th.length {
         vertical-align: middle !important;
     }
 
@@ -1078,6 +1185,10 @@
         width: 2rem;
     }
 
+    thead th.bpm, thead th.njs, thead th.nps, thead th.length {
+        width: 2.5rem;
+    }
+
     thead th.maxPp {
         width: 3rem;
     }
@@ -1094,11 +1205,7 @@
         text-align: center;
     }
 
-    tbody td.stars {
-        text-align: center;
-    }
-
-    tbody td.maxPp {
+    tbody td.stars, tbody td.maxPp, tbody td.bpm, tbody td.njs, tbody td.nps, tbody td.length {
         text-align: center;
     }
 

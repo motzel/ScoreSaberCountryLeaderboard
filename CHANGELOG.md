@@ -1,4 +1,7 @@
 # Changelog
+0.8.2
+ - add song bpm, njs, nps and duration to song browser
+ 
 0.8.1
  - add CSV export
  - fix bug with acc calc on song leaderboard when mods were in use

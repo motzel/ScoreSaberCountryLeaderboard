@@ -51,7 +51,7 @@ module.exports = {
             terserOptions: {
                 mangle: false,
                 output: {
-                    beautify: true
+                    beautify: false
                 }
             }
         }),

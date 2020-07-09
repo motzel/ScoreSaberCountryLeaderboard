@@ -60,3 +60,5 @@ export const round = (val, places = 2) => {
 export function roundToPrecision(num, precision = 0.1) {
     return round(Math.floor(num / precision) * precision);
 }
+
+export const padNumber = (num, pad = 2) => (Array(pad).fill('0').join('') + num).slice(-pad);
