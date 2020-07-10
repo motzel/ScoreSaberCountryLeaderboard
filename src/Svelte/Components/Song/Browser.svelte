@@ -204,7 +204,7 @@
             isSongColumn: true,
             isSeriesColumn: false,
             displayed: true,
-            valueProps: {zero: "-", suffix: " BPM", digits: 0}
+            valueProps: {zero: "-", suffix: "", digits: 0}
         },
         {
             label: 'NJS',
@@ -214,7 +214,7 @@
             isSongColumn: true,
             isSeriesColumn: false,
             displayed: true,
-            valueProps: {zero: "-", suffix: " NJS", digits: 0}
+            valueProps: {zero: "-", suffix: "", digits: 0}
         },
         {
             label: 'NPS',
@@ -224,7 +224,7 @@
             isSongColumn: true,
             isSeriesColumn: false,
             displayed: true,
-            valueProps: {zero: "-", suffix: " NPS"}
+            valueProps: {zero: "-", suffix: ""}
         },
         {
             label: 'Czas',
@@ -584,6 +584,26 @@
         forceFiltersChanged()
     }
 
+    function setColumnsSuffixes(columns, viewType) {
+        columns.forEach(col => {
+            if( ["bpm", "njs", "nps"].includes(col.key)) {
+                col.valueProps.suffix = viewType.id === 'compact' ? " " + col.key.toUpperCase() : "";
+            }
+        })
+    }
+
+    function getSelectedSongCols(columns, viewType) {
+        setColumnsSuffixes(columns, viewType);
+
+        return columns.filter(c => c.isSongColumn && c.selected);
+    }
+
+    function getSelectedSeriesCols(columns, viewType) {
+        setColumnsSuffixes(columns, viewType);
+
+        return columns.filter(c => c.isSeriesColumn && c.selected)
+    }
+
     const onFilterNameChange = debounce(e => allFilters.name = e.target.value, DEBOUNCE_DELAY);
     const onFilterStarsChange = debounce(e => allFilters.starsFilter = Object.assign({}, allFilters.starsFilter), DEBOUNCE_DELAY);
     const onFilterMinPlusPpChanged = debounce(e => allFilters.minPpDiff = e.detail, DEBOUNCE_DELAY * 2);
@@ -894,8 +914,8 @@
     }
 
     $: shownColumns = allColumns.filter(c => c.displayed)
-    $: selectedSongCols = allColumns.filter(c => c.isSongColumn && c.selected)
-    $: selectedSeriesCols = allColumns.filter(c => c.isSeriesColumn && c.selected)
+    $: selectedSongCols = getSelectedSongCols(allColumns, viewType)
+    $: selectedSeriesCols = getSelectedSeriesCols(allColumns, viewType)
     $: shouldCalculateTotalPp = getObjectFromArrayByKey(allColumns, 'diffPp').selected && 'rankeds_with_not_played' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
     // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;

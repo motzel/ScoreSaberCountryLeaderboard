@@ -1,4 +1,7 @@
 # Changelog
+0.8.3
+ - bpm/njs/nps suffixes are now not added in the tabular view
+ 
 0.8.2
  - add song bpm, njs, nps and duration to song browser
  
