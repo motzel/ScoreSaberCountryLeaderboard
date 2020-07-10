@@ -36,3 +36,16 @@ table.ranking tbody tr:hover {background-color: var(--hover) !important;}
 
 section.rankChart {height: 300px!important;}
 table.ranking.songs {max-width: none!important;}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.buttons button {
+  margin-bottom: .5em;
+}
+.buttons button:not(:last-child) {
+  margin-right: .5em;
+}
