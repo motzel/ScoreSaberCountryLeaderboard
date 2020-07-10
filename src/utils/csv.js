@@ -1,3 +1,5 @@
+import download from './download';
+
 const processRow = (row, headers, delimiter = ',') => {
     return headers.map(h => {
         let val = row[h.field] ? row[h.field] : '';
@@ -23,19 +25,4 @@ export const generateCsv = (data, headers, delimiter = ',') => {
         data.map(row => processRow(row, headers, delimiter)).join('\n')
 }
 
-export const downloadCsv = (filename, csv) => {
-    const link = document.createElement("a");
-    if (link.download === undefined) return false;
-
-    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-
-    link.setAttribute("href", URL.createObjectURL(blob));
-    link.setAttribute("download", filename);
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    return true;
-}
+export const downloadCsv = (filename, csv) => download(csv, filename, 'text/csv;charset=utf-8;');

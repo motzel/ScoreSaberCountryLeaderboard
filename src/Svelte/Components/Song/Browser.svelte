@@ -14,8 +14,6 @@
     import {dateFromString} from "../../../utils/date";
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
-    import Difficulty from "../Common/Difficulty.svelte";
-    import Value from "../Common/Value.svelte";
     import {
         getCountryRanking,
         getPlayerInfo,
@@ -23,10 +21,6 @@
         getPlayerScores,
         getPlayerSongScore
     } from "../../../scoresaber/players";
-    import memoize from '../../../utils/memoize';
-    import Song from "./Song.svelte";
-    import Pager from "../Common/Pager.svelte";
-    import Range from "../Common/Range.svelte";
     import {
         extractDiffAndType,
         getHumanDiffInfo,
@@ -34,14 +28,24 @@
         getSongMaxScore,
         getSongMaxScoreWithDiffAndType
     } from "../../../song";
-    import Date from "../Common/Date.svelte";
-    import MultiRange from "../Common/MultiRange.svelte";
+    import {generateCsv, downloadCsv} from '../../../utils/csv';
     import {onMount, tick} from "svelte";
     import {round} from "../../../utils/format";
-    import WhatIfPp from "./WhatIfPp.svelte";
+    import memoize from '../../../utils/memoize';
 
-    import {generateCsv, downloadCsv} from '../../../utils/csv';
+    import dlSvg from "../../../resource/svg/download.svg"
+
+    import Song from "./Song.svelte";
+    import Pager from "../Common/Pager.svelte";
+    import Range from "../Common/Range.svelte";
+    import Date from "../Common/Date.svelte";
+    import MultiRange from "../Common/MultiRange.svelte";
+
+    import WhatIfPp from "./WhatIfPp.svelte";
     import Duration from "../Common/Duration.svelte";
+    import Difficulty from "../Common/Difficulty.svelte";
+    import Value from "../Common/Value.svelte";
+    import Button from "../Common/Button.svelte";
 
     export let playerId = getMainUserId();
     export let snipedIds = [];
@@ -1152,10 +1156,7 @@
 
 {#if !calculating}
 <div class="actions">
-    <button on:click={exportCsv}>
-        <svg fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-        CSV
-    </button>
+    <Button label="CSV" icon={dlSvg} on:click={exportCsv} />
 </div>
 {/if}
 
@@ -1373,14 +1374,7 @@
         opacity: 1;
     }
 
-    .actions button {
-        padding: 2px .5rem 2px .25rem;
-        font-weight: 500;
-    }
-    .actions svg {
-        width: 16px;
-        height: 16px;
-        position: relative;
-        top: 2px;
+    .actions {
+        font-size: .75rem;
     }
 </style>

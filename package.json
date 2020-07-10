@@ -31,5 +31,7 @@
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
   },
-  "dependencies": {}
+  "dependencies": {
+    "svg-inline-loader": "^0.8.2"
+  }
 }

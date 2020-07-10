@@ -27,6 +27,11 @@ import {
 } from "./scoresaber/pp";
 import {dateFromString} from "./utils/date";
 import {formatNumber} from "./utils/format";
+import {importData, exportData} from "./utils/export";
+
+import dlSvg from "./resource/svg/download.svg"
+import upSvg from "./resource/svg/upload.svg"
+import arrowsExpandSvg from "./resource/svg/arrows-expand.svg"
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -337,7 +342,7 @@ async function setupProfile() {
         const column = stats.closest('.column');
         if(column) {
             const div = document.createElement('div')
-            div.classList.add('buttons');
+            div.classList.add('el-group');
             div.classList.add('flex-center');
             div.style.marginTop = "1em";
             column.appendChild(div);
@@ -346,7 +351,8 @@ async function setupProfile() {
                 target: div,
                 props: {
                     label: "Transformuj",
-                    icon: '<svg fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>',
+                    icon: arrowsExpandSvg,
+                    type: 'primary'
                 }
             })
             transformBtn.$on('click', _ => {
@@ -366,6 +372,37 @@ async function setupProfile() {
                     songBox.remove();
                     transformBtn.$destroy();
                 }
+            })
+        }
+
+        const avatarColumn = document.querySelector('.column.avatar');
+        if (avatarColumn) {
+            const div = document.createElement('div')
+            div.style.marginTop = "1rem";
+            div.style.fontSize = "0.75rem";
+            div.classList.add('flex-center')
+            div.classList.add('flex-column');
+            avatarColumn.appendChild(div);
+
+            new Button({
+                target: div,
+                props: {
+                    label: "Eksport",
+                    icon: dlSvg,
+                    cls: "full-width"
+                }
+            }).$on('click', _ => exportData())
+
+            const importBtn = new Button({
+                target: div,
+                props: {
+                    label: "Import",
+                    icon: upSvg,
+                    cls: "full-width"
+                }
+            })
+            importBtn.$on('click', _ => {
+                console.warn("import data")
             })
         }
     }
