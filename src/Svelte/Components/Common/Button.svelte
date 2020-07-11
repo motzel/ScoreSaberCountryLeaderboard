@@ -1,6 +1,5 @@
 <script>
     import {createEventDispatcher} from 'svelte';
-    import Value from "./Value.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -35,10 +34,12 @@
 <button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin};" on:click={() => dispatch('click')} {disabled} class={cls}>
     <span class="icon">{#if icon}{@html icon}{/if}</span>
     <span>{label}</span>
+    <slot></slot>
 </button>
 
 <style>
     button {
+        position: relative;
         display: inline-flex;
         align-items: center;
         justify-content: center;

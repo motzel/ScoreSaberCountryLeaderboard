@@ -6,28 +6,16 @@ import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
+import File from './Svelte/Components/Common/File.svelte';
 
 import log from './utils/logger';
 import {default as config, getMainUserId} from './temp';
-import {getCacheAndConvertIfNeeded, Globals} from "./store";
-import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
+import {getCacheAndConvertIfNeeded, setCache} from "./store";
+import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
-
-import {getRankedSongs} from "./scoresaber/rankeds";
-import {
-    findRawPp,
-    getAllRankedsWithUserScores,
-    getEstimatedAcc,
-    PP_PER_STAR,
-    ppFromScore,
-    getWhatIfScore,
-    getTotalUserPp
-} from "./scoresaber/pp";
-import {dateFromString} from "./utils/date";
-import {formatNumber} from "./utils/format";
-import {importData, exportData} from "./utils/export";
+import exportData from "./utils/export";
 
 import dlSvg from "./resource/svg/download.svg"
 import upSvg from "./resource/svg/upload.svg"
@@ -393,16 +381,54 @@ async function setupProfile() {
                 }
             }).$on('click', _ => exportData())
 
-            const importBtn = new Button({
+            const importBtn = new File({
                 target: div,
                 props: {
                     label: "Import",
                     icon: upSvg,
-                    cls: "full-width"
+                    cls: "full-width",
+                    accept: "application/json"
                 }
             })
-            importBtn.$on('click', _ => {
-                console.warn("import data")
+            importBtn.$on('change', e => {
+                const file = e.target.files[0];
+                if (!file) {
+                    return;
+                }
+                if (file.type !== 'application/json') {
+                    alert('Wybierz plik JSON zawierający eksport danych');
+                    return;
+                }
+
+                importBtn.$set({disabled: true});
+
+                const reader = new FileReader();
+
+                reader.onload = async function (e) {
+                    try {
+                        const json = JSON.parse(e.target.result);
+
+                        if (!json || !json.version || !json.lastUpdated || !json.users) {
+                            alert('Niepoprawny plik eksportu');
+                            return;
+                        }
+
+                        if (json.version < 1.2) {
+                            alert('Import pliku ze starszej wersji pluginu nie jest wspierany');
+                            return;
+                        }
+
+                        await setCache(json);
+
+                        window.location.reload(false);
+                    } catch (_) {
+                        alert("Nieprawidłowy plik JSON");
+                    } finally {
+                        importBtn.$set({disabled: false});
+                    }
+                };
+
+                reader.readAsText(file);
             })
         }
     }
