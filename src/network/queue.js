@@ -21,5 +21,12 @@ export default {
         throwOnTimeout: true,
         intervalCap: 10,
         interval: 1 * 1000
-    })
+    }),
+    TWITCH: new PQueue({
+        concurrency: 8,
+        timeout: 8000,
+        throwOnTimeout: true,
+        intervalCap: 800,
+        interval: 60 * 1000
+    }),
 };

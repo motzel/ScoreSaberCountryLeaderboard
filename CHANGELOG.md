@@ -1,4 +1,7 @@
 # Changelog
+0.8.5
+ - add twitch integration
+ 
 0.8.4
  - add data export/import
  

@@ -8,6 +8,7 @@
     export let disabled = false;
     export let type = 'default';
     export let cls = "";
+    export let title;
 
     const types = {
         default: {
@@ -26,12 +27,20 @@
             border: "transparent",
             activeBorder: "transparent"
         },
+        twitch: {
+            color: "#dbdbdb",
+            activeColor: "#fff",
+            bgColor: "#9146ff",
+            activeBgColor: "#8333ff",
+            border: "transparent",
+            activeBorder: "transparent"
+        },
     }
     let selectedType = types[type] ? types[type] : types.default
     let margin = label && label.length ? ".45em" : "1px"
 </script>
 
-<button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin};" on:click={() => dispatch('click')} {disabled} class={cls}>
+<button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin};" on:click={() => dispatch('click')} {disabled} {title} class={cls}>
     <span class="icon">{#if icon}{@html icon}{/if}</span>
     <span>{label}</span>
     <slot></slot>
@@ -42,7 +51,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         vertical-align: top;
         padding: calc(.45em - 1px) 1em;
         margin-bottom: .45em;
