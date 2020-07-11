@@ -1,6 +1,7 @@
 <!--suppress JSUnfilteredForInLoop -->
 <script>
     import Progress from './Progress.svelte';
+    import Button from './Button.svelte';
 
     import {formatDate} from '../../../utils/format';
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
@@ -14,6 +15,8 @@
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
     import {fetchUsers} from "../../../network/scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
+
+    import refreshSvg from '../../../resource/svg/refresh.svg'
 
     const dispatch = createEventDispatcher();
 
@@ -254,19 +257,13 @@
     {#if started}
         <Progress value={progress} label={label} subLabel={subLabel} maxWidth="16rem"/>
     {:else}
-        <button title="Odśwież" on:click={onRefresh} disabled={started}><svg fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
+        <span class="btn-cont"><Button icon={refreshSvg} on:click={onRefresh} disabled={started} /></span>
         <strong>Data pobrania:</strong> <span>{date ? formatDate(date) : '-'}</span>
     {/if}
 </div>
 
 <style>
-    button {
-        padding: 2px;
-    }
-    svg {
-        width: 1rem;
-        height: 1rem;
-        position: relative;
-        top: 2px;
+    .btn-cont {
+        font-size: .5rem;
     }
 </style>

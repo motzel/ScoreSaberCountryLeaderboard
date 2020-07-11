@@ -42,10 +42,19 @@ table.ranking.songs {max-width: none!important;}
   justify-content: center;
   align-items: center;
 }
+.flex-column {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.full-width {
+  width: 100%;
+}
 
-.buttons button {
+.el-group button {
   margin-bottom: .5em;
 }
-.buttons button:not(:last-child) {
+.el-group button:not(:last-child) {
   margin-right: .5em;
 }

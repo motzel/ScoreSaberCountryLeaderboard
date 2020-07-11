@@ -1,4 +1,7 @@
 # Changelog
+0.8.4
+ - add data export/import
+ 
 0.8.3
  - bpm/njs/nps suffixes are now not added in the tabular view
  
