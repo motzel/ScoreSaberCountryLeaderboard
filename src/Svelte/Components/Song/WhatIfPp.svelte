@@ -53,7 +53,7 @@
     .inc {color: #42b129!important}
 </style>
 
-{#if mainUserId}
+{#if mainUserId && userPp > 0}
     {#if round(pp) > round(userPp)}
         <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
         </button>
