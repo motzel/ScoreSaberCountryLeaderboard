@@ -391,7 +391,7 @@ async function setupCountryRanking(diffOffset = 6) {
     log.info("Setup country ranking");
 
     const users = (await getCacheAndConvertIfNeeded())?.users;
-    if (!users) return;
+    if (!users || !Object.keys(users).length) return;
 
     const origTable = getBySelector('table.ranking.global');
 
