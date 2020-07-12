@@ -51,6 +51,7 @@ const getStreams = async userId => {
 
 export default {
     getAuthUrl,
+    getCurrentToken,
     getProfileByUsername,
     getVideos,
     getStreams,

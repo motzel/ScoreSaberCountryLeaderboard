@@ -438,14 +438,15 @@ async function setupProfile() {
             })
 
             // twitch button
-            const tokenExpireInMilis = data.twitch && data.twitch.token ? dateFromString(data.twitch.token.expires) - (new Date()) : 0;
-            const tokenExpireInDays = Math.floor(tokenExpireInMilis / 1000 / 60 / 60 / 24);
+            const twitchToken = await twitch.getCurrentToken();
+            const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
+            const tokenExpireSoon = tokenExpireInDays <= 3;
             new Button({
                 target: div,
                 props: {
-                    label: tokenExpireInMilis > 3 ? 'Połączono' : 'Połącz',
-                    title: tokenExpireInMilis > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
-                    disabled: tokenExpireInDays > 3,
+                    label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
+                    title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
+                    disabled: !tokenExpireSoon,
                     icon: twitchSvg,
                     cls: 'full-width',
                     type: 'twitch',
