@@ -9,7 +9,6 @@ import Button from './Svelte/Components/Common/Button.svelte';
 import File from './Svelte/Components/Common/File.svelte';
 
 import log from './utils/logger';
-import {default as queue} from "./network/queue";
 import {default as config, getMainUserId} from './temp';
 import {getCacheAndConvertIfNeeded, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
@@ -22,25 +21,13 @@ import dlSvg from "./resource/svg/download.svg"
 import upSvg from "./resource/svg/upload.svg"
 import arrowsExpandSvg from "./resource/svg/arrows-expand.svg"
 import twitchSvg from "./resource/svg/twitch.svg";
-import {SCORESABER_URL} from "./network/scoresaber/consts";
-import {queueFetchJson} from "./network/fetch";
 import {dateFromString} from "./utils/date";
+import twitch from './services/twitch';
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
-const getTwitchToken = () => {
-    const hash = getFirstRegexpMatch(/scoresaber.com\/#(.*)$/, window.location.href);
-    if (!hash) return null;
-
-    const accessTokenMatch = /access_token=(.*?)(&|$)/.exec(hash);
-    if (!accessTokenMatch) return null;
-
-    const stateMatch = /state=(.*?)(&|$)/.exec(hash);
-
-    return {accessToken: accessTokenMatch[1], url: stateMatch ? SCORESABER_URL + '/u/' + stateMatch[1] : ''};
-}
 const isProfilePage = () => null !== getProfileId();
 const isCountryRankingPage = () =>
     [
@@ -465,7 +452,7 @@ async function setupProfile() {
                 }
             }).$on('click', _ => {
                 const profileId = isProfilePage() ? getProfileId() : null;
-                window.location.href = 'https://id.twitch.tv/oauth2/authorize?client_id=c60s8xch3rksxz2i2rtuof3mczskzc&redirect_uri=https://scoresaber.com/&response_type=token&scope=' + (profileId ? '&state=' + encodeURIComponent(profileId) : '');
+                window.location.href = twitch.getAuthUrl(profileId ? profileId : '');
             });
         }
     }
@@ -631,30 +618,6 @@ async function waitForSSEInit(timeout) {
     });
 }
 
-async function checkTwitchToken() {
-    const twitchToken = getTwitchToken();
-    if (twitchToken) {
-        const data = await getCacheAndConvertIfNeeded();
-        if (!data.twitch) data.twitch = {token: null};
-
-        // validate token
-        const tokenValidation = await queueFetchJson(queue.TWITCH, 'https://id.twitch.tv/oauth2/validate', {headers:{'Authorization': 'OAuth ' + twitchToken.accessToken}});
-        data.twitch.token = Object.assign(
-            {},
-            data.twitch.token,
-            tokenValidation,
-            {
-                accessToken: twitchToken.accessToken,
-                expires: (new Date(Date.now() + tokenValidation.expires_in * 1000)).toISOString()
-            }
-        );
-
-        await setCache(data);
-
-        if (twitchToken.url) window.location.href = twitchToken.url;
-    }
-}
-
 let initialized = false;
 
 async function init() {
@@ -669,7 +632,7 @@ async function init() {
 
     setupStyles();
 
-    await checkTwitchToken();
+    await (twitch.processTokenIfAvailable());
 
     if (isProfilePage()) {
         setupProfile();
