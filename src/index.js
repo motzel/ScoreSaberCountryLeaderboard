@@ -20,6 +20,9 @@ import exportData from "./utils/export";
 import dlSvg from "./resource/svg/download.svg"
 import upSvg from "./resource/svg/upload.svg"
 import arrowsExpandSvg from "./resource/svg/arrows-expand.svg"
+import twitchSvg from "./resource/svg/twitch.svg";
+import {dateFromString} from "./utils/date";
+import twitch from './services/twitch';
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -333,6 +336,7 @@ async function setupProfile() {
             div.classList.add('el-group');
             div.classList.add('flex-center');
             div.style.marginTop = "1em";
+            div.style.fontSize = "0.875rem";
             column.appendChild(div);
 
             const transformBtn = new Button({
@@ -372,6 +376,7 @@ async function setupProfile() {
             div.classList.add('flex-column');
             avatarColumn.appendChild(div);
 
+            // export button
             new Button({
                 target: div,
                 props: {
@@ -381,6 +386,7 @@ async function setupProfile() {
                 }
             }).$on('click', _ => exportData())
 
+            // import button
             const importBtn = new File({
                 target: div,
                 props: {
@@ -430,6 +436,52 @@ async function setupProfile() {
 
                 reader.readAsText(file);
             })
+
+            // twitch button
+            if (profileId && data?.twitch?.users?.[profileId]?.login && data?.users?.[profileId]) {
+                const twitchToken = await twitch.getCurrentToken();
+                const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
+                const tokenExpireSoon = tokenExpireInDays <= 3;
+                new Button({
+                    target: div,
+                    props: {
+                        label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
+                        title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
+                        disabled: !tokenExpireSoon,
+                        icon: twitchSvg,
+                        cls: 'full-width',
+                        type: 'twitch',
+                    }
+                }).$on('click', _ => {
+                    window.location.href = twitch.getAuthUrl(profileId ? profileId : '');
+                });
+
+
+                let twitchProfile = data.twitch.users[profileId];
+                if (!twitchProfile.id) {
+                    const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
+                    if (fetchedProfile) {
+                        twitchProfile = Object.assign({}, twitchProfile, fetchedProfile);
+                        data.twitch.users[profileId] = twitchProfile;
+                    }
+                }
+
+                if (twitchProfile.id) {
+                    const scoresRecentPlay = data.users[profileId].recentPlay ? data.users[profileId].recentPlay : data.users[profileId].lastUpdated;
+                    const twitchLastUpdated = twitchProfile.lastUpdated;
+
+                    if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
+                        console.warn("fetching twitter videos")
+                        const videos = await twitch.getVideos(twitchProfile.id);
+                        if (videos?.data) {
+                            twitchProfile.videos = videos.data;
+                            twitchProfile.lastUpdated = new Date();
+
+                            await setCache(data);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -559,6 +611,11 @@ function setupStyles() {
     cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
 }
 
+async function setupTwitch() {
+    await twitch.processTokenIfAvailable();
+    await twitch.createTwitchUsersCache();
+}
+
 async function setupDelayed() {
     initialized = true;
 
@@ -607,6 +664,8 @@ async function init() {
     const data = await getCacheAndConvertIfNeeded();
 
     setupStyles();
+
+    await setupTwitch();
 
     if (isProfilePage()) {
         setupProfile();

@@ -33,7 +33,7 @@ export const convertPlayerInfo = info => {
                 userId: playerId
             }),
             lastUpdated: null,
-            lastPlay: null,
+            recentPlay: null,
 
             userHistory: {},
             scores: {}

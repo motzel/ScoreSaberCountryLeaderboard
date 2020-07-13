@@ -37,11 +37,17 @@ table.ranking tbody tr:hover {background-color: var(--hover) !important;}
 section.rankChart {height: 300px!important;}
 table.ranking.songs {max-width: none!important;}
 
+.flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
 .flex-center {
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .flex-column {
   flex-direction: column;
 }
