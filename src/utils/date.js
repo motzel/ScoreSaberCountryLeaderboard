@@ -1,3 +1,5 @@
+import {padNumber} from "./format";
+
 export const DAY = 24 * 60 * 60 * 1000;
 
 export function toUTCDate(date) {
@@ -19,7 +21,8 @@ export function dayTrunc(date) {
     return date;
 }
 
-export const daysAgo = days => new Date((new Date()).getTime() - days * DAY);
+export const addToDate = (date, millis) => new Date(date.getTime() + millis)
+export const daysAgo = days => addToDate(new Date(), - days * DAY);
 
 export const getFirstNotNewerThan = (timestamp, arr) =>
     arr
@@ -29,3 +32,24 @@ export const getFirstNotNewerThan = (timestamp, arr) =>
 
 
 export const dateFromString = (str) => (str ? new Date(Date.parse(str)) : null);
+
+export const durationToMillis = duration => {
+    const match = duration.match(/^\s*(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)\s*$/);
+    if (!match) return null;
+
+    return (match[1] ? parseInt(match[1], 10) * 1000 * 60 * 60 : 0) +
+        (match[2] ? parseInt(match[2], 10) * 1000 * 60 : 0) +
+        (match[3] ? parseInt(match[3], 10) * 1000 : 0);
+}
+
+export const millisToDuration = millis => {
+    const hours = padNumber(Math.floor(millis / (1000 * 60 * 60)));
+    millis -= hours * 1000 * 60 * 60;
+
+    const minutes = padNumber(Math.floor(millis  / (1000 * 60)));
+    millis -= minutes * 1000 * 60;
+
+    const seconds = padNumber(Math.floor(millis / 1000));
+
+    return `${hours}h${minutes}m${seconds}s`;
+}

@@ -438,23 +438,50 @@ async function setupProfile() {
             })
 
             // twitch button
-            const twitchToken = await twitch.getCurrentToken();
-            const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
-            const tokenExpireSoon = tokenExpireInDays <= 3;
-            new Button({
-                target: div,
-                props: {
-                    label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
-                    title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
-                    disabled: !tokenExpireSoon,
-                    icon: twitchSvg,
-                    cls: 'full-width',
-                    type: 'twitch',
+            if (profileId && data?.twitch?.users?.[profileId]?.login && data?.users?.[profileId]) {
+                const twitchToken = await twitch.getCurrentToken();
+                const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
+                const tokenExpireSoon = tokenExpireInDays <= 3;
+                new Button({
+                    target: div,
+                    props: {
+                        label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
+                        title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
+                        disabled: !tokenExpireSoon,
+                        icon: twitchSvg,
+                        cls: 'full-width',
+                        type: 'twitch',
+                    }
+                }).$on('click', _ => {
+                    window.location.href = twitch.getAuthUrl(profileId ? profileId : '');
+                });
+
+
+                let twitchProfile = data.twitch.users[profileId];
+                if (!twitchProfile.id) {
+                    const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
+                    if (fetchedProfile) {
+                        twitchProfile = Object.assign({}, twitchProfile, fetchedProfile);
+                        data.twitch.users[profileId] = twitchProfile;
+                    }
                 }
-            }).$on('click', _ => {
-                const profileId = isProfilePage() ? getProfileId() : null;
-                window.location.href = twitch.getAuthUrl(profileId ? profileId : '');
-            });
+
+                if (twitchProfile.id) {
+                    const scoresRecentPlay = data.users[profileId].recentPlay ? data.users[profileId].recentPlay : data.users[profileId].lastUpdated;
+                    const twitchLastUpdated = twitchProfile.lastUpdated;
+
+                    if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
+                        console.warn("fetching twitter videos")
+                        const videos = await twitch.getVideos(twitchProfile.id);
+                        if (videos?.data) {
+                            twitchProfile.videos = videos.data;
+                            twitchProfile.lastUpdated = new Date();
+
+                            await setCache(data);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -584,6 +611,11 @@ function setupStyles() {
     cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
 }
 
+async function setupTwitch() {
+    await twitch.processTokenIfAvailable();
+    await twitch.createTwitchUsersCache();
+}
+
 async function setupDelayed() {
     initialized = true;
 
@@ -633,7 +665,7 @@ async function init() {
 
     setupStyles();
 
-    await (twitch.processTokenIfAvailable());
+    await setupTwitch();
 
     if (isProfilePage()) {
         setupProfile();

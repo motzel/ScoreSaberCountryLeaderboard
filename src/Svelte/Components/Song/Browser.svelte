@@ -11,7 +11,7 @@
     import {delay} from "../../../network/fetch";
     import {getMainUserId} from "../../../temp";
     import {getCacheAndConvertIfNeeded} from "../../../store";
-    import {dateFromString} from "../../../utils/date";
+    import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import {
@@ -34,6 +34,7 @@
     import memoize from '../../../utils/memoize';
 
     import dlSvg from "../../../resource/svg/download.svg"
+    import twitchSvg from "../../../resource/svg/twitch.svg";
 
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
@@ -463,6 +464,18 @@
             }
         }
 
+        async function findTwitchVideo(playerId, timeset, songLength) {
+            const data = await getCacheAndConvertIfNeeded();
+            if(data && data.twitch && data.twitch.users && data.twitch.users[playerId] && data.twitch.users[playerId].videos) {
+                const songStarted = addToDate(timeset, -(songLength+5) * 1000)
+                const video = data.twitch.users[playerId].videos
+                        .map(v => Object.assign({}, v, {created_at: dateFromString(v.created_at), ended_at: addToDate(dateFromString(v.created_at), durationToMillis(v.duration))}))
+                        .find(v => v.created_at <= songStarted && songStarted < v.ended_at);
+
+                return video ? Object.assign({}, video, {url: video.url + '?t=' + millisToDuration(songStarted - video.created_at)}) : null;
+            }
+        }
+
         for (const songsKey in songPage.songs) {
             const song = songPage.songs[songsKey];
 
@@ -478,6 +491,11 @@
                         song.njs = songInfo.njs;
                         song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
                         song.length = songInfo.length;
+
+                        if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
+                            const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
+                            if (video) song.video = video;
+                        }
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
@@ -497,7 +515,7 @@
         // wait for resolve all song diff info promises
         if (promisesToResolve.length)
             Promise.allSettled(promisesToResolve.map(arr => arr.promise)).then(all => {
-                all.forEach((result, idx) => {
+                all.forEach(async (result, idx) => {
                     if (result.status === 'fulfilled') {
                         const songInfo = result.value;
                         const song = promisesToResolve[idx].song;
@@ -508,6 +526,11 @@
                             song.njs = songInfo.njs;
                             song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
                             song.length = songInfo.length;
+
+                            if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
+                                const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
+                                if (video) song.video = video;
+                            }
 
                             updateAccFromMaxScore(song, songPage.series);
                         }
@@ -628,7 +651,7 @@
             const playerInfos = (await Promise.all(playerIds.map(async pId => getPlayerInfo(pId))))
             const playersSeries = await Promise.all(playerInfos
                     .map(async pInfo => {
-                        const {lastPlay, recentPlay, scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
+                        const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
                         // set all players total pp to main player's total pp
                         const shouldCalculateTotalPp = filters.songType.id === 'rankeds_with_not_played';
@@ -1030,15 +1053,22 @@
                         <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
                     </td>
                     <td class="song">
-                        <Song song={song}>
-                            <figure>
-                                <img src="/imports/images/songs/{song.id}.png" />
-                                <div class="songinfo">
-                                    <span class="name">{song.name}</span>
-                                    <div class="author">{song.songAuthor} <small>{song.levelAuthor}</small></div>
-                                </div>
-                            </figure>
-                        </Song>
+                        <div class="flex-start">
+                            {#if song.video && song.video.url}
+                                <a class="video" href="{song.video.url}" target="_blank">
+                                    <Button icon={twitchSvg} type="twitch"/>
+                                </a>
+                            {/if}
+                            <Song song={song}>
+                                <figure>
+                                    <img src="/imports/images/songs/{song.id}.png"/>
+                                    <div class="songinfo">
+                                        <span class="name">{song.name}</span>
+                                        <div class="author">{song.songAuthor} <small>{song.levelAuthor}</small></div>
+                                    </div>
+                                </figure>
+                            </Song>
+                        </div>
                     </td>
                     {#each selectedSongCols as col,idx (col.key)}
                     {#if getObjectFromArrayByKey(allColumns, col.key).selected}
