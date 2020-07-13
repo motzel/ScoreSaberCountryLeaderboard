@@ -467,7 +467,7 @@
         async function findTwitchVideo(playerId, timeset, songLength) {
             const data = await getCacheAndConvertIfNeeded();
             if(data && data.twitch && data.twitch.users && data.twitch.users[playerId] && data.twitch.users[playerId].videos) {
-                const songStarted = addToDate(timeset, -(songLength+5) * 1000)
+                const songStarted = addToDate(timeset, -songLength * 1000)
                 const video = data.twitch.users[playerId].videos
                         .map(v => Object.assign({}, v, {created_at: dateFromString(v.created_at), ended_at: addToDate(dateFromString(v.created_at), durationToMillis(v.duration))}))
                         .find(v => v.created_at <= songStarted && songStarted < v.ended_at);

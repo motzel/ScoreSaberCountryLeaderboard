@@ -1,4 +1,7 @@
 # Changelog
+0.8.5.1
+ - minor twitch integration fix regarding video offset
+ 
 0.8.5
  - add twitch integration
  
