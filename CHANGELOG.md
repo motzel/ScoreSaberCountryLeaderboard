@@ -1,4 +1,8 @@
 # Changelog
+0.8.5.2
+ - minor bug fix regarding player inactivity
+ - add date to default export filename
+ 
 0.8.5.1
  - minor twitch integration fix regarding video offset
  
