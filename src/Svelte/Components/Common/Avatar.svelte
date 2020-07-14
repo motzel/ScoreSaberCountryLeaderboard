@@ -3,7 +3,7 @@
 
     export let url;
 
-    $: fullUrl = NEW_SCORESABER_URL + url;
+    $: fullUrl = url.startsWith('http') ? url : NEW_SCORESABER_URL + url;
 </script>
 
 <style>

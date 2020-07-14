@@ -79,7 +79,7 @@ export const fetchUsers = async (page = 1) => {
                     return convertPlayerInfo(await fetchPlayerInfo(info.playerInfo.playerId));
                 }
 
-                return Object.assign({}, data.users[info.playerInfo.playerId], info);
+                return Object.assign({}, data.users[info.playerInfo.playerId], info.playerInfo, info.scoreStats);
             })
     )
 }
