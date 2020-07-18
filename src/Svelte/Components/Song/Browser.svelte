@@ -84,10 +84,14 @@
         if (allFilters.songType.id === 'rankeds_with_not_played')
             types.push({label: 'PP do globala', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
 
+        if (allFilters.songType.id !== 'unrankeds')
+            types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
+
+        const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []));
         if (data && data.users) {
-            const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []));
             userIds.forEach((pId, idx) => {
                 const name = data.users[pId] ? data.users[pId].name : null;
+                if (userIds.length > 1) types.push({label: name, type: 'label'})
                 if (name) {
                     [
                         {field: "timeset", label: "Data zagrania"},
@@ -96,7 +100,7 @@
                     ].forEach(field => {
                         if ('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id))
                             types.push({
-                                label: (userIds.length > 1 ? name + ': ' : '') + field.label,
+                                label: field.label,
                                 type: 'series',
                                 subtype: idx,
                                 field: field.field,
@@ -108,11 +112,8 @@
             })
         }
 
-        if (allFilters.songType.id !== 'unrankeds')
-            types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
-
         sortTypes = types;
-        allFilters.sortBy = types[0];
+        allFilters.sortBy = types[userIds.length > 1 && types[0].type && types[0].type === 'label' || types[0].label === 'Gwiazdki' ? 1 : 0];
     }
 
     const findSort = (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field);
