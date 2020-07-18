@@ -38,7 +38,7 @@
         dispatch('change', value);
     }
 
-    $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [{text: value.label}]).map(v => v.label).join(', ') : noSelected
+    $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [value.label ? value: {label:value}]).map(v => v.label).join(', ') : noSelected
 </script>
 
 <div class="multi-select" class:disabled={disabled}>

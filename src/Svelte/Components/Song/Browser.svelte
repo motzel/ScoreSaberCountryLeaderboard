@@ -68,13 +68,13 @@
     let minStarsForSniper = 0;
     let maxStars = 100;
     let songTypes = [
-        {id: 'all', text: 'Wszystkie'},
-        {id: 'rankeds', text: 'Tylko rankingowe'},
-        {id: 'unrankeds', text: 'Tylko nierankingowe'},
-        {id: 'rankeds_with_not_played', text: 'Tryb snajpera'},
+        {id: 'all', label: 'Wszystkie'},
+        {id: 'rankeds', label: 'Tylko rankingowe'},
+        {id: 'unrankeds', label: 'Tylko nierankingowe'},
+        {id: 'rankeds_with_not_played', label: 'Tryb snajpera'},
     ]
     let sortTypes = [
-        {name: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
+        {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
     ]
     const generateSortTypes = async _ => {
         const types = [];
@@ -82,7 +82,7 @@
         const data = (await getCacheAndConvertIfNeeded());
 
         if (allFilters.songType.id === 'rankeds_with_not_played')
-            types.push({name: '+PP', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
+            types.push({label: 'PP do globala', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
 
         if (data && data.users) {
             const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []));
@@ -90,13 +90,13 @@
                 const name = data.users[pId] ? data.users[pId].name : null;
                 if (name) {
                     [
-                        {field: "timeset", name: "Data zagrania"},
-                        {field: "pp", name: "PP"},
-                        {field: "acc", name: "ACC"},
+                        {field: "timeset", label: "Data zagrania"},
+                        {field: "pp", label: "PP"},
+                        {field: "acc", label: "Dokładność"},
                     ].forEach(field => {
                         if ('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id))
                             types.push({
-                                name: (userIds.length > 1 ? name + ': ' : '') + field.name,
+                                label: (userIds.length > 1 ? name + ': ' : '') + field.label,
                                 type: 'series',
                                 subtype: idx,
                                 field: field.field,
@@ -108,7 +108,8 @@
             })
         }
 
-        types.push({name: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
+        if (allFilters.songType.id !== 'unrankeds')
+            types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
 
         sortTypes = types;
         allFilters.sortBy = types[0];
@@ -299,7 +300,7 @@
             valueProps: {zero: "-", suffix: "%"}
         },
         {
-            label: 'Wynik punktowy',
+            label: 'Wynik',
             compactLabel: 'Wynik',
             name: 'Wynik',
             key: 'score',
@@ -331,8 +332,8 @@
     selectedColumns = allColumns.filter(c => c.selected && c.displayed)
 
     const viewTypes = [
-        {id: 'compact', text: 'Kompaktowy'},
-        {id: 'tabular', text: 'Tabelaryczny'}
+        {id: 'compact', label: 'Kompaktowy'},
+        {id: 'tabular', label: 'Tabelaryczny'}
     ]
     let viewType = viewTypes[0];
 
@@ -957,11 +958,7 @@
 <div class="filters">
     <div>
         <header>Rodzaj</header>
-        <select bind:value={allFilters.songType} on:change={onSongTypeChange}>
-            {#each songTypes as st}
-                <option value={st}>{st.text}</option>
-            {/each}
-        </select>
+        <Select bind:value={allFilters.songType} items={songTypes} on:change={onSongTypeChange} />
     </div>
 
     <div class="filter-name">
@@ -983,11 +980,7 @@
 
     <div>
         <header>Widok</header>
-        <select bind:value={viewType}>
-            {#each viewTypes as vt}
-                <option value={vt}>{vt.text}</option>
-            {/each}
-        </select>
+        <Select bind:value={viewType} items={viewTypes} />
     </div>
 
     <div class="columns">
@@ -1000,11 +993,7 @@
 
     <div>
         <header>Sortowanie</header>
-        <select bind:value={allFilters.sortBy}>
-            {#each sortTypes as st}
-                <option value={st} disabled={!st.enabled}>{st.name}</option>
-            {/each}
-        </select>
+        <Select bind:value={allFilters.sortBy} items={sortTypes} />
     </div>
 </div>
 
@@ -1184,7 +1173,9 @@
     {/if}
 {/await}
 
-<Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
+{#if songsPage.songs && songsPage.songs.length}
+    <Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
+{/if}
 
 {#if !calculating}
 <div class="actions">
