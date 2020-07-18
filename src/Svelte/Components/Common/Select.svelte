@@ -8,6 +8,7 @@
     export let value = multiple ? [] : null
     export let items = [];
     export let noSelected = 'No item selected';
+    export let minSelected = 1;
 
     function onMenuClick(e) {
         const item = e.target.closest('.dropdown-item');
@@ -16,29 +17,29 @@
         const idx = item.dataset.idx;
         if (idx < 0 || idx >= items.length) return;
 
-        if(multiple) {
+        if (multiple) {
             const itemValueIdx = value ? value.findIndex(v => v === items[idx]) : -1;
             let newValue = [];
             if (itemValueIdx >= 0) {
-                newValue = value.filter((v,idx) => idx !== itemValueIdx)
+                newValue = value.filter((v, idx) => idx !== itemValueIdx || value.length <= minSelected)
             } else {
                 newValue = value.concat([items[idx]])
             }
 
             items.forEach((item, idx) => {
                 const v = newValue.find(v => v === item)
-                if(v) v.idx = idx;
+                if (v) v.idx = idx;
             })
 
-            value = newValue.sort((a,b) => a.idx - b.idx)
+            value = newValue.sort((a, b) => a.idx - b.idx)
         } else {
-            value = value === items[idx] ? null : items[idx];
+            value = value === items[idx] && minSelected < 1 ? null : items[idx];
         }
 
         dispatch('change', value);
     }
 
-    $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [value.label ? value: {label:value}]).map(v => v.label).join(', ') : noSelected
+    $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [value.label ? value : {label: value}]).map(v => v.label).join(', ') : noSelected
 </script>
 
 <div class="multi-select" class:disabled={disabled}>
@@ -57,12 +58,14 @@
                     {:else if item.type === 'label'}
                         <div class="menu-label">{item.label}</div>
                     {:else}
-                    <div class="dropdown-item" class:is-active={value && (value === item || (Array.isArray(value) && value.includes(item)))} data-idx={idx}>
-                        <span>{item.label}</span>
-                        {#if value && (value === item || (Array.isArray(value) && value.includes(item)))}
-                            <span class="icon is-small"><i class="fas fa-check" aria-hidden="true"></i></span>
-                        {/if}
-                    </div>
+                        <div class="dropdown-item"
+                             class:is-active={value && (value === item || (Array.isArray(value) && value.includes(item)))}
+                             data-idx={idx}>
+                            <span>{item.label}</span>
+                            {#if value && (value === item || (Array.isArray(value) && value.includes(item)))}
+                                <span class="icon is-small"><i class="fas fa-check" aria-hidden="true"></i></span>
+                            {/if}
+                        </div>
                     {/if}
                 {/each}
             </div>

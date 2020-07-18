@@ -94,12 +94,12 @@
                 if (userIds.length > 1) types.push({label: name, type: 'label'})
                 if (name) {
                     [
-                        {field: "timeset", label: "Data zagrania"},
-                        {field: "diffPp", label: "PP do globala"},
-                        {field: "pp", label: "PP"},
-                        {field: "acc", label: "Dokładność"},
+                        {field: "timeset", label: "Data zagrania", enabled: true},
+                        {field: "diffPp", label: "PP do globala", enabled: 'rankeds_with_not_played' === allFilters.songType.id && idx !== 0},
+                        {field: "pp", label: "PP", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
+                        {field: "acc", label: "Dokładność", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
                     ].forEach(field => {
-                        if (('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)) && ('diffPp' !== field.field || idx !== 0) )
+                        if (field.enabled)
                             types.push({
                                 label: field.label,
                                 type: 'series',
@@ -192,8 +192,7 @@
             name: '*',
             key: 'stars',
             selected: false,
-            isSongColumn: true,
-            isSeriesColumn: false,
+            type: 'song',
             displayed: true,
             valueProps: {zero: "-", suffix: "*"}
         },
@@ -202,8 +201,7 @@
             name: 'Max PP',
             key: 'maxPp',
             selected: false,
-            isSongColumn: true,
-            isSeriesColumn: false,
+            type: 'song',
             displayed: true,
             valueProps: {zero: "-", suffix: "pp"}
         },
@@ -212,8 +210,7 @@
             name: 'BPM',
             key: 'bpm',
             selected: false,
-            isSongColumn: true,
-            isSeriesColumn: false,
+            type: 'song',
             displayed: true,
             valueProps: {zero: "-", suffix: "", digits: 0}
         },
@@ -222,8 +219,7 @@
             name: 'NJS',
             key: 'njs',
             selected: false,
-            isSongColumn: true,
-            isSeriesColumn: false,
+            type: 'song',
             displayed: true,
             valueProps: {zero: "-", suffix: "", digits: 0}
         },
@@ -232,8 +228,7 @@
             name: 'NPS',
             key: 'nps',
             selected: false,
-            isSongColumn: true,
-            isSeriesColumn: false,
+            type: 'song',
             displayed: true,
             valueProps: {zero: "-", suffix: ""}
         },
@@ -242,8 +237,7 @@
             name: 'Czas',
             key: 'length',
             selected: false,
-            isSongColumn: true,
-            isSeriesColumn: false,
+            type: 'song',
             displayed: true,
             valueProps: {zero: "-"}
         },
@@ -253,8 +247,7 @@
             name: 'Data',
             key: 'timeset',
             selected: true,
-            isSongColumn: false,
-            isSeriesColumn: true,
+            type: 'series',
             displayed: true,
             valueProps: {prevValue: null}
         },
@@ -264,8 +257,7 @@
             name: '+PP',
             key: 'diffPp',
             selected: false,
-            isSongColumn: false,
-            isSeriesColumn: true,
+            type: 'series',
             displayed: false,
             valueProps: {zero: "-", suffix: "pp", withSign: true, useColorsForValue: true}
         },
@@ -274,8 +266,7 @@
             name: 'PP',
             key: 'pp',
             selected: true,
-            isSongColumn: false,
-            isSeriesColumn: true,
+            type: 'series',
             valueProps: {zero: "-", suffix: "pp"},
             displayed: true
         },
@@ -285,8 +276,7 @@
             name: 'wPP',
             key: 'weightedPp',
             selected: false,
-            isSongColumn: false,
-            isSeriesColumn: true,
+            type: 'series',
             displayed: true,
             valueProps: {zero: "-", suffix: "pp"}
         },
@@ -296,8 +286,7 @@
             name: 'Acc',
             key: 'acc',
             selected: true,
-            isSongColumn: false,
-            isSeriesColumn: true,
+            type: 'series',
             displayed: true,
             valueProps: {zero: "-", suffix: "%"}
         },
@@ -307,8 +296,7 @@
             name: 'Wynik',
             key: 'score',
             selected: true,
-            isSongColumn: false,
-            isSeriesColumn: true,
+            type: 'series',
             displayed: true,
             valueProps: {digits: 0, zero: "-"}
         },
@@ -317,18 +305,24 @@
             name: 'Różnice',
             key: 'diff',
             selected: true,
-            isSongColumn: false,
-            isSeriesColumn: false,
+            type: 'other',
             displayed: true
         },
         {
             label: 'Pokazuj potencjał',
             name: 'Potencjał',
             key: 'estimate',
-            selected: true,
-            isSongColumn: false,
-            isSeriesColumn: false,
-            displayed: false
+            type: 'other',
+            displayed: false,
+            selected: false
+        },
+        {
+            label: 'Ikony akcji',
+            name: '',
+            key: 'icons',
+            type: 'additional',
+            displayed: true,
+            selected: true
         },
     ]
     selectedColumns = allColumns.filter(c => c.selected && c.displayed)
@@ -565,7 +559,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','diff'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','diff','icons'].includes(c.key))
 
                 generateSortTypes();
                 break;
@@ -576,7 +570,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diff'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diff','icons'].includes(c.key))
 
                 allFilters.starsFilter.from = 0;
 
@@ -589,7 +583,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diffPp','diff'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diffPp','diff','icons'].includes(c.key))
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper, 1);
 
@@ -603,7 +597,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diff'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diff','icons'].includes(c.key))
 
                 allFilters.starsFilter.from = 0;
 
@@ -627,16 +621,10 @@
         })
     }
 
-    function getSelectedSongCols(columns, viewType) {
+    function getSelectedCols(columns, viewType, type) {
         setColumnsSuffixes(columns, viewType);
 
-        return columns.filter(c => c.isSongColumn);
-    }
-
-    function getSelectedSeriesCols(columns, viewType) {
-        setColumnsSuffixes(columns, viewType);
-
-        return columns.filter(c => c.isSeriesColumn)
+        return columns.filter(c => type === c.type);
     }
 
     const onFilterNameChange = debounce(e => allFilters.name = e.target.value, DEBOUNCE_DELAY);
@@ -949,8 +937,9 @@
     }
 
     $: shownColumns = allColumns.filter(c => c.displayed)
-    $: selectedSongCols = getSelectedSongCols(selectedColumns, viewType)
-    $: selectedSeriesCols = getSelectedSeriesCols(selectedColumns, viewType)
+    $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
+    $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
+    $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'rankeds_with_not_played' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
     // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;
@@ -1010,11 +999,11 @@
                 <thead>
                 <tr>
                     <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
+
                     {#each selectedSongCols as col,idx (col.key)}
-                    {#if !!getObjectFromArrayByKey(selectedColumns, col.key)}
                         <th class={"left middle " + col.key} rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
-                    {/if}
                     {/each}
+
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
                             <th class="left down">{series.name}</th>
@@ -1024,6 +1013,10 @@
                                     class="series left">{series.name}</th>
                             {/if}
                         {/if}
+                    {/each}
+
+                    {#each selectedAdditionalCols as col,idx (col.key)}
+                        <th class={"left " + col.key} rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
                     {/each}
                 </tr>
 
@@ -1045,13 +1038,9 @@
                     <td class="diff">
                         <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
                     </td>
+
                     <td class="song">
                         <div class="flex-start">
-                            {#if song.video && song.video.url}
-                                <a class="video" href="{song.video.url}" target="_blank">
-                                    <Button icon={twitchSvg} type="twitch"/>
-                                </a>
-                            {/if}
                             <Song song={song}>
                                 <figure>
                                     <img src="/imports/images/songs/{song.id}.png"/>
@@ -1063,8 +1052,8 @@
                             </Song>
                         </div>
                     </td>
+
                     {#each selectedSongCols as col,idx (col.key)}
-                    {#if !!getObjectFromArrayByKey(selectedColumns, col.key)}
                         <td class={"left middle " + col.key}>
                             {#if col.key === 'length'}
                                 <Duration value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
@@ -1072,8 +1061,8 @@
                                 <Value value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
                             {/if}
                         </td>
-                    {/if}
                     {/each}
+
                     {#each songsPage.series as series (series.id+'_'+series.estimateId)}
                         {#if viewType.id === 'compact'}
                             <td class="left compact series-{songsPage.series.length}"
@@ -1126,6 +1115,16 @@
                             {/if}{/each}
                         {/if}
                     {/each}
+
+                    {#each selectedAdditionalCols as col,idx (col.key)}
+                        <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
+                            {#if song.video && song.video.url}
+                                <a class="video" href="{song.video.url}" target="_blank">
+                                    <Button icon={twitchSvg} type="twitch"/>
+                                </a>
+                            {/if}
+                        </td>
+                    {/each}
                 </tr>
             {/each}
             </tbody>
@@ -1154,10 +1153,16 @@
                             </th>
                         {/if}
                     {/each}
+
+                    {#each selectedAdditionalCols as col,idx (col.key)}
+                        <th class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
+
+                        </th>
+                    {/each}
                 </tr>
                 <tr>
                     {#if selectedSeriesCols.length && songsPage.series.length > 2}
-                        <th class="left" colspan={selectedSeriesCols.length * (songsPage.series.length - 1)}>
+                        <th class="left" colspan={selectedSeriesCols.length * (songsPage.series.length - 1) + selectedAdditionalCols.length}>
                             <Value value={songsPage.bestTotalRealPp}
                                    prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') ? songsPage.series[0].totalPp : null}
                                    suffix="pp"/>
@@ -1255,6 +1260,10 @@
         width: 5.5rem;
     }
 
+    thead th.icons {
+        width: 2rem;
+    }
+
     tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset {
         text-align: center;
     }
@@ -1309,6 +1318,11 @@
     tbody td.song small {
         font-size: 0.75em;
         color: #888;
+    }
+
+    tbody td.icons {
+        width: 2rem;
+        text-align: right;
     }
 
     tfoot th {
