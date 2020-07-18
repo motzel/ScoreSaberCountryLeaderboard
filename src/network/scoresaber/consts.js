@@ -11,10 +11,3 @@ export const SCORES_PER_PAGE = 12; // song leaderboard
 export const PLAYS_PER_PAGE = 8; // top/recent plays
 export const PLAYERS_PER_PAGE = 50; // global ranking
 export const MAGIC_HISTORY_NUMBER = 999999; // just ask Umbra
-
-// Don't know what rate limits are, let's assume BeatSaver ones - 50 reqs/min, max 8 at the time
-export const RATE_LIMITS = {
-    concurrency: 8,
-    limit: 50,
-    time: 60 * 1000
-}
