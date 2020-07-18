@@ -95,10 +95,11 @@
                 if (name) {
                     [
                         {field: "timeset", label: "Data zagrania"},
+                        {field: "diffPp", label: "PP do globala"},
                         {field: "pp", label: "PP"},
                         {field: "acc", label: "Dokładność"},
                     ].forEach(field => {
-                        if ('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id))
+                        if (('acc' !== field.field || ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)) && ('diffPp' !== field.field || idx !== 0) )
                             types.push({
                                 label: field.label,
                                 type: 'series',
