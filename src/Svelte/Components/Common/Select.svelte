@@ -18,12 +18,19 @@
 
         if(multiple) {
             const itemValueIdx = value ? value.findIndex(v => v === items[idx]) : -1;
+            let newValue = [];
             if (itemValueIdx >= 0) {
-                value.splice(itemValueIdx, 1);
-                value = value.slice(0)
+                newValue = value.filter((v,idx) => idx !== itemValueIdx)
             } else {
-                value = value.concat([items[idx]])
+                newValue = value.concat([items[idx]])
             }
+
+            items.forEach((item, idx) => {
+                const v = newValue.find(v => v === item)
+                if(v) v.idx = idx;
+            })
+
+            value = newValue.sort((a,b) => a.idx - b.idx)
         } else {
             value = value === items[idx] ? null : items[idx];
         }
@@ -31,7 +38,7 @@
         dispatch('change', value);
     }
 
-    $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [{text: value.text}]).map(v => v.text).join(', ') : noSelected
+    $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [{text: value.label}]).map(v => v.label).join(', ') : noSelected
 </script>
 
 <div class="multi-select" class:disabled={disabled}>
@@ -51,7 +58,7 @@
                         <div class="menu-label">{item.label}</div>
                     {:else}
                     <div class="dropdown-item" class:is-active={value && (value === item || (Array.isArray(value) && value.includes(item)))} data-idx={idx}>
-                        <span>{item.text}</span>
+                        <span>{item.label}</span>
                         {#if value && (value === item || (Array.isArray(value) && value.includes(item)))}
                             <span class="icon is-small"><i class="fas fa-check" aria-hidden="true"></i></span>
                         {/if}
@@ -79,9 +86,11 @@
 
     .dropdown-trigger .button {
         max-width: 100%;
+        height: 2em;
         font-size: inherit;
         padding-left: .5em;
         padding-right: 1.25em;
+        padding-bottom: 0;
         color: var(--textColor, #000);
         background-color: var(--foreground, #fff);
         border-color: transparent;
@@ -99,7 +108,7 @@
 
     .dropdown-trigger .button .icon {
         position: absolute;
-        top: .25em;
+        top: .5em;
         right: .25em;
     }
 
@@ -110,6 +119,8 @@
     .dropdown-content {
         color: var(--textColor, #000);
         background-color: var(--foreground, #fff);
+        padding-top: 0;
+        box-shadow: 0 2px 3px rgba(200, 200, 00, 0.1), 0 0 0 1px rgba(200, 200, 200, 0.1);
     }
 
     .dropdown-content .menu-label {
@@ -126,12 +137,13 @@
 
     .dropdown-item {
         white-space: nowrap;
-        padding: .375em 2.5em .375em 1em;
+        padding: .25em 2.5em .25em 1em;
         font-size: inherit;
         color: inherit;
         overflow-x: hidden;
         text-overflow: ellipsis;
         cursor: pointer;
+        line-height: 1.25;
     }
 
     .dropdown-item:hover {
@@ -147,10 +159,8 @@
 
     .dropdown-item .icon {
         position: absolute;
-        top: .75em;
+        top: .5em;
         right: .5em;
         font-size: smaller;
     }
-
-
 </style>
