@@ -6,6 +6,7 @@ import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
+import Select from './Svelte/Components/Common/Select.svelte';
 import File from './Svelte/Components/Common/File.svelte';
 
 import log from './utils/logger';
@@ -514,34 +515,32 @@ async function setupCountryRanking(diffOffset = 6) {
         '.pagination',
         origTable.parentNode.parentNode
     );
-    const typeSel = document.createElement('select');
-    typeSel.classList.add('type');
-    [
-        {value: 'sspl', text: 'Cached'},
-        {value: 'original', text: 'Original'}
-    ].map((o) => {
-            const option = document.createElement('option');
-            option.selected = o.value === 'sspl';
-            option.value = o.value;
-            option.text = o.text;
-            typeSel.appendChild(option);
+    const typeDiv = document.createElement('div');
+    pagination.insertBefore(typeDiv, getBySelector('br', pagination));
+
+    const typeItems = [
+        {value: 'sspl', label: 'Cached'},
+        {value: 'original', label: 'Original'}
+    ];
+    const selectedType = typeItems[0]
+    const typeSel = new Select({
+        target: typeDiv,
+        props: {
+            value: selectedType,
+            items: typeItems
         }
-    );
-    pagination.insertBefore(typeSel, getBySelector('br', pagination));
-    typeSel.addEventListener('change', (e) =>
+    })
+    typeSel.$on('change', e =>
         Array.prototype.slice
             .apply(
-                e.target
+                typeDiv
                     .closest('.box')
                     .querySelectorAll('table.ranking.global')
             )
             .map(
-                (tbl) =>
-                    (tbl.style.display = tbl.classList.contains(
-                        e.target.options[e.target.selectedIndex].value
-                    )
-                        ? ''
-                        : 'none')
+                (tbl) => (tbl.style.display = tbl.classList.contains(e.detail.value)
+                    ? ''
+                    : 'none')
             )
     );
 
