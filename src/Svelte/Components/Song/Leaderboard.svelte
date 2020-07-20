@@ -65,7 +65,7 @@
     }
 
     .sspl thead th.rank {
-        width: 5.4rem;
+        width: 2rem;
     }
 
     .sspl thead th, .sspl tbody td.mods, .sspl tbody td.percentage, .sspl tbody td.pp {
@@ -140,7 +140,7 @@
         <tr class={(item.hidden ? 'hidden' : '') + (mainUserId === item.id ? ' main' : '')} data-id={item.id}>
             <td class="picture"><Avatar url={item.avatar}/></td>
             <td class="rank">
-                <Rank rank={idx+1} subRank={item.rank} url={'/leaderboard/' +
+                <Rank rank={idx+1} url={'/leaderboard/' +
                             encodeURIComponent(leaderboardId) +
                             '?page=' +
                             encodeURIComponent(
