@@ -559,7 +559,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','diff','icons'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
 
                 generateSortTypes();
                 break;
@@ -570,7 +570,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diff','icons'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
 
                 allFilters.starsFilter.from = 0;
 
@@ -583,7 +583,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
                 // getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diffPp','diff','icons'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && (selectedColumns.includes(c) || ['diffPp', 'pp'].includes(c.key)))
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper, 1);
 
@@ -597,7 +597,7 @@
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && ['timeset','score','acc','pp','diff','icons'].includes(c.key))
+                selectedColumns = allColumns.filter(c => c.displayed && (selectedColumns.includes(c) || ['pp'].includes(c.key)))
 
                 allFilters.starsFilter.from = 0;
 
