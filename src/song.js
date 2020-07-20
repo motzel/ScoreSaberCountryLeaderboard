@@ -180,6 +180,7 @@ export async function getSongDiffInfo(hash, diffAndType, cacheOnly = false) {
 
     return Object.assign(
         {bpm: songMetadata.bpm, maxScore: diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0},
+        songInfo,
         diffInfo
     );
 }

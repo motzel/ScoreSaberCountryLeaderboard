@@ -35,6 +35,7 @@
 
     import dlSvg from "../../../resource/svg/download.svg"
     import twitchSvg from "../../../resource/svg/twitch.svg";
+    import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
 
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
@@ -493,6 +494,7 @@
                         song.njs = songInfo.njs;
                         song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
                         song.length = songInfo.length;
+                        song.key = songInfo.key;
 
                         if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
                             const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
@@ -528,6 +530,7 @@
                             song.njs = songInfo.njs;
                             song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
                             song.length = songInfo.length;
+                            song.key = songInfo.key;
 
                             if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
                                 const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
@@ -936,6 +939,14 @@
         downloadCsv("scores.csv", csv);
     }
 
+    function copyToClipboard(text) {
+        navigator.permissions.query({name: 'clipboard-write'}).then(result => {
+            if (result.state === 'granted' || result.state === 'prompt') {
+                navigator.clipboard.writeText(text).then(() => {});
+            }
+        });
+    }
+
     $: shownColumns = allColumns.filter(c => c.displayed)
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
@@ -1118,6 +1129,12 @@
 
                     {#each selectedAdditionalCols as col,idx (col.key)}
                         <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
+                            {#if song.key && song.key.length}
+                                <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr" on:click={copyToClipboard('!bsr ' + song.key)} />
+                                <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank"><Button icon={beatSaverSvg} /></a>
+                                <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank"><Button iconFa="fas fa-eye" title="Podgląd mapy" /></a>
+                            {/if}
+
                             {#if song.video && song.video.url}
                                 <a class="video" href="{song.video.url}" target="_blank">
                                     <Button icon={twitchSvg} type="twitch"/>
@@ -1261,7 +1278,7 @@
     }
 
     thead th.icons {
-        width: 2rem;
+        width: 4.1rem;
     }
 
     tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset {
@@ -1321,8 +1338,13 @@
     }
 
     tbody td.icons {
-        width: 2rem;
+        width: 4.1rem;
         text-align: right;
+    }
+
+    :global(tbody td.icons button) {
+        margin-bottom: .25em!important;
+        min-height: 2rem;
     }
 
     tfoot th {

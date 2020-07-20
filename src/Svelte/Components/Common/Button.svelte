@@ -5,6 +5,7 @@
 
     export let label = "";
     export let icon;
+    export let iconFa;
     export let disabled = false;
     export let type = 'default';
     export let cls = "";
@@ -43,7 +44,8 @@
 </script>
 
 <button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={cls}>
-    <span class="icon">{#if icon}{@html icon}{/if}</span>
+    {#if icon}<span class="icon">{@html icon}</span>{/if}
+    {#if iconFa}<i class={iconFa}></i>{/if}
     <span>{label}</span>
     <slot></slot>
 </button>
