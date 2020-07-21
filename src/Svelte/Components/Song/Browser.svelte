@@ -1131,7 +1131,7 @@
                         <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
                             {#if song.key && song.key.length}
                                 <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr" on:click={copyToClipboard('!bsr ' + song.key)} />
-                                <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank"><Button icon={beatSaverSvg} /></a>
+                                <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank"><Button icon={beatSaverSvg} title="Przejdź na Beat Saver" /></a>
                                 <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank"><Button iconFa="fas fa-eye" title="Podgląd mapy" /></a>
                             {/if}
 
