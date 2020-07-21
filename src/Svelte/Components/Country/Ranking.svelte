@@ -4,11 +4,11 @@
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
 
-    import {getMainUserId} from '../../../temp';
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
     import {filterByCountry} from "../../../scoresaber/players";
     import Avatar from "../Common/Avatar.svelte";
+    import {getMainUserId} from "../../../plugin-config";
 
     export let diff = 6;
     export let users = {};
@@ -19,7 +19,8 @@
         {value: 29, text: 'Miesiąc'}
     ];
 
-    const mainUserId = getMainUserId();
+    let mainUserId;
+    (async () => {mainUserId = await getMainUserId()})()
 
     let selectedDiff = diffOptions.find(i => i.value === diff);
     let ranking = [];

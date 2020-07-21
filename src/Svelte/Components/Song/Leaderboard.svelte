@@ -12,14 +12,15 @@
     import Refresh from '../Common/Refresh.svelte';
     import NewRankeds from '../Song/NewRankeds.svelte';
 
-    import {getMainUserId} from '../../../temp';
     import {isAnyData} from '../../../store';
     import {NEW_SCORESABER_URL, SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
+    import {getMainUserId} from "../../../plugin-config";
 
     export let leaderboardId;
     export let leaderboard = [];
 
-    const mainUserId = getMainUserId();
+    let mainUserId;
+    (async () => {mainUserId = await getMainUserId()})()
 
     let tooltip;
     let tooltipHistory = [];

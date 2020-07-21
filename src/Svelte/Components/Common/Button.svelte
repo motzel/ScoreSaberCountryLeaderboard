@@ -107,7 +107,6 @@
 
     :global(button .icon svg, button i) {
         display: inline-block;
-        font-size: 1.25em;
         width: 1.3em;
         height: 1.3em;
         vertical-align: -.125em;

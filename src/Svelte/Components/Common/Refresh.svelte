@@ -6,7 +6,7 @@
     import {formatDate} from '../../../utils/format';
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
     import {PLAYS_PER_PAGE} from '../../../network/scoresaber/consts';
-    import {default as config, getMainUserId} from '../../../temp';
+    import config from '../../../temp';
     import {convertArrayToObjectByKey, escapeHtml, isEmpty} from '../../../utils/js';
     import log from '../../../utils/logger';
 
@@ -15,6 +15,7 @@
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
     import {fetchUsers} from "../../../network/scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
+    import {getMainUserId} from "../../../plugin-config";
 
     const dispatch = createEventDispatcher();
 
@@ -149,7 +150,7 @@
 
         if (!newlyRanked) return;
 
-        const sseUserId = getMainUserId();
+        const sseUserId = await getMainUserId();
         if (!sseUserId) return;
 
         if (newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length)

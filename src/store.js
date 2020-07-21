@@ -1,7 +1,7 @@
 import log from './utils/logger';
 import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
 import {dateFromString} from "./utils/date";
-import config, {getMainUserId} from "./temp";
+import config, {getMainUserId as getSseMainUserId} from "./temp";
 import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from "./network/scoresaber/players";
 
 const CACHE_KEY = 'sspl_users';
@@ -64,7 +64,7 @@ export async function getCacheAndConvertIfNeeded() {
 
     if (!cache.config) {
         if (!cache.config) cache.config = {};
-        if (!cache.config.users) cache.config.users = {main: getMainUserId(), country: config.COUNTRY, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
+        if (!cache.config.users) cache.config.users = {main: getSseMainUserId(), country: config.COUNTRY, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
         if (!cache.config.songBrowser) cache.config.songBrowser = {};
         if (!cache.config.songLeaderboard) cache.config.songLeaderboard = {};
         if (!cache.config.profile) cache.config.profile = {};

@@ -9,7 +9,6 @@
     } from "../../../scoresaber/pp";
     import {getRankedSongs} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
-    import {getMainUserId} from "../../../temp";
     import {getCacheAndConvertIfNeeded} from "../../../store";
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
@@ -47,10 +46,13 @@
     import Value from "../Common/Value.svelte";
     import Button from "../Common/Button.svelte";
     import Select from "../Common/Select.svelte";
+    import {getMainUserId} from "../../../plugin-config";
 
-    export let playerId = getMainUserId();
+    export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
+
+    (async () => {playerId = await getMainUserId()})()
 
     let selectedColumns = [];
 
@@ -1135,7 +1137,7 @@
 
                             {#if song.video && song.video.url}
                                 <a class="video" href="{song.video.url}" target="_blank">
-                                    <Button iconFa="fab fa-twitch" type="twitch"/>
+                                    <Button iconFa="fab fa-twitch" type="twitch" title="Podgląd video" />
                                 </a>
                             {/if}
                         </td>
@@ -1276,7 +1278,7 @@
     }
 
     thead th.icons {
-        width: 4.1rem;
+        width: 4.9rem;
     }
 
     tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset {
@@ -1336,13 +1338,12 @@
     }
 
     tbody td.icons {
-        width: 4.1rem;
+        width: 4.9rem;
         text-align: right;
     }
 
     :global(tbody td.icons button) {
         margin-bottom: .25em!important;
-        min-height: 2rem;
     }
 
     tfoot th {

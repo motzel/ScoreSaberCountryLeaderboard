@@ -1,23 +1,22 @@
 <script>
     import {hoverable} from '../../Actions/hoverable';
-    import {getMainUserId} from '../../../temp';
     import {getWhatIfScore, getUserSongScore} from '../../../scoresaber/pp';
     import {formatNumber, round} from '../../../utils/format';
+    import {getMainUserId} from "../../../plugin-config";
 
     export let leaderboardId;
     export let pp = 0;
 
-    let mainUserId = getMainUserId();
     let buttonEl;
     let tooltip;
 
     let score = {currentTotalPp: 0, newTotalPp: 0, diff: 0};
 
     let userPp = 0;
-    (async _ => {const score = await getUserSongScore(mainUserId, leaderboardId); userPp = undefined !== score ? score.pp : 0;})();
+    (async _ => {const score = await getUserSongScore(await getMainUserId(), leaderboardId); userPp = undefined !== score ? score.pp : 0;})();
 
     async function onHover(event) {
-        const wi = await getWhatIfScore(mainUserId, leaderboardId, pp);
+        const wi = await getWhatIfScore(await getMainUserId(), leaderboardId, pp);
         score = Object.assign({}, score, wi);
 
         tooltip.style.display = 'inline-block';
@@ -53,7 +52,7 @@
     .inc {color: #42b129!important}
 </style>
 
-{#if mainUserId && userPp > 0}
+{#if userPp > 0}
     {#if round(pp) > round(userPp)}
         <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
         </button>

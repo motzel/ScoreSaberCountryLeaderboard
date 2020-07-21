@@ -10,7 +10,7 @@ import Select from './Svelte/Components/Common/Select.svelte';
 import File from './Svelte/Components/Common/File.svelte';
 
 import log from './utils/logger';
-import {default as config, getMainUserId} from './temp';
+import config from './temp';
 import {getCacheAndConvertIfNeeded, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
@@ -20,7 +20,7 @@ import exportData from "./utils/export";
 
 import {dateFromString} from "./utils/date";
 import twitch from './services/twitch';
-import {getConfig} from "./plugin-config";
+import {getConfig, getMainUserId} from "./plugin-config";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -110,7 +110,7 @@ async function setupLeaderboard() {
     );
 
     // TODO: dont show when no user data is available
-    const sseUserId = getMainUserId();
+    const sseUserId = await getMainUserId();
     if (sseUserId) {
         [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
             const pp = parseFloat(
@@ -211,6 +211,9 @@ async function setupProfile() {
     if (profileConfig && profileConfig.enlargeAvatar) {
         const avatarCol = document.querySelector('.column.avatar');
         if (avatarCol) avatarCol.classList.add('enlarge')
+
+        const usersConfig = await getConfig('users');
+        if(usersConfig && usersConfig.main && usersConfig.main === profileId) avatarCol.classList.add('main')
     }
 
     const tbl = document.querySelector('table.ranking');
