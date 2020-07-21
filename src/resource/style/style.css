@@ -64,3 +64,12 @@ table.ranking.songs {max-width: none!important;}
 .el-group button:not(:last-child) {
   margin-right: .5em;
 }
+
+.column.avatar.enlarge img.is-96x96 {
+  width: 150px;
+  height: 150px;
+}
+.column.avatar.main img.is-96x96 {
+  border: 2px solid green;
+  padding: 2px;
+}

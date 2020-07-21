@@ -20,6 +20,7 @@ import exportData from "./utils/export";
 
 import {dateFromString} from "./utils/date";
 import twitch from './services/twitch';
+import {getConfig} from "./plugin-config";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -205,6 +206,12 @@ async function setupProfile() {
     if (!profileId) return;
 
     const data = await getCacheAndConvertIfNeeded();
+
+    const profileConfig = await getConfig('profile');
+    if (profileConfig && profileConfig.enlargeAvatar) {
+        const avatarCol = document.querySelector('.column.avatar');
+        if (avatarCol) avatarCol.classList.add('enlarge')
+    }
 
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
