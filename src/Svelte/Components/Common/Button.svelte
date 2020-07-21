@@ -43,7 +43,7 @@
     let btnMargin = label && label.length ? "0 0 .45em 0" : "0";
 </script>
 
-<button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={cls}>
+<button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={'button ' + (type?type:'default') + ' ' + cls}>
     {#if icon}<span class="icon">{@html icon}</span>{/if}
     {#if iconFa}<i class={iconFa}></i>{/if}
     <span>{label}</span>
@@ -95,6 +95,14 @@
         height: 1.3em;
         margin-left: calc(- var(--margin, .45em) - 1px);
         margin-right: var(--margin, .45em);
+    }
+
+    :global(.button.is-loading::after) {
+        border-color: transparent transparent rgba(0,0,0,.7) rgba(0,0,0,.7)!important;
+    }
+
+    :global(.button.twitch.is-loading::after) {
+        border-color: transparent transparent rgba(219,219,219,1) rgba(219,219,219,1)!important;
     }
 
     :global(button .icon svg) {
