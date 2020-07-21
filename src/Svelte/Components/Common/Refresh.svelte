@@ -16,8 +16,6 @@
     import {fetchUsers} from "../../../network/scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
 
-    import refreshSvg from '../../../resource/svg/refresh.svg'
-
     const dispatch = createEventDispatcher();
 
     let label = "";
@@ -257,7 +255,7 @@
     {#if started}
         <Progress value={progress} label={label} subLabel={subLabel} maxWidth="16rem"/>
     {:else}
-        <span class="btn-cont"><Button icon={refreshSvg} on:click={onRefresh} disabled={started} /></span>
+        <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={started} /></span>
         <strong>Data pobrania:</strong> <span>{date ? formatDate(date) : '-'}</span>
     {/if}
 </div>

@@ -87,7 +87,7 @@
         background-color: var(--bg-color, #3273dc);
     }
 
-    button .icon:first-child:not(:last-child) {
+    button .icon:first-child:not(:last-child), button i:first-child:not(:last-child) {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -105,9 +105,9 @@
         border-color: transparent transparent rgba(219,219,219,1) rgba(219,219,219,1)!important;
     }
 
-    :global(button .icon svg) {
+    :global(button .icon svg, button i) {
         display: inline-block;
-        font-size: inherit;
+        font-size: 1.25em;
         width: 1.3em;
         height: 1.3em;
         vertical-align: -.125em;

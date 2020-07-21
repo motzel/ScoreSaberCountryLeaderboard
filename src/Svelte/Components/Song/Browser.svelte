@@ -33,8 +33,6 @@
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
 
-    import dlSvg from "../../../resource/svg/download.svg"
-    import twitchSvg from "../../../resource/svg/twitch.svg";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
 
     import Song from "./Song.svelte";
@@ -1132,12 +1130,12 @@
                             {#if song.key && song.key.length}
                                 <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr" on:click={copyToClipboard('!bsr ' + song.key)} />
                                 <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank"><Button icon={beatSaverSvg} title="Przejdź na Beat Saver" /></a>
-                                <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank"><Button iconFa="fas fa-eye" title="Podgląd mapy" /></a>
+                                <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank"><Button iconFa="fa fa-play-circle" title="Podgląd mapy" /></a>
                             {/if}
 
                             {#if song.video && song.video.url}
                                 <a class="video" href="{song.video.url}" target="_blank">
-                                    <Button icon={twitchSvg} type="twitch"/>
+                                    <Button iconFa="fab fa-twitch" type="twitch"/>
                                 </a>
                             {/if}
                         </td>
@@ -1203,7 +1201,7 @@
 
 {#if !calculating}
 <div class="actions">
-    <Button label="CSV" icon={dlSvg} on:click={exportCsv} />
+    <Button label="CSV" iconFa="fas fa-download" on:click={exportCsv} />
 </div>
 {/if}
 

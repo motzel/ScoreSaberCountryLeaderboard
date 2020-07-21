@@ -18,10 +18,6 @@ import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 import exportData from "./utils/export";
 
-import dlSvg from "./resource/svg/download.svg"
-import upSvg from "./resource/svg/upload.svg"
-import arrowsExpandSvg from "./resource/svg/arrows-expand.svg"
-import twitchSvg from "./resource/svg/twitch.svg";
 import {dateFromString} from "./utils/date";
 import twitch from './services/twitch';
 
@@ -344,7 +340,7 @@ async function setupProfile() {
                 target: div,
                 props: {
                     label: "Transformuj",
-                    icon: arrowsExpandSvg,
+                    iconFa: "fas fa-expand-arrows-alt",
                     type: 'primary'
                 }
             })
@@ -382,7 +378,7 @@ async function setupProfile() {
                 target: div,
                 props: {
                     label: "Eksport",
-                    icon: dlSvg,
+                    iconFa: "fas fa-download",
                     cls: "full-width"
                 }
             }).$on('click', _ => exportData())
@@ -392,7 +388,7 @@ async function setupProfile() {
                 target: div,
                 props: {
                     label: "Import",
-                    icon: upSvg,
+                    iconFa: "fas fa-upload",
                     cls: "full-width",
                     accept: "application/json"
                 }
@@ -449,7 +445,7 @@ async function setupProfile() {
                         label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
                         title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
                         disabled: !tokenExpireSoon,
-                        icon: twitchSvg,
+                        iconFa: "fab fa-twitch",
                         cls: 'full-width',
                         type: 'twitch',
                     }
