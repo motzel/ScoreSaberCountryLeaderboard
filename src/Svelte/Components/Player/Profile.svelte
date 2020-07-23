@@ -1,8 +1,10 @@
 <script>
     import ProfileLine from './ProfileLine.svelte';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
+    import Button from '../Common/Button.svelte';
 
     export let profile;
+    let mode = 'pp-stars';
 
     $: scores = profile.scores
             ? Object.values(profile.scores)
@@ -20,13 +22,20 @@
 
 {#if scores}
     <li class="calc">
-        <ProfilePpCalc scores={scores} />
+        <div><ProfilePpCalc scores={scores} playerId={profile.id} mode={mode} /></div>
+        <Button iconFa="fas fa-arrows-alt-v" on:click={() => mode = mode === 'pp-stars' ? 'stars-pp' : 'pp-stars'} />
     </li>
 {/if}
 
 <style>
     li.calc {
+        display: flex;
+        align-items: flex-start;
         list-style: none;
         margin-left: -1.25em;
+    }
+    li.calc > div {
+        margin-right: 1rem;
+        width: 27rem;
     }
 </style>

@@ -1,4 +1,7 @@
 # Changelog
+0.8.6.1
+ - add stars/accuracy => pp calculator to player profile page
+ 
 0.8.6
  - add Beat Saver integration
  - add BS Viewer integration

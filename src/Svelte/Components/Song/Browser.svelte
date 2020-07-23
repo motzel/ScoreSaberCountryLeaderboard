@@ -52,7 +52,8 @@
     export let snipedIds = [];
     export let minPpPerMap = 1;
 
-    (async () => {playerId = await getMainUserId()})()
+    if (!playerId)
+        (async () => {playerId = await getMainUserId()})()
 
     let selectedColumns = [];
 
