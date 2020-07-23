@@ -394,7 +394,9 @@ async function setupProfile() {
                 transformBtn.$destroy();
             }
         }
-        transformBtn.$on('click', transformSongs)
+        const songBrowserConfig = await getConfig('songBrowser');
+        if (songBrowserConfig && songBrowserConfig.autoTransform) transformSongs()
+        else transformBtn.$on('click', transformSongs)
 
         const avatarColumn = document.querySelector('.column.avatar');
         if (avatarColumn) {
