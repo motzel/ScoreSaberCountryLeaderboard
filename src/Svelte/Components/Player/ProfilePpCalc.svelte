@@ -21,32 +21,11 @@
     }
 </script>
 
-<style>
-    .pp-boundary {
-        border: none;
-        background: transparent;
-        font-weight: 700;
-        font-size: 1rem;
-        width: 3rem;
-        text-align: center;
-        margin-right: .25rem;
-        outline: none;
-    }
-
-    .err {
-        color: red;
-    }
-
-    table {
-        width: auto;
-    }
-</style>
-
-<strong>+</strong><input class="pp-boundary" bind:value={expectedStr}/>
-<strong>pp: </strong>
+<strong class="plus">+</strong><input class="pp-boundary" bind:value={expectedStr}/>
+<strong>pp = </strong>
 {#if !error.length}
     <span><Value value={rawPp} /></span>
-    raw pp new play
+    <span>raw pp new play</span>
 
     <table>
         <thead>
@@ -68,3 +47,27 @@
 {:else}
     <span class="err">{error}</span>
 {/if}
+
+<style>
+    .plus {
+        vertical-align: text-bottom
+    }
+    .pp-boundary {
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        font-size: 1rem;
+        width: 3rem;
+        text-align: right;
+        outline: none;
+        padding: 0;
+    }
+
+    .err {
+        color: red;
+    }
+
+    table {
+        width: auto;
+    }
+</style>

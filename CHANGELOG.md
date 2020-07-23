@@ -1,4 +1,9 @@
 # Changelog
+0.8.6
+ - add Beat Saver integration
+ - add BS Viewer integration
+ - UI changes
+ 
 0.8.5.2
  - minor bug fix regarding player inactivity
  - add date to default export filename

@@ -137,6 +137,10 @@ function setupChart() {
     const chart = document.getElementById('rankChart');
     if(!chart) return;
 
+    const chartSection = chart.closest('section');
+    chartSection.style.setProperty('margin', '0 auto', 'important');
+    chartSection.closest('.box').appendChild(chartSection);
+
     const history = getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML);
     if(!history) return;
 
@@ -328,51 +332,69 @@ async function setupProfile() {
             })
         });
 
-    const stats = document.querySelector('.content .column ul');
-    if (stats && data.users?.[profileId]?.stats) {
+    const header = document.querySelector('.content .column h5').closest('.box');
+    if (header) {
+        const refreshDiv = document.createElement('div');
+        refreshDiv.classList.add('refresh');
+        header.appendChild(refreshDiv);
+        const refresh = new Refresh({
+            target: refreshDiv,
+            props: {}
+        })
+        refresh.$on('data-refreshed', async _ => {
+            window.location.reload(false);
+        })
+    }
+
+    const mainColumn = document.querySelector('.content .column ul').closest('.column');
+    if (mainColumn && data.users?.[profileId]?.stats) {
+        const additionalProfile = document.createElement('div');
+        additionalProfile.classList.add('column');
+        const ul = document.createElement('ul');
+        ul.style.marginTop = sseInstalled ? '3.375rem' : '2.875rem';
+        additionalProfile.appendChild(ul);
         new Profile({
-            target: stats,
+            target: ul,
             props: {
                 profile: data.users?.[profileId] ?? null,
             }
         });
+        mainColumn.closest('.columns').appendChild(additionalProfile);
 
-        const column = stats.closest('.column');
-        if(column) {
-            const div = document.createElement('div')
-            div.classList.add('el-group');
-            div.classList.add('flex-center');
-            div.style.marginTop = "1em";
-            div.style.fontSize = "0.875rem";
-            column.appendChild(div);
+        const div = document.createElement('div')
+        div.classList.add('el-group');
+        div.classList.add('flex-center');
+        div.style.marginTop = "1em";
+        div.style.fontSize = "0.875rem";
+        mainColumn.closest('.box').appendChild(div);
 
-            const transformBtn = new Button({
-                target: div,
-                props: {
-                    label: "Transformuj",
-                    iconFa: "fas fa-expand-arrows-alt",
-                    type: 'primary'
-                }
-            })
-            transformBtn.$on('click', _ => {
-                const content = document.querySelector('.content .box .rankChart').closest('.content');
-                const songBox = content.querySelector('.box:nth-child(2)');
-                if(songBox) {
-                    const box = document.createElement('div');
-                    box.classList.add('box');
-                    box.classList.add('has-shadow');
-                    content.insertBefore(box, songBox);
+        const transformBtn = new Button({
+            target: div,
+            props: {
+                label: "Transformuj",
+                iconFa: "fas fa-expand-arrows-alt",
+                type: 'primary'
+            }
+        })
+        const transformSongs = () => {
+            const content = mainColumn.closest('.content');
+            const songBox = content.querySelector('.box:nth-child(2)');
+            if(songBox) {
+                const box = document.createElement('div');
+                box.classList.add('box');
+                box.classList.add('has-shadow');
+                content.insertBefore(box, songBox);
 
-                    new SongBrowser({
-                        target: box,
-                        props: {playerId: profileId}
-                    })
+                new SongBrowser({
+                    target: box,
+                    props: {playerId: profileId}
+                })
 
-                    songBox.remove();
-                    transformBtn.$destroy();
-                }
-            })
+                songBox.remove();
+                transformBtn.$destroy();
+            }
         }
+        transformBtn.$on('click', transformSongs)
 
         const avatarColumn = document.querySelector('.column.avatar');
         if (avatarColumn) {
@@ -490,20 +512,6 @@ async function setupProfile() {
                 }
             }
         }
-    }
-
-    const header = document.querySelector('.content .column h5');
-    if (header) {
-        const refreshDiv = document.createElement('div');
-        refreshDiv.classList.add('refresh');
-        header.appendChild(refreshDiv);
-        const refresh = new Refresh({
-            target: refreshDiv,
-            props: {}
-        })
-        refresh.$on('data-refreshed', async _ => {
-            window.location.reload(false);
-        })
     }
 
     log.info("Setup profile page / Done")
@@ -624,11 +632,15 @@ async function setupTwitch() {
 async function setupDelayed() {
     initialized = true;
 
-    if (isLeaderboardPage()) {
-        // wait for SSE or given timeout
-        await waitForSSEInit(config.SSE_CHECK_DELAY);
+    // wait for SSE or given timeout
+    await waitForSSEInit(config.SSE_CHECK_DELAY);
 
+    if (isLeaderboardPage()) {
         await setupLeaderboard();
+    }
+
+    if (isProfilePage()) {
+        await setupProfile();
     }
 }
 
@@ -646,12 +658,14 @@ function checkElement(selector) {
     }
 }
 
+let sseInstalled = false;
 async function waitForSSEInit(timeout) {
     log.info("Waiting for SSE initialization");
 
     return new Promise(function(resolve, reject) {
         // whatever comes first
-        checkElement('#all_scores_tab').then(el => resolve(el))
+        checkElement('#all_scores_tab').then(el => {sseInstalled = true; resolve(el)})
+        checkElement('#user_compare').then(el => {sseInstalled = true; resolve(el)})
         setTimeout(() => resolve(null), timeout);
     });
 }
@@ -671,10 +685,6 @@ async function init() {
     setupStyles();
 
     await setupTwitch();
-
-    if (isProfilePage()) {
-        setupProfile();
-    }
 
     if (isCountryRankingPage()) {
         setupCountryRanking();

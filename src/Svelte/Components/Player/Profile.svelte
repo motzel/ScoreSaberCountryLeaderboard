@@ -19,7 +19,14 @@
 {/if}
 
 {#if scores}
-    <li>
+    <li class="calc">
         <ProfilePpCalc scores={scores} />
     </li>
 {/if}
+
+<style>
+    li.calc {
+        list-style: none;
+        margin-left: -1.25em;
+    }
+</style>

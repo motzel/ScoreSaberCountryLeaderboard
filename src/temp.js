@@ -2,7 +2,7 @@
 
 export default {
     COUNTRY: 'pl',
-    SSE_CHECK_DELAY: 500
+    SSE_CHECK_DELAY: 50
 };
 
 export function getMainUserId() {
