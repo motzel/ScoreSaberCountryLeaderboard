@@ -12,8 +12,11 @@
 
     let score = {currentTotalPp: 0, newTotalPp: 0, diff: 0};
 
-    let userPp = 0;
-    (async _ => {const score = await getUserSongScore(await getMainUserId(), leaderboardId); userPp = undefined !== score ? score.pp : 0;})();
+    let userPp;
+    (async _ => {
+        const score = await getUserSongScore(await getMainUserId(), leaderboardId);
+        userPp = undefined !== score ? score.pp : 0;
+    })();
 
     async function onHover(event) {
         const wi = await getWhatIfScore(await getMainUserId(), leaderboardId, pp);
@@ -52,7 +55,7 @@
     .inc {color: #42b129!important}
 </style>
 
-{#if userPp > 0}
+{#if undefined !== userPp}
     {#if round(pp) > round(userPp)}
         <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
         </button>

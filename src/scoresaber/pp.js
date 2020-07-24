@@ -91,7 +91,6 @@ export async function getUserSongScore(userId, leaderboardId)
 {
     return (await getUserScores(userId))?.[leaderboardId];
 }
-``
 
 export async function getAllRankedsWithUserScores(userId) {
     const rankedMaps = await getRankedSongs();
