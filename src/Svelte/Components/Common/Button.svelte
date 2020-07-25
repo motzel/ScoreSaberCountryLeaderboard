@@ -10,6 +10,7 @@
     export let type = 'default';
     export let cls = "";
     export let title;
+    export let noMargin = false;
 
     const types = {
         default: {
@@ -40,7 +41,7 @@
     let selectedType = types[type] ? types[type] : types.default
     let margin = label && label.length ? ".45em" : "1px"
     let btnPadding = label && label.length ? "calc(.45em - 1px) 1em" : "calc(.45em - 1px) .25em";
-    let btnMargin = label && label.length ? "0 0 .45em 0" : "0";
+    let btnMargin = noMargin ? 0 : "0 0 .45em 0";
 </script>
 
 <button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={'button ' + (type?type:'default') + ' ' + cls}>

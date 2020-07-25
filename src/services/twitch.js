@@ -93,6 +93,16 @@ const createTwitchUsersCache = async () => {
     })
 }
 
+const getProfileName = async ssProfileId => {
+    const data = await getCacheAndConvertIfNeeded();
+
+    return data?.twitch?.users?.[ssProfileId];
+}
+
+const isProfileTwitchConnected = async ssProfileId => {
+    return !!(await getProfileName(ssProfileId) && data?.users?.[ssProfileId]);
+}
+
 export default {
     getAuthUrl,
     getCurrentToken,
@@ -126,5 +136,7 @@ export default {
             if (twitchToken.url) window.location.href = twitchToken.url;
         }
     },
-    createTwitchUsersCache
+    createTwitchUsersCache,
+    getProfileName,
+    isProfileTwitchConnected
 }

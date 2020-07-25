@@ -9,6 +9,7 @@ import Button from './Svelte/Components/Common/Button.svelte';
 import Select from './Svelte/Components/Common/Select.svelte';
 import File from './Svelte/Components/Common/File.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
+import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
 import log from './utils/logger';
 import config from './temp';
@@ -132,11 +133,17 @@ async function setupLeaderboard() {
     log.info("Setup leaderboard page / Done")
 }
 
-function setupChart() {
+async function setupChart() {
     log.info("Setup chart");
 
     const chart = document.getElementById('rankChart');
     if(!chart) return;
+
+    const profileConfig = await getConfig('profile');
+    if (profileConfig && !profileConfig.showChart) {
+        chart.closest('.rankChart').remove();
+        return;
+    }
 
     const chartSection = chart.closest('section');
     chartSection.style.setProperty('margin', '0 auto', 'important');
@@ -404,11 +411,17 @@ async function setupProfile() {
             const div = document.createElement('div')
             div.style.marginTop = "1rem";
             div.style.fontSize = "0.75rem";
-            div.classList.add('flex-center')
-            div.classList.add('flex-column');
+            div.classList.add('buttons')
+            div.classList.add('flex-center');
             avatarColumn.appendChild(div);
 
+            new PlayerSettings({
+                target: div,
+                props: {profileId}
+            })
+
             // export button
+            /*
             new Button({
                 target: div,
                 props: {
@@ -468,52 +481,7 @@ async function setupProfile() {
 
                 reader.readAsText(file);
             })
-
-            // twitch button
-            if (profileId && data?.twitch?.users?.[profileId]?.login && data?.users?.[profileId]) {
-                const twitchToken = await twitch.getCurrentToken();
-                const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
-                const tokenExpireSoon = tokenExpireInDays <= 3;
-                new Button({
-                    target: div,
-                    props: {
-                        label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
-                        title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
-                        disabled: !tokenExpireSoon,
-                        iconFa: "fab fa-twitch",
-                        cls: 'full-width',
-                        type: 'twitch',
-                    }
-                }).$on('click', _ => {
-                    window.location.href = twitch.getAuthUrl(profileId ? profileId : '');
-                });
-
-
-                let twitchProfile = data.twitch.users[profileId];
-                if (!twitchProfile.id) {
-                    const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
-                    if (fetchedProfile) {
-                        twitchProfile = Object.assign({}, twitchProfile, fetchedProfile);
-                        data.twitch.users[profileId] = twitchProfile;
-                    }
-                }
-
-                if (twitchProfile.id) {
-                    const scoresRecentPlay = data.users[profileId].recentPlay ? data.users[profileId].recentPlay : data.users[profileId].lastUpdated;
-                    const twitchLastUpdated = twitchProfile.lastUpdated;
-
-                    if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
-                        console.warn("fetching twitter videos")
-                        const videos = await twitch.getVideos(twitchProfile.id);
-                        if (videos?.data) {
-                            twitchProfile.videos = videos.data;
-                            twitchProfile.lastUpdated = new Date();
-
-                            await setCache(data);
-                        }
-                    }
-                }
-            }
+             */
         }
     }
 
