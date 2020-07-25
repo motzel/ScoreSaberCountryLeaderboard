@@ -46,19 +46,17 @@
     import Value from "../Common/Value.svelte";
     import Button from "../Common/Button.svelte";
     import Select from "../Common/Select.svelte";
-    import {getMainUserId} from "../../../plugin-config";
+    import {getConfig, getMainUserId} from "../../../plugin-config";
 
     export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
 
-    if (!playerId)
-        (async () => {playerId = await getMainUserId()})()
-
     let selectedColumns = [];
 
     const DEBOUNCE_DELAY = 400;
 
+    let shownIcons = ["bsr", "bs", "preview", "twitch"];
     let lightMode = false;
     onMount(() => {
         lightMode = getComputedStyle(document.documentElement).getPropertyValue('--background') === 'white';
@@ -78,13 +76,28 @@
     let sortTypes = [
         {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
     ]
+    let allFilters = {
+        songType: songTypes[0],
+        name: "",
+        starsFilter: {from: 0, to: maxStars},
+        minPpDiff: 1,
+        sortBy: sortTypes[0]
+    }
+    const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     const generateSortTypes = async _ => {
         const types = [];
 
         const data = (await getCacheAndConvertIfNeeded());
 
         if (allFilters.songType.id === 'rankeds_with_not_played')
-            types.push({label: '+PP global', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
+            types.push({
+                label: '+PP global',
+                type: 'song',
+                subtype: null,
+                field: 'bestDiffPp',
+                order: 'desc',
+                enabled: true
+            });
 
         if (allFilters.songType.id !== 'unrankeds')
             types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
@@ -97,9 +110,21 @@
                 if (name) {
                     [
                         {field: "timeset", label: "Data zagrania", enabled: true},
-                        {field: "diffPp", label: "+PP global", enabled: 'rankeds_with_not_played' === allFilters.songType.id && idx !== 0},
-                        {field: "pp", label: "PP", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
-                        {field: "acc", label: "Celność", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
+                        {
+                            field: "diffPp",
+                            label: "+PP global",
+                            enabled: 'rankeds_with_not_played' === allFilters.songType.id && idx !== 0
+                        },
+                        {
+                            field: "pp",
+                            label: "PP",
+                            enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)
+                        },
+                        {
+                            field: "acc",
+                            label: "Celność",
+                            enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)
+                        },
                     ].forEach(field => {
                         if (field.enabled)
                             types.push({
@@ -116,19 +141,15 @@
         }
 
         sortTypes = types;
-        allFilters.sortBy = types[userIds.length > 1 && types[0].type && types[0].type === 'label' || types[0].label === 'Gwiazdki' ? 1 : 0];
+
+        const config = await getConfig('songBrowser');
+        const sortBy = allFilters.songType.id === 'rankeds_with_not_played' ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
+        const defaultSort = sortTypes.find(s => s.field === sortBy);
+        allFilters.sortBy = defaultSort ? defaultSort: types[0];
     }
 
     const findSort = (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field);
 
-    let allFilters = {
-        songType: songTypes[0],
-        name: "",
-        starsFilter: {from: 0, to: maxStars},
-        minPpDiff: 1,
-        sortBy: sortTypes[0]
-    }
-    const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     let allRankeds = {};
 
     const getAllScoresByType = async (playerId, rankedOnly = true) => {
@@ -148,39 +169,6 @@
 
     const getMaxScoreExFromPlayersScores = async leaderboardId => Object.values((await getCacheAndConvertIfNeeded()).users).reduce((maxScore, player) => !maxScore && player.scores && player.scores[leaderboardId] && player.scores[leaderboardId].maxScoreEx ? player.scores[leaderboardId].maxScoreEx : maxScore, null)
     const getCachedMaxScoreExFromPlayersScores = memoize(getMaxScoreExFromPlayersScores);
-
-    // initialize async values
-    (async () => {
-        // add snipeds if not defined
-        if (!snipedIds || !snipedIds.length) {
-            countryRanking = await getCountryRanking();
-            const player = countryRanking.find(p => p.id === playerId)
-            if (player) {
-                if (player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
-                if (player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
-            }
-        }
-
-        allRankeds = await getRankedSongs();
-        maxStars = (await Promise.all(
-                Object.values(allRankeds)
-                        .map(async r => {
-                            allRankeds[r.leaderboardId].maxScoreEx = await getCachedMaxScoreExFromPlayersScores(r.leaderboardId);
-
-                            return r.stars
-                        })
-        ))
-
-                .reduce((max, stars) => max = stars > max ? stars : max, 0);
-
-        allFilters.starsFilter = Object.assign({}, allFilters.starsFilter, {to: maxStars});
-
-        minStarsForSniper = await getCachedMinStars(playerId, minPpPerMap)
-
-        await generateSortTypes();
-
-        initialized = true;
-    })();
 
     let calculating = true;
 
@@ -335,6 +323,58 @@
     ]
     let viewType = viewTypes[0];
 
+    // initialize async values
+    (async () => {
+        if (!playerId) playerId = await getMainUserId()
+
+        // add snipeds if not defined
+        if (!snipedIds || !snipedIds.length) {
+            countryRanking = await getCountryRanking();
+            const player = countryRanking.find(p => p.id === playerId)
+            if (player) {
+                if (player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
+                if (player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
+            }
+        }
+
+        allRankeds = await getRankedSongs();
+        maxStars = (await Promise.all(
+                Object.values(allRankeds)
+                        .map(async r => {
+                            allRankeds[r.leaderboardId].maxScoreEx = await getCachedMaxScoreExFromPlayersScores(r.leaderboardId);
+
+                            return r.stars
+                        })
+        ))
+
+                .reduce((max, stars) => max = stars > max ? stars : max, 0);
+
+        allFilters.starsFilter = Object.assign({}, allFilters.starsFilter, {to: maxStars});
+
+        minStarsForSniper = await getCachedMinStars(playerId, minPpPerMap)
+
+        const config = await getConfig('songBrowser');
+        shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
+
+        if (config.defaultView) {
+            const defaultView = viewTypes.find(v => v.id === config.defaultView);
+            if (defaultView) viewType = defaultView;
+        }
+
+        if (config.defaultType) {
+            const defaultType = songTypes.find(t => t.id === config.defaultType);
+            if (defaultType) allFilters.songType = defaultType;
+        }
+
+        if (config.showColumns) {
+            selectedColumns = allColumns.filter(c => config.showColumns.includes(c.key) && c.displayed)
+        }
+
+        await generateSortTypes();
+
+        initialized = true;
+    })();
+
     const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
 
     const getCachedTotalPlayerPp = memoize(getTotalUserPp);
@@ -470,10 +510,13 @@
 
         async function findTwitchVideo(playerId, timeset, songLength) {
             const data = await getCacheAndConvertIfNeeded();
-            if(data && data.twitch && data.twitch.users && data.twitch.users[playerId] && data.twitch.users[playerId].videos) {
+            if (data && data.twitch && data.twitch.users && data.twitch.users[playerId] && data.twitch.users[playerId].videos) {
                 const songStarted = addToDate(timeset, -songLength * 1000)
                 const video = data.twitch.users[playerId].videos
-                        .map(v => Object.assign({}, v, {created_at: dateFromString(v.created_at), ended_at: addToDate(dateFromString(v.created_at), durationToMillis(v.duration))}))
+                        .map(v => Object.assign({}, v, {
+                            created_at: dateFromString(v.created_at),
+                            ended_at: addToDate(dateFromString(v.created_at), durationToMillis(v.duration))
+                        }))
                         .find(v => v.created_at <= songStarted && songStarted < v.ended_at);
 
                 return video ? Object.assign({}, video, {url: video.url + '?t=' + millisToDuration(songStarted - video.created_at)}) : null;
@@ -619,7 +662,7 @@
 
     function setColumnsSuffixes(columns, viewType) {
         columns.forEach(col => {
-            if( ["bpm", "njs", "nps"].includes(col.key)) {
+            if (["bpm", "njs", "nps"].includes(col.key)) {
                 col.valueProps.suffix = viewType.id === 'compact' ? " " + col.key.toUpperCase() : "";
             }
         })
@@ -943,7 +986,8 @@
     function copyToClipboard(text) {
         navigator.permissions.query({name: 'clipboard-write'}).then(result => {
             if (result.state === 'granted' || result.state === 'prompt') {
-                navigator.clipboard.writeText(text).then(() => {});
+                navigator.clipboard.writeText(text).then(() => {
+                });
             }
         });
     }
@@ -958,256 +1002,275 @@
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
 </script>
 
-<div class="filters">
-    <div>
-        <header>Rodzaj</header>
-        <Select bind:value={allFilters.songType} items={songTypes} on:change={onSongTypeChange} />
-    </div>
-
-    <div class="filter-name">
-        <header>Nutka</header>
-        <input type="text" placeholder="Zacznij wpisywać..." on:input={onFilterNameChange}/>
-    </div>
-
-    <div class="filter-diff-pp" style="display: {allFilters.songType.id === 'rankeds_with_not_played' ? 'flex' : 'none'}">
-        <header>+PP global</header>
-        <Range value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp" inline={true}
-               on:change={onFilterMinPlusPpChanged}/>
-    </div>
-
-    <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'flex' : 'none'}">
-        <header>Gwiazdki</header>
-        <MultiRange label="Gwiazdki" value={allFilters.starsFilter}
-                    min={allFilters.songType.id === 'rankeds_with_not_played' ? round(minStarsForSniper,1) : 0}
-                    max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true}
-                    on:change={onFilterStarsChange}/>
-    </div>
-
-    <div>
-        <header>Widok</header>
-        <Select bind:value={viewType} items={viewTypes} />
-    </div>
-
-    <div class="columns">
+{#if initialized}
+    <div class="filters">
         <div>
-            <header>Pokazuj</header>
+            <header>Rodzaj</header>
+            <Select bind:value={allFilters.songType} items={songTypes} on:change={onSongTypeChange}/>
+        </div>
 
-            <Select multiple bind:value={selectedColumns} bind:items={shownColumns} noSelected="Nic nie wybrano" />
+        <div class="filter-name">
+            <header>Nutka</header>
+            <input type="text" placeholder="Zacznij wpisywać..." on:input={onFilterNameChange}/>
+        </div>
+
+        <div class="filter-diff-pp"
+             style="display: {allFilters.songType.id === 'rankeds_with_not_played' ? 'flex' : 'none'}">
+            <header>+PP global</header>
+            <Range value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp" inline={true}
+                   on:change={onFilterMinPlusPpChanged}/>
+        </div>
+
+        <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'flex' : 'none'}">
+            <header>Gwiazdki</header>
+            <MultiRange label="Gwiazdki" value={allFilters.starsFilter}
+                        min={allFilters.songType.id === 'rankeds_with_not_played' ? round(minStarsForSniper,1) : 0}
+                        max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true}
+                        on:change={onFilterStarsChange}/>
+        </div>
+
+        <div>
+            <header>Widok</header>
+            <Select bind:value={viewType} items={viewTypes}/>
+        </div>
+
+        <div class="columns">
+            <div>
+                <header>Pokazuj</header>
+
+                <Select multiple bind:value={selectedColumns} bind:items={shownColumns} noSelected="Nic nie wybrano"/>
+            </div>
+        </div>
+
+        <div>
+            <header>Sortowanie</header>
+            <Select bind:value={allFilters.sortBy} items={sortTypes}/>
         </div>
     </div>
 
-    <div>
-        <header>Sortowanie</header>
-        <Select bind:value={allFilters.sortBy} items={sortTypes} />
-    </div>
-</div>
-
-{#await pagedPromised}
-    <div class="info">
-        <h3>Transformacja wszechświata w toku...</h3>
-    </div>
-{:then calc}
-    {#if songsPage.songs.length}
-        <table class="ranking sspl" class:light={lightMode}>
-            {#if viewType.id !== 'compact' || songsPage.series.length > 1}
-                <thead>
-                <tr>
-                    <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
-
-                    {#each selectedSongCols as col,idx (col.key)}
-                        <th class={"left middle " + col.key} rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
-                    {/each}
-
-                    {#each songsPage.series as series (series.id+'_'+series.estimateId)}
-                        {#if viewType.id === 'compact'}
-                            <th class="left down">{series.name}</th>
-                        {:else}
-                            {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
-                                <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
-                                    class="series left">{series.name}</th>
-                            {/if}
-                        {/if}
-                    {/each}
-
-                    {#each selectedAdditionalCols as col,idx (col.key)}
-                        <th class={"left " + col.key} rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
-                    {/each}
-                </tr>
-
-                {#if viewType.id !== 'compact'}
+    {#await pagedPromised}
+        <div class="info">
+            <h3>Transformacja wszechświata w toku...</h3>
+        </div>
+    {:then calc}
+        {#if songsPage.songs.length}
+            <table class="ranking sspl" class:light={lightMode}>
+                {#if viewType.id !== 'compact' || songsPage.series.length > 1}
+                    <thead>
                     <tr>
+                        <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
+
+                        {#each selectedSongCols as col,idx (col.key)}
+                            <th class={"left middle " + col.key}
+                                rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
+                        {/each}
+
                         {#each songsPage.series as series (series.id+'_'+series.estimateId)}
-                            {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
-                            {/if}{/each}
+                            {#if viewType.id === 'compact'}
+                                <th class="left down">{series.name}</th>
+                            {:else}
+                                {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
+                                    <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
+                                        class="series left">{series.name}</th>
+                                {/if}
+                            {/if}
+                        {/each}
+
+                        {#each selectedAdditionalCols as col,idx (col.key)}
+                            <th class={"left " + col.key} rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
                         {/each}
                     </tr>
+
+                    {#if viewType.id !== 'compact'}
+                        <tr>
+                            {#each songsPage.series as series (series.id+'_'+series.estimateId)}
+                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                    <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
+                                {/if}{/each}
+                            {/each}
+                        </tr>
+                    {/if}
+                    </thead>
                 {/if}
-                </thead>
-            {/if}
 
-            <tbody>
-            {#each songsPage.songs as song (song.leaderboardId)}
-                <tr>
-                    <td class="diff">
-                        <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
-                    </td>
-
-                    <td class="song">
-                        <div class="flex-start">
-                            <Song song={song}>
-                                <figure>
-                                    <img src="/imports/images/songs/{song.id}.png"/>
-                                    <div class="songinfo">
-                                        <span class="name">{song.name}</span>
-                                        <div class="author">{song.songAuthor} <small>{song.levelAuthor}</small></div>
-                                    </div>
-                                </figure>
-                            </Song>
-                        </div>
-                    </td>
-
-                    {#each selectedSongCols as col,idx (col.key)}
-                        <td class={"left middle " + col.key}>
-                            {#if col.key === 'length'}
-                                <Duration value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
-                            {:else}
-                                <Value value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
-                            {/if}
+                <tbody>
+                {#each songsPage.songs as song (song.leaderboardId)}
+                    <tr>
+                        <td class="diff">
+                            <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
                         </td>
-                    {/each}
 
-                    {#each songsPage.series as series (series.id+'_'+series.estimateId)}
-                        {#if viewType.id === 'compact'}
-                            <td class="left compact series-{songsPage.series.length}"
-                                class:with-cols={selectedSongCols.length > 0}
-                                class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
-                                {#if getScoreValueByKey(series, song, 'score')}
-                                    {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                        {#if col.key === 'timeset'}
-                                            <strong class={'compact-' + col.key + '-val'}>
-                                                <Date date={getScoreValueByKey(series, song, col.key)}
-                                                      {...col.valueProps}/>
-                                            </strong>
-                                        {:else}
-                                            {#if getScoreValueByKey(series, song, col.key)}
-                                                <div>
-                                                    {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
-                                                        :{/if}
-                                                    <strong class={'compact-' + col.key + '-val'}>
-                                                        <Value value={getScoreValueByKey(series, song, col.key)}
-                                                               prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
-                                                               prevLabel={series.prevLabel} inline={true}
-                                                               {...col.valueProps}
-                                                        />
-                                                    </strong>
-                                                </div>
-                                            {/if}
-                                            {#if col.key === 'pp' && allFilters.songType.id !== 'rankeds_with_not_played'}
-                                                <WhatIfPp leaderboardId={song.leaderboardId}
-                                                          pp={getScoreValueByKey(series, song, col.key)}/>{/if}
-                                        {/if}
-                                    {/if}{/each}
+                        <td class="song">
+                            <div class="flex-start">
+                                <Song song={song}>
+                                    <figure>
+                                        <img src="/imports/images/songs/{song.id}.png"/>
+                                        <div class="songinfo">
+                                            <span class="name">{song.name}</span>
+                                            <div class="author">{song.songAuthor} <small>{song.levelAuthor}</small>
+                                            </div>
+                                        </div>
+                                    </figure>
+                                </Song>
+                            </div>
+                        </td>
+
+                        {#each selectedSongCols as col,idx (col.key)}
+                            <td class={"left middle " + col.key}>
+                                {#if col.key === 'length'}
+                                    <Duration value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
                                 {:else}
-                                    -
+                                    <Value value={getSongValueByKey(song, col.key)} {...col.valueProps}/>
                                 {/if}
                             </td>
-                        {:else}
-                            {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                <td class={'left ' + col.key} class:middle={idx > 0}
+                        {/each}
+
+                        {#each songsPage.series as series (series.id+'_'+series.estimateId)}
+                            {#if viewType.id === 'compact'}
+                                <td class="left compact series-{songsPage.series.length}"
+                                    class:with-cols={selectedSongCols.length > 0}
                                     class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
-                                    {#if col.key === 'timeset'}
-                                        <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                    {#if getScoreValueByKey(series, song, 'score')}
+                                        {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                            {#if col.key === 'timeset'}
+                                                <strong class={'compact-' + col.key + '-val'}>
+                                                    <Date date={getScoreValueByKey(series, song, col.key)}
+                                                          {...col.valueProps}/>
+                                                </strong>
+                                            {:else}
+                                                {#if getScoreValueByKey(series, song, col.key)}
+                                                    <div>
+                                                        {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
+                                                            :{/if}
+                                                        <strong class={'compact-' + col.key + '-val'}>
+                                                            <Value value={getScoreValueByKey(series, song, col.key)}
+                                                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                                   prevLabel={series.prevLabel} inline={true}
+                                                                   {...col.valueProps}
+                                                            />
+                                                        </strong>
+                                                    </div>
+                                                {/if}
+                                                {#if col.key === 'pp' && allFilters.songType.id !== 'rankeds_with_not_played'}
+                                                    <WhatIfPp leaderboardId={song.leaderboardId}
+                                                              pp={getScoreValueByKey(series, song, col.key)}/>{/if}
+                                            {/if}
+                                        {/if}{/each}
                                     {:else}
-                                        <Value value={getScoreValueByKey(series, song, col.key)}
-                                               prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
-                                               prevLabel={series.prevLabel}
-                                               {...col.valueProps}
-                                        />
+                                        -
                                     {/if}
                                 </td>
-                            {/if}{/each}
-                        {/if}
-                    {/each}
-
-                    {#each selectedAdditionalCols as col,idx (col.key)}
-                        <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
-                            {#if song.key && song.key.length}
-                                <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr" on:click={copyToClipboard('!bsr ' + song.key)} />
-                                <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank"><Button icon={beatSaverSvg} title="Przejdź na Beat Saver" /></a>
-                                <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank"><Button iconFa="fa fa-play-circle" title="Podgląd mapy" /></a>
+                            {:else}
+                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                    <td class={'left ' + col.key} class:middle={idx > 0}
+                                        class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                                        {#if col.key === 'timeset'}
+                                            <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                        {:else}
+                                            <Value value={getScoreValueByKey(series, song, col.key)}
+                                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                   prevLabel={series.prevLabel}
+                                                   {...col.valueProps}
+                                            />
+                                        {/if}
+                                    </td>
+                                {/if}{/each}
                             {/if}
+                        {/each}
 
-                            {#if song.video && song.video.url}
-                                <a class="video" href="{song.video.url}" target="_blank">
-                                    <Button iconFa="fab fa-twitch" type="twitch" title="Podgląd video" />
-                                </a>
-                            {/if}
-                        </td>
-                    {/each}
-                </tr>
-            {/each}
-            </tbody>
+                        {#each selectedAdditionalCols as col,idx (col.key)}
+                            <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
+                                {#if song.key && song.key.length}
+                                    {#if shownIcons.includes('bsr')}
+                                        <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr"
+                                                on:click={copyToClipboard('!bsr ' + song.key)}/>
+                                    {/if}
+                                    {#if shownIcons.includes('bs')}
+                                        <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank">
+                                            <Button icon={beatSaverSvg} title="Przejdź na Beat Saver"/>
+                                        </a>
+                                    {/if}
+                                    {#if shownIcons.includes('preview')}
+                                        <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank">
+                                            <Button iconFa="fa fa-play-circle" title="Podgląd mapy"/>
+                                        </a>
+                                    {/if}
+                                {/if}
 
-            {#if shouldCalculateTotalPp}
-                <tfoot>
-                <tr>
-                    <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
-                        colspan={2 + selectedSongCols.length}>
-                        Razem dla {songsPage.series[0].name}</th>
-                    {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
-                        {#if viewType.id === 'tabular'}
-                            {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
-                                <th class="left" rowspan={series.id !== playerId ? 1 : (songsPage.series.length > 2 ? 2 : 1)}
-                                    colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}>
+                                {#if song.video && song.video.url && shownIcons.includes('twitch')}
+                                    <a class="video" href="{song.video.url}" target="_blank">
+                                        <Button iconFa="fab fa-twitch" type="twitch" title="Podgląd video"/>
+                                    </a>
+                                {/if}
+                            </td>
+                        {/each}
+                    </tr>
+                {/each}
+                </tbody>
+
+                {#if shouldCalculateTotalPp}
+                    <tfoot>
+                    <tr>
+                        <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
+                            colspan={2 + selectedSongCols.length}>
+                            Razem dla {songsPage.series[0].name}</th>
+                        {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
+                            {#if viewType.id === 'tabular'}
+                                {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
+                                    <th class="left"
+                                        rowspan={series.id !== playerId ? 1 : (songsPage.series.length > 2 ? 2 : 1)}
+                                        colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}>
+                                        <Value value={series.totalPp}
+                                               prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') ? series.prevTotalPp : null}
+                                               suffix="pp"/>
+                                    </th>
+                                {/if}
+                            {:else}
+                                <th class="left">
                                     <Value value={series.totalPp}
                                            prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') ? series.prevTotalPp : null}
                                            suffix="pp"/>
                                 </th>
                             {/if}
-                        {:else}
-                            <th class="left">
-                                <Value value={series.totalPp}
-                                       prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') ? series.prevTotalPp : null}
+                        {/each}
+
+                        {#each selectedAdditionalCols as col,idx (col.key)}
+                            <th class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
+
+                            </th>
+                        {/each}
+                    </tr>
+                    <tr>
+                        {#if selectedSeriesCols.length && songsPage.series.length > 2}
+                            <th class="left"
+                                colspan={selectedSeriesCols.length * (songsPage.series.length - 1) + selectedAdditionalCols.length}>
+                                <Value value={songsPage.bestTotalRealPp}
+                                       prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') ? songsPage.series[0].totalPp : null}
                                        suffix="pp"/>
                             </th>
                         {/if}
-                    {/each}
+                    </tr>
+                    </tfoot>
+                {/if}
+            </table>
+        {:else}
+            <div class="info">
+                <h3>Strasznie tu pusto</h3>
+                <p>Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?</p>
+            </div>
+        {/if}
+    {/await}
 
-                    {#each selectedAdditionalCols as col,idx (col.key)}
-                        <th class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
+    {#if songsPage.songs && songsPage.songs.length}
+        <Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal}
+               itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
+    {/if}
 
-                        </th>
-                    {/each}
-                </tr>
-                <tr>
-                    {#if selectedSeriesCols.length && songsPage.series.length > 2}
-                        <th class="left" colspan={selectedSeriesCols.length * (songsPage.series.length - 1) + selectedAdditionalCols.length}>
-                            <Value value={songsPage.bestTotalRealPp}
-                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') ? songsPage.series[0].totalPp : null}
-                                   suffix="pp"/>
-                        </th>
-                    {/if}
-                </tr>
-                </tfoot>
-            {/if}
-        </table>
-    {:else}
-        <div class="info">
-            <h3>Strasznie tu pusto</h3>
-            <p>Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?</p>
+    {#if !calculating}
+        <div class="actions">
+            <Button label="CSV" iconFa="fas fa-download" on:click={exportCsv}/>
         </div>
     {/if}
-{/await}
-
-{#if songsPage.songs && songsPage.songs.length}
-    <Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal} itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
-{/if}
-
-{#if !calculating}
-<div class="actions">
-    <Button label="CSV" iconFa="fas fa-download" on:click={exportCsv} />
-</div>
 {/if}
 
 <style>
@@ -1346,7 +1409,7 @@
     }
 
     :global(tbody td.icons button) {
-        margin-bottom: .25em!important;
+        margin-bottom: .25em !important;
     }
 
     tfoot th {
