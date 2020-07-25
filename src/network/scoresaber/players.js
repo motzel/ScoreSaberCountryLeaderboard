@@ -76,7 +76,10 @@ export const fetchUsers = async (page = 1) => {
                 const lastUpdated = data.users?.[info.playerInfo.playerId]?.lastUpdated;
 
                 if (!info.scoreStats || !data.users?.[info.playerInfo.playerId] || !lastUpdated || dayTrunc(lastUpdated).getTime() !== dayTrunc(new Date()).getTime()) {
-                    return convertPlayerInfo(await fetchPlayerInfo(info.playerInfo.playerId));
+                    const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
+                    playerInfo.playerInfo.avatar = info.playerInfo.avatar;
+
+                    return convertPlayerInfo(playerInfo);
                 }
 
                 return Object.assign({}, data.users[info.playerInfo.playerId], info.playerInfo, info.scoreStats);

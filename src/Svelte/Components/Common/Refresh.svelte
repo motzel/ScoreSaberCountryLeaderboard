@@ -221,6 +221,8 @@
                             newScores.scores
                     )
                 });
+            } else {
+                cum.users[u.id] = Object.assign({}, u, {lastUpdated: new Date().toISOString()});
             }
 
             idx++;
