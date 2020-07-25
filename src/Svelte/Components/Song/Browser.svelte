@@ -98,6 +98,15 @@
                 order: 'desc',
                 enabled: true
             });
+        else
+            types.push({
+                label: 'Data zagrania',
+                type: 'series',
+                subtype: 0,
+                field: 'timeset',
+                order: 'desc',
+                enabled: true
+            });
 
         if (allFilters.songType.id !== 'unrankeds')
             types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
@@ -126,7 +135,7 @@
                             enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)
                         },
                     ].forEach(field => {
-                        if (field.enabled)
+                        if (field.enabled && (field.field !== 'timeset' || allFilters.songType.id === 'rankeds_with_not_played'))
                             types.push({
                                 label: field.label,
                                 type: 'series',

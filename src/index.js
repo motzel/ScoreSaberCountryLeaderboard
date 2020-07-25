@@ -421,69 +421,6 @@ async function setupProfile() {
                 target: div,
                 props: {profileId}
             })
-
-            // export button
-            /*
-            new Button({
-                target: div,
-                props: {
-                    label: "Eksport",
-                    iconFa: "fas fa-download",
-                    cls: "full-width"
-                }
-            }).$on('click', _ => exportData())
-
-            // import button
-            const importBtn = new File({
-                target: div,
-                props: {
-                    label: "Import",
-                    iconFa: "fas fa-upload",
-                    cls: "full-width",
-                    accept: "application/json"
-                }
-            })
-            importBtn.$on('change', e => {
-                const file = e.target.files[0];
-                if (!file) {
-                    return;
-                }
-                if (file.type !== 'application/json') {
-                    alert('Wybierz plik JSON zawierający eksport danych');
-                    return;
-                }
-
-                importBtn.$set({disabled: true});
-
-                const reader = new FileReader();
-
-                reader.onload = async function (e) {
-                    try {
-                        const json = JSON.parse(e.target.result);
-
-                        if (!json || !json.version || !json.lastUpdated || !json.users) {
-                            alert('Niepoprawny plik eksportu');
-                            return;
-                        }
-
-                        if (json.version < 1.2) {
-                            alert('Import pliku ze starszej wersji pluginu nie jest wspierany');
-                            return;
-                        }
-
-                        await setCache(json);
-
-                        window.location.reload(false);
-                    } catch (_) {
-                        alert("Nieprawidłowy plik JSON");
-                    } finally {
-                        importBtn.$set({disabled: false});
-                    }
-                };
-
-                reader.readAsText(file);
-            })
-             */
         }
     }
 
