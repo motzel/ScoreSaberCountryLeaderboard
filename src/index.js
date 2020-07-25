@@ -7,7 +7,6 @@ import Refresh from './Svelte/Components/Common/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import Select from './Svelte/Components/Common/Select.svelte';
-import File from './Svelte/Components/Common/File.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
@@ -18,9 +17,7 @@ import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
-import exportData from "./utils/export";
 
-import {dateFromString} from "./utils/date";
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
 
@@ -232,114 +229,118 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    (await Promise.all([...document.querySelectorAll('table.ranking tbody tr')].map(async tr => {
-        let ret = {tr};
+    const ssConfig = await getConfig('ss');
+    const showDiff = !!ssConfig.song.showDiff;
+    const showWhatIfPp = !!ssConfig.song.showWhatIfPp;
+    if (ssConfig && ssConfig.song && !!ssConfig.song.enhance)
+        (await Promise.all([...document.querySelectorAll('table.ranking tbody tr')].map(async tr => {
+            let ret = {tr};
 
-        const rank = tr.querySelector('th.rank');
-        if(rank) {
-            const rankMatch = getFirstRegexpMatch(/#(\d+)/, rank.innerText);
-            ret.rank = rankMatch ? parseInt(rankMatch, 10) : null;
-        } else {
-            ret.rank = null;
-        }
-
-        const song = tr.querySelector('th.song a');
-        if(song) {
-            const leaderboardMatch = getFirstRegexpMatch(/leaderboard\/(\d+)/, song.href);
-            ret.leaderboardId = leaderboardMatch ? parseInt(leaderboardMatch, 10): null;
-        } else {
-            ret.leaderboardId = null;
-        }
-
-        const img = tr.querySelector('th.song img');
-        ret.songImg = img ? img.src : null;
-
-        const songPp = tr.querySelector('th.song a .songTop.pp');
-        const songMatch = songPp ? songPp.innerHTML.match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
-        if(songMatch) {
-            ret.songName = songMatch[1];
-            ret.songDiff = songMatch[2];
-        } else {
-            ret = Object.assign(ret, {songName: null, songDiff: null});
-        }
-
-        const songMapper = tr.querySelector('th.song a .songTop.mapper');
-        ret.songMapper = songMapper ? songMapper.innerText : null;
-
-        const songDate = tr.querySelector('th.song span.songBottom.time');
-        ret.timeset = songDate ? songDate.title : null;
-
-        const pp = tr.querySelector('th.score .scoreTop.ppValue');
-        if(pp) ret.pp = parseFloat(pp.innerText);
-
-        const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
-        const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
-        ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
-
-        const scoreInfo = tr.querySelector('th.score .scoreBottom');
-        const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
-        if(scoreInfoMatch) {
-            switch(scoreInfoMatch[1]) {
-                case "score":
-                    ret.percent = null;
-                    ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-                    ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
-                    break;
-
-                case "accuracy":
-                    ret.score = null;
-                    ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-                    ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
-                    break;
+            const rank = tr.querySelector('th.rank');
+            if(rank) {
+                const rankMatch = getFirstRegexpMatch(/#(\d+)/, rank.innerText);
+                ret.rank = rankMatch ? parseInt(rankMatch, 10) : null;
+            } else {
+                ret.rank = null;
             }
-        }
 
-        const leaderboard = data.users?.[profileId]?.scores?.[ret.leaderboardId];
-        if (leaderboard) {
-            try {
-                const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
+            const song = tr.querySelector('th.song a');
+            if(song) {
+                const leaderboardMatch = getFirstRegexpMatch(/leaderboard\/(\d+)/, song.href);
+                ret.leaderboardId = leaderboardMatch ? parseInt(leaderboardMatch, 10): null;
+            } else {
+                ret.leaderboardId = null;
+            }
 
-                if (!ret.percent && ret.score) {
-                    ret.percent = maxSongScore
-                        ? ret.score / maxSongScore
+            const img = tr.querySelector('th.song img');
+            ret.songImg = img ? img.src : null;
+
+            const songPp = tr.querySelector('th.song a .songTop.pp');
+            const songMatch = songPp ? songPp.innerHTML.match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
+            if(songMatch) {
+                ret.songName = songMatch[1];
+                ret.songDiff = songMatch[2];
+            } else {
+                ret = Object.assign(ret, {songName: null, songDiff: null});
+            }
+
+            const songMapper = tr.querySelector('th.song a .songTop.mapper');
+            ret.songMapper = songMapper ? songMapper.innerText : null;
+
+            const songDate = tr.querySelector('th.song span.songBottom.time');
+            ret.timeset = songDate ? songDate.title : null;
+
+            const pp = tr.querySelector('th.score .scoreTop.ppValue');
+            if(pp) ret.pp = parseFloat(pp.innerText);
+
+            const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
+            const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
+            ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
+
+            const scoreInfo = tr.querySelector('th.score .scoreBottom');
+            const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
+            if(scoreInfoMatch) {
+                switch(scoreInfoMatch[1]) {
+                    case "score":
+                        ret.percent = null;
+                        ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
+                        ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
+                        break;
+
+                    case "accuracy":
+                        ret.score = null;
+                        ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
+                        ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
+                        break;
+                }
+            }
+
+            const leaderboard = data.users?.[profileId]?.scores?.[ret.leaderboardId];
+            if (leaderboard) {
+                try {
+                    const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
+
+                    if (!ret.percent && ret.score) {
+                        ret.percent = maxSongScore
+                            ? ret.score / maxSongScore
+                            : (leaderboard.maxScoreEx
+                                ? ret.score / leaderboard.maxScoreEx
+                                : null);
+                    }
+
+                    if(!ret.score && ret.percent) {
+                        ret.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(ret.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
+                    }
+
+                    ret.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+
+                    const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
+                    ret.prevRank = showDiff && history ? history.rank : null;
+                    ret.prevPp = showDiff && history ? history.pp : null;
+                    ret.prevScore = showDiff && history ? history.score : null;
+                    ret.prevTimeset = showDiff && history ? new Date(Date.parse(history.rank)) : null;
+                    ret.prevPercent = showDiff && history && ret.prevScore ? (maxSongScore
+                        ? ret.prevScore / maxSongScore
                         : (leaderboard.maxScoreEx
-                            ? ret.score / leaderboard.maxScoreEx
-                            : null);
-                }
+                            ? ret.prevScore / leaderboard.maxScoreEx
+                            : null)) : null;
+                } catch (e) {} // swallow error
+            }
 
-                if(!ret.score && ret.percent) {
-                    ret.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(ret.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
-                }
+            return ret;
+        })))
+            .filter(s => null !== s.tr)
+            .forEach(s => {
+                const score = s.tr.querySelector('.score');
+                if(!score) return;
 
-                ret.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+                score.innerHTML = "";
 
-                const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
-                ret.prevRank = history ? history.rank : null;
-                ret.prevPp = history ? history.pp : null;
-                ret.prevScore = history ? history.score : null;
-                ret.prevTimeset = history ? new Date(Date.parse(history.rank)) : null;
-                ret.prevPercent = history && ret.prevScore ? (maxSongScore
-                    ? ret.prevScore / maxSongScore
-                    : (leaderboard.maxScoreEx
-                        ? ret.prevScore / leaderboard.maxScoreEx
-                        : null)) : null;
-            } catch (e) {} // swallow error
-        }
-
-        return ret;
-    })))
-        .filter(s => null !== s.tr)
-        .forEach(s => {
-            const score = s.tr.querySelector('.score');
-            if(!score) return;
-
-            score.innerHTML = "";
-
-            new SongScore({
-                target: score,
-                props: {song: s}
-            })
-        });
+                new SongScore({
+                    target: score,
+                    props: {song: s, showWhatIfPp}
+                })
+            });
 
     const header = document.querySelector('.content .column h5').closest('.box');
     if (header) {
