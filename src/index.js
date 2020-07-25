@@ -638,6 +638,7 @@ async function setupPlayerAvatar() {
 
     const cont = document.createElement('div');
     cont.classList.add('navbar-item');
+    cont.classList.add('sspl-avatar');
     navbarBurger.parentNode.insertBefore(cont, navbarBurger)
 
     // set newest avatar taken from user profile

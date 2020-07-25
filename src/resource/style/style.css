@@ -76,3 +76,13 @@ table.ranking.songs {max-width: none!important;}
   border: 2px solid green;
   padding: 2px;
 }
+.navbar-item.sspl-avatar {
+  padding: 6px .75rem;
+}
+.navbar-item.sspl-avatar figure {
+  width: 40px;
+  height: 40px;
+}
+.navbar-item.sspl-avatar img {
+  max-height: none;
+}
