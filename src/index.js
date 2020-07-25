@@ -8,6 +8,7 @@ import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import Select from './Svelte/Components/Common/Select.svelte';
 import File from './Svelte/Components/Common/File.svelte';
+import Avatar from './Svelte/Components/Common/Avatar.svelte';
 
 import log from './utils/logger';
 import config from './temp';
@@ -626,6 +627,24 @@ function setupStyles() {
     cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
 }
 
+async function setupPlayerAvatar() {
+    log.info("Setup player avatar");
+
+    const usersConfig = await getConfig('users');
+    if (!usersConfig || !usersConfig.main) return;
+
+    const navbarBurger = document.querySelector('.navbar-brand .navbar-burger')
+    if(!navbarBurger) return;
+
+    const cont = document.createElement('div');
+    cont.classList.add('navbar-item');
+    navbarBurger.parentNode.insertBefore(cont, navbarBurger)
+
+    const url = isProfilePage() ? document.querySelector('.column.avatar img')?.src : null;
+
+    new Avatar({target: cont, props: {playerId: usersConfig.main, url}})
+}
+
 async function setupTwitch() {
     await twitch.processTokenIfAvailable();
     await twitch.createTwitchUsersCache();
@@ -685,6 +704,8 @@ async function init() {
     const data = await getCacheAndConvertIfNeeded();
 
     setupStyles();
+
+    setupPlayerAvatar();
 
     await setupTwitch();
 

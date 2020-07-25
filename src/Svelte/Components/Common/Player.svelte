@@ -1,6 +1,6 @@
 <script>
     import {substituteVars} from '../../../utils/format';
-    import {USER_PROFILE_URL} from "../../../network/scoresaber/players";
+    import {USER_PROFILE_URL} from "../../../scoresaber/players";
 
     export let user;
 

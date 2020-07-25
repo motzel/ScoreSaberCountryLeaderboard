@@ -1,9 +1,11 @@
 <script>
-    import {NEW_SCORESABER_URL} from "../../../network/scoresaber/consts";
+    import {getPlayerAvatarUrl, getPlayerProfileUrl} from "../../../scoresaber/players";
+    import BloodTrail from "./BloodTrail.svelte";
 
-    export let url;
+    export let playerId = null;
+    export let url
 
-    $: fullUrl = url.startsWith('http') ? url : NEW_SCORESABER_URL + url;
+    $: promisedUrl = url ? Promise.resolve(url) : getPlayerAvatarUrl(playerId);
 </script>
 
 <style>
@@ -11,7 +13,14 @@
         margin: 0;
     }
 </style>
-
-{#if url}
-    <figure class="image is-24x24"><img src={fullUrl} style="border-radius: 50%"></figure>
-{/if}
+{#await promisedUrl then fullUrl}
+    <a href={getPlayerProfileUrl(playerId)}>
+        {#if fullUrl}
+            <figure class="image is-24x24"><img src={fullUrl} style="border-radius: 50%"></figure>
+        {:else}
+            <figure class="image is-24x24">
+                <BloodTrail/>
+            </figure>
+        {/if}
+    </a>
+{/await}

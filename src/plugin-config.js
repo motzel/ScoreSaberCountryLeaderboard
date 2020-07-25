@@ -5,7 +5,7 @@ export const getConfig = async (key = null) => {
 
     if (!data && data.config) return null;
 
-    return data.config[key] ? data.config[key] : null;
+    return key ? (data.config[key] ? data.config[key] : null) : data.config;
 }
 
 export const getMainUserId = async () => {

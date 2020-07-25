@@ -28,14 +28,13 @@
     $: if (selectedDiff) {
         ranking = filterByCountry(users)
                 .reduce((cum, userId) => {
-                    const {id, name, avatar, country, pp, rank, userHistory, weeklyDiff} = users[userId];
+                    const {id, name, country, pp, rank, userHistory, weeklyDiff} = users[userId];
 
                     const historicalTimestamp = userHistory ? getFirstNotNewerThan(toUTCDate(daysAgo(selectedDiff.value + 1)), Object.keys(userHistory)) : null;
 
                     cum.push({
                         id,
                         name,
-                        avatar,
                         country,
                         pp,
                         prevPp: userHistory && historicalTimestamp && pp !== userHistory[historicalTimestamp].pp ? userHistory[historicalTimestamp].pp : null,
@@ -74,7 +73,7 @@
     <tbody>
     {#each ranking as user, idx (user.id)}
         <tr style="{mainUserId === user.id ? 'background-color: var(--color-highlight);' : ''}">
-            <td class="picture"><Avatar url={user.avatar}/></td>
+            <td class="picture"><Avatar playerId={user.id} /></td>
             <td class="rank">
                 <Rank rank={idx+1} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / PLAYERS_PER_PAGE))} />
             </td>

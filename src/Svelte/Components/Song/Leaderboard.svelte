@@ -13,7 +13,7 @@
     import NewRankeds from '../Song/NewRankeds.svelte';
 
     import {isAnyData} from '../../../store';
-    import {NEW_SCORESABER_URL, SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
+    import {SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
     import {getMainUserId} from "../../../plugin-config";
 
     export let leaderboardId;
@@ -139,7 +139,7 @@
     <tbody use:hoverable on:hover={onHover} on:unhover={onUnhover}>
     {#each leaderboard as item, idx (item.id)}
         <tr class={(item.hidden ? 'hidden' : '') + (mainUserId === item.id ? ' main' : '')} data-id={item.id}>
-            <td class="picture"><Avatar url={item.avatar}/></td>
+            <td class="picture"><Avatar playerId={item.id} /></td>
             <td class="rank">
                 <Rank rank={idx+1} url={'/leaderboard/' +
                             encodeURIComponent(leaderboardId) +
