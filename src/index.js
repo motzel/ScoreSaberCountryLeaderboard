@@ -640,7 +640,9 @@ async function setupPlayerAvatar() {
     cont.classList.add('navbar-item');
     navbarBurger.parentNode.insertBefore(cont, navbarBurger)
 
-    const url = isProfilePage() ? document.querySelector('.column.avatar img')?.src : null;
+    // set newest avatar taken from user profile
+    const profileId = getProfileId();
+    const url = usersConfig.main === profileId ? document.querySelector('.column.avatar img')?.src : null;
 
     new Avatar({target: cont, props: {playerId: usersConfig.main, url}})
 }
