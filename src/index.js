@@ -112,8 +112,9 @@ async function setupLeaderboard() {
     );
 
     // TODO: dont show when no user data is available
-    const sseUserId = await getMainUserId();
-    if (sseUserId) {
+    const config = await getConfig('songLeaderboard');
+    const mainUserId = await getMainUserId();
+    if (mainUserId && !!config.showWhatIfPp) {
         [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
             const pp = parseFloat(
                 span.innerText.replace(/\s/, '').replace(',', '.')
