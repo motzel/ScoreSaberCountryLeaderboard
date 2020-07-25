@@ -84,7 +84,7 @@
         const data = (await getCacheAndConvertIfNeeded());
 
         if (allFilters.songType.id === 'rankeds_with_not_played')
-            types.push({label: 'PP do globala', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
+            types.push({label: '+PP global', type: 'song', subtype: null, field: 'bestDiffPp', order: 'desc', enabled: true});
 
         if (allFilters.songType.id !== 'unrankeds')
             types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
@@ -97,9 +97,9 @@
                 if (name) {
                     [
                         {field: "timeset", label: "Data zagrania", enabled: true},
-                        {field: "diffPp", label: "PP do globala", enabled: 'rankeds_with_not_played' === allFilters.songType.id && idx !== 0},
+                        {field: "diffPp", label: "+PP global", enabled: 'rankeds_with_not_played' === allFilters.songType.id && idx !== 0},
                         {field: "pp", label: "PP", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
-                        {field: "acc", label: "Dokładność", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
+                        {field: "acc", label: "Celność", enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)},
                     ].forEach(field => {
                         if (field.enabled)
                             types.push({
@@ -254,14 +254,14 @@
             valueProps: {prevValue: null}
         },
         {
-            label: 'PP do globala',
-            compactLabel: 'Ranking',
+            label: '+PP global',
+            compactLabel: null,
             name: '+PP',
             key: 'diffPp',
             selected: false,
             type: 'series',
             displayed: false,
-            valueProps: {zero: "-", suffix: "pp", withSign: true, useColorsForValue: true}
+            valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
         },
         {
             label: 'PP',
@@ -283,8 +283,8 @@
             valueProps: {zero: "-", suffix: "pp"}
         },
         {
-            label: 'Dokładność',
-            compactLabel: 'Acc',
+            label: 'Celność',
+            compactLabel: null,
             name: 'Acc',
             key: 'acc',
             selected: true,
@@ -294,7 +294,7 @@
         },
         {
             label: 'Wynik',
-            compactLabel: 'Wynik',
+            compactLabel: null,
             name: 'Wynik',
             key: 'score',
             selected: true,
@@ -965,15 +965,17 @@
     </div>
 
     <div class="filter-name">
-        <input type="text" placeholder="Nazwa nutki..." on:input={onFilterNameChange}/>
+        <header>Nutka</header>
+        <input type="text" placeholder="Zacznij wpisywać..." on:input={onFilterNameChange}/>
     </div>
 
-    <div style="display: {allFilters.songType.id === 'rankeds_with_not_played' ? 'block' : 'none'}">
-        <Range label="+PP > " value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp"
+    <div class="filter-diff-pp" style="display: {allFilters.songType.id === 'rankeds_with_not_played' ? 'flex' : 'none'}">
+        <header>+PP global</header>
+        <Range value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp" inline={true}
                on:change={onFilterMinPlusPpChanged}/>
     </div>
 
-    <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'block' : 'none'}">
+    <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'flex' : 'none'}">
         <header>Gwiazdki</header>
         <MultiRange label="Gwiazdki" value={allFilters.starsFilter}
                     min={allFilters.songType.id === 'rankeds_with_not_played' ? round(minStarsForSniper,1) : 0}
@@ -1404,6 +1406,10 @@
     }
 
     .filters > :global(*) {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        min-height: 4rem;
         margin: 1.5rem 0 0 1.5rem;
     }
 
@@ -1414,11 +1420,16 @@
     }
 
     .filters .filter-name {
-        width: 12rem;
+        min-width: 12rem;
     }
 
     .filters .filter-name input {
         width: 100%;
+    }
+
+    :global(.filters .filter-diff-pp > div) {
+        position: relative;
+        top: .5em;
     }
 
     div.info {
