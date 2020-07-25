@@ -23,7 +23,7 @@
         playerInfo = await getPlayerInfo(profileId)
 
         let twitchProfile = await twitch.getProfileName(profileId);
-        if(profileId && twitchProfile) {
+        if (profileId && twitchProfile) {
             const data = await getCacheAndConvertIfNeeded();
 
             const twitchToken = await twitch.getCurrentToken();
@@ -61,15 +61,26 @@
         }
     })()
 
+    async function setAsMainProfile() {
+        if (!profileId) return;
+
+        const data = await getCacheAndConvertIfNeeded();
+        data.config.users.main = profileId;
+        await setCache(data);
+
+        location.reload();
+    }
+
 </script>
 
 {#if playerInfo}
     {#if showTwitchBtn}
-        <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled} type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
+        <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
+                type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
     {/if}
 
     {#if profileId !== mainUserId}
-        <Button iconFa="fas fa-user-check" type="primary" title="Ustaw jako główny profil"/>
+        <Button iconFa="fas fa-user-check" type="primary" title="Ustaw jako główny profil" on:click={setAsMainProfile}/>
     {:else}
         <Button iconFa="fas fa-cog" title="Ustawienia"/>
     {/if}
