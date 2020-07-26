@@ -403,6 +403,8 @@ async function setupProfile() {
 
                 songBox.remove();
                 transformBtn.$destroy();
+
+                document.querySelector('.el-group.flex-center').remove();
             }
         }
         const songBrowserConfig = await getConfig('songBrowser');
