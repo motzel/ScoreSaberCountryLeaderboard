@@ -8,7 +8,7 @@
   "updateURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js",
   "downloadURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js",
   "supportURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/issues",
-  "match": ["https://scoresaber.com/leaderboard/*", "https://scoresaber.com/u/*", "https://scoresaber.com/"],
+  "match": ["https://scoresaber.com/*"],
   "include": ["/^https://scoresaber\\.com\\/global(\\/\\d+&country=pl|\\?country=pl)/"],
   "require": ["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],
   "grant": [

@@ -2,6 +2,10 @@ import {getAdditionalPlayers} from "../network/scoresaber/players";
 import {default as config} from '../temp';
 import {getCacheAndConvertIfNeeded} from "../store";
 import {getRankedSongs} from "./rankeds";
+import {NEW_SCORESABER_URL, SCORESABER_URL} from "../network/scoresaber/consts";
+import {substituteVars} from "../utils/format";
+
+export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 
 export const isActiveCountryUser = (u, country = config.COUNTRY) => !u.inactive && (getAdditionalPlayers().includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
@@ -31,6 +35,15 @@ export const getCountryRanking = async (country = config.COUNTRY) => {
 export const getPlayerInfo = async playerId => {
     const data = await getCacheAndConvertIfNeeded();
     return data?.users?.[playerId] ? data.users[playerId] : null;
+}
+
+export const getPlayerProfileUrl = playerId => substituteVars(USER_PROFILE_URL, {userId: playerId})
+
+export const getPlayerAvatarUrl = async playerId => {
+    if (!playerId) return null;
+
+    const playerInfo = await getPlayerInfo(playerId);
+    return playerInfo && playerInfo.avatar ? (playerInfo.avatar.startsWith('http') ? playerInfo.avatar : NEW_SCORESABER_URL + playerInfo.avatar) : null;
 }
 
 export const getPlayerScores = async playerId => {

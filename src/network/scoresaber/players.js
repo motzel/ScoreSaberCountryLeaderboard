@@ -1,13 +1,13 @@
 import {substituteVars} from "../../utils/format";
-import {fetchApiPage, fetchHtmlPage, SsplError} from "../fetch";
+import {fetchApiPage, fetchHtmlPage} from "../fetch";
 import {getFirstRegexpMatch} from "../../utils/js";
-import {PLAYER_INFO_URL, SCORESABER_URL, USERS_URL} from "./consts";
+import {PLAYER_INFO_URL, USERS_URL} from "./consts";
 import {default as queue} from "../queue";
 import {default as config} from '../../temp';
 import {dayTrunc} from "../../utils/date";
 import {getCacheAndConvertIfNeeded} from "../../store";
+import {USER_PROFILE_URL} from "../../scoresaber/players";
 
-export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724']};
 
 export const getAdditionalPlayers = (country = config.COUNTRY) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
@@ -76,7 +76,10 @@ export const fetchUsers = async (page = 1) => {
                 const lastUpdated = data.users?.[info.playerInfo.playerId]?.lastUpdated;
 
                 if (!info.scoreStats || !data.users?.[info.playerInfo.playerId] || !lastUpdated || dayTrunc(lastUpdated).getTime() !== dayTrunc(new Date()).getTime()) {
-                    return convertPlayerInfo(await fetchPlayerInfo(info.playerInfo.playerId));
+                    const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
+                    playerInfo.playerInfo.avatar = info.playerInfo.avatar;
+
+                    return convertPlayerInfo(playerInfo);
                 }
 
                 return Object.assign({}, data.users[info.playerInfo.playerId], info.playerInfo, info.scoreStats);

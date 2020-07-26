@@ -34,7 +34,6 @@ table.ranking.songs.sspl th.score {min-width: 11rem;}
 .sspl tbody tr.main {background-color: var(--color-highlight);}
 table.ranking tbody tr:hover {background-color: var(--hover) !important;}
 
-section.rankChart {height: 300px!important;}
 table.ranking.songs {max-width: none!important;}
 
 .flex-start {
@@ -75,4 +74,14 @@ table.ranking.songs {max-width: none!important;}
 .column.avatar.main img.is-96x96 {
   border: 2px solid green;
   padding: 2px;
+}
+.navbar-item.sspl-avatar {
+  padding: 6px .75rem;
+}
+.navbar-item.sspl-avatar figure {
+  width: 40px;
+  height: 40px;
+}
+.navbar-item.sspl-avatar img {
+  max-height: none;
 }

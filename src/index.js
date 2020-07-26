@@ -7,7 +7,8 @@ import Refresh from './Svelte/Components/Common/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import Select from './Svelte/Components/Common/Select.svelte';
-import File from './Svelte/Components/Common/File.svelte';
+import Avatar from './Svelte/Components/Common/Avatar.svelte';
+import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
 import log from './utils/logger';
 import config from './temp';
@@ -16,9 +17,7 @@ import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
-import exportData from "./utils/export";
 
-import {dateFromString} from "./utils/date";
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
 
@@ -110,8 +109,9 @@ async function setupLeaderboard() {
     );
 
     // TODO: dont show when no user data is available
-    const sseUserId = await getMainUserId();
-    if (sseUserId) {
+    const config = await getConfig('songLeaderboard');
+    const mainUserId = await getMainUserId();
+    if (mainUserId && !!config.showWhatIfPp) {
         [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
             const pp = parseFloat(
                 span.innerText.replace(/\s/, '').replace(',', '.')
@@ -131,14 +131,21 @@ async function setupLeaderboard() {
     log.info("Setup leaderboard page / Done")
 }
 
-function setupChart() {
+async function setupChart() {
     log.info("Setup chart");
 
     const chart = document.getElementById('rankChart');
     if(!chart) return;
 
+    const profileConfig = await getConfig('profile');
+    if (profileConfig && !profileConfig.showChart) {
+        chart.closest('.rankChart').remove();
+        return;
+    }
+
     const chartSection = chart.closest('section');
     chartSection.style.setProperty('margin', '0 auto', 'important');
+    chartSection.style.setProperty('height', '300px', 'important');
     chartSection.closest('.box').appendChild(chartSection);
 
     const history = getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML);
@@ -223,114 +230,118 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    (await Promise.all([...document.querySelectorAll('table.ranking tbody tr')].map(async tr => {
-        let ret = {tr};
+    const ssConfig = await getConfig('ss');
+    const showDiff = !!ssConfig.song.showDiff;
+    const showWhatIfPp = !!ssConfig.song.showWhatIfPp;
+    if (ssConfig && ssConfig.song && !!ssConfig.song.enhance)
+        (await Promise.all([...document.querySelectorAll('table.ranking tbody tr')].map(async tr => {
+            let ret = {tr};
 
-        const rank = tr.querySelector('th.rank');
-        if(rank) {
-            const rankMatch = getFirstRegexpMatch(/#(\d+)/, rank.innerText);
-            ret.rank = rankMatch ? parseInt(rankMatch, 10) : null;
-        } else {
-            ret.rank = null;
-        }
-
-        const song = tr.querySelector('th.song a');
-        if(song) {
-            const leaderboardMatch = getFirstRegexpMatch(/leaderboard\/(\d+)/, song.href);
-            ret.leaderboardId = leaderboardMatch ? parseInt(leaderboardMatch, 10): null;
-        } else {
-            ret.leaderboardId = null;
-        }
-
-        const img = tr.querySelector('th.song img');
-        ret.songImg = img ? img.src : null;
-
-        const songPp = tr.querySelector('th.song a .songTop.pp');
-        const songMatch = songPp ? songPp.innerHTML.match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
-        if(songMatch) {
-            ret.songName = songMatch[1];
-            ret.songDiff = songMatch[2];
-        } else {
-            ret = Object.assign(ret, {songName: null, songDiff: null});
-        }
-
-        const songMapper = tr.querySelector('th.song a .songTop.mapper');
-        ret.songMapper = songMapper ? songMapper.innerText : null;
-
-        const songDate = tr.querySelector('th.song span.songBottom.time');
-        ret.timeset = songDate ? songDate.title : null;
-
-        const pp = tr.querySelector('th.score .scoreTop.ppValue');
-        if(pp) ret.pp = parseFloat(pp.innerText);
-
-        const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
-        const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
-        ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
-
-        const scoreInfo = tr.querySelector('th.score .scoreBottom');
-        const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
-        if(scoreInfoMatch) {
-            switch(scoreInfoMatch[1]) {
-                case "score":
-                    ret.percent = null;
-                    ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-                    ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
-                    break;
-
-                case "accuracy":
-                    ret.score = null;
-                    ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-                    ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
-                    break;
+            const rank = tr.querySelector('th.rank');
+            if(rank) {
+                const rankMatch = getFirstRegexpMatch(/#(\d+)/, rank.innerText);
+                ret.rank = rankMatch ? parseInt(rankMatch, 10) : null;
+            } else {
+                ret.rank = null;
             }
-        }
 
-        const leaderboard = data.users?.[profileId]?.scores?.[ret.leaderboardId];
-        if (leaderboard) {
-            try {
-                const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
+            const song = tr.querySelector('th.song a');
+            if(song) {
+                const leaderboardMatch = getFirstRegexpMatch(/leaderboard\/(\d+)/, song.href);
+                ret.leaderboardId = leaderboardMatch ? parseInt(leaderboardMatch, 10): null;
+            } else {
+                ret.leaderboardId = null;
+            }
 
-                if (!ret.percent && ret.score) {
-                    ret.percent = maxSongScore
-                        ? ret.score / maxSongScore
+            const img = tr.querySelector('th.song img');
+            ret.songImg = img ? img.src : null;
+
+            const songPp = tr.querySelector('th.song a .songTop.pp');
+            const songMatch = songPp ? songPp.innerHTML.match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
+            if(songMatch) {
+                ret.songName = songMatch[1];
+                ret.songDiff = songMatch[2];
+            } else {
+                ret = Object.assign(ret, {songName: null, songDiff: null});
+            }
+
+            const songMapper = tr.querySelector('th.song a .songTop.mapper');
+            ret.songMapper = songMapper ? songMapper.innerText : null;
+
+            const songDate = tr.querySelector('th.song span.songBottom.time');
+            ret.timeset = songDate ? songDate.title : null;
+
+            const pp = tr.querySelector('th.score .scoreTop.ppValue');
+            if(pp) ret.pp = parseFloat(pp.innerText);
+
+            const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
+            const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
+            ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
+
+            const scoreInfo = tr.querySelector('th.score .scoreBottom');
+            const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
+            if(scoreInfoMatch) {
+                switch(scoreInfoMatch[1]) {
+                    case "score":
+                        ret.percent = null;
+                        ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
+                        ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
+                        break;
+
+                    case "accuracy":
+                        ret.score = null;
+                        ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
+                        ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
+                        break;
+                }
+            }
+
+            const leaderboard = data.users?.[profileId]?.scores?.[ret.leaderboardId];
+            if (leaderboard) {
+                try {
+                    const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
+
+                    if (!ret.percent && ret.score) {
+                        ret.percent = maxSongScore
+                            ? ret.score / maxSongScore
+                            : (leaderboard.maxScoreEx
+                                ? ret.score / leaderboard.maxScoreEx
+                                : null);
+                    }
+
+                    if(!ret.score && ret.percent) {
+                        ret.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(ret.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
+                    }
+
+                    ret.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+
+                    const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
+                    ret.prevRank = showDiff && history ? history.rank : null;
+                    ret.prevPp = showDiff && history ? history.pp : null;
+                    ret.prevScore = showDiff && history ? history.score : null;
+                    ret.prevTimeset = showDiff && history ? new Date(Date.parse(history.rank)) : null;
+                    ret.prevPercent = showDiff && history && ret.prevScore ? (maxSongScore
+                        ? ret.prevScore / maxSongScore
                         : (leaderboard.maxScoreEx
-                            ? ret.score / leaderboard.maxScoreEx
-                            : null);
-                }
+                            ? ret.prevScore / leaderboard.maxScoreEx
+                            : null)) : null;
+                } catch (e) {} // swallow error
+            }
 
-                if(!ret.score && ret.percent) {
-                    ret.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(ret.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
-                }
+            return ret;
+        })))
+            .filter(s => null !== s.tr)
+            .forEach(s => {
+                const score = s.tr.querySelector('.score');
+                if(!score) return;
 
-                ret.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+                score.innerHTML = "";
 
-                const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
-                ret.prevRank = history ? history.rank : null;
-                ret.prevPp = history ? history.pp : null;
-                ret.prevScore = history ? history.score : null;
-                ret.prevTimeset = history ? new Date(Date.parse(history.rank)) : null;
-                ret.prevPercent = history && ret.prevScore ? (maxSongScore
-                    ? ret.prevScore / maxSongScore
-                    : (leaderboard.maxScoreEx
-                        ? ret.prevScore / leaderboard.maxScoreEx
-                        : null)) : null;
-            } catch (e) {} // swallow error
-        }
-
-        return ret;
-    })))
-        .filter(s => null !== s.tr)
-        .forEach(s => {
-            const score = s.tr.querySelector('.score');
-            if(!score) return;
-
-            score.innerHTML = "";
-
-            new SongScore({
-                target: score,
-                props: {song: s}
-            })
-        });
+                new SongScore({
+                    target: score,
+                    props: {song: s, showWhatIfPp}
+                })
+            });
 
     const header = document.querySelector('.content .column h5').closest('.box');
     if (header) {
@@ -392,6 +403,8 @@ async function setupProfile() {
 
                 songBox.remove();
                 transformBtn.$destroy();
+
+                document.querySelector('.el-group.flex-center').remove();
             }
         }
         const songBrowserConfig = await getConfig('songBrowser');
@@ -403,116 +416,14 @@ async function setupProfile() {
             const div = document.createElement('div')
             div.style.marginTop = "1rem";
             div.style.fontSize = "0.75rem";
-            div.classList.add('flex-center')
-            div.classList.add('flex-column');
+            div.classList.add('buttons')
+            div.classList.add('flex-center');
             avatarColumn.appendChild(div);
 
-            // export button
-            new Button({
+            new PlayerSettings({
                 target: div,
-                props: {
-                    label: "Eksport",
-                    iconFa: "fas fa-download",
-                    cls: "full-width"
-                }
-            }).$on('click', _ => exportData())
-
-            // import button
-            const importBtn = new File({
-                target: div,
-                props: {
-                    label: "Import",
-                    iconFa: "fas fa-upload",
-                    cls: "full-width",
-                    accept: "application/json"
-                }
+                props: {profileId}
             })
-            importBtn.$on('change', e => {
-                const file = e.target.files[0];
-                if (!file) {
-                    return;
-                }
-                if (file.type !== 'application/json') {
-                    alert('Wybierz plik JSON zawierający eksport danych');
-                    return;
-                }
-
-                importBtn.$set({disabled: true});
-
-                const reader = new FileReader();
-
-                reader.onload = async function (e) {
-                    try {
-                        const json = JSON.parse(e.target.result);
-
-                        if (!json || !json.version || !json.lastUpdated || !json.users) {
-                            alert('Niepoprawny plik eksportu');
-                            return;
-                        }
-
-                        if (json.version < 1.2) {
-                            alert('Import pliku ze starszej wersji pluginu nie jest wspierany');
-                            return;
-                        }
-
-                        await setCache(json);
-
-                        window.location.reload(false);
-                    } catch (_) {
-                        alert("Nieprawidłowy plik JSON");
-                    } finally {
-                        importBtn.$set({disabled: false});
-                    }
-                };
-
-                reader.readAsText(file);
-            })
-
-            // twitch button
-            if (profileId && data?.twitch?.users?.[profileId]?.login && data?.users?.[profileId]) {
-                const twitchToken = await twitch.getCurrentToken();
-                const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
-                const tokenExpireSoon = tokenExpireInDays <= 3;
-                new Button({
-                    target: div,
-                    props: {
-                        label: twitchToken && !tokenExpireSoon ? 'Połączono' : 'Połącz',
-                        title: twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null,
-                        disabled: !tokenExpireSoon,
-                        iconFa: "fab fa-twitch",
-                        cls: 'full-width',
-                        type: 'twitch',
-                    }
-                }).$on('click', _ => {
-                    window.location.href = twitch.getAuthUrl(profileId ? profileId : '');
-                });
-
-
-                let twitchProfile = data.twitch.users[profileId];
-                if (!twitchProfile.id) {
-                    const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
-                    if (fetchedProfile) {
-                        twitchProfile = Object.assign({}, twitchProfile, fetchedProfile);
-                        data.twitch.users[profileId] = twitchProfile;
-                    }
-                }
-
-                if (twitchProfile.id) {
-                    const scoresRecentPlay = data.users[profileId].recentPlay ? data.users[profileId].recentPlay : data.users[profileId].lastUpdated;
-                    const twitchLastUpdated = twitchProfile.lastUpdated;
-
-                    if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
-                        console.warn("fetching twitter videos")
-                        const videos = await twitch.getVideos(twitchProfile.id);
-                        if (videos?.data) {
-                            twitchProfile.videos = videos.data;
-                            twitchProfile.lastUpdated = new Date();
-
-                            await setCache(data);
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -626,6 +537,27 @@ function setupStyles() {
     cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
 }
 
+async function setupPlayerAvatar() {
+    log.info("Setup player avatar");
+
+    const usersConfig = await getConfig('users');
+    if (!usersConfig || !usersConfig.main) return;
+
+    const navbarBurger = document.querySelector('.navbar-brand .navbar-burger')
+    if(!navbarBurger) return;
+
+    const cont = document.createElement('div');
+    cont.classList.add('navbar-item');
+    cont.classList.add('sspl-avatar');
+    navbarBurger.parentNode.insertBefore(cont, navbarBurger)
+
+    // set newest avatar taken from user profile
+    const profileId = getProfileId();
+    const url = usersConfig.main === profileId ? document.querySelector('.column.avatar img')?.src : null;
+
+    new Avatar({target: cont, props: {playerId: usersConfig.main, url}})
+}
+
 async function setupTwitch() {
     await twitch.processTokenIfAvailable();
     await twitch.createTwitchUsersCache();
@@ -685,6 +617,8 @@ async function init() {
     const data = await getCacheAndConvertIfNeeded();
 
     setupStyles();
+
+    setupPlayerAvatar();
 
     await setupTwitch();
 

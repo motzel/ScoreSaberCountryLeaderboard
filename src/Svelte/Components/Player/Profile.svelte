@@ -2,9 +2,18 @@
     import ProfileLine from './ProfileLine.svelte';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Button from '../Common/Button.svelte';
+    import {getConfig} from "../../../plugin-config";
 
     export let profile;
+
     let mode = 'pp-stars';
+    let showCalc = false;
+
+    (async() => {
+        const profileConfig = await getConfig('profile');
+        if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
+    })()
+
 
     $: scores = profile.scores
             ? Object.values(profile.scores)
@@ -20,7 +29,7 @@
     <ProfileLine label="Average ranked accuracy" value={profile.stats.averageRankedAccuracy} suffix="%"/>
 {/if}
 
-{#if scores}
+{#if showCalc && scores}
     <li class="calc">
         <div><ProfilePpCalc scores={scores} playerId={profile.id} mode={mode} /></div>
         <Button iconFa="fas fa-arrows-alt-v" on:click={() => mode = mode === 'pp-stars' ? 'stars-pp' : 'pp-stars'} />

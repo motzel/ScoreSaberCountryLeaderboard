@@ -9,6 +9,7 @@
     export let items = [];
     export let noSelected = 'No item selected';
     export let minSelected = 1;
+    export let right = false;
 
     function onMenuClick(e) {
         const item = e.target.closest('.dropdown-item');
@@ -50,7 +51,7 @@
                 <span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>
             </button>
         </div>
-        <div class="dropdown-menu" role="menu" on:click={onMenuClick}>
+        <div class:right={right} class="dropdown-menu" role="menu" on:click={onMenuClick}>
             <div class="dropdown-content">
                 {#each items as item, idx (item)}
                     {#if item.type === 'divider'}
@@ -117,6 +118,10 @@
 
     .dropdown-menu {
         right: 0;
+    }
+
+    .dropdown-menu.right {
+        left: auto;
     }
 
     .dropdown-content {
