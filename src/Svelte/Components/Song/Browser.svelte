@@ -56,6 +56,8 @@
 
     const DEBOUNCE_DELAY = 400;
 
+    const allItemsPerPage = [5, 10, 15, 20, 25, 50];
+
     let shownIcons = ["bsr", "bs", "preview", "twitch"];
     let lightMode = false;
     onMount(() => {
@@ -377,6 +379,10 @@
 
         if (config.showColumns) {
             selectedColumns = allColumns.filter(c => config.showColumns.includes(c.key) && c.displayed)
+        }
+
+        if (config.itemsPerPage) {
+            itemsPerPage = config.itemsPerPage;
         }
 
         await generateSortTypes();
@@ -1272,7 +1278,7 @@
 
     {#if songsPage.songs && songsPage.songs.length}
         <Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal}
-               itemsPerPageValues={[5, 10, 15, 20, 25, 50]} hide={calculating}/>
+               itemsPerPageValues={allItemsPerPage} hide={calculating}/>
     {/if}
 
     {#if !calculating}

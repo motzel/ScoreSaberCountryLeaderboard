@@ -201,6 +201,10 @@
     ];
     let configShowIcons = shownIcons.map(i => i);
 
+    const allItemsPerPage = [5, 10, 15, 20, 25, 50];
+    let itemsPerPage = allItemsPerPage.map(i => ({label: i, val: i}));
+    let configItemsPerPage = itemsPerPage[1];
+
     (async () => {
         config = await getConfig();
         mainUserId = config && config.users && config.users.main ? config.users.main : null;
@@ -217,6 +221,9 @@
 
         const defaultSort = filterSortTypes().find(s => s.field === config.songBrowser.defaultSort)
         if (defaultSort) configSortType = defaultSort;
+
+        const defaultItemsPerPage = itemsPerPage.find(i => i.val === config.songBrowser.itemsPerPage);
+        if (defaultItemsPerPage) configItemsPerPage = defaultItemsPerPage;
 
         filterSortTypes();
 
@@ -327,6 +334,7 @@
         config.songBrowser.defaultSort = configSortType.field;
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = configShowIcons.map(i => i.id);
+        config.songBrowser.itemsPerPage = configItemsPerPage.val;
 
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);
@@ -355,87 +363,102 @@
         </header>
 
         <main>
-            <div class="menu-label">Przeglądarka nut</div>
-            <label class="checkbox">
-                <input type="checkbox" bind:checked={config.songBrowser.autoTransform}>
-                Automatycznie transformuj
-            </label>
+            <section>
+                <div class="menu-label">Przeglądarka nut</div>
+                <label class="checkbox">
+                    <input type="checkbox" bind:checked={config.songBrowser.autoTransform}>
+                    Automatycznie transformuj
+                </label>
 
-            <div class="columns is-multiline">
-                <div class="column">
-                    <label class="menu-label">Domyślny rodzaj</label>
-                    <Select bind:value={configSongType} items={songTypes} on:change={onSongTypeChange}/>
+                <div class="columns">
+                    <div class="column is-one-third">
+                        <label class="menu-label">Domyślny rodzaj</label>
+                        <Select bind:value={configSongType} items={songTypes} on:change={onSongTypeChange}/>
+                    </div>
+
+                    <div class="column is-one-third">
+                        <label class="menu-label">Domyślny widok</label>
+                        <Select bind:value={configViewType} items={viewTypes}/>
+                    </div>
+
+                    <div class="column is-one-third">
+                        <label class="menu-label">Domyślne kolumny</label>
+                        <Select multiple bind:value={configShowColumns} items={columns}/>
+                    </div>
                 </div>
 
-                <div class="column">
-                    <label class="menu-label">Domyślny widok</label>
-                    <Select bind:value={configViewType} items={viewTypes}/>
+                <div class="columns">
+                    <div class="column is-one-third">
+                        <label class="menu-label">Domyślne sortowanie</label>
+                        <Select bind:value={configSortType} items={sortTypes}/>
+                    </div>
+
+                    <div class="column is-one-third">
+                        <label class="menu-label">Domyślne ikony</label>
+                        <Select multiple bind:value={configShowIcons} items={shownIcons} />
+                    </div>
+
+                    <div class="column is-one-third">
+                        <label class="menu-label">Liczba pozycji na stronę</label>
+                        <Select bind:value={configItemsPerPage} items={itemsPerPage} />
+                    </div>
                 </div>
+            </section>
 
-                <div class="column">
-                    <label class="menu-label">Domyślne sortowanie</label>
-                    <Select bind:value={configSortType} items={sortTypes}/>
+            <section>
+                <div class="menu-label">Profil</div>
+                <div>
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
+                        Powiększaj avatar
+                    </label>
+
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.profile.showChart}>
+                        Pokazuj wykres
+                    </label>
+
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
+                        Pokazuj kalkulator +1PP
+                    </label>
                 </div>
+            </section>
 
-                <div class="column">
-                    <label class="menu-label">Domyślne kolumny</label>
-                    <Select multiple bind:value={configShowColumns} items={columns}/>
+            <section>
+                <div class="menu-label">Ranking nutki</div>
+                <div>
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.songLeaderboard.showDiff}>
+                        Pokazuj różnice
+                    </label>
+
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.songLeaderboard.showWhatIfPp}>
+                        Pokazuj "jeśli tak zagrasz"
+                    </label>
                 </div>
+            </section>
 
-                <div class="column">
-                    <label class="menu-label">Domyślne ikony</label>
-                    <Select multiple bind:value={configShowIcons} items={shownIcons} right={true}/>
+            <section>
+                <div class="menu-label">Domyślna lista nut</div>
+                <div>
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.ss.song.enhance}>
+                        Dodawaj wynik/dokładność
+                    </label>
+
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.ss.song.showDiff}>
+                        Pokazuj różnice
+                    </label>
+
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
+                        Pokazuj "jeśli tak zagrasz"
+                    </label>
                 </div>
-            </div>
-
-            <div class="menu-label">Profil</div>
-            <div>
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
-                    Powiększaj avatar
-                </label>
-
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.profile.showChart}>
-                    Pokazuj wykres
-                </label>
-
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
-                    Pokazuj kalkulator +1PP
-                </label>
-            </div>
-
-            <div class="menu-label">Ranking nutki</div>
-            <div>
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.songLeaderboard.showDiff}>
-                    Pokazuj różnice
-                </label>
-
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.songLeaderboard.showWhatIfPp}>
-                    Pokazuj "jeśli tak zagrasz"
-                </label>
-            </div>
-
-            <div class="menu-label">Domyślna lista nut</div>
-            <div>
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.ss.song.enhance}>
-                    Dodawaj wynik/dokładność
-                </label>
-
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.ss.song.showDiff}>
-                    Pokazuj różnice
-                </label>
-
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
-                    Pokazuj "jeśli tak zagrasz"
-                </label>
-            </div>
+            </section>
         </main>
 
         <footer class="columns">
@@ -474,14 +497,20 @@
         margin-bottom: .25em;
     }
 
-    .columns {
+    .columns:last-of-type {
         margin-bottom: 0;
     }
 
     .column {
         text-align: center;
         padding-bottom: 0;
-        max-width: 11rem;
+        max-width: 20rem;
+    }
+
+    @media screen and (max-width: 768px) {
+        .column {
+            max-width: none;
+        }
     }
 
     .column .menu-label {
