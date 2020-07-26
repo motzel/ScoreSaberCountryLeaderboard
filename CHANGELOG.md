@@ -1,4 +1,7 @@
 # Changelog
+0.8.7.1 
+ - small fix regarding twitch button
+ 
 0.8.7
  - add configuration window
  

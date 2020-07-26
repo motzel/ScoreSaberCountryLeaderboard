@@ -263,6 +263,8 @@
                     }
                 }
             }
+        } else {
+            showTwitchBtn = false;
         }
     })()
 
