@@ -34,7 +34,6 @@ table.ranking.songs.sspl th.score {min-width: 11rem;}
 .sspl tbody tr.main {background-color: var(--color-highlight);}
 table.ranking tbody tr:hover {background-color: var(--hover) !important;}
 
-section.rankChart {height: 300px!important;}
 table.ranking.songs {max-width: none!important;}
 
 .flex-start {

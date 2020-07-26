@@ -145,6 +145,7 @@ async function setupChart() {
 
     const chartSection = chart.closest('section');
     chartSection.style.setProperty('margin', '0 auto', 'important');
+    chartSection.style.setProperty('height', '300px', 'important');
     chartSection.closest('.box').appendChild(chartSection);
 
     const history = getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML);
