@@ -2,38 +2,94 @@
     import ProfileLine from './ProfileLine.svelte';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Button from '../Common/Button.svelte';
-    import {getConfig} from "../../../plugin-config";
+    import {getConfig} from '../../../plugin-config';
+    import {UNRANKED} from '../../../scoresaber/rankeds';
+    import {diffColors} from '../../../song';
+    import Badge from "../Common/Badge.svelte";
 
     export let profile;
 
     let mode = 'pp-stars';
     let showCalc = false;
+    let showBadges = true;
 
-    (async() => {
+    const badgesDef = [
+        {name: 'A', min: null, max: 80, value: 0, color: diffColors.easy},
+        {name: 'S', min: 80, max: 85, value: 0, color: diffColors.normal},
+        {name: 'S+', min: 85, max: 90, value: 0, color: diffColors.hard},
+        {name: 'SS', min: 90, max: 95, value: 0, color: diffColors.expert},
+        {name: 'SS+', min: 95, max: null, value: 0, color: diffColors.expertPlus},
+    ];
+
+    (async () => {
         const profileConfig = await getConfig('profile');
         if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
+
+        if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
     })()
 
+    function getPlayerStats(scores) {
+        if (!scores || !scores.length) return null;
 
-    $: scores = profile.scores
+        const stats = scores.reduce((cum, s) => {
+            if (!s.maxScoreEx) return cum;
+
+            const scoreMult = s.uScore ? s.score / s.uScore : 1
+            const acc = s.score / s.maxScoreEx / scoreMult * 100;
+
+            cum.totalScore += s.uScore ? s.uScore : s.score;
+            cum.totalAcc += acc;
+
+            cum.badges.forEach(badge => {
+                if ((!badge.min || badge.min <= acc) && (!badge.max || badge.max > acc)) badge.value++;
+
+                badge.title = !badge.min ? '< ' + badge.max + '%' : (!badge.max ? '> ' + badge.min + '%' : badge.min + '% - ' + badge.max + '%')
+            })
+
+            return cum;
+        }, {badges: badgesDef, totalAcc: 0, totalScore: 0, avgAcc: 0, playCount: scores.length})
+
+        stats.avgAcc = stats.totalAcc / scores.length;
+        delete stats.totalAcc;
+
+        return stats;
+    }
+
+    $: allRankedScores = profile.scores
             ? Object.values(profile.scores)
-                    .filter((s) => s.pp > 0)
-                    .map((s) => s.pp)
+                    .filter(s => s.pp > 0 && !UNRANKED.includes(s.leaderboardId))
+            : null;
+
+    $: scores = allRankedScores
+            ? allRankedScores
+                    .map(s => s.pp)
                     .sort((a, b) => b - a)
             : null;
+
+    $: stats = getPlayerStats(allRankedScores);
 </script>
 
 {#if profile && profile.stats}
-    <ProfileLine label="Ranked play count" value={profile.stats.rankedPlayCount} precision={0}/>
-    <ProfileLine label="Total ranked score" value={profile.stats.totalRankedScore} precision={0}/>
-    <ProfileLine label="Average ranked accuracy" value={profile.stats.averageRankedAccuracy} suffix="%"/>
+    <ProfileLine label="Ranked play count" value={stats.playCount} precision={0}/>
+    <ProfileLine label="Total ranked score" value={stats.totalScore} precision={0}/>
+    <ProfileLine label="Average ranked accuracy" value={stats.avgAcc} suffix="%"/>
 {/if}
 
 {#if showCalc && scores}
     <li class="calc">
-        <div><ProfilePpCalc scores={scores} playerId={profile.id} mode={mode} /></div>
-        <Button iconFa="fas fa-arrows-alt-v" on:click={() => mode = mode === 'pp-stars' ? 'stars-pp' : 'pp-stars'} />
+        <div>
+            <ProfilePpCalc scores={scores} playerId={profile.id} mode={mode}/>
+        </div>
+        <Button iconFa="fas fa-arrows-alt-v" on:click={() => mode = mode === 'pp-stars' ? 'stars-pp' : 'pp-stars'}/>
     </li>
+{/if}
+
+{#if showBadges && scores}
+    <div class="badges">
+        {#each stats.badges.reverse() as badge (badge)}
+            <Badge name={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
+        {/each}
+    </div>
 {/if}
 
 <style>
@@ -43,8 +99,14 @@
         list-style: none;
         margin-left: -1.25em;
     }
+
     li.calc > div {
         margin-right: 1rem;
         width: 27rem;
+    }
+
+    .badges {
+        margin-top: .75em;
+        margin-left: -1.25em;
     }
 </style>

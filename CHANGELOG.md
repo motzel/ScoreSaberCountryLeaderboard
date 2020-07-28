@@ -1,4 +1,7 @@
 # Changelog
+0.8.8
+ - add accuracy badges, thx Modren 
+ 
 0.8.7.3
  - small fix regarding downloading additional players avatars
  

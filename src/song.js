@@ -4,15 +4,16 @@ import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {filterByCountry} from "./scoresaber/players";
 
+export const diffColors = {
+    easy: 'MediumSeaGreen',
+    normal: '#59b0f4',
+    hard: 'tomato',
+    expert: '#bf2a42',
+    expertPlus: '#8f48db'
+}
+
 export function getDiffColor(diffInfo) {
-    const colors = {
-        easy: 'MediumSeaGreen',
-        normal: '#59b0f4',
-        hard: 'tomato',
-        expert: '#bf2a42',
-        expertPlus: '#8f48db'
-    };
-    return colors[diffInfo.diff] ? colors[diffInfo.diff] : null;
+    return diffColors[diffInfo.diff] ? diffColors[diffInfo.diff] : null;
 }
 
 export function getHumanDiffInfo(diffInfo) {
