@@ -7,7 +7,7 @@
         PP_PER_STAR,
         ppFromScore, getWeightedPp
     } from "../../../scoresaber/pp";
-    import {getRankedSongs} from "../../../scoresaber/rankeds";
+    import {getRankedSongs, RANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded} from "../../../store";
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
@@ -764,6 +764,9 @@
                     )
 
             const allPlayedSongsObj = convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId')
+            RANKED.forEach(id => {
+                if(allPlayedSongsObj[id]) allRankeds = {...allRankeds, [id]: {...allPlayedSongsObj[id], stars: 0.01}};
+            })
 
             const filteredSongs = (await Promise.all((
                     filters.songType.id === 'rankeds_with_not_played'
