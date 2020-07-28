@@ -77,7 +77,7 @@ export const fetchUsers = async (page = 1) => {
 
                 if (!info.scoreStats || !data.users?.[info.playerInfo.playerId] || !lastUpdated || dayTrunc(lastUpdated).getTime() !== dayTrunc(new Date()).getTime()) {
                     const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
-                    playerInfo.playerInfo.avatar = info.playerInfo.avatar;
+                    if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
 
                     return convertPlayerInfo(playerInfo);
                 }

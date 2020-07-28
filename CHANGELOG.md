@@ -1,4 +1,7 @@
 # Changelog
+0.8.7.3
+ - small fix regarding downloading additional players avatars
+ 
 0.8.7.2
  - foreign polish players update
  
