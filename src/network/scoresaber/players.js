@@ -8,7 +8,7 @@ import {dayTrunc} from "../../utils/date";
 import {getCacheAndConvertIfNeeded} from "../../store";
 import {USER_PROFILE_URL} from "../../scoresaber/players";
 
-export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724']};
+export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
 export const getAdditionalPlayers = (country = config.COUNTRY) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 export const convertPlayerInfo = info => {
