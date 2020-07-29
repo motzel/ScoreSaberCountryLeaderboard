@@ -527,11 +527,13 @@ function setupStyles() {
             ['textColor', '#4a4a4a'],
             ['ppColour', '#6772E5'],
             ['alternate', '#3273dc'],
-            ['hover', '#ddd']
+            ['hover', '#ddd'],
+            ['highlight', 'green']
         ]
     } else {
         cssVars = [
-            ['hover', '#444']
+            ['hover', '#444'],
+            ['highlight', 'green']
         ]
     }
     cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));

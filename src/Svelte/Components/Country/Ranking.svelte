@@ -72,7 +72,7 @@
 
     <tbody>
     {#each ranking as user, idx (user.id)}
-        <tr style="{mainUserId === user.id ? 'background-color: var(--color-highlight);' : ''}">
+        <tr style="{mainUserId === user.id ? 'background-color: var(--highlight);' : ''}">
             <td class="picture"><Avatar playerId={user.id} /></td>
             <td class="rank">
                 <Rank rank={idx+1} url={'/global/' + encodeURIComponent( Math.ceil(user.rank / PLAYERS_PER_PAGE))} />

@@ -31,7 +31,7 @@ table.ranking.songs.sspl th.score {min-width: 11rem;}
 
 .sspl thead .diff select, .pagination select.type, .sspl select {font-size: 1rem; font-weight: 700; border: none; color: var(--textColor, black); background-color: var(--background, white); outline: none;}
 .pp-boundary {color: var(--textColor, black);}
-.sspl tbody tr.main {background-color: var(--color-highlight);}
+.sspl tbody tr.main {background-color: var(--highlight);}
 table.ranking tbody tr:hover {background-color: var(--hover) !important;}
 
 table.ranking.songs {max-width: none!important;}
