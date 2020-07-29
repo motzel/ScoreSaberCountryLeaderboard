@@ -61,7 +61,7 @@
     let shownIcons = ["bsr", "bs", "preview", "twitch"];
     let lightMode = false;
     onMount(() => {
-        lightMode = getComputedStyle(document.documentElement).getPropertyValue('--background') === 'white';
+        lightMode = getComputedStyle(document.documentElement).getPropertyValue('--foreground') === 'white';
     })
 
     let initialized = false;

@@ -20,6 +20,7 @@ import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
+import {setSsDefaultTheme} from "./theme";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -517,26 +518,7 @@ function setupStyles() {
 
     addStyles(require('./resource/style/style.css').toString());
 
-    // set css variables
-    let cssVars = [];
-    if(!getComputedStyle(document.documentElement).getPropertyValue('--foreground').length) {
-        // light mode
-        cssVars = [
-            ['background', 'white'],
-            ['foreground', 'white'],
-            ['textColor', '#4a4a4a'],
-            ['ppColour', '#6772E5'],
-            ['alternate', '#3273dc'],
-            ['hover', '#ddd'],
-            ['highlight', 'green']
-        ]
-    } else {
-        cssVars = [
-            ['hover', '#444'],
-            ['highlight', 'green']
-        ]
-    }
-    cssVars.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]));
+    setSsDefaultTheme();
 }
 
 async function setupPlayerAvatar() {
