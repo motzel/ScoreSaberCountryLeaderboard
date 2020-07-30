@@ -69,7 +69,8 @@
         {id: 'all', label: 'Wszystkie'},
         {id: 'rankeds', label: 'Tylko rankingowe'},
         {id: 'unrankeds', label: 'Tylko nierankingowe'},
-        {id: 'rankeds_with_not_played', label: 'Tryb snajpera'},
+        {id: 'rankeds_unplayed', label: 'Tylko niezagrane'},
+        {id: 'sniper_mode', label: 'Tryb snajpera'},
     ]
     let sortTypes = [
         {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
@@ -87,7 +88,7 @@
 
         const data = (await getCacheAndConvertIfNeeded());
 
-        if (allFilters.songType.id === 'rankeds_with_not_played')
+        if (allFilters.songType.id === 'sniper_mode')
             types.push({
                 label: '+PP global',
                 type: 'song',
@@ -96,7 +97,7 @@
                 order: 'desc',
                 enabled: true
             });
-        else
+        else if(allFilters.songType.id !== 'rankeds_unplayed')
             types.push({
                 label: 'Data zagrania',
                 type: 'series',
@@ -109,7 +110,7 @@
         if (allFilters.songType.id !== 'unrankeds')
             types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
 
-        const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []));
+        const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'sniper_mode' === allFilters.songType.id ? sniperModeIds : []));
         if (data && data.users) {
             userIds.forEach((pId, idx) => {
                 const name = data.users[pId] ? data.users[pId].name : null;
@@ -120,20 +121,20 @@
                         {
                             field: "diffPp",
                             label: "+PP global",
-                            enabled: 'rankeds_with_not_played' === allFilters.songType.id && idx !== 0
+                            enabled: 'sniper_mode' === allFilters.songType.id && idx !== 0
                         },
                         {
                             field: "pp",
                             label: "PP",
-                            enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)
+                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id)
                         },
                         {
                             field: "acc",
                             label: "Celność",
-                            enabled: ['rankeds', 'rankeds_with_not_played'].includes(allFilters.songType.id)
+                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id)
                         },
                     ].forEach(field => {
-                        if (field.enabled && (field.field !== 'timeset' || allFilters.songType.id === 'rankeds_with_not_played'))
+                        if (field.enabled && (field.field !== 'timeset' || allFilters.songType.id === 'sniper_mode'))
                             types.push({
                                 label: field.label,
                                 type: 'series',
@@ -150,7 +151,7 @@
         sortTypes = types;
 
         const config = await getConfig('songBrowser');
-        const sortBy = allFilters.songType.id === 'rankeds_with_not_played' ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
+        const sortBy = allFilters.songType.id === 'sniper_mode' ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
         const defaultSort = sortTypes.find(s => s.field === sortBy);
         allFilters.sortBy = defaultSort ? defaultSort: types[0];
     }
@@ -635,7 +636,7 @@
                 generateSortTypes();
                 break;
 
-            case 'rankeds_with_not_played':
+            case 'sniper_mode':
                 getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
@@ -708,7 +709,7 @@
                         const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
                         // set all players total pp to main player's total pp
-                        const shouldCalculateTotalPp = filters.songType.id === 'rankeds_with_not_played';
+                        const shouldCalculateTotalPp = filters.songType.id === 'sniper_mode';
                         playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
                         playerInfo.totalPp = playerInfo.prevTotalPp;
 
@@ -765,12 +766,15 @@
             })
 
             const filteredSongs = (await Promise.all((
-                    filters.songType.id === 'rankeds_with_not_played'
+                    filters.songType.id === 'sniper_mode'
                             ? Object.values(Object.assign(
-                            convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
-                            allRankeds
+                                convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
+                                allRankeds
                             ))
-                            : allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
+                            : (filters.songType.id === 'rankeds_unplayed'
+                                ? Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId])
+                                :allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
+                            )
             )
                     .filter(s =>
                             // filter by name
@@ -869,7 +873,7 @@
                             }
                         }
 
-                        if (filters.songType.id === 'rankeds_with_not_played') {
+                        if (filters.songType.id === 'sniper_mode') {
                             for (const idx in playersSeries) {
                                 // skip calculating if player is the best - will be filtered belowe
                                 if (playersSeries[0].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
@@ -892,9 +896,8 @@
 
                     // filter when sniper mode, player is the best and diff > minPpDiff
                     .filter(s =>
-                            filters.songType.id !== 'rankeds_with_not_played' ||
+                            filters.songType.id !== 'sniper_mode' ||
                             (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
-                            || (filters.songType.id === 'rankeds_with_not_played' && nobodyPlayedItYet(s))
                     )
 
                     .sort((songA, songB) => {
@@ -921,7 +924,7 @@
             let bestTotalRealPp = playersSeries[compareToIdx].totalPp
             let bestTotalPp = playersSeries[compareToIdx].totalPp;
 
-            if (filters.songType.id === 'rankeds_with_not_played') {
+            if (filters.songType.id === 'sniper_mode') {
                 const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
                 for (const p of playersSeries) {
                     const betterScores = convertArrayToObjectByKey(
@@ -1010,8 +1013,8 @@
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
-    $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'rankeds_with_not_played' === allFilters.songType.id
-    $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'rankeds_with_not_played' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
+    $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
+    $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'sniper_mode' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
     // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
 </script>
@@ -1029,7 +1032,7 @@
         </div>
 
         <div class="filter-diff-pp"
-             style="display: {allFilters.songType.id === 'rankeds_with_not_played' ? 'flex' : 'none'}">
+             style="display: {allFilters.songType.id === 'sniper_mode' ? 'flex' : 'none'}">
             <header>+PP global</header>
             <Range value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp" inline={true}
                    on:change={onFilterMinPlusPpChanged}/>
@@ -1038,7 +1041,7 @@
         <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'flex' : 'none'}">
             <header>Gwiazdki</header>
             <MultiRange label="Gwiazdki" value={allFilters.starsFilter}
-                        min={allFilters.songType.id === 'rankeds_with_not_played' ? round(minStarsForSniper,1) : 0}
+                        min={allFilters.songType.id === 'sniper_mode' ? round(minStarsForSniper,1) : 0}
                         max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true}
                         on:change={onFilterStarsChange}/>
         </div>
@@ -1158,14 +1161,14 @@
                                                             :{/if}
                                                         <strong class={'compact-' + col.key + '-val'}>
                                                             <Value value={getScoreValueByKey(series, song, col.key)}
-                                                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
                                                                    prevLabel={series.prevLabel} inline={true}
                                                                    {...col.valueProps}
                                                             />
                                                         </strong>
                                                     </div>
                                                 {/if}
-                                                {#if col.key === 'pp' && allFilters.songType.id !== 'rankeds_with_not_played'}
+                                                {#if col.key === 'pp' && allFilters.songType.id !== 'sniper_mode'}
                                                     <WhatIfPp leaderboardId={song.leaderboardId}
                                                               pp={getScoreValueByKey(series, song, col.key)}/>{/if}
                                             {/if}
@@ -1182,7 +1185,7 @@
                                             <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                         {:else}
                                             <Value value={getScoreValueByKey(series, song, col.key)}
-                                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'rankeds_with_not_played' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                   prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
                                                    prevLabel={series.prevLabel}
                                                    {...col.valueProps}
                                             />

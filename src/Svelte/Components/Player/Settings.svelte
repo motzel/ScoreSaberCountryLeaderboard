@@ -36,7 +36,8 @@
         {id: 'all', label: 'Wszystkie'},
         {id: 'rankeds', label: 'Tylko rankingowe'},
         {id: 'unrankeds', label: 'Tylko nierankingowe'},
-        {id: 'rankeds_with_not_played', label: 'Tryb snajpera'},
+        {id: 'rankeds_unplayed', label: 'Tylko niezagrane'},
+        {id: 'sniper_mode', label: 'Tryb snajpera'},
     ]
     let configSongType = songTypes[0];
 
@@ -47,10 +48,10 @@
     let configViewType = viewTypes[0];
 
     const allSortTypes = [
-        {label: 'Data zagrania', field: 'timeset'},
-        {label: 'Gwiazdki', field: 'stars', onlyTypes: ['all', 'rankeds', 'rankeds_with_not_played']},
-        {label: 'PP', field: 'pp', onlyTypes: ['rankeds', 'rankeds_with_not_played']},
-        {label: 'Celność', field: 'acc', onlyTypes: ['rankeds', 'rankeds_with_not_played']}
+        {label: 'Data zagrania', field: 'timeset', onlyTypes: ['all', 'rankeds', 'unrankeds', 'sniper_mode']},
+        {label: 'Gwiazdki', field: 'stars', onlyTypes: ['all', 'rankeds', 'rankeds_unplayed', 'sniper_mode']},
+        {label: 'PP', field: 'pp', onlyTypes: ['rankeds', 'sniper_mode']},
+        {label: 'Celność', field: 'acc', onlyTypes: ['rankeds', 'sniper_mode']}
     ]
     const filterSortTypes = () => allSortTypes.filter(st => !st.onlyTypes || st.onlyTypes.includes(configSongType.id))
     let sortTypes = filterSortTypes();
