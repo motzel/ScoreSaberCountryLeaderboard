@@ -12,7 +12,7 @@ import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
 import log from './utils/logger';
 import config from './temp';
-import {getCacheAndConvertIfNeeded, setCache} from "./store";
+import {getCacheAndConvertIfNeeded} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";

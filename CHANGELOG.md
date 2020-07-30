@@ -1,4 +1,7 @@
 # Changelog
+0.8.9.2
+ - optimize SS API usage
+ 
 0.8.9.1
  - add only unplayed ranked songs filter to song browser
  

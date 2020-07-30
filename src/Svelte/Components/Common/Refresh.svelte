@@ -188,8 +188,8 @@
 
             u.userHistory = cum.users && cum.users[u.id] && cum.users[u.id].userHistory ? cum.users[u.id].userHistory : {};
             if(cum && cum.users && cum.users[u.id]) {
-                const {rank, pp, countryRank} = cum.users[u.id];
-                u.userHistory = Object.assign({}, u.userHistory, {[toUTCDate(new Date())]: {rank, pp, countryRank}})
+                const {rank, pp, countryRank, ssplCountryRank} = cum.users[u.id];
+                u.userHistory = Object.assign({}, u.userHistory, {[toUTCDate(new Date())]: {rank, pp, countryRank, ssplCountryRank}})
             }
 
             let newScores = await fetchAllNewScores(

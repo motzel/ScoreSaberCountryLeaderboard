@@ -4,7 +4,6 @@ import {getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, USERS_URL} from "./consts";
 import {default as queue} from "../queue";
 import {default as config} from '../../temp';
-import {dayTrunc} from "../../utils/date";
 import {getCacheAndConvertIfNeeded} from "../../store";
 import {USER_PROFILE_URL} from "../../scoresaber/players";
 
@@ -29,6 +28,8 @@ export const convertPlayerInfo = info => {
         {
             id: playerId,
             name: playerName,
+            playerId,
+            playerName,
             url: substituteVars(USER_PROFILE_URL, {
                 userId: playerId
             }),
@@ -51,13 +52,15 @@ export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API
 export const fetchUsers = async (page = 1) => {
     const data = await getCacheAndConvertIfNeeded();
 
-    return await Promise.all(
+    return (await Promise.all(
         [...(await fetchHtmlPage(queue.SCORESABER, USERS_URL, page)).querySelectorAll('.ranking.global .player a')]
             .map(a => {
                     const tr = a.closest("tr");
 
                     return {
                         playerInfo: {
+                            id: getFirstRegexpMatch(/\/(\d+)$/, a.href),
+                            name: a.querySelector('.songTop.pp').innerText,
                             playerId: getFirstRegexpMatch(/\/(\d+)$/, a.href),
                             playerName: a.querySelector('.songTop.pp').innerText,
                             avatar: tr.querySelector('td.picture img').src,
@@ -73,16 +76,20 @@ export const fetchUsers = async (page = 1) => {
             )
             .concat(getAdditionalPlayers().map(playerId => ({playerInfo: {playerId, inactive: false}})))
             .map(async info => {
-                const lastUpdated = data.users?.[info.playerInfo.playerId]?.lastUpdated;
+                const {lastUpdated, recentPlay, scores, userHistory} = data.users?.[info.playerInfo.playerId]
+                    ? data.users?.[info.playerInfo.playerId]
+                    : {lastUpdated: null, recentPlay: null, userHistory: {}, scores: {}};
 
-                if (!info.scoreStats || !data.users?.[info.playerInfo.playerId] || !lastUpdated || dayTrunc(lastUpdated).getTime() !== dayTrunc(new Date()).getTime()) {
+                if (!info.scoreStats || !data.users?.[info.playerInfo.playerId]) {
                     const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
                     if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
 
-                    return convertPlayerInfo(playerInfo);
+                    return Object.assign({}, data.users[info.playerInfo.playerId], convertPlayerInfo(playerInfo), {lastUpdated, recentPlay, scores, userHistory});
                 }
 
                 return Object.assign({}, data.users[info.playerInfo.playerId], info.playerInfo, info.scoreStats);
             })
-    )
+    ))
+        .sort((a,b) => b.pp - a.pp)
+        .map((u,idx) => ({...u, ssplCountryRank: idx+1}))
 }
