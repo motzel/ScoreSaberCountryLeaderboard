@@ -53,14 +53,14 @@ export const themes = {
     sombra: {
         name: 'Sombra',
         def: [
-            ['background', '#000'],
-            ['foreground', '#090909'],
-            ['textColor', '#888'],
-            ['ppColour', '#8992e8'],
-            ['alternate', '#aaa'],
-            ['selected', '#222'],
-            ['hover', '#333'],
-            ['highlight', '#222'],
+            ['background', '#1f0001'],
+            ['foreground', '#2f0042'],
+            ['textColor', '#fff'],
+            ['ppColour', '#f50004'],
+            ['alternate', '#fff'],
+            ['selected', '#0f008f'],
+            ['hover', '#0f008f'],
+            ['highlight', '#0f008f'],
             ['decrease', '#f94022'],
             ['increase', '#42b129']
         ]
