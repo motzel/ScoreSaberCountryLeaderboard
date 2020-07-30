@@ -59,10 +59,6 @@
     const allItemsPerPage = [5, 10, 15, 20, 25, 50];
 
     let shownIcons = ["bsr", "bs", "preview", "twitch"];
-    let lightMode = false;
-    onMount(() => {
-        lightMode = getComputedStyle(document.documentElement).getPropertyValue('--foreground') === 'white';
-    })
 
     let initialized = false;
     let countryRanking = [];
@@ -1072,7 +1068,7 @@
         </div>
     {:then calc}
         {#if songsPage.songs.length}
-            <table class="ranking sspl" class:light={lightMode}>
+            <table class="ranking sspl">
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
                     <tr>
@@ -1312,7 +1308,7 @@
     th, td {
         vertical-align: middle !important;
         padding: 0.25em !important;
-        border-color: #666 !important;
+        border-color: var(--textColor) !important;
     }
 
     thead th {
@@ -1414,11 +1410,17 @@
 
     tbody td.song .songinfo {
         text-align: left;
+        font-size: .95rem;
+        font-weight: 500;
     }
 
-    tbody td.song small {
+    tbody td.song .songinfo {
+        color: var(--alternate);
+    }
+
+    tbody td.song .songinfo small {
         font-size: 0.75em;
-        color: #888;
+        color: var(--ppColour);
     }
 
     tbody td.icons {
@@ -1445,11 +1447,7 @@
     }
 
     tbody td.best {
-        background: linear-gradient(90deg, rgba(51, 51, 51, 1) 0%, rgba(85, 85, 85, 1) 50%, rgba(51, 51, 51, 1) 100%);
-    }
-
-    table.light tbody td.best {
-        background: linear-gradient(90deg, rgba(201, 201, 201, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 201, 201, 1) 100%);
+        background: var(--highlight);
     }
 
     tbody td.compact {
@@ -1462,7 +1460,7 @@
     }
 
     .compact-timeset-val {
-        border-bottom: 1px dashed #666;
+        border-bottom: 1px dashed var(--textColor);
     }
 
     .compact-diffPp-val {
@@ -1498,6 +1496,14 @@
         display: block;
         text-align: center;
         color: #888;
+    }
+
+    :global(.filters input) {
+        font-size: 1rem;
+        color: var(--textColor);
+        background: var(--foreground);
+        border: none;
+        border-bottom: 1px solid var(--textColor);
     }
 
     .filters .filter-name {

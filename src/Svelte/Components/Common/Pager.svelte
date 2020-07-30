@@ -112,6 +112,14 @@
         justify-content: center;
         margin-top: 0;
     }
+    .pagination-previous, .pagination-next, .pagination-link {
+        border-color: var(--alternate);
+    }
+    .pagination-link.is-current {
+        color: var(--textColor);
+        background-color: var(--selected);
+        border-color: var(--selected);
+    }
     .pagination-link:focus {
         border-color: #dbdbdb !important;
     }

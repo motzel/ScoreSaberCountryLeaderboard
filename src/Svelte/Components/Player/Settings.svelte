@@ -497,6 +497,7 @@
     .menu-label {
         margin-top: .75em;
         margin-bottom: .25em;
+        color: var(--alternate);
     }
 
     .columns:last-of-type {

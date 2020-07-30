@@ -118,6 +118,7 @@
 
     .dropdown-menu {
         right: 0;
+        min-width: 12.6rem;
     }
 
     .dropdown-menu.right {
@@ -155,14 +156,13 @@
     }
 
     .dropdown-item:hover {
-        background-color: #2f2f2f;
+        background-color: var(--hover);
         border-color: transparent;
-        color: whitesmoke;
     }
 
     .dropdown-item.is-active, .dropdown-item.is-active:hover {
-        color: white;
-        background-color: #3273dc;
+        color: var(--textColor);
+        background-color: var(--selected);
     }
 
     .dropdown-item .icon {

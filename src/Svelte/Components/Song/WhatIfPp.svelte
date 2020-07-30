@@ -43,8 +43,8 @@
         font-weight: normal;
         text-align: center;
         color: var(--textColor);
-        background-color: var(--background);
-        border: 1px solid var(--foreground);
+        background-color: var(--foreground);
+        border: 1px solid var(--textColor);
     }
 
     strong {
