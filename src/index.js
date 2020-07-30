@@ -20,7 +20,7 @@ import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
-import {setSsDefaultTheme} from "./theme";
+import {setSsDefaultTheme, setTheme} from "./theme";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const getSongHash = () => document.querySelector('.title~b')?.innerText;
@@ -511,14 +511,15 @@ function generate_tab(css_id, has_offset) {
     return li;
 }
 
-function setupStyles() {
+async function setupStyles() {
     log.info("Setup styles");
 
     const addStyles = GM_addStyle ? GM_addStyle : () => {};
 
     addStyles(require('./resource/style/style.css').toString());
 
-    setSsDefaultTheme();
+    const configOthers = await getConfig('others');
+    if(configOthers && configOthers.theme) setTheme(configOthers.theme); else setSsDefaultTheme();
 }
 
 async function setupPlayerAvatar() {
@@ -600,11 +601,11 @@ async function init() {
     // fetch cache
     const data = await getCacheAndConvertIfNeeded();
 
-    setupStyles();
-
-    setupPlayerAvatar();
-
-    await setupTwitch();
+    await Promise.allSettled([
+        setupStyles(),
+        setupPlayerAvatar(),
+        setupTwitch()
+    ])
 
     if (isCountryRankingPage()) {
         setupCountryRanking();

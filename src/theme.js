@@ -1,6 +1,22 @@
 export const themes = {
+    darkss: {
+        name: 'Jedyny słuszny',
+        def: [
+            ['background', '#222'],
+            ['foreground', '#252525'],
+            ['textColor', '#eee'],
+            ['ppColour', '#8992e8'],
+            ['alternate', '#72a8ff'],
+            ['selected', '#3273dc'],
+            ['hover', '#333'],
+            ['highlight', '#484848'],
+            ['decrease', '#f94022'],
+            ['increase', '#42b129']
+        ]
+    },
+
     lightss: {
-        name: 'Jasny SS',
+        name: 'Wypalający oczy',
         def: [
             ['background', '#fcfcfc'],
             ['foreground', 'white'],
@@ -15,22 +31,6 @@ export const themes = {
             ['navBg', '#252525'],
             ['navText', '#eee'],
             ['navHover', '#111']
-        ]
-    },
-
-    darkss: {
-        name: 'Ciemny SS',
-        def: [
-            ['background', '#222'],
-            ['foreground', '#252525'],
-            ['textColor', '#eee'],
-            ['ppColour', '#8992e8'],
-            ['alternate', '#72a8ff'],
-            ['selected', '#3273dc'],
-            ['hover', '#333'],
-            ['highlight', '#484848'],
-            ['decrease', '#f94022'],
-            ['increase', '#42b129']
         ]
     },
 

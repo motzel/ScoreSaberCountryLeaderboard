@@ -70,17 +70,17 @@ table.ranking.songs {max-width: none!important;}
   height: 150px;
 }
 .column.avatar.main img.is-96x96 {
-  border: 2px solid var(--increase);
+  border: 2px solid var(--increase, '#42b129');
 }
-.navbar {
-  background-color: var(--navBg, --foreground);
+.navbar, .navbar.has-shadow {
+  background-color: var(--navBg, var(--foreground, '#252525'))!important;
 }
 .navbar .navbar-item {
-  color: var(--navText, --textColor);
+  color: var(--navText, var(--textColor, '#eee'))!important;
 }
 .navbar .navbar-item:hover, .navbar .navbar-item.is-active, .navbar .navbar-link:hover, .navbar .navbar-link.is-active {
-  background-color: var(--navHover, --hover);
-  color: var(--foreground);
+  background-color: var(--navHover, var(--hover, '#333'))!important;
+  color: var(--foreground, '#252525')!important;
 }
 .navbar-item.sspl-avatar {
   padding: 6px .75rem;

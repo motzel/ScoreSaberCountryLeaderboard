@@ -10,6 +10,7 @@
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {dateFromString} from "../../../utils/date";
     import exportJsonData from "../../../utils/export";
+    import {themes, setTheme} from "../../../theme";
 
     export let profileId;
 
@@ -26,6 +27,10 @@
     let importBtn;
 
     let config;
+
+    const availableThemes = Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def}));
+    let theme = availableThemes[0];
+    let origTheme = theme;
 
     const songTypes = [
         {id: 'all', label: 'Wszystkie'},
@@ -225,6 +230,12 @@
         const defaultItemsPerPage = itemsPerPage.find(i => i.val === config.songBrowser.itemsPerPage);
         if (defaultItemsPerPage) configItemsPerPage = defaultItemsPerPage;
 
+        const defaultTheme = availableThemes.find(t => t.id === config.others.theme)
+        if (defaultTheme) {
+            theme = defaultTheme;
+            origTheme = defaultTheme;
+        }
+
         filterSortTypes();
 
         let twitchProfile = await twitch.getProfileName(profileId);
@@ -330,6 +341,18 @@
         }
     }
 
+    async function onThemeChange() {
+        setTheme(theme.id);
+    }
+
+    function onCancel() {
+        theme = origTheme;
+
+        setTheme(theme.id);
+
+        showSettingsModal = false
+    }
+
     async function saveConfig() {
         config.songBrowser.defaultType = configSongType.id;
         config.songBrowser.defaultView = configViewType.id;
@@ -337,6 +360,7 @@
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = configShowIcons.map(i => i.id);
         config.songBrowser.itemsPerPage = configItemsPerPage.val;
+        config.others.theme = theme.id;
 
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);
@@ -365,6 +389,13 @@
         </header>
 
         <main>
+            <section class="columns">
+                <div class="column is-one-third">
+                    <div class="menu-label">Motyw</div>
+                    <Select items={availableThemes} bind:value={theme} on:change={onThemeChange} />
+                </div>
+            </section>
+
             <section>
                 <div class="menu-label">Przeglądarka nut</div>
                 <label class="checkbox">
@@ -466,7 +497,7 @@
         <footer class="columns">
             <div class="column">
                 <Button iconFa="fas fa-save" label="Zapisz" type="primary" on:click={saveConfig}/>
-                <Button label="Anuluj" on:click={() => showSettingsModal = false}/>
+                <Button label="Anuluj" on:click={onCancel}/>
             </div>
 
             <div class="column">

@@ -89,6 +89,7 @@ export async function getCacheAndConvertIfNeeded() {
         cache.config.ss.song.showDiff = true;
         cache.config.ss.song.showWhatIfPp = true;
     }
+    if (!cache.config.others) cache.config.others = {theme: 'darkss'}
 
     Globals.data = cache;
 

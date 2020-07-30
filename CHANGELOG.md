@@ -1,4 +1,7 @@
 # Changelog
+0.8.9
+ - add color theme support
+ 
 0.8.8
  - add accuracy badges, thx Modren 
  

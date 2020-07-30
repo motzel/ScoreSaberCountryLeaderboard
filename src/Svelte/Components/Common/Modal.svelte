@@ -71,7 +71,7 @@
         left: 50%;
         top: 50%;
         width: calc(100vw - 4em);
-        height: 30rem;
+        height: 34rem;
         max-width: 60em;
         max-height: calc(100vh - 4em);
         overflow: auto;
