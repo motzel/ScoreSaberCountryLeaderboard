@@ -75,15 +75,20 @@ export function findDiffInfo(characteristics, ssDiff) {
     return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
 }
 
-export async function getLeaderboard(songHash, leaderboardId) {
+export async function getLeaderboard(leaderboardId) {
     const data = await getCacheAndConvertIfNeeded();
 
-    const songInfo = songHash ? await getSongByHash(songHash) : null;
-    const songCharacteristics = songInfo?.metadata?.characteristics;
-    let diffInfo = null,
-        maxSongScore = 0;
+    const scores = filterByCountry(data.users)
+        .map(playerId => data?.users?.[playerId]?.scores?.[leaderboardId] ? {playerId, songHash: data.users[playerId].scores[leaderboardId].id} : null)
+        .filter(s => s)
+    ;
+    if (!scores.length) return scores;
 
-    return filterByCountry(data.users)
+    const songInfo = scores[0].songHash ? await getSongByHash(scores[0].songHash) : null;
+    const songCharacteristics = songInfo?.metadata?.characteristics;
+    let diffInfo = null, maxSongScore = 0;
+
+    return scores.map(s => s.playerId)
         .reduce((cum, userId) => {
             if (!data.users[userId].scores[leaderboardId]) return cum;
 

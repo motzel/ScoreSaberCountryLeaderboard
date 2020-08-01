@@ -12,24 +12,27 @@
     import Refresh from '../Common/Refresh.svelte';
     import NewRankeds from '../Song/NewRankeds.svelte';
 
-    import {isAnyData} from '../../../store';
     import {SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
     import {getConfig, getMainUserId} from "../../../plugin-config";
+    import {getLeaderboard} from "../../../song";
 
     export let leaderboardId;
-    export let leaderboard = [];
+    export let tableOnly = false;
+    export let showDiff;
 
+    let leaderboard = [];
     let mainUserId;
 
-    let showDiff = true;
     let showWhatIfPp = false;
 
     (async () => {
         mainUserId = await getMainUserId()
 
         const config = await getConfig('songLeaderboard');
-        showDiff = !!config.showDiff;
-        showWhatIfPp = !!config.showWhatIfPp;
+        showDiff = undefined !== showDiff ? !!config.showDiff : true;
+        showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
+
+        leaderboard = await getLeaderboard(leaderboardId);
     })()
 
     let tooltip;
@@ -38,14 +41,12 @@
 
     let newRankeds = [];
 
-    let dataAvailable = false;
-    isAnyData().then(v => dataAvailable = v);
-
     function onNewRankeds(event) {
         newRankeds = event.detail;
     }
 
     function onHover(event) {
+        if (tableOnly) return;
         const tr = event.detail.target.closest("tr"), trBound = tr.getBoundingClientRect(),
                 lbBound = leaderboardContainer.getBoundingClientRect(),
                 tooltipTop = trBound.top - lbBound.top;
@@ -65,17 +66,19 @@
     }
 
     function onUnhover(event) {
+        if (tableOnly) return;
         tooltip.style.display = 'none';
     }
 </script>
 
 <div bind:this={leaderboardContainer} class="leaderboard-container">
 
-<div class="refresh"><Refresh on:new-rankeds={onNewRankeds} on:data-refreshed/></div>
+{#if !tableOnly}
+    <div class="refresh"><Refresh on:new-rankeds={onNewRankeds} on:data-refreshed/></div>
+    <NewRankeds rankeds={newRankeds} />
+{/if}
 
-<NewRankeds rankeds={newRankeds} />
-
-{#if dataAvailable}
+{#if leaderboard && leaderboard.length}
 <table class="ranking sspl">
     <thead>
     <tr>
@@ -115,6 +118,8 @@
     {/each}
     </tbody>
 </table>
+
+{#if !tableOnly}
 <div bind:this={tooltip} class="tooltip">
     <table class="history"><tbody>
     {#each tooltipHistory as item (item.timestamp)}
@@ -127,11 +132,11 @@
     {/each}
     </tbody></table>
 </div>
+{/if}
+
 {:else}
     <div class="first-fetch">
-        <h3>Strasznie tu pusto</h3>
-        <p>Wygląda na to, że nie ma jeszcze żadnych danych.</p>
-        <p>Usiądź sobie wygodnie, otwórz harnasia, kliknij Odśwież i poczekaj, bo trochę to potrwa...</p>
+        <p>Wygląda na to, że nikt jeszcze nie zagrał tej nutki.</p>
     </div>
 {/if}
 </div>

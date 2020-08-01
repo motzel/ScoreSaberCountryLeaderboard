@@ -29,6 +29,14 @@
             border: "transparent",
             activeBorder: "transparent"
         },
+        text: {
+            color: "var(--textColor)",
+            activeColor: "var(--textColor)",
+            bgColor: "transparent",
+            activeBgColor: "transparent",
+            border: "transparent",
+            activeBorder: "transparent"
+        },
         twitch: {
             color: "#dbdbdb",
             activeColor: "#fff",
@@ -68,8 +76,8 @@
         cursor: pointer;
         color: var(--color, #363636);
         background-color: var(--bg-color, #3273dc);
-        outline: none;
-        box-shadow: none;
+        outline: none !important;
+        box-shadow: none !important;
     }
 
     button:hover {

@@ -25,7 +25,6 @@ import {getConfig, getMainUserId} from "./plugin-config";
 import {setSsDefaultTheme, setTheme} from "./theme";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
-const getSongHash = () => document.querySelector('.title~b')?.innerText;
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
@@ -48,27 +47,21 @@ function getBySelector(sel, el = null) {
 async function setupPlTable() {
     let scoreTableNode = getBySelector('.ranking table.global');
     const leaderboardId = getLeaderboardId();
-    const leaderboard = await getLeaderboard(getSongHash(), leaderboardId);
-    if(leaderboard?.length) {
-        let tblContainer = document.createElement('div');
-        tblContainer["id"] = "sspl";
-        tblContainer.style["display"] = "none";
-        scoreTableNode.parentNode.appendChild(tblContainer);
+    if (!leaderboardId) return null;
 
-        const songLeaderboard = new SongLeaderboard({
-            target: tblContainer,
-            props: {
-                leaderboardId,
-                leaderboard
-            }
-        });
-        songLeaderboard.$on('data-refreshed', async _ => {
-            const leaderboard = await getLeaderboard(getSongHash(), leaderboardId);
-            songLeaderboard.$set({leaderboard});
-        });
-    }
+    let tblContainer = document.createElement('div');
+    tblContainer["id"] = "sspl";
+    tblContainer.style["display"] = "none";
+    scoreTableNode.parentNode.appendChild(tblContainer);
 
-    return leaderboard;
+    const songLeaderboard = new SongLeaderboard({
+        target: tblContainer,
+        props: {leaderboardId}
+    });
+    songLeaderboard.$on('data-refreshed', async _ => {
+        const leaderboard = await getLeaderboard(leaderboardId);
+        songLeaderboard.$set({leaderboard});
+    });
 }
 
 async function setupLeaderboard() {
@@ -77,8 +70,7 @@ async function setupLeaderboard() {
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
-    const leaderboard = await setupPlTable();
-    if(!leaderboard || !leaderboard.length) return;
+    await setupPlTable();
 
     const tabs = getBySelector('.tabs > ul');
     tabs.appendChild(

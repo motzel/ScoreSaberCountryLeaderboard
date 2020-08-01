@@ -47,6 +47,7 @@
     import Button from "../Common/Button.svelte";
     import Select from "../Common/Select.svelte";
     import {getConfig, getMainUserId} from "../../../plugin-config";
+    import Leaderboard from "./Leaderboard.svelte";
 
     export let playerId;
     export let snipedIds = [];
@@ -97,7 +98,7 @@
                 order: 'desc',
                 enabled: true
             });
-        else if(allFilters.songType.id !== 'rankeds_unplayed')
+        else if (allFilters.songType.id !== 'rankeds_unplayed')
             types.push({
                 label: 'Data zagrania',
                 type: 'series',
@@ -153,7 +154,7 @@
         const config = await getConfig('songBrowser');
         const sortBy = allFilters.songType.id === 'sniper_mode' ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
         const defaultSort = sortTypes.find(s => s.field === sortBy);
-        allFilters.sortBy = defaultSort ? defaultSort: types[0];
+        allFilters.sortBy = defaultSort ? defaultSort : types[0];
     }
 
     const findSort = (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field);
@@ -762,18 +763,18 @@
 
             const allPlayedSongsObj = convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId')
             RANKED.forEach(id => {
-                if(allPlayedSongsObj[id]) allRankeds = {...allRankeds, [id]: {...allPlayedSongsObj[id], stars: 0.01}};
+                if (allPlayedSongsObj[id]) allRankeds = {...allRankeds, [id]: {...allPlayedSongsObj[id], stars: 0.01}};
             })
 
             const filteredSongs = (await Promise.all((
                     filters.songType.id === 'sniper_mode'
                             ? Object.values(Object.assign(
-                                convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
-                                allRankeds
+                            convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
+                            allRankeds
                             ))
                             : (filters.songType.id === 'rankeds_unplayed'
-                                ? Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId])
-                                :allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
+                                    ? Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId])
+                                    : allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
                             )
             )
                     .filter(s =>
@@ -1112,13 +1113,13 @@
 
                 <tbody>
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <tr>
+                    <tr class="item" class:opened={!!song.leaderboardOpened}>
                         <td class="diff">
                             <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
                         </td>
 
                         <td class="song">
-                            <div class="flex-start">
+                            <div class="flex-start flex-justify-between">
                                 <Song song={song}>
                                     <figure>
                                         <img src="/imports/images/songs/{song.id}.png"/>
@@ -1129,6 +1130,8 @@
                                         </div>
                                     </figure>
                                 </Song>
+
+                                <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-down" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
                             </div>
                         </td>
 
@@ -1222,6 +1225,9 @@
                             </td>
                         {/each}
                     </tr>
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length}>
+                        <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} />
+                    </td></tr>
                 {/each}
                 </tbody>
 
@@ -1433,6 +1439,26 @@
 
     :global(tbody td.icons button) {
         margin-bottom: .25em !important;
+    }
+
+    tbody tr.item.opened td {
+        border-bottom-style: dashed;
+    }
+
+    tbody tr.leaderboard {
+        display: none;
+    }
+
+    tbody tr.leaderboard.opened {
+        display: table-row;
+    }
+
+    tbody tr.leaderboard td {
+        padding: 1rem!important;
+    }
+
+    table.ranking tbody tr.leaderboard:hover {
+        background-color: inherit!important;
     }
 
     tfoot th {
