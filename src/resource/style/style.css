@@ -72,23 +72,28 @@ table.ranking.songs {max-width: none!important;}
 .column.avatar.main img.is-96x96 {
   border: 2px solid var(--increase, '#42b129');
 }
-.navbar, .navbar.has-shadow {
+body .navbar, body .navbar.has-shadow {
   background-color: var(--navBg, var(--foreground, '#252525'))!important;
 }
-.navbar .navbar-item {
+body .navbar .navbar-item {
   color: var(--navText, var(--textColor, '#eee'))!important;
 }
-.navbar .navbar-item:hover, .navbar .navbar-item.is-active, .navbar .navbar-link:hover, .navbar .navbar-link.is-active {
+body .navbar .navbar-item:hover, body .navbar .navbar-item.is-active, body .navbar .navbar-link:hover, body .navbar .navbar-link.is-active {
   background-color: var(--navHover, var(--hover, '#333'))!important;
   color: var(--foreground, '#252525')!important;
 }
-.navbar-item.sspl-avatar {
+body .navbar-item.sspl-avatar {
   padding: 6px .75rem;
 }
-.navbar-item.sspl-avatar figure {
+body .navbar-item.sspl-avatar figure {
   width: 40px;
   height: 40px;
 }
-.navbar-item.sspl-avatar img {
+body .navbar-item.sspl-avatar img {
   max-height: none;
+}
+
+body .select select {
+  background-color: var(--background) !important;
+  color: var(--textColor) !important;
 }

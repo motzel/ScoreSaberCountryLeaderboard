@@ -1,4 +1,7 @@
 # Changelog
+0.8.9.3
+ - fixed theme settings when SS is set to light mode
+ 
 0.8.9.2
  - optimize SS API usage
  

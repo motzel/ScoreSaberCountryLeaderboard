@@ -518,6 +518,8 @@ async function setupStyles() {
 
     addStyles(require('./resource/style/style.css').toString());
 
+    document.querySelector('head').innerHTML += '<link rel="stylesheet" href="https://scoresaber.com/imports/css/darkmode.css?v=1.0.3" type="text/css"/>';
+
     const configOthers = await getConfig('others');
     if(configOthers && configOthers.theme) setTheme(configOthers.theme); else setSsDefaultTheme();
 }
