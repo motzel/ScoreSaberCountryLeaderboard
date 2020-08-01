@@ -1,4 +1,7 @@
 # Changelog
+0.8.9.6
+ - add a rank to player profile that includes additional country players
+ 
 0.8.9.5
  - add song leaderboard preview to song browser
  

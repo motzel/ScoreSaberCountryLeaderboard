@@ -2,8 +2,8 @@ import {substituteVars} from "../../utils/format";
 import {fetchApiPage, fetchHtmlPage} from "../fetch";
 import {getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, USERS_URL} from "./consts";
-import {default as queue} from "../queue";
-import {default as config} from '../../temp';
+import queue from "../queue";
+import config from '../../temp';
 import {getCacheAndConvertIfNeeded} from "../../store";
 import {USER_PROFILE_URL} from "../../scoresaber/players";
 
@@ -91,5 +91,5 @@ export const fetchUsers = async (page = 1) => {
             })
     ))
         .sort((a,b) => b.pp - a.pp)
-        .map((u,idx) => ({...u, ssplCountryRank: idx+1}))
+        .map((u,idx) => ({...u, ssplCountryRank: {[config.COUNTRY]: idx+1}}))
 }

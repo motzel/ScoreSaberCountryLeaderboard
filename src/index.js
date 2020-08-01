@@ -355,6 +355,24 @@ async function setupProfile() {
     const mainColumn = document.querySelector('.content .column ul').closest('.column');
     if (mainColumn) {
         if (data.users?.[profileId]?.stats) {
+            let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
+            ssplCountryRank = typeof ssplCountryRank === "object" && ssplCountryRank[config.COUNTRY] ? ssplCountryRank[config.COUNTRY] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
+            if(ssplCountryRank) {
+                const rankLi = mainColumn.querySelector('ul li:first-of-type');
+                if (rankLi) {
+                    const globalRankA = rankLi.querySelector('a:first-of-type');
+                    const rankA = rankLi.querySelector('a[href^="/global?country="]');
+                    if(globalRankA && rankA) {
+                        const originalGlobalRank = getFirstRegexpMatch(/(\d+)$/, globalRankA.innerText);
+                        const originalRank = getFirstRegexpMatch(/(\d+)$/, rankA.innerText);
+                        const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
+                        if (originalGlobalRank && originalRank && originalCountry) {
+                           rankLi.innerHTML = `<strong>Player Ranking:</strong> <a href="/global">#${originalGlobalRank}</a> ( ${originalCountry === config.COUNTRY ? `<a href="/global?country=${config.COUNTRY}"><img src="/imports/images/flags/${config.COUNTRY}.png" /> <strong>#${ssplCountryRank}</strong>${parseInt(originalRank, 10) !== ssplCountryRank ? ` / <small>#${originalRank}</small>` : ''}</a>` : `<a href="/global?country=${config.COUNTRY}"><img src="/imports/images/flags/${config.COUNTRY}.png" /> <strong>#${ssplCountryRank}</strong></a> / <a href="/global?country=${originalCountry}"><img src="/imports/images/flags/${originalCountry}.png" /> <small>#${originalRank}</small></a>`} )`;
+                        }
+                    }
+                }
+            }
+
             const additionalProfile = document.createElement('div');
             additionalProfile.classList.add('column');
             const ul = document.createElement('ul');
