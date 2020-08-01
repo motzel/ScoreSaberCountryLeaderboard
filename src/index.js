@@ -6,17 +6,19 @@ import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
+import File from './Svelte/Components/Common/File.svelte';
 import Select from './Svelte/Components/Common/Select.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
 import log from './utils/logger';
 import config from './temp';
-import {getCacheAndConvertIfNeeded} from "./store";
+import {getCacheAndConvertIfNeeded, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
+import importJsonData from "./utils/import";
 
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
@@ -359,72 +361,111 @@ async function setupProfile() {
     }
 
     const mainColumn = document.querySelector('.content .column ul').closest('.column');
-    if (mainColumn && data.users?.[profileId]?.stats) {
-        const additionalProfile = document.createElement('div');
-        additionalProfile.classList.add('column');
-        const ul = document.createElement('ul');
-        ul.style.marginTop = sseInstalled ? '3.375rem' : '2.875rem';
-        additionalProfile.appendChild(ul);
-        new Profile({
-            target: ul,
-            props: {
-                profile: data.users?.[profileId] ?? null,
-            }
-        });
-        mainColumn.closest('.columns').appendChild(additionalProfile);
+    if (mainColumn) {
+        if (data.users?.[profileId]?.stats) {
+            const additionalProfile = document.createElement('div');
+            additionalProfile.classList.add('column');
+            const ul = document.createElement('ul');
+            ul.style.marginTop = sseInstalled ? '3.375rem' : '2.875rem';
+            additionalProfile.appendChild(ul);
+            new Profile({
+                target: ul,
+                props: {
+                    profile: data.users?.[profileId] ?? null,
+                }
+            });
+            mainColumn.closest('.columns').appendChild(additionalProfile);
 
-        const div = document.createElement('div')
-        div.classList.add('el-group');
-        div.classList.add('flex-center');
-        div.style.marginTop = "1em";
-        div.style.fontSize = "0.875rem";
-        mainColumn.closest('.box').appendChild(div);
-
-        const transformBtn = new Button({
-            target: div,
-            props: {
-                label: "Transformuj",
-                iconFa: "fas fa-expand-arrows-alt",
-                type: 'primary'
-            }
-        })
-        const transformSongs = () => {
-            const content = mainColumn.closest('.content');
-            const songBox = content.querySelector('.box:nth-child(2)');
-            if(songBox) {
-                const box = document.createElement('div');
-                box.classList.add('box');
-                box.classList.add('has-shadow');
-                content.insertBefore(box, songBox);
-
-                new SongBrowser({
-                    target: box,
-                    props: {playerId: profileId}
-                })
-
-                songBox.remove();
-                transformBtn.$destroy();
-
-                document.querySelector('.el-group.flex-center').remove();
-            }
-        }
-        const songBrowserConfig = await getConfig('songBrowser');
-        if (songBrowserConfig && songBrowserConfig.autoTransform) transformSongs()
-        else transformBtn.$on('click', transformSongs)
-
-        const avatarColumn = document.querySelector('.column.avatar');
-        if (avatarColumn) {
             const div = document.createElement('div')
-            div.style.marginTop = "1rem";
-            div.style.fontSize = "0.75rem";
-            div.classList.add('buttons')
+            div.classList.add('el-group');
             div.classList.add('flex-center');
-            avatarColumn.appendChild(div);
+            div.style.marginTop = "1em";
+            div.style.fontSize = "0.875rem";
+            mainColumn.closest('.box').appendChild(div);
 
-            new PlayerSettings({
+            const transformBtn = new Button({
                 target: div,
-                props: {profileId}
+                props: {
+                    label: "Transformuj",
+                    iconFa: "fas fa-expand-arrows-alt",
+                    type: 'primary'
+                }
             })
+            const transformSongs = () => {
+                const content = mainColumn.closest('.content');
+                const songBox = content.querySelector('.box:nth-child(2)');
+                if (songBox) {
+                    const box = document.createElement('div');
+                    box.classList.add('box');
+                    box.classList.add('has-shadow');
+                    content.insertBefore(box, songBox);
+
+                    new SongBrowser({
+                        target: box,
+                        props: {playerId: profileId}
+                    })
+
+                    songBox.remove();
+                    transformBtn.$destroy();
+
+                    document.querySelector('.el-group.flex-center').remove();
+                }
+            }
+            const songBrowserConfig = await getConfig('songBrowser');
+            if (songBrowserConfig && songBrowserConfig.autoTransform) transformSongs()
+            else transformBtn.$on('click', transformSongs)
+
+            const avatarColumn = document.querySelector('.column.avatar');
+            if (avatarColumn) {
+                const div = document.createElement('div')
+                div.style.marginTop = "1rem";
+                div.style.fontSize = "0.75rem";
+                div.classList.add('buttons')
+                div.classList.add('flex-center');
+                avatarColumn.appendChild(div);
+
+                new PlayerSettings({
+                    target: div,
+                    props: {profileId}
+                })
+            }
+        } else {
+            const avatarColumn = document.querySelector('.column.avatar');
+            if (avatarColumn) {
+                const div = document.createElement('div')
+                div.style.marginTop = "1rem";
+                div.style.fontSize = "0.75rem";
+                div.classList.add('buttons')
+                div.classList.add('flex-center');
+                avatarColumn.appendChild(div);
+
+                const importBtn = new File({
+                    target: div,
+                    props: {
+                        iconFa: "fas fa-upload",
+                        label: "Import",
+                        accept: "application/json"
+                    }
+                });
+                importBtn.$on('change', e => {
+                    importBtn.$set({disabled: true});
+
+                    importJsonData(
+                        e,
+                        msg => {
+                            alert(msg)
+                            importBtn.$set({disabled: false});
+                        },
+                        async json => {
+                            await setCache(json);
+
+                            importBtn.$set({disabled: false});
+
+                            window.location.reload(false);
+                        }
+                    )
+                });
+            }
         }
     }
 

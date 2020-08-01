@@ -1,4 +1,7 @@
 # Changelog
+0.8.9.4
+ - add import data button if there is no data downloaded yet for faster onboarding
+
 0.8.9.3
  - fixed theme settings when SS is set to light mode
  

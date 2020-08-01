@@ -9,6 +9,7 @@
     import {getPlayerInfo} from "../../../scoresaber/players";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {dateFromString} from "../../../utils/date";
+    import importJsonData from "../../../utils/import";
     import exportJsonData from "../../../utils/export";
     import {themes, setTheme} from "../../../theme";
 
@@ -291,44 +292,22 @@
     }
 
     function importData(e) {
-        const file = e.target.files[0];
-        if (!file) {
-            return;
-        }
-        if (file.type !== 'application/json') {
-            alert('Wybierz plik JSON zawierający eksport danych');
-            return;
-        }
-
         importBtn.$set({disabled: true});
 
-        const reader = new FileReader();
+        importJsonData(
+                e,
+                msg => {
+                    alert(msg)
+                    importBtn.$set({disabled: false});
+                },
+                async json => {
+                    await setCache(json);
 
-        reader.onload = async function (e) {
-            try {
-                const json = JSON.parse(e.target.result);
+                    importBtn.$set({disabled: false});
 
-                if (!json || !json.version || !json.lastUpdated || !json.users) {
-                    alert('Niepoprawny plik eksportu');
-                    return;
+                    window.location.reload(false);
                 }
-
-                if (json.version < 1.2) {
-                    alert('Import pliku ze starszej wersji pluginu nie jest wspierany');
-                    return;
-                }
-
-                await setCache(json);
-
-                window.location.reload(false);
-            } catch (_) {
-                alert("Nieprawidłowy plik JSON");
-            } finally {
-                importBtn.$set({disabled: false});
-            }
-        };
-
-        reader.readAsText(file);
+        )
     }
 
     function exportData() {
