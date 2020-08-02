@@ -83,7 +83,6 @@ body .navbar .navbar-item {
 }
 body .navbar .navbar-item:hover, body .navbar .navbar-item.is-active, body .navbar .navbar-link:hover, body .navbar .navbar-link.is-active {
   background-color: var(--navHover, var(--hover, '#333'))!important;
-  color: var(--foreground, '#252525')!important;
 }
 body .navbar-item.sspl-avatar {
   padding: 6px .75rem;
