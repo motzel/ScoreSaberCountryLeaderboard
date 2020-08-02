@@ -1,4 +1,7 @@
 # Changelog
+0.8.9.7
+ - fix !bsr copy to clipboard in Firefox, thx Drakonno 
+ 
 0.8.9.6
  - add a rank to player profile that includes additional country players
  
