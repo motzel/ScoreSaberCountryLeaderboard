@@ -7,7 +7,8 @@
     export let currentPage = 0;
     export let itemsPerPage = 10;
     export let itemsPerPageValues = [5, 10, 15, 20, 25];
-    export let displayMax = 11;
+    export let displayMax;
+    if (!displayMax) displayMax = 11;
     export let hide = false;
 
     let displayStart = false;
@@ -111,6 +112,7 @@
         max-width: none !important;
         justify-content: center;
         margin-top: 0;
+        margin-bottom: 0!important;
     }
     .pagination-previous, .pagination-next, .pagination-link {
         border-color: var(--alternate);

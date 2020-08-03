@@ -1,4 +1,7 @@
 # Changelog
+0.9
+ - new country ranking dashboard
+ 
 0.8.9.8
  - fix rank parsing, thx Sebanan
  

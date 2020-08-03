@@ -1,5 +1,5 @@
 import Profile from './Svelte/Components/Player/Profile.svelte';
-import CountryRanking from './Svelte/Components/Country/Ranking.svelte';
+import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
@@ -17,7 +17,6 @@ import {getCacheAndConvertIfNeeded, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getLeaderboard, getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
-import {filterByCountry, mapUsersToObj} from "./scoresaber/players";
 import importJsonData from "./utils/import";
 
 import twitch from './services/twitch';
@@ -485,53 +484,22 @@ async function setupProfile() {
 async function setupCountryRanking(diffOffset = 6) {
     log.info("Setup country ranking");
 
-    const users = (await getCacheAndConvertIfNeeded())?.users;
-    if (!users || !Object.keys(users).length) return;
+    const cont = document.querySelector('body > .section > .container');
+    if(!cont) {
+        log.error("Setup country ranking / container not found")
+        return;
+    }
 
-    const origTable = getBySelector('table.ranking.global');
+    cont.classList.add('original');
+    cont.style.display = 'none';
+    cont.parentNode.style.position = 'relative';
 
-    const pagination = getBySelector(
-        '.pagination',
-        origTable.parentNode.parentNode
-    );
-    const typeDiv = document.createElement('div');
-    pagination.insertBefore(typeDiv, getBySelector('br', pagination));
+    const newCont = document.createElement('main');
+    newCont.classList.add('container-fluid');
+    newCont.style.paddingTop = '3rem';
+    cont.parentNode.appendChild(newCont);
 
-    const typeItems = [
-        {value: 'sspl', label: 'Cached'},
-        {value: 'original', label: 'Original'}
-    ];
-    const selectedType = typeItems[0]
-    const typeSel = new Select({
-        target: typeDiv,
-        props: {
-            value: selectedType,
-            items: typeItems
-        }
-    })
-    typeSel.$on('change', e =>
-        Array.prototype.slice
-            .apply(
-                typeDiv
-                    .closest('.box')
-                    .querySelectorAll('table.ranking.global')
-            )
-            .map(
-                (tbl) => (tbl.style.display = tbl.classList.contains(e.detail.value)
-                    ? ''
-                    : 'none')
-            )
-    );
-
-    origTable.style.display = 'none';
-    origTable.classList.add('original');
-
-    new CountryRanking({
-        target: origTable.parentNode,
-        props: {
-            users: mapUsersToObj(filterByCountry(users), users)
-        }
-    });
+    new CountryDashboard({target: newCont});
 
     log.info("Setup country ranking / Done")
 }
