@@ -112,7 +112,7 @@
     }
 
     $: rows = users
-            .filter(s => (!min || (s[sortBy] && s[sortBy] > min)))
+            .filter(s => (!min || (s[sortBy] && s[sortBy] >= min)))
             .sort((a, b) => b[sortBy] - a[sortBy])
             .map((s, idx) => ({...s, rank: idx + 1}))
 </script>

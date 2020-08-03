@@ -48,7 +48,7 @@
         if (isPromise(promisedData)) {
             dataPage = await promisedData;
 
-            if(Array.isArray(dataPage)) return dataPage;
+            if (Array.isArray(dataPage)) return dataPage;
             else promisedData = dataPage;
         }
 
@@ -70,61 +70,65 @@
     $: totalItems = rows.length;
 </script>
 
-<table class={className}>
-    <thead>
-    <slot name="head">
-        {#if tableHeader && tableHeader.length && tableHeader[0].label !== null}
-            <tr>
-                {#each tableHeader as col (col)}
-                    <th class={col.className ? col.className : ''}>
-                        <slot name="head-col" col={col}>{col.label}</slot>
-                    </th>
-                {/each}
-            </tr>
-        {/if}
-    </slot>
-    </thead>
-
-    <tbody>
-    <slot name="body">
-        {#await currentPageDataPromise then _}
-            {#if dataPage && dataPage.length}
-                {#each dataPage as row, rowIdx (row)}
+{#await currentPageDataPromise then _}
+    {#if dataPage.length}
+        <table class={className}>
+            <thead>
+            <slot name="head">
+                {#if tableHeader && tableHeader.length && tableHeader[0].label !== null}
                     <tr>
-                        {#each tableHeader as head, colIdx (head)}
-                            <td class={row[head.key + '_className'] ? row[head.key + '_className'] : (head.className ? head.className : '')}>
-                                <slot name="body-col"
-                                      key={head.key}
-                                      rowIdx={rowIdx + page * itemsPerPage}
-                                      {colIdx}
-                                      {row}
-                                      col={row[head.key] !== undefined ? row[head.key] : null}
-                                      {head}>
-                                    {row[head.key] ? row[head.key] : ''}
-                                </slot>
-                            </td>
+                        {#each tableHeader as col (col)}
+                            <th class={col.className ? col.className : ''}>
+                                <slot name="head-col" col={col}>{col.label}</slot>
+                            </th>
                         {/each}
                     </tr>
-                {/each}
-            {/if}
-        {/await}
-    </slot>
-    </tbody>
+                {/if}
+            </slot>
+            </thead>
 
-    <tfoot>
-    <slot name="foot">
-        {#if tableFooter && tableFooter.length}
-            <tr>
-                {#each tableFooter as col (col)}
-                    <th class={col.className ? col.className : ''}>
-                        <slot name="foot-col" {col}>{col.label}</slot>
-                    </th>
-                {/each}
-            </tr>
-        {/if}
-    </slot>
-    </tfoot>
-</table>
+            <tbody>
+            <slot name="body">
+                {#if dataPage && dataPage.length}
+                    {#each dataPage as row, rowIdx (row)}
+                        <tr>
+                            {#each tableHeader as head, colIdx (head)}
+                                <td class={row[head.key + '_className'] ? row[head.key + '_className'] : (head.className ? head.className : '')}>
+                                    <slot name="body-col"
+                                          key={head.key}
+                                          rowIdx={rowIdx + page * itemsPerPage}
+                                          {colIdx}
+                                          {row}
+                                          col={row[head.key] !== undefined ? row[head.key] : null}
+                                          {head}>
+                                        {row[head.key] ? row[head.key] : ''}
+                                    </slot>
+                                </td>
+                            {/each}
+                        </tr>
+                    {/each}
+                {/if}
+            </slot>
+            </tbody>
+
+            <tfoot>
+            <slot name="foot">
+                {#if tableFooter && tableFooter.length}
+                    <tr>
+                        {#each tableFooter as col (col)}
+                            <th class={col.className ? col.className : ''}>
+                                <slot name="foot-col" {col}>{col.label}</slot>
+                            </th>
+                        {/each}
+                    </tr>
+                {/if}
+            </slot>
+            </tfoot>
+        </table>
+    {:else}
+    <slot name="empty">Brak danych</slot>
+    {/if}
+{/await}
 
 {#if paged && totalItems > itemsPerPage}
     <Pager bind:currentPage={page} bind:itemsPerPage={itemsPerPage} {totalItems} {itemsPerPageValues}
