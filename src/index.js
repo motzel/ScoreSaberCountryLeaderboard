@@ -363,7 +363,7 @@ async function setupProfile() {
                     const globalRankA = rankLi.querySelector('a:first-of-type');
                     const rankA = rankLi.querySelector('a[href^="/global?country="]');
                     if(globalRankA && rankA) {
-                        const originalGlobalRank = getFirstRegexpMatch(/(\d+)$/, globalRankA.innerText);
+                        const originalGlobalRank = globalRankA.innerText.replace(/[^\d]/g,'');
                         const originalRank = getFirstRegexpMatch(/(\d+)$/, rankA.innerText);
                         const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
                         if (originalGlobalRank && originalRank && originalCountry) {

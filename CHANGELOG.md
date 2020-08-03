@@ -1,4 +1,7 @@
 # Changelog
+0.8.9.8
+ - fix rank parsing, thx Sebanan
+ 
 0.8.9.7
  - fix !bsr copy to clipboard in Firefox, thx Drakonno 
  
