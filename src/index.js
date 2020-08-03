@@ -490,41 +490,14 @@ async function setupCountryRanking(diffOffset = 6) {
         return;
     }
 
+    cont.classList.add('original');
     cont.style.display = 'none';
     cont.parentNode.style.position = 'relative';
 
-    const selCont = document.createElement('aside');
-    selCont.style.position = 'absolute';
-    selCont.style.top = '3rem';
-    selCont.style.left = '1.5rem';
-    cont.parentNode.appendChild(selCont);
-
     const newCont = document.createElement('main');
     newCont.classList.add('container-fluid');
-    newCont.style.paddingTop = '3.5rem';
+    newCont.style.paddingTop = '3rem';
     cont.parentNode.appendChild(newCont);
-
-    const typeItems = [
-        {value: 'sspl', label: 'Plugin'},
-        {value: 'original', label: 'Oryginał'}
-    ];
-    const selectedType = typeItems[0]
-    const typeSel = new Select({
-        target: selCont,
-        props: {
-            value: selectedType,
-            items: typeItems
-        }
-    })
-    typeSel.$on('change', e => {
-        if (e.detail.value === 'original') {
-            newCont.style.display = 'none';
-            cont.style.display = 'block';
-        } else {
-            cont.style.display = 'none';
-            newCont.style.display = 'block';
-        }
-    })
 
     new CountryDashboard({target: newCont});
 
