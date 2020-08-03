@@ -43,11 +43,13 @@
 
         if (!onDataPage) return dataPage;
 
-        const promisedData = onDataPage(dataPage, page, itemsPerPage);
+        let promisedData = onDataPage(dataPage, page, itemsPerPage);
 
         if (isPromise(promisedData)) {
             dataPage = await promisedData;
-            return dataPage;
+
+            if(Array.isArray(dataPage)) return dataPage;
+            else promisedData = dataPage;
         }
 
         if (promisedData && promisedData.enhancePromise && typeof promisedData.enhancePromise === 'function') {

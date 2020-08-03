@@ -4,15 +4,16 @@
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
     import Table from '../Common/Table.svelte';
+    import Avatar from "../Common/Avatar.svelte";
 
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
     import {filterByCountry} from "../../../scoresaber/players";
-    import Avatar from "../Common/Avatar.svelte";
     import {getMainUserId} from "../../../plugin-config";
     import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let country;
+    export let itemsPerPage = 25;
     export let diff = 6;
 
     const diffOptions = [
@@ -28,7 +29,7 @@
 
         const data = await getCacheAndConvertIfNeeded();
         users = data.users;
-    })()
+    })();
 
     let selectedDiff = diffOptions.find(i => i.value === diff);
     let ranking = [];
@@ -70,7 +71,7 @@
     }
 </script>
 
-<Table {header} rows={ranking} itemsPerPage={20} pagesDisplayMax={7} className="ranking global sspl">
+<Table {header} rows={ranking} {itemsPerPage} pagesDisplayMax={7} className="ranking global sspl">
     <span slot="head-col" let:col>{col.label}</span>
 
     <span slot="body-col" let:key let:rowIdx let:row>
