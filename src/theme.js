@@ -67,5 +67,12 @@ export const themes = {
     },
 }
 
-export const setTheme = name => (themes[name] ? themes[name] : 'darkss').def.map(s => document.documentElement.style.setProperty('--' + s[0], s[1]))
+// temporary SSE workaround
+const sseVars = [
+    ['color-ahead', 'rgb(0, 128, 0)'],
+    ['color-behind', 'rgb(128, 0, 0)'],
+    ['color-highlight', 'darkgreen']
+];
+
+export const setTheme = name => (themes[name] ? themes[name] : 'darkss').def.concat(sseVars).map(s => document.documentElement.style.setProperty('--' + s[0], s[1]))
 export const setSsDefaultTheme = () => setTheme(getComputedStyle(document.documentElement).getPropertyValue('--foreground').length ? 'darkss' : 'lightss')
