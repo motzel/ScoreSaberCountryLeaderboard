@@ -2,6 +2,7 @@
     import {filterByCountry} from "../../../scoresaber/players";
     import {getCacheAndConvertIfNeeded} from "../../../store";
     import {dateFromString} from "../../../utils/date";
+    import {extractDiffAndType, getSongDiffInfo} from "../../../song";
 
     import Table from '../Common/Table.svelte';
     import Avatar from "../Common/Avatar.svelte";
@@ -11,7 +12,7 @@
     import Date from "../Common/Date.svelte";
     import Song from "../Song/Song.svelte";
     import Value from "../Common/Value.svelte";
-    import {extractDiffAndType, getSongDiffInfo} from "../../../song";
+    import Difficulty from "../Common/Difficulty.svelte";
 
     export let country;
     export let sortBy = 'timeset'
@@ -46,6 +47,7 @@
                                     .map(s => {
                                         s.scoreMult = s.uScore ? s.score / s.uScore : 1;
                                         s.acc = s.maxScoreEx ? s.score / s.maxScoreEx / s.scoreMult * 100 : null;
+                                        s.diffInfo = extractDiffAndType(s.diff);
 
                                         return {
                                             ...s,
@@ -67,14 +69,14 @@
         for (const i in data) {
             if (!data[i].maxScoreEx) {
                 try {
-                    const songInfo = await getSongDiffInfo(data[i].id, extractDiffAndType(data[i].diff), true);
+                    const songInfo = await getSongDiffInfo(data[i].id, data[i].diffInfo, true);
                     if (songInfo) {
                         data[i].maxScoreEx = songInfo.maxScore;
                         data[i].acc = data[i].maxScoreEx ? data[i].score / data[i].maxScoreEx / data[i].scoreMult * 100 : null;
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
-                            promise: getSongDiffInfo(data[i].id, extractDiffAndType(data[i].diff), false),
+                            promise: getSongDiffInfo(data[i].id, data[i].diffInfo, false),
                             song: data[i],
                             page
                         })
@@ -128,16 +130,19 @@
         {:else if key === 'player'}
             <Player user={row.playerInfo}/>
         {:else if key === 'song'}
-            <Song song={row}>
-                <figure>
-                    <div class="songinfo">
-                        <span class="name">{row.name}</span>
-                        <div class="author">{row.songAuthorName}
-                            <small>{row.levelAuthorName}</small>
+            <div class="song-cont">
+                <Difficulty diff={row.diffInfo} useShortName={true} reverseColors={true}/>
+                <Song song={row}>
+                    <figure>
+                        <div class="songinfo">
+                            <span class="name">{row.name}</span>
+                            <div class="author">{row.songAuthorName}
+                                <small>{row.levelAuthorName}</small>
+                            </div>
                         </div>
-                    </div>
-                </figure>
-            </Song>
+                    </figure>
+                </Song>
+            </div>
         {:else if key === 'timeset'}
             <Date date={row.timeset}/>
         {:else if key === 'acc'}
@@ -174,6 +179,15 @@
 
     :global(.sspl tbody td.player .player-name) {
         font-size: inherit !important;
+    }
+
+    .song-cont {
+        display:flex;
+        align-items: center;
+    }
+
+    :global(.song-cont figure) {
+        margin-left: .5rem;
     }
 
     :global(.sspl td.song .songinfo) {

@@ -1,4 +1,7 @@
 # Changelog
+0.9.0.1
+ - add difficulty info to songs on country dashboard, thx Sombra
+ 
 0.9
  - new country ranking dashboard
  
