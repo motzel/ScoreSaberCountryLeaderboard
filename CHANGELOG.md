@@ -1,4 +1,7 @@
 # Changelog
+0.9.0.3
+ - add background cover to song leaderboard
+ 
 0.9.0.2
  - SSE workaround
  

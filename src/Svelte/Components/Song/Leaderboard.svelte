@@ -1,4 +1,5 @@
 <script>
+    import {onMount} from 'svelte';
     import {hoverable} from '../../Actions/hoverable';
 
     import Avatar from '../Common/Avatar.svelte';
@@ -19,21 +20,26 @@
     export let leaderboardId;
     export let tableOnly = false;
     export let showDiff;
+    export let bgLeft = "0rem";
+    export let bgTop = "0rem";
+
 
     let leaderboard = [];
     let mainUserId;
 
     let showWhatIfPp = false;
+    let showBgCover = true;
 
-    (async () => {
+    onMount(async () => {
         mainUserId = await getMainUserId()
 
         const config = await getConfig('songLeaderboard');
         showDiff = undefined !== showDiff ? !!config.showDiff : true;
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
+        showBgCover = config.showBgCover === false ? false : true;
 
         leaderboard = await getLeaderboard(leaderboardId);
-    })()
+    })
 
     let tooltip;
     let tooltipHistory = [];
@@ -71,7 +77,7 @@
     }
 </script>
 
-<div bind:this={leaderboardContainer} class="leaderboard-container">
+<div bind:this={leaderboardContainer} class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
 
 {#if !tableOnly}
     <div class="refresh"><Refresh on:new-rankeds={onNewRankeds} on:data-refreshed/></div>
@@ -142,6 +148,20 @@
 </div>
 
 <style>
+    .leaderboard-container:before {
+        position: absolute;
+        content: ' ';
+        background-image: var(--background-image);
+        left: var(--bgLeft, 0);
+        top: var(--bgTop, 0);
+        width: calc(100% - var(--bgLeft) - var(--bgLeft));
+        height: calc(100% - var(--bgTop) - var(--bgTop));
+        background-repeat: no-repeat;
+        background-size: cover;
+        opacity: 0.1;
+        pointer-events: none;
+    }
+
     .sspl tbody {padding-bottom: 2rem;}
     .sspl th, .sspl td {
         padding: .5rem;

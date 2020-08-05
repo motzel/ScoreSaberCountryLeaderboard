@@ -238,6 +238,8 @@
             origTheme = defaultTheme;
         }
 
+        if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
+
         filterSortTypes();
 
         let twitchProfile = await twitch.getProfileName(profileId);
@@ -449,6 +451,11 @@
                     <label class="checkbox">
                         <input type="checkbox" bind:checked={config.songLeaderboard.showWhatIfPp}>
                         Pokazuj "jeśli tak zagrasz"
+                    </label>
+
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.songLeaderboard.showBgCover}>
+                        Pokazuj okładkę w tle
                     </label>
                 </div>
             </section>

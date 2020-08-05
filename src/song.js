@@ -105,6 +105,7 @@ export async function getLeaderboard(leaderboardId) {
 
             const { scores, ...user } = data.users[userId];
             const {
+                id: songHash,
                 score,
                 uScore,
                 timeset,
@@ -135,6 +136,7 @@ export async function getLeaderboard(leaderboardId) {
             const scoreMult = uScore && score ? score / uScore : 1
             cum.push(
                 Object.assign({}, user, {
+                    songHash,
                     score,
                     timeset,
                     rank,

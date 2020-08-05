@@ -7,7 +7,6 @@ import Refresh from './Svelte/Components/Common/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import File from './Svelte/Components/Common/File.svelte';
-import Select from './Svelte/Components/Common/Select.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
