@@ -13,6 +13,7 @@
     import Song from "../Song/Song.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
+    import Leaderboard from "../Song/Leaderboard.svelte";
 
     export let country;
     export let sortBy = 'timeset'
@@ -119,7 +120,7 @@
             .map((s, idx) => ({...s, rank: idx + 1}))
 </script>
 
-<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} className="ranking global sspl">
+<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} className="ranking global sspl">
     <span slot="head-col" let:col>{col.label}</span>
 
     <span slot="body-col" let:key let:row>
@@ -150,6 +151,10 @@
         {:else if key === 'pp'}
             <Pp pp="{row.pp}" zero="-"/>
         {/if}
+    </span>
+
+    <span slot="details" let:row>
+        <Leaderboard leaderboardId={row.leaderboardId} tableOnly={true} showDiff={false} />
     </span>
 </Table>
 

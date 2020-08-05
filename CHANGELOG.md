@@ -1,4 +1,7 @@
 # Changelog
+0.9.0.4
+ - add song leaderboard preview to top/last song on the country dashboard
+ 
 0.9.0.3
  - add background cover to song leaderboard
  
