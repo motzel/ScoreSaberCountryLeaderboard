@@ -1,4 +1,7 @@
 # Changelog
+0.9.0.6
+ - add refresh button to country dashboard
+ 
 0.9.0.5
  - fixed bug with current page in song browser when filtering narrowing down total count
  

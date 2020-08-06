@@ -5,6 +5,7 @@
     import Button from "../Common/Button.svelte";
     import Range from "../Common/Range.svelte";
     import Select from "../Common/Select.svelte";
+    import Refresh from "../Common/Refresh.svelte";
 
     export let country = config.COUNTRY;
 
@@ -25,6 +26,13 @@
         newCont.style.display = 'none';
         cont.style.display = 'block';
     }
+
+    let lastScoresComponent;
+    let topScoresComponent;
+    function onDataRefreshed() {
+        lastScoresComponent.refreshUsers();
+        topScoresComponent.refreshUsers();
+    }
 </script>
 
 <div class="columns is-multiline">
@@ -44,12 +52,18 @@
     <div class="scores content column is-full-tablet is-half-widescreen is-three-fifths-fullhd">
         <div class="box has-shadow">
             <header>
-                <h2 class="title is-5">Ostatnie wyniki</h2>
+                <h2>
+                    <div class="title is-5">Ostatnie wyniki</div>
+                    <div class="refresh">
+                        <Refresh on:data-refreshed={onDataRefreshed} />
+                    </div>
+                </h2>
                 <nav>
                     <Select bind:value={selectedSongPeriod} items={lastSongsPeriods} right={true}/>
                 </nav>
             </header>
-            <Songs {country} sortBy="timeset" min={new Date(Date.now()-selectedSongPeriod.value*1000*60*60*24)}
+            <Songs bind:this={lastScoresComponent} {country} sortBy="timeset"
+                   min={new Date(Date.now()-selectedSongPeriod.value*1000*60*60*24)}
                    itemsPerPage={5} pagesDisplayMax={7} noRank={true}/>
         </div>
 
@@ -61,7 +75,7 @@
                 </nav>
             </header>
 
-            <Songs {country} sortBy="pp" min={minPp} itemsPerPage={5} pagesDisplayMax={7}/>
+            <Songs bind:this={topScoresComponent} {country} sortBy="pp" min={minPp} itemsPerPage={5} pagesDisplayMax={7}/>
         </div>
     </div>
 </div>
@@ -74,7 +88,22 @@
     }
 
     .box h2 {
-        margin-bottom: 0rem;
+        margin-bottom: 0;
+    }
+
+    .box h2 {
+        display: flex;
+        align-items: center;
+    }
+
+    .box h2 .title {
+        margin-bottom: 0;
+    }
+
+    .box h2 .refresh {
+        margin-left: 1rem;
+        margin-top: .5em;
+        font-size: 1rem;
     }
 
     header {

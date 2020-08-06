@@ -34,7 +34,8 @@
     let rows = [];
 
     let users = [];
-    (async () => {
+
+    export async function refreshUsers() {
         const data = await getCacheAndConvertIfNeeded();
 
         users = filterByCountry(data.users, country)
@@ -61,6 +62,10 @@
                     return cum;
                 }, [])
         ;
+    }
+
+    (async () => {
+        await refreshUsers();
     })();
 
     async function onDataPage(data, page) {
