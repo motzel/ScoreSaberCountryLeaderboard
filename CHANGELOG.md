@@ -1,4 +1,7 @@
 # Changelog
+0.9.0.5
+ - fixed bug with current page in song browser when filtering narrowing down total count
+ 
 0.9.0.4
  - add song leaderboard preview to top/last song on the country dashboard
  

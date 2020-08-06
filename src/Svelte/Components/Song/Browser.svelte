@@ -694,6 +694,8 @@
     async function calculate(playerId, snipedIds, filters) {
         calculating = true;
 
+        currentPage = 0;
+
         await delay(0);
 
         // main player series index
