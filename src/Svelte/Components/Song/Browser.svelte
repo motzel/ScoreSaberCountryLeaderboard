@@ -1,7 +1,7 @@
 <script>
     import log from '../../../utils/logger';
     import {findRawPp, getTotalUserPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
-    import {getRankedSongs, RANKED} from "../../../scoresaber/rankeds";
+    import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
@@ -740,6 +740,9 @@
             const allPlayedSongsObj = convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId')
             RANKED.forEach(id => {
                 if (allPlayedSongsObj[id]) allRankeds = {...allRankeds, [id]: {...allPlayedSongsObj[id], stars: 0.01}};
+            })
+            UNRANKED.forEach(id => {
+                delete allRankeds[id];
             })
 
             const filteredSongs = (await Promise.all((
