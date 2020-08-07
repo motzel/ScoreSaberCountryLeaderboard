@@ -92,15 +92,6 @@
                 order: 'desc',
                 enabled: true
             });
-        else if (allFilters.songType.id !== 'rankeds_unplayed' && !snipedIds.length)
-            types.push({
-                label: 'Data zagrania',
-                type: 'series',
-                subtype: 0,
-                field: 'timeset',
-                order: 'desc',
-                enabled: true
-            });
 
         if (allFilters.songType.id !== 'unrankeds')
             types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
@@ -129,7 +120,7 @@
                             enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                     ].forEach(field => {
-                        if (field.enabled && (snipedIds.length || 'sniper_mode' === allFilters.songType.id))
+                        if (field.enabled)
                             newFields.push({
                                 label: field.label,
                                 type: 'series',

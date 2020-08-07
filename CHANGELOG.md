@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.2
+ - fix available sort options for each type in song browser 
+ 
 0.9.1.1
  - some minor bug fixes
  
