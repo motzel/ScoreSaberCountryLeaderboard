@@ -159,7 +159,7 @@
     </span>
 
     <span slot="details" let:row>
-        <Leaderboard leaderboardId={row.leaderboardId} tableOnly={true} showDiff={false} />
+        <Leaderboard leaderboardId={row.leaderboardId} tableOnly={true} showDiff={false} highlight={[row.playerId]} />
     </span>
 </Table>
 

@@ -22,16 +22,16 @@
     export let showDiff;
     export let bgLeft = "0rem";
     export let bgTop = "0rem";
-
+    export let highlight = [];
 
     let leaderboard = [];
-    let mainUserId;
 
     let showWhatIfPp = false;
     let showBgCover = true;
 
     onMount(async () => {
-        mainUserId = await getMainUserId()
+        const mainUserId = await getMainUserId()
+        if (mainUserId) highlight.push(mainUserId);
 
         const config = await getConfig('songLeaderboard');
         showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
@@ -101,7 +101,7 @@
 
     <tbody use:hoverable on:hover={onHover} on:unhover={onUnhover}>
     {#each leaderboard as item, idx (item.id)}
-        <tr class={(item.hidden ? 'hidden' : '') + (mainUserId === item.id ? ' main' : '')} data-id={item.id}>
+        <tr class={(item.hidden ? 'hidden' : '') + (highlight.includes(item.id) ? ' main' : '')} data-id={item.id}>
             <td class="picture"><Avatar playerId={item.id} /></td>
             <td class="rank">
                 <Rank rank={idx+1} url={'/leaderboard/' +
