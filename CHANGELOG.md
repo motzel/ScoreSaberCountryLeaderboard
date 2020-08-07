@@ -1,4 +1,9 @@
 # Changelog
+0.9.1
+ - add players comparision in song browser
+ - highlight current player on song leaderboard previewed from country dashboard
+ - some minor UI fixes
+ 
 0.9.0.6
  - add refresh button to country dashboard
  

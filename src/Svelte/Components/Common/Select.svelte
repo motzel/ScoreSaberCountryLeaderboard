@@ -33,11 +33,13 @@
             })
 
             value = newValue.sort((a, b) => a.idx - b.idx)
-        } else {
-            value = value === items[idx] && minSelected < 1 ? null : items[idx];
-        }
 
-        dispatch('change', value);
+            dispatch('change', value);
+        } else if (value !== items[idx] || minSelected < 1) {
+            value = value === items[idx] && minSelected < 1 ? null : items[idx];
+
+            dispatch('change', value);
+        }
     }
 
     $: current = value && (!Array.isArray(value) || value.length) ? (Array.isArray(value) ? value : [value.label ? value : {label: value}]).map(v => v.label).join(', ') : noSelected

@@ -3,7 +3,7 @@
     import {findRawPp, getTotalUserPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
     import {getRankedSongs, RANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
-    import {getCacheAndConvertIfNeeded} from "../../../store";
+    import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
@@ -79,7 +79,7 @@
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     const generateSortTypes = async _ => {
-        const types = [];
+        let types = [];
 
         const data = (await getCacheAndConvertIfNeeded());
 
@@ -92,7 +92,7 @@
                 order: 'desc',
                 enabled: true
             });
-        else if (allFilters.songType.id !== 'rankeds_unplayed')
+        else if (allFilters.songType.id !== 'rankeds_unplayed' && !snipedIds.length)
             types.push({
                 label: 'Data zagrania',
                 type: 'series',
@@ -109,10 +109,10 @@
         if (data && data.users) {
             userIds.forEach((pId, idx) => {
                 const name = data.users[pId] ? data.users[pId].name : null;
-                if (userIds.length > 1) types.push({label: name, type: 'label'})
                 if (name) {
+                    const newFields = [];
                     [
-                        {field: "timeset", label: "Data zagrania", enabled: true},
+                        {field: "timeset", label: "Data zagrania", enabled: pId !== playerId || allFilters.songType.id !== 'rankeds_unplayed'},
                         {
                             field: "diffPp",
                             label: "+PP global",
@@ -121,16 +121,16 @@
                         {
                             field: "pp",
                             label: "PP",
-                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id)
+                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                         {
                             field: "acc",
                             label: "Celność",
-                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id)
+                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                     ].forEach(field => {
-                        if (field.enabled && (field.field !== 'timeset' || allFilters.songType.id === 'sniper_mode'))
-                            types.push({
+                        if (field.enabled && (snipedIds.length || 'sniper_mode' === allFilters.songType.id))
+                            newFields.push({
                                 label: field.label,
                                 type: 'series',
                                 subtype: idx,
@@ -139,6 +139,11 @@
                                 enabled: true
                             })
                     })
+
+                    if (newFields.length) {
+                        if (userIds.length > 1) types.push({label: name, type: 'label'})
+                        types = types.concat(newFields);
+                    }
                 }
             })
         }
@@ -324,6 +329,8 @@
     (async () => {
         if (!playerId) playerId = await getMainUserId()
 
+        const config = await getConfig('songBrowser');
+
         // add snipeds if not defined
         if (!snipedIds || !snipedIds.length) {
             countryRanking = await getCountryRanking();
@@ -332,6 +339,8 @@
                 if (player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
                 if (player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
             }
+
+            if (config.compareTo && Array.isArray(config.compareTo)) snipedIds = [...config.compareTo];
         }
 
         allRankeds = await getRankedSongs();
@@ -350,7 +359,6 @@
 
         minStarsForSniper = await getCachedMinStars(playerId, minPpPerMap)
 
-        const config = await getConfig('songBrowser');
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
 
         if (config.defaultView) {
@@ -588,7 +596,7 @@
 
                 selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
 
-                generateSortTypes();
+                await generateSortTypes();
                 break;
 
             case 'all':
@@ -600,7 +608,7 @@
 
                 allFilters.starsFilter.from = 0;
 
-                generateSortTypes();
+                await generateSortTypes();
                 break;
 
             case 'sniper_mode':
@@ -612,7 +620,9 @@
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper, 1);
 
-                generateSortTypes();
+                if (!snipedIds.length) snipedIds = [...sniperModeIds];
+
+                await generateSortTypes();
                 break;
 
             case 'rankeds':
@@ -625,7 +635,7 @@
 
                 allFilters.starsFilter.from = 0;
 
-                generateSortTypes();
+                await generateSortTypes();
                 break;
         }
 
@@ -986,11 +996,47 @@
         ;
     }
 
-    function onPlayerSelected(e, seriesIdx) {
+    let comparisionModified = false;
+
+    async function onPlayerSelected(e, seriesIdx) {
         if (snipedIds[seriesIdx - 1]) {
             snipedIds[seriesIdx - 1] = e.detail.id;
-        } else if (!snipedIds.length && 'sniper_mode' === allFilters.songType.id && sniperModeIds[seriesIdx - 1]) {
-            sniperModeIds[seriesIdx - 1] = e.detail.id;
+
+            await generateSortTypes();
+
+            comparisionModified = true;
+        }
+    }
+
+    async function onPlayerRemove(seriesIdx) {
+        if (snipedIds[seriesIdx - 1]) {
+            snipedIds = snipedIds.filter((s,idx) => idx !== seriesIdx - 1);
+
+            await generateSortTypes();
+
+            comparisionModified = true;
+        }
+    }
+
+    async function onAddPlayerToCompare() {
+        if (!users.length) return;
+
+        snipedIds = [...snipedIds, users.filter(u => !snipedIds.includes(u.id))[0].id];
+
+        await generateSortTypes();
+
+        comparisionModified = true;
+    }
+
+    async function onSaveComparision() {
+        const data = await getCacheAndConvertIfNeeded();
+        const songBrowserConfig = await getConfig('songBrowser');
+        if (songBrowserConfig) {
+            songBrowserConfig.compareTo = snipedIds;
+
+            await setCache(data);
+
+            comparisionModified = false;
         }
     }
 
@@ -999,8 +1045,9 @@
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
-    $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'sniper_mode' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
+    $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters) : null;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
+    $: comparePossible = users.length && snipedIds.length < 3;
 </script>
 
 {#if initialized}
@@ -1047,6 +1094,14 @@
             <header>Sortowanie</header>
             <Select bind:value={allFilters.sortBy} items={sortTypes}/>
         </div>
+
+        <div class="player-compare-btns">
+            <header></header>
+            <Button iconFa="fas fa-balance-scale" label="Porównaj" title="Dodaj gracza do porównania" on:click={onAddPlayerToCompare} disabled={!comparePossible} />
+            {#if comparisionModified}
+                <Button iconFa="fas fa-save" type="primary" label="Zapisz" title="Zapisz jako domyślne" on:click={onSaveComparision} />
+            {/if}
+        </div>
     </div>
 
     {#await pagedPromised}
@@ -1070,7 +1125,8 @@
                             {#if viewType.id === 'compact'}
                                 <th class="left down player-sel">
                                     {#if sIdx > 0}
-                                    <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
+                                        <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
+                                        <i class="fas fa-times player-remove" title="Usuń z porównania" on:click={() => onPlayerRemove(sIdx)}></i>
                                     {:else}
                                         {series.name}
                                     {/if}
@@ -1078,7 +1134,14 @@
                             {:else}
                                 {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
                                     <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
-                                        class="series left player-sel">{series.name}</th>
+                                        class="series left player-sel">
+                                        {#if sIdx > 0}
+                                            <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
+                                            <i class="fas fa-times player-remove" title="Usuń z porównania" on:click={() => onPlayerRemove(sIdx)}></i>
+                                        {:else}
+                                            {series.name}
+                                        {/if}
+                                    </th>
                                 {/if}
                             {/if}
                         {/each}
@@ -1317,10 +1380,24 @@
 
     thead th.player-sel {
         max-width: 12rem;
+        position: relative;
     }
 
     :global(thead th.player-sel .multi-select .dropdown, thead th.player-sel .multi-select .dropdown-trigger) {
         width: 100%;
+    }
+
+    thead th.player-sel .player-remove {
+        display: none;
+        position: absolute;
+        top: .125rem;
+        right: .125rem;
+        color: var(--decrease, red);
+        cursor: pointer;
+    }
+
+    thead th.player-sel:hover .player-remove {
+        display: inline;
     }
 
     thead th.song, thead th.stars {
@@ -1338,7 +1415,6 @@
 
     thead th.series {
         width: 6rem;
-        overflow-x: hidden;
         border-bottom-style: dotted;
         border-bottom-width: 1px;
     }
@@ -1543,6 +1619,10 @@
     :global(.filters .filter-diff-pp > div) {
         position: relative;
         top: .5em;
+    }
+
+    .player-compare-btns {
+        font-size: .875rem;
     }
 
     div.info {
