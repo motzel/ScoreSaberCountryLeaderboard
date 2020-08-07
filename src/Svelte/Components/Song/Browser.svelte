@@ -1,12 +1,6 @@
 <script>
     import log from '../../../utils/logger';
-    import {
-        findRawPp, getEstimatedAcc,
-        getAllRankedsWithUserScores,
-        getTotalUserPp,
-        PP_PER_STAR,
-        ppFromScore, getWeightedPp
-    } from "../../../scoresaber/pp";
+    import {findRawPp, getTotalUserPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
     import {getRankedSongs, RANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded} from "../../../store";
@@ -308,14 +302,6 @@
             displayed: true
         },
         {
-            label: 'Pokazuj potencjał',
-            name: 'Potencjał',
-            key: 'estimate',
-            type: 'other',
-            displayed: false,
-            selected: false
-        },
-        {
             label: 'Ikony akcji',
             name: '',
             key: 'icons',
@@ -395,42 +381,12 @@
         return await getCachedTotalPlayerPp(playerId, newSongPp) - await getCachedTotalPlayerPp(playerId);
     }
     const getCachedScoreWithNewPp = memoize(getScoreWithNewPp);
-    const getPlayerSongEstimate = async (playerId, leaderboardId, stars) => {
-        const userScore = await getCachedSeriesSongScore(playerId, leaderboardId, null)
-        const userRankedScores = await getAllRankedsWithUserScores(playerId);
-
-        const userEstimatedAcc = getEstimatedAcc(stars, userRankedScores) * 100;
-        const useEstimated = !userScore.acc || userScore.acc < userEstimatedAcc
-        const pp = useEstimated ? stars * PP_PER_STAR * ppFromScore(userEstimatedAcc) : userScore.pp;
-
-        const maxScore = userScore.maxScoreEx ? userScore.maxScoreEx : 0;
-        const score = useEstimated ? userEstimatedAcc * maxScore / 100 : userScore.score;
-
-        return {
-            leaderboardId,
-            acc: useEstimated ? userEstimatedAcc : userScore.acc,
-            prevAcc: userScore.acc,
-            score,
-            prevScore: userScore.score,
-            pp,
-            prevPp: userScore.pp,
-            timeset: !useEstimated ? userScore.timeset : null,
-            diff: useEstimated
-                    ? await getCachedScoreWithNewPp(playerId, {[leaderboardId]: {pp}})
-                    : 0,
-            best: false
-        }
-    }
-    const getCachedPlayerSongEstimate = memoize(getPlayerSongEstimate);
     const getSeriesSong = (leaderboardId, series) => series && series.scores && series.scores[leaderboardId] ? series.scores[leaderboardId] : null;
-    const findBestInSeries = (series, leaderboardId, withEstimated = true, key = 'score') => {
+    const findBestInSeries = (series, leaderboardId, key = 'score') => {
         let bestIdx = null;
         let bestValue = null;
 
         series.forEach((s, idx) => {
-            // skip estimated scores
-            if (!withEstimated && s.estimateId) return null;
-
             const value = s.scores[leaderboardId] && s.scores[leaderboardId][key] ? s.scores[leaderboardId][key] : null
             if (value && (!bestValue || value > bestValue)) {
                 bestValue = value;
@@ -466,12 +422,6 @@
     const playerDoesNotPlaySongYet = (leaderboardId, series) => !getSeriesSong(leaderboardId, series)
     const playerIsNotTheBest = (leaderboardId, series) => !getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best
     const nobodyPlayedItYet = song => song.bestIdx === null;
-    const playerAccIsLowerThanEstimated = (leaderboardId, playerSeries, estSeries, minDiff = 1) => {
-        const playerScore = getSeriesSong(leaderboardId, playerSeries);
-        const estScore = getSeriesSong(leaderboardId, estSeries);
-
-        return !playerScore || (estScore && playerScore.acc < estScore.acc && estScore.diff > minDiff);
-    }
 
     function getSongValueByKey(song, key) {
         return song[key] ? song[key] : null;
@@ -617,7 +567,6 @@
                 getObjectFromArrayByKey(allColumns, 'pp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = false;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
 
@@ -628,7 +577,6 @@
                 getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
 
@@ -641,7 +589,6 @@
                 getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
-                // getObjectFromArrayByKey(allColumns, 'estimate').displayed = true;
 
                 selectedColumns = allColumns.filter(c => c.displayed && (selectedColumns.includes(c) || ['diffPp', 'pp'].includes(c.key)))
 
@@ -655,7 +602,6 @@
                 getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'estimate').displayed = false;
 
                 selectedColumns = allColumns.filter(c => c.displayed && (selectedColumns.includes(c) || ['pp'].includes(c.key)))
 
@@ -838,13 +784,12 @@
                             }
                         })
 
-                        const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, true, 'score');
+                        const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, 'score');
                         if (null !== bestIdx) {
                             const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
-                            const isBestEstimated = playersSeries[bestIdx];
 
                             if (bestSeries) {
-                                bestSeries.best = !isBestEstimated;
+                                bestSeries.best = true;
 
                                 s.bestIdx = bestIdx;
                                 s.bestAcc = bestSeries.acc;
@@ -857,22 +802,6 @@
                                 s.bestRealScore = bestSeries.score;
                                 s.bestRealPp = bestSeries.pp;
                                 s.bestRealDiffPp = bestSeries.diffPp;
-                            }
-
-                            if (isBestEstimated) {
-                                const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, false, 'score');
-                                if (null !== bestIdx) {
-                                    const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
-                                    if (bestSeries) {
-                                        bestSeries.best = true;
-
-                                        s.bestRealIdx = bestIdx;
-                                        s.bestRealAcc = bestSeries.acc;
-                                        s.bestRealScore = bestSeries.score;
-                                        s.bestRealPp = bestSeries.pp;
-                                        s.bestRealDiffPp = bestSeries.diffPp;
-                                    }
-                                }
                             }
                         }
 
@@ -1045,7 +974,6 @@
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(playerId, snipedIds.concat(!snipedIds.length && 'sniper_mode' === allFilters.songType.id ? sniperModeIds : []), allFilters) : null;
-    // $: withEstimate = getObjectFromArrayByKey(allColumns, 'estimate').selected;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
 </script>
 
@@ -1112,7 +1040,7 @@
                                 rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
                         {/each}
 
-                        {#each songsPage.series as series (series.id+'_'+series.estimateId)}
+                        {#each songsPage.series as series (series.id)}
                             {#if viewType.id === 'compact'}
                                 <th class="left down">{series.name}</th>
                             {:else}
@@ -1130,7 +1058,7 @@
 
                     {#if viewType.id !== 'compact'}
                         <tr>
-                            {#each songsPage.series as series (series.id+'_'+series.estimateId)}
+                            {#each songsPage.series as series (series.id)}
                                 {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                     <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
                                 {/if}{/each}
@@ -1174,7 +1102,7 @@
                             </td>
                         {/each}
 
-                        {#each songsPage.series as series (series.id+'_'+series.estimateId)}
+                        {#each songsPage.series as series (series.id)}
                             {#if viewType.id === 'compact'}
                                 <td class="left compact series-{songsPage.series.length}"
                                     class:with-cols={selectedSongCols.length > 0}
@@ -1266,7 +1194,7 @@
                         <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                             colspan={2 + selectedSongCols.length}>
                             Razem dla {songsPage.series[0].name}</th>
-                        {#each songsPage.series as series, idx (series.id+'_'+series.estimateId)}
+                        {#each songsPage.series as series, idx (series.id)}
                             {#if viewType.id === 'tabular'}
                                 {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
                                     <th class="left"

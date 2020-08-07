@@ -92,44 +92,7 @@ export async function getUserSongScore(userId, leaderboardId)
     return (await getUserScores(userId))?.[leaderboardId];
 }
 
-export async function getAllRankedsWithUserScores(userId) {
-    const rankedMaps = await getRankedSongs();
-    const userScores = (await getCacheAndConvertIfNeeded())?.users?.[userId]?.scores;
-    return userScores ? Object.values(userScores)
-            .filter(s => s.pp > 0)
-            .map(s => Object.assign({}, s, {
-                timeset: dateFromString(s.timeset),
-                stars: rankedMaps?.[s.leaderboardId]?.stars,
-                acc: s.score / s.maxScoreEx
-            }))
-            .filter(s => s.stars)
-            .sort((a, b) => b.pp - a.pp)
-        : []
-        ;
-}
-
 // written by BaliBalo: https://github.com/BaliBalo/ScoreSaber/blob/master/pages/peepee.js
-export function getEstimatedAcc(stars, scores) {
-    let now = Date.now();
-    let decay = 1000 * 60 * 60 * 24 * 15;
-    let maxStars = Math.max(...scores.map(e => e.stars));
-    let data = scores.reduce((o, score) => {
-        let d = 2 * Math.abs(stars - score.stars);
-        let front = stars > score.stars ? d * d * d : 1;
-        let timeset = score.timeset || now;
-        let time = 1 + Math.max(now - timeset, 0) / decay;
-        let weight = 1 / (1 + d * time * front);
-        o.weight += weight;
-        o.sum += score.acc * weight;
-        return o;
-    }, { weight: 0, sum: 0 });
-    let result = data.weight ? data.sum / data.weight : 0;
-    if (stars > maxStars) {
-        let d = 2 * Math.abs(stars - maxStars);
-        result /= (1 + d * d);
-    }
-    return result;
-}
 export const PP_PER_STAR = 42.114296;
 const ppCurve = [
     { at: 0, value: 0 },
