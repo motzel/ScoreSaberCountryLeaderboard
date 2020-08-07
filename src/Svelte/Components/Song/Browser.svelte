@@ -8,24 +8,23 @@
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import {
+        filterByCountry,
         getCountryRanking,
         getPlayerInfo,
         getPlayerRankedScores,
-        getPlayerScores,
-        getPlayerSongScore
+        getPlayerScores
     } from "../../../scoresaber/players";
     import {
         extractDiffAndType,
         getHumanDiffInfo,
         getSongDiffInfo,
-        getSongMaxScore,
         getSongMaxScoreWithDiffAndType
     } from "../../../song";
     import {generateCsv, downloadCsv} from '../../../utils/csv';
-    import {onMount, tick} from "svelte";
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
-
+    import {getConfig, getMainUserId} from "../../../plugin-config";
+    import config from "../../../temp";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
 
     import Song from "./Song.svelte";
@@ -40,12 +39,13 @@
     import Value from "../Common/Value.svelte";
     import Button from "../Common/Button.svelte";
     import Select from "../Common/Select.svelte";
-    import {getConfig, getMainUserId} from "../../../plugin-config";
     import Leaderboard from "./Leaderboard.svelte";
 
     export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
+
+    const country = config.COUNTRY;
 
     let selectedColumns = [];
 
@@ -318,6 +318,8 @@
     ]
     let viewType = viewTypes[0];
 
+    let users = [];
+
     // initialize async values
     (async () => {
         if (!playerId) playerId = await getMainUserId()
@@ -370,6 +372,22 @@
         }
 
         await generateSortTypes();
+
+        const data = await getCacheAndConvertIfNeeded();
+        users = filterByCountry(data.users, country)
+                .reduce((cum, userId) => {
+                    if (data.users[userId] && data.users[userId].scores) {
+                        let {id, name, avatar, ssplCountryRank} = data.users[userId];
+                        ssplCountryRank = typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
+
+                        cum.push({id, label: name, avatar, ssplCountryRank});
+                    }
+                    return cum;
+                }, [])
+                .sort((a, b) => a.label.toLowerCase().replace(/[^a-zAZ]/g,'').localeCompare(b.label.toLowerCase().replace(/[^a-zAZ]/g,'')))
+                .slice(0, 50)
+                .filter(u => u.id !== playerId)
+        ;
 
         initialized = true;
     })();
@@ -968,6 +986,14 @@
         ;
     }
 
+    function onPlayerSelected(e, seriesIdx) {
+        if (snipedIds[seriesIdx - 1]) {
+            snipedIds[seriesIdx - 1] = e.detail.id;
+        } else if (!snipedIds.length && 'sniper_mode' === allFilters.songType.id && sniperModeIds[seriesIdx - 1]) {
+            sniperModeIds[seriesIdx - 1] = e.detail.id;
+        }
+    }
+
     $: shownColumns = allColumns.filter(c => c.displayed)
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
@@ -1040,13 +1066,19 @@
                                 rowspan={viewType.id === 'compact' ? 1 : 2}>{col.name}</th>
                         {/each}
 
-                        {#each songsPage.series as series (series.id)}
+                        {#each songsPage.series as series, sIdx (series.id)}
                             {#if viewType.id === 'compact'}
-                                <th class="left down">{series.name}</th>
+                                <th class="left down player-sel">
+                                    {#if sIdx > 0}
+                                    <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
+                                    {:else}
+                                        {series.name}
+                                    {/if}
+                                </th>
                             {:else}
                                 {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
                                     <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
-                                        class="series left">{series.name}</th>
+                                        class="series left player-sel">{series.name}</th>
                                 {/if}
                             {/if}
                         {/each}
@@ -1281,6 +1313,14 @@
         text-align: center;
         vertical-align: bottom !important;
         border-bottom-width: 2px;
+    }
+
+    thead th.player-sel {
+        max-width: 12rem;
+    }
+
+    :global(thead th.player-sel .multi-select .dropdown, thead th.player-sel .multi-select .dropdown-trigger) {
+        width: 100%;
     }
 
     thead th.song, thead th.stars {

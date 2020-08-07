@@ -119,6 +119,21 @@
     .dropdown-menu {
         right: 0;
         min-width: 12.6rem;
+        max-height: 25.5rem;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--selected, #3273dc) var(--foreground, #fff);
+    }
+    .dropdown-menu::-webkit-scrollbar {
+        width: .25rem;
+    }
+    body::-webkit-scrollbar-track {
+        background: var(--foreground, #fff);
+    }
+    .dropdown-menu::-webkit-scrollbar-thumb {
+        background-color: var(--selected, #3273dc) ;
+        border-radius: 6px;
+        border: 3px solid var(--selected, #3273dc);
     }
 
     .dropdown-menu.right {
