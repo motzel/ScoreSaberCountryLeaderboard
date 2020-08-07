@@ -65,8 +65,9 @@
         }
 
         if (promisedData && promisedData.enhancePromise && typeof promisedData.enhancePromise === 'function') {
-            promisedData.enhancePromise()
-                    .then(data => dataPage = data);
+            promisedData.enhancePromise().then(data => {
+                if (data) dataPage = data
+            });
         }
 
         if (promisedData && promisedData.data) {

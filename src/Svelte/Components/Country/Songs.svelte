@@ -22,6 +22,8 @@
     export let itemsPerPage = 10;
     export let pagesDisplayMax = 10;
 
+    let currentPage = 0;
+
     const header = [
         {label: '', key: 'picture', className: 'picture'},
         {label: '#', key: 'rank', className: 'rank'},
@@ -114,7 +116,9 @@
                         return all;
                     })
 
-                return data;
+                return promisesToResolve.length && promisesToResolve[0].page === currentPage
+                        ? data
+                        : null;
             }
         }
     }
@@ -122,10 +126,10 @@
     $: rows = users
             .filter(s => (!min || (s[sortBy] && s[sortBy] >= min)))
             .sort((a, b) => b[sortBy] - a[sortBy])
-            .map((s, idx) => ({...s, rank: idx + 1}))
+            .map((s, idx) => ({...s, rank: idx + 1}));
 </script>
 
-<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} className="ranking global sspl">
+<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} bind:page={currentPage} className="ranking global sspl">
     <span slot="head-col" let:col>{col.label}</span>
 
     <span slot="body-col" let:key let:row>
