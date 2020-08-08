@@ -67,11 +67,17 @@
         {id: 'rankeds_unplayed', label: 'Tylko niezagrane'},
         {id: 'sniper_mode', label: 'Tryb snajpera'},
     ]
+    let songTypeOptions = [
+        {id: 'all', label: 'Wszystkie'},
+        {id: 'not_best', label: 'Gdy NIEnajlepszy'},
+        {id: 'best', label: 'Gdy NAJlepszy'},
+    ];
     let sortTypes = [
         {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
     ]
     let allFilters = {
         songType: songTypes[0],
+        songTypeOption: songTypeOptions[0],
         name: "",
         starsFilter: {from: 0, to: maxStars},
         minPpDiff: 1,
@@ -403,15 +409,20 @@
         let bestIdx = null;
         let bestValue = null;
 
+        let playedByCnt = 0;
         series.forEach((s, idx) => {
             const value = s.scores[leaderboardId] && s.scores[leaderboardId][key] ? s.scores[leaderboardId][key] : null
-            if (value && (!bestValue || value > bestValue)) {
-                bestValue = value;
-                bestIdx = idx;
+            if (value) {
+                playedByCnt++;
+
+                if (!bestValue || value > bestValue) {
+                    bestValue = value;
+                    bestIdx = idx;
+                }
             }
         })
 
-        return bestIdx;
+        return {bestIdx, bestValue, playedByCnt};
     }
 
     async function getPlayerTotalPpWithBestScores(songs, key = 'bestRealPp') {
@@ -437,7 +448,8 @@
     // post-filters
     const bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiffPp && song.bestDiffPp > minPpDiff;
     const playerDoesNotPlaySongYet = (leaderboardId, series) => !getSeriesSong(leaderboardId, series)
-    const playerIsNotTheBest = (leaderboardId, series) => !getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best
+    const playerIsTheBest = (leaderboardId, series) => getSeriesSong(leaderboardId, series) && !!getSeriesSong(leaderboardId, series).best
+    const playerIsNotTheBest = (leaderboardId, series, playerHasScore = false) => (!getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best) && (!playerHasScore || !!getSeriesSong(leaderboardId, series))
     const nobodyPlayedItYet = song => song.bestIdx === null;
 
     function getSongValueByKey(song, key) {
@@ -806,12 +818,15 @@
                             }
                         })
 
-                        const bestIdx = findBestInSeries(playersSeries, s.leaderboardId, 'score');
+                        const {bestIdx, playedByCnt} = findBestInSeries(playersSeries, s.leaderboardId, 'score');
+                        s.playedByCnt = playedByCnt;
+
                         if (null !== bestIdx) {
                             const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
 
                             if (bestSeries) {
                                 bestSeries.best = true;
+                                bestSeries.playedByCnt = playedByCnt;
 
                                 s.bestIdx = bestIdx;
                                 s.bestAcc = bestSeries.acc;
@@ -850,8 +865,21 @@
 
                     // filter when sniper mode, player is the best and diff > minPpDiff
                     .filter(s =>
-                            filters.songType.id !== 'sniper_mode' ||
-                            (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                            (
+                                filters.songType.id === 'sniper_mode' &&
+                                (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                            ) ||
+
+                            (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
+
+                            (
+                                    'sniper_mode' !== allFilters.songType.id &&
+                                    (
+                                        allFilters.songTypeOption.id === 'all' ||
+                                        (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
+                                        (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
+                                    )
+                            )
                     )
 
                     .sort((songA, songB) => {
@@ -994,7 +1022,7 @@
 
     async function onPlayerSelected(e, seriesIdx) {
         if (snipedIds[seriesIdx - 1]) {
-            snipedIds[seriesIdx - 1] = e.detail.id;
+            snipedIds[seriesIdx - 1] = e.detail.value.id;
 
             await generateSortTypes();
 
@@ -1048,7 +1076,9 @@
     <div class="filters">
         <div>
             <header>Rodzaj</header>
-            <Select bind:value={allFilters.songType} items={songTypes} on:change={onSongTypeChange}/>
+            <Select bind:value={allFilters.songType} items={songTypes} on:change={onSongTypeChange}
+                    bind:option={allFilters.songTypeOption} optionItems={snipedIds && snipedIds.length && 'sniper_mode' !== allFilters.songType.id ? songTypeOptions : []}
+            />
         </div>
 
         <div class="filter-name">

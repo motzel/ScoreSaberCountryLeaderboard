@@ -7,24 +7,23 @@
     export let multiple = false;
     export let value = multiple ? [] : null
     export let items = [];
+    export let optionsLabel = 'Opcje';
+    export let optionMultiple = false;
+    export let option = optionMultiple ? [] : null;
+    export let optionItems  = [];
     export let noSelected = 'No item selected';
     export let minSelected = 1;
+    export let optionsMinSelected = 1;
     export let right = false;
 
-    function onMenuClick(e) {
-        const item = e.target.closest('.dropdown-item');
-        if (!item) return;
-
-        const idx = item.dataset.idx;
-        if (idx < 0 || idx >= items.length) return;
-
+    function processItems(items, value, clickedIdx, multiple = false, minSelected = 1) {
         if (multiple) {
-            const itemValueIdx = value ? value.findIndex(v => v === items[idx]) : -1;
+            const itemValueIdx = value ? value.findIndex(v => v === items[clickedIdx]) : -1;
             let newValue = [];
             if (itemValueIdx >= 0) {
                 newValue = value.filter((v, idx) => idx !== itemValueIdx || value.length <= minSelected)
             } else {
-                newValue = value.concat([items[idx]])
+                newValue = value.concat([items[clickedIdx]])
             }
 
             items.forEach((item, idx) => {
@@ -32,13 +31,40 @@
                 if (v) v.idx = idx;
             })
 
-            value = newValue.sort((a, b) => a.idx - b.idx)
+            return newValue.sort((a, b) => a.idx - b.idx)
+        } else if (value !== items[clickedIdx] || minSelected < 1) {
+            return value === items[clickedIdx] && minSelected < 1 ? null : items[clickedIdx];
+        }
 
-            dispatch('change', value);
-        } else if (value !== items[idx] || minSelected < 1) {
-            value = value === items[idx] && minSelected < 1 ? null : items[idx];
+        return null;
+    }
 
-            dispatch('change', value);
+    function onMenuClick(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (!item) return;
+
+        const idx = item.dataset.idx, optionIdx = item.dataset.optionIdx;
+        if (
+                (!idx && !optionIdx) ||
+                (idx && (idx < 0 || idx >= items.length)) ||
+                (optionIdx && (optionIdx < 0 || optionIdx >= optionItems.length))
+        )
+            return;
+
+        if (idx) {
+            const newValue = processItems(items, value, idx, multiple, minSelected);
+            if (newValue) {
+                value = newValue;
+
+                dispatch('change', {value, option, changed: 'value'});
+            }
+        } else {
+            const newOption = processItems(optionItems, option, optionIdx, optionMultiple, optionsMinSelected);
+            if (newOption) {
+                option = newOption;
+
+                dispatch('change', {value, option, changed: 'option'});
+            }
         }
     }
 
@@ -71,6 +97,26 @@
                         </div>
                     {/if}
                 {/each}
+                {#if optionItems.length}
+                    <hr class="dropdown-divider">
+                    <div class="menu-label">{optionsLabel}</div>
+                    {#each optionItems as optionItem, optionIdx (optionItem)}
+                        {#if optionItem.type === 'divider'}
+                            <hr class="dropdown-divider">
+                        {:else if optionItem.type === 'label'}
+                            <div class="menu-label">{optionItem.label}</div>
+                        {:else}
+                            <div class="dropdown-item"
+                                 class:is-active={option && (option === optionItem || (Array.isArray(option) && option.includes(optionItem)))}
+                                 data-option-idx={optionIdx}>
+                                <span>{optionItem.label}</span>
+                                {#if option && (option === optionItem || (Array.isArray(option) && option.includes(optionItem)))}
+                                    <span class="icon is-small"><i class="fas fa-check" aria-hidden="true"></i></span>
+                                {/if}
+                            </div>
+                        {/if}
+                    {/each}
+                {/if}
             </div>
         </div>
     </div>
