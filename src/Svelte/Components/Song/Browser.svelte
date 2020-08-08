@@ -73,15 +73,20 @@
         {id: 'best', label: 'Gdy NAJlepszy'},
     ];
     let sortTypes = [
-        {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', order: 'desc', enabled: true},
-    ]
+        {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', enabled: true},
+    ];
+    let sortOrders = [
+        {label: 'Malejąco', order: 'desc'},
+        {label: 'Rosnąco', order: 'asc'}
+    ];
     let allFilters = {
         songType: songTypes[0],
         songTypeOption: songTypeOptions[0],
         name: "",
         starsFilter: {from: 0, to: maxStars},
         minPpDiff: 1,
-        sortBy: sortTypes[0]
+        sortBy: sortTypes[0],
+        sortOrder: sortOrders[0]
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
     const generateSortTypes = async _ => {
@@ -95,12 +100,11 @@
                 type: 'song',
                 subtype: null,
                 field: 'bestDiffPp',
-                order: 'desc',
                 enabled: true
             });
 
         if (allFilters.songType.id !== 'unrankeds')
-            types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', order: 'desc', enabled: true});
+            types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', enabled: true});
 
         const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'sniper_mode' === allFilters.songType.id ? sniperModeIds : []));
         if (data && data.users) {
@@ -132,7 +136,6 @@
                                 type: 'series',
                                 subtype: idx,
                                 field: field.field,
-                                order: 'desc',
                                 enabled: true
                             })
                     })
@@ -900,7 +903,7 @@
                                 break;
                         }
 
-                        return filters.sortBy.order === 'asc' ? a - b : b - a;
+                        return filters.sortOrder.order === 'asc' ? a - b : b - a;
                     })
 
             let bestTotalRealPp = playersSeries[compareToIdx].totalPp
@@ -1116,7 +1119,7 @@
 
         <div>
             <header>Sortowanie</header>
-            <Select bind:value={allFilters.sortBy} items={sortTypes}/>
+            <Select bind:value={allFilters.sortBy} items={sortTypes} bind:option={allFilters.sortOrder} optionItems={sortOrders}/>
         </div>
 
         <div class="player-compare-btns">

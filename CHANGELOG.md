@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.4
+ - add sort order option, thx Patian
+ 
 0.9.1.3
  - add the best/not the best filter options in players comparision
  
