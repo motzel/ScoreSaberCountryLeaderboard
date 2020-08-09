@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.5
+ - SS API error handling optimization
+ 
 0.9.1.4
  - add sort order option, thx Patian
  

@@ -30,7 +30,7 @@
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
     import Range from "../Common/Range.svelte";
-    import Date from "../Common/Date.svelte";
+    import FormattedDate from "../Common/FormattedDate.svelte";
     import MultiRange from "../Common/MultiRange.svelte";
 
     import WhatIfPp from "./WhatIfPp.svelte";
@@ -1233,7 +1233,7 @@
                                         {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
                                             {#if col.key === 'timeset'}
                                                 <strong class={'compact-' + col.key + '-val'}>
-                                                    <Date date={getScoreValueByKey(series, song, col.key)}
+                                                    <FormattedDate date={getScoreValueByKey(series, song, col.key)}
                                                           {...col.valueProps}/>
                                                 </strong>
                                             {:else}
@@ -1264,7 +1264,7 @@
                                     <td class={'left ' + col.key} class:middle={idx > 0}
                                         class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                         {#if col.key === 'timeset'}
-                                            <Date date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                            <FormattedDate date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                         {:else}
                                             <Value value={getScoreValueByKey(series, song, col.key)}
                                                    prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}

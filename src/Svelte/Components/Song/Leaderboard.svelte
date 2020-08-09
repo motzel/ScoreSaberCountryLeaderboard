@@ -5,7 +5,7 @@
     import Avatar from '../Common/Avatar.svelte';
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
-    import Date from "../Common/Date.svelte";
+    import FormattedDate from "../Common/FormattedDate.svelte";
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
     import WhatIfPp from './WhatIfPp.svelte';
@@ -113,7 +113,7 @@
             </td>
             <td class="player"><Player user={item}/></td>
             <td class="score"><Value value={item.score} digits={0} zero="-" prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].score : null}/></td>
-            <td class="timeset"><Date date={item.timeset} prevDate={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].timeset : null} /></td>
+            <td class="timeset"><FormattedDate date={item.timeset} prevDate={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].timeset : null} /></td>
             <td class="mods">{item.mods && item.mods.length ? item.mods : '-'}</td>
             <td class="percentage"><Value value={item.percent*100} zero="-" suffix="%" prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].percent*100 : null} /></td>
             <td class="pp">
@@ -130,7 +130,7 @@
     <table class="history"><tbody>
     {#each tooltipHistory as item (item.timestamp)}
     <tr>
-        <td><Date date={item.timeset} /></td>
+        <td><FormattedDate date={item.timeset} /></td>
         <td><Value value={item.score} digits={0} zero="-" /></td>
         <td><Value value={item.percent*100} zero="-" suffix="%" /></td>
         <td><Pp pp="{item.pp}" /></td>

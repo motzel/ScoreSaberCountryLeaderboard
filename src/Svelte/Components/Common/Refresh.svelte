@@ -2,8 +2,8 @@
 <script>
     import Progress from './Progress.svelte';
     import Button from './Button.svelte';
+    import FormattedDate from './FormattedDate.svelte';
 
-    import {formatDate} from '../../../utils/format';
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
     import {PLAYS_PER_PAGE} from '../../../network/scoresaber/consts';
     import config from '../../../temp';
@@ -23,6 +23,7 @@
     let subLabel = "";
     let progress = 0;
     let started = false;
+    let errorMsg;
 
     let date = null;
     setLastRefershDate();
@@ -37,11 +38,10 @@
         subLabel = info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString();
     }
 
-    async function updateNewRankedsPpScores(progressCallback = null) {
-        const data = await getCacheAndConvertIfNeeded();
-
+    async function updateNewRankedsPpScores(data, progressCallback = null) {
         label = "";
         subLabel = "";
+        errorMsg = "";
 
         // check if scores has been updated max 1 minute ago
         const MAX_TIME_AFTER_UPDATE = 60 * 1000;
@@ -51,14 +51,14 @@
                 MAX_TIME_AFTER_UPDATE
         ) {
             log.error('Please update song data first');
-            return null;
+            throw 'Please update song data first';
         }
 
         label = "";
         subLabel = 'Pobieranie nowych rankedów';
 
         const newlyRanked = await getNewlyRanked();
-        if (!newlyRanked) return null;
+        if (!newlyRanked) return {data, newlyRanked};
 
         // if not first fetch
         if(newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length) {
@@ -138,20 +138,19 @@
         data.rankedSongs = newlyRanked.allRanked;
         data.rankedSongsLastUpdated = JSON.parse(JSON.stringify(new Date()));
 
-        await setCache(data);
-
-        return newlyRanked;
+        return {data, newlyRanked};
     }
 
-    async function updateNewRankeds(newlyRanked) {
+    async function updateNewRankeds(newData) {
         dispatch('new-rankeds', []);
 
-        const data = await getCacheAndConvertIfNeeded();
+        const data = newData.data
+        const newlyRanked = newData.newlyRanked;
 
         if (!newlyRanked) return;
 
-        const sseUserId = await getMainUserId();
-        if (!sseUserId) return;
+        const mainUserId = await getMainUserId();
+        if (!mainUserId) return;
 
         if (newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length)
             dispatch(
@@ -160,8 +159,8 @@
                             .sort((a, b) => b.stars - a.stars)
                             .map((m) =>
                                     Object.assign({}, m, {
-                                        pp: data && data.users && data.users[sseUserId] && data.users[sseUserId].scores && data.users[sseUserId].scores[m.leaderboardId]
-                                                ? data.users[sseUserId].scores[m.leaderboardId].pp
+                                        pp: data && data.users && data.users[mainUserId] && data.users[mainUserId].scores && data.users[mainUserId].scores[m.leaderboardId]
+                                                ? data.users[mainUserId].scores[m.leaderboardId].pp
                                                 : null
                                     })
                             )
@@ -169,6 +168,7 @@
     }
 
     async function refresh() {
+        errorMsg = "";
         label = "";
         subLabel = "Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...';
 
@@ -177,7 +177,7 @@
         label = "";
         subLabel = "";
 
-        const data = await getCacheAndConvertIfNeeded();
+        const data = Object.assign({}, await getCacheAndConvertIfNeeded());
 
         // set all cached users as inactive
         if(data.users) Object.keys(data.users).map(userId => data.users[userId].inactive = true);
@@ -231,9 +231,8 @@
         }, data);
 
         cache.lastUpdated = new Date().toISOString();
-        date = cache.lastUpdated;
 
-        await setCache(cache);
+        return cache;
     }
 
     async function onRefresh() {
@@ -242,12 +241,20 @@
         progress = 0;
 
         refresh()
-                .then(_ => updateNewRankedsPpScores(updateProgress))
-                .then(newlyRanked => updateNewRankeds(newlyRanked))
+                .then(newData => updateNewRankedsPpScores(newData, updateProgress))
+                .then(async newData => {
+                    await setCache(newData.data);
+
+                    date = newData.data.lastUpdated;
+
+                    return newData;
+                })
+                .then(newData => updateNewRankeds(newData))
                 .then(_ => started = false)
                 .then(_ => dispatch('data-refreshed', {}))
                 .catch(e => {
                     started = false
+                    errorMsg = 'Błąd pobierania danych. Spróbuj ponownie.';
                     log.error("Can not refresh users", e)
                 })
         ;
@@ -259,12 +266,20 @@
         <Progress value={progress} label={label} subLabel={subLabel} maxWidth="16rem"/>
     {:else}
         <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={started} /></span>
-        <strong>Data pobrania:</strong> <span>{date ? formatDate(date) : '-'}</span>
+        {#if !errorMsg || !errorMsg.length}
+            <strong>Data pobrania:</strong> <span><FormattedDate {date} noDate="-" /></span>
+        {:else}
+            <span class="err">{errorMsg}</span>
+        {/if}
     {/if}
 </div>
 
 <style>
     .btn-cont {
         font-size: .5rem;
+    }
+
+    .err {
+        color: var(--decrease, red) !important;
     }
 </style>

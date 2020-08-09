@@ -108,4 +108,3 @@ export const fetchHtmlPage = async (queue, url, page = 1) =>
 
 export const fetchApiPage = async (queue, url, page = 1, rateLimitCallback = null) =>
     queueFetchJson(queue, substituteVars(url, {page}), {}, rateLimitCallback)
-        .catch(_ => null);

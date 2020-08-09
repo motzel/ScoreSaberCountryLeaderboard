@@ -9,7 +9,7 @@
     import Rank from "../Common/Rank.svelte";
     import Player from "../Common/Player.svelte";
     import Pp from "../Common/Pp.svelte";
-    import Date from "../Common/Date.svelte";
+    import FormattedDate from "../Common/FormattedDate.svelte";
     import Song from "../Song/Song.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
@@ -154,7 +154,7 @@
                 </Song>
             </div>
         {:else if key === 'timeset'}
-            <Date date={row.timeset}/>
+            <FormattedDate date={row.timeset}/>
         {:else if key === 'acc'}
             <Value value={row.acc} zero="-" suffix="%"/>
         {:else if key === 'pp'}
