@@ -92,4 +92,5 @@ export const fetchUsers = async (page = 1) => {
     ))
         .sort((a,b) => b.pp - a.pp)
         .map((u,idx) => ({...u, ssplCountryRank: {[config.COUNTRY]: idx+1}}))
+        .slice(0, 50)
 }
