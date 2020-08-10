@@ -21,6 +21,7 @@ import importJsonData from "./utils/import";
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
 import {setSsDefaultTheme, setTheme} from "./theme";
+import eventBus from './utils/broadcast-channel-pubsub';
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -52,13 +53,9 @@ async function setupPlTable() {
     tblContainer.style["display"] = "none";
     scoreTableNode.parentNode.appendChild(tblContainer);
 
-    const songLeaderboard = new SongLeaderboard({
+    new SongLeaderboard({
         target: tblContainer,
         props: {leaderboardId}
-    });
-    songLeaderboard.$on('data-refreshed', async _ => {
-        const leaderboard = await getLeaderboard(leaderboardId);
-        songLeaderboard.$set({leaderboard});
     });
 }
 
@@ -341,11 +338,11 @@ async function setupProfile() {
         const refreshDiv = document.createElement('div');
         refreshDiv.classList.add('refresh');
         header.appendChild(refreshDiv);
-        const refresh = new Refresh({
+        new Refresh({
             target: refreshDiv,
             props: {}
         })
-        refresh.$on('data-refreshed', async _ => {
+        eventBus.on('data-refreshed', async _ => {
             window.location.reload(false);
         })
     }

@@ -16,6 +16,8 @@
     import {SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
     import {getConfig, getMainUserId} from "../../../plugin-config";
     import {getLeaderboard} from "../../../song";
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let leaderboardId;
     export let tableOnly = false;
@@ -29,6 +31,10 @@
     let showWhatIfPp = false;
     let showBgCover = true;
 
+    async function refreshLeaderboard() {
+        leaderboard = await getLeaderboard(leaderboardId);
+    }
+
     onMount(async () => {
         const mainUserId = await getMainUserId()
         if (mainUserId) highlight.push(mainUserId);
@@ -38,7 +44,20 @@
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
         showBgCover = config.showBgCover === false ? false : true;
 
-        leaderboard = await getLeaderboard(leaderboardId);
+        await refreshLeaderboard();
+
+        const unsubscriberDataRefresh = eventBus.on('data-refreshed', async (value, local) => {
+            if (!local) await getCacheAndConvertIfNeeded(true);
+
+            await refreshLeaderboard();
+        });
+
+        const unsubscriberNewRankeds = eventBus.on('new-rankeds', value => newRankeds = value);
+
+        return () => {
+            unsubscriberDataRefresh();
+            unsubscriberNewRankeds();
+        }
     })
 
     let tooltip;
@@ -46,10 +65,6 @@
     let leaderboardContainer;
 
     let newRankeds = [];
-
-    function onNewRankeds(event) {
-        newRankeds = event.detail;
-    }
 
     function onHover(event) {
         if (tableOnly) return;
@@ -80,7 +95,7 @@
 <div bind:this={leaderboardContainer} class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
 
 {#if !tableOnly}
-    <div class="refresh"><Refresh on:new-rankeds={onNewRankeds} on:data-refreshed/></div>
+    <div class="refresh"><Refresh /></div>
     <NewRankeds rankeds={newRankeds} />
 {/if}
 

@@ -1,11 +1,15 @@
 <script>
     import config from "../../../temp";
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import {onMount} from 'svelte';
+
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
     import Button from "../Common/Button.svelte";
     import Range from "../Common/Range.svelte";
     import Select from "../Common/Select.svelte";
     import Refresh from "../Common/Refresh.svelte";
+    import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let country = config.COUNTRY;
 
@@ -29,10 +33,14 @@
 
     let lastScoresComponent;
     let topScoresComponent;
-    function onDataRefreshed() {
-        lastScoresComponent.refreshUsers();
-        topScoresComponent.refreshUsers();
-    }
+    onMount(() => {
+        return eventBus.on('data-refreshed', async (value, local) => {
+            if (!local) await getCacheAndConvertIfNeeded(true);
+
+            lastScoresComponent.refreshUsers();
+            topScoresComponent.refreshUsers();
+        });
+    })
 </script>
 
 <div class="columns is-multiline">
@@ -55,7 +63,7 @@
                 <h2>
                     <div class="title is-5">Ostatnie wyniki</div>
                     <div class="refresh">
-                        <Refresh on:data-refreshed={onDataRefreshed} />
+                        <Refresh />
                     </div>
                 </h2>
                 <nav>

@@ -10,24 +10,23 @@
     import {convertArrayToObjectByKey, escapeHtml, isEmpty} from '../../../utils/js';
     import log from '../../../utils/logger';
 
-    import { createEventDispatcher } from 'svelte';
     import {getNewlyRanked} from "../../../network/scoresaber/rankeds";
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
     import {fetchUsers} from "../../../network/scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
     import {getMainUserId} from "../../../plugin-config";
-    import {createChannelStore} from '../../stores/broadcast-channel';
+    import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
 
-    const dispatch = createEventDispatcher();
-
-    let state = createChannelStore('refresh-widget', {
+    let stateObj = {
         date: null,
         started: false,
         progress: 0,
         label: '',
         subLabel: '',
         errorMsg: ''
-    });
+    };
+    let state = createBroadcastChannelStore('refresh-widget', stateObj);
 
     setLastRefershDate();
 
@@ -35,16 +34,17 @@
         lastUpdated().then(d => $state.date = dateFromString(d));
     }
 
+    function updateState(obj) {
+        stateObj = {...stateObj, ...obj}
+        $state = stateObj;
+    }
+
     function updateProgress(info) {
-        $state.progress = info.percent;
-        $state.label = escapeHtml(info.name);
-        $state.subLabel = info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString();
+        updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString()});
     }
 
     async function updateNewRankedsPpScores(data, progressCallback = null) {
-        $state.label = "";
-        $state.subLabel = "";
-        $state.errorMsg = "";
+        updateState({label: '', subLabel: '', errorMsg: ''});
 
         // check if scores has been updated max 1 minute ago
         const MAX_TIME_AFTER_UPDATE = 60 * 1000;
@@ -57,8 +57,7 @@
             throw 'Please update song data first';
         }
 
-        $state.label = "";
-        $state.subLabel = 'Pobieranie nowych rankedów';
+        updateState({subLabel: 'Pobieranie nowych rankedów'});
 
         const newlyRanked = await getNewlyRanked();
         if (!newlyRanked) return {data, newlyRanked};
@@ -97,8 +96,7 @@
                 return cum;
             }, {});
 
-            $state.label = "";
-            $state.subLabel = 'Aktualizacja wyników nowych rankedów';
+            updateState({label: '', subLabel: 'Aktualizacja wyników nowych rankedów'});
 
             const totalPages = Object.values(usersToUpdate).reduce((sum, u) => (sum += Object.keys(u).length), 0);
 
@@ -145,7 +143,7 @@
     }
 
     async function updateNewRankeds(newData) {
-        dispatch('new-rankeds', []);
+        eventBus.publish('new-rankeds', []);
 
         const data = newData.data
         const newlyRanked = newData.newlyRanked;
@@ -156,7 +154,7 @@
         if (!mainUserId) return;
 
         if (newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length)
-            dispatch(
+            eventBus.publish(
                     'new-rankeds',
                     newlyRanked.newRanked.concat(newlyRanked.changed)
                             .sort((a, b) => b.stars - a.stars)
@@ -171,14 +169,11 @@
     }
 
     async function refresh() {
-        $state.errorMsg = "";
-        $state.label = "";
-        $state.subLabel = "Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...';
+        updateState({errorMsg: '', label: '', subLabel:"Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...'});
 
         const users = await fetchUsers();
 
-        $state.label = "";
-        $state.subLabel = "";
+        updateState({label: '', subLabel: ''});
 
         const data = Object.assign({}, await getCacheAndConvertIfNeeded());
 
@@ -239,25 +234,22 @@
     }
 
     async function onRefresh() {
-        $state.started = true;
-
-        $state.progress = 0;
+        updateState({started: true, progress: 0});
 
         refresh()
                 .then(newData => updateNewRankedsPpScores(newData, updateProgress))
                 .then(async newData => {
                     await setCache(newData.data);
 
-                    $state.date = newData.data.lastUpdated;
+                    updateState({date: newData.data.lastUpdated});
 
                     return newData;
                 })
                 .then(newData => updateNewRankeds(newData))
-                .then(_ => $state.started = false)
-                .then(_ => dispatch('data-refreshed', {}))
+                .then(_ => updateState({started: false}))
+                .then(_ => eventBus.publish('data-refreshed', {}))
                 .catch(e => {
-                    $state.started = false
-                    $state.errorMsg = 'Błąd pobierania danych. Spróbuj ponownie.';
+                    updateState({started: false, errorMsg: 'Błąd pobierania danych. Spróbuj ponownie.'});
                     log.error("Can not refresh users", e)
                 })
         ;

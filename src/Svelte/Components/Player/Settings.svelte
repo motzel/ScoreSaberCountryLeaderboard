@@ -12,6 +12,7 @@
     import importJsonData from "../../../utils/import";
     import exportJsonData from "../../../utils/export";
     import {themes, setTheme} from "../../../theme";
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
 
     export let profileId;
 
@@ -306,6 +307,8 @@
                     await setCache(json);
 
                     importBtn.$set({disabled: false});
+
+                    eventBus.publish('data-refreshed', {});
 
                     window.location.reload(false);
                 }

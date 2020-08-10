@@ -12,19 +12,28 @@ const createPubSub = () => {
         subscribers[eventName].forEach(handler => handler(value, _local, eventName));
     }
 
+    const unsubscribe = (eventName, handler) => {
+        if (!exists(eventName)) return;
+
+        subscribers[eventName] = subscribers[eventName].filter(h => h !== handler);
+    }
+
     bc.onmessage = ({data: {eventName, value}}) => notify(eventName, value, false)
 
     return {
         on(eventName, handler) {
             if (!exists(eventName)) subscribers[eventName] = [];
 
-            subscribers[eventName].push(handler);
-        },
-        unsubscribe(eventName, handler) {
-            if (!exists(eventName)) return;
+            // workaround - have no idea why some handlers are registered multiple times
+            if (subscribers[eventName].find(h => h === handler)) return;
 
-            subscribers[eventName] = subscribers[eventName].filter(h => h !== handler);
+            subscribers[eventName].push(handler);
+
+            return () => {
+                unsubscribe(eventName, handler);
+            }
         },
+        unsubscribe,
         publish(eventName, value) {
             notify(eventName, value);
 

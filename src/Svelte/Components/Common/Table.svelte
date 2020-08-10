@@ -126,8 +126,8 @@
                                 </td>
                             {/each}
                         </tr>
-                        {#if withDetails}
-                        <tr class="row--details" style="display: {detailsOpened.includes(rowIdx + page * itemsPerPage) ? 'table-row' : 'none'}">
+                        {#if withDetails && detailsOpened.includes(rowIdx + page * itemsPerPage)}
+                        <tr class="row--details">
                             <td class="col--details" colspan={tableHeader.length + 1}>
                                 <slot name="details" rowIdx={rowIdx + page * itemsPerPage} {row}></slot>
                             </td>

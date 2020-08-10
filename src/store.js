@@ -18,8 +18,8 @@ export const lastUpdated = async () => (await getCacheAndConvertIfNeeded()).last
 
 export const isAnyData = async () => {await getCacheAndConvertIfNeeded(); return Globals.data && Object.keys(Globals.data.users).length}
 
-export async function getCacheAndConvertIfNeeded() {
-    if (Globals.data) return Globals.data;
+export async function getCacheAndConvertIfNeeded(force = false) {
+    if (Globals.data && !force) return Globals.data;
 
     log.info("Data fetch from cache");
 

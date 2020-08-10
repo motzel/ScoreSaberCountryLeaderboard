@@ -1304,9 +1304,11 @@
                             </td>
                         {/each}
                     </tr>
+                    {#if !!song.leaderboardOpened}
                     <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length}>
                         <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
                     </td></tr>
+                    {/if}
                 {/each}
                 </tbody>
 
