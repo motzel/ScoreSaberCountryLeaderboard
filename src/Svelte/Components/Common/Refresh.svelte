@@ -16,32 +16,35 @@
     import {fetchUsers} from "../../../network/scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
     import {getMainUserId} from "../../../plugin-config";
+    import {createChannelStore} from '../../stores/broadcast-channel';
 
     const dispatch = createEventDispatcher();
 
-    let label = "";
-    let subLabel = "";
-    let progress = 0;
-    let started = false;
-    let errorMsg;
+    let state = createChannelStore('refresh-widget', {
+        date: null,
+        started: false,
+        progress: 0,
+        label: '',
+        subLabel: '',
+        errorMsg: ''
+    });
 
-    let date = null;
     setLastRefershDate();
 
     function setLastRefershDate() {
-        lastUpdated().then(d => date = dateFromString(d));
+        lastUpdated().then(d => $state.date = dateFromString(d));
     }
 
     function updateProgress(info) {
-        progress = info.percent;
-        label = escapeHtml(info.name);
-        subLabel = info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString();
+        $state.progress = info.percent;
+        $state.label = escapeHtml(info.name);
+        $state.subLabel = info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString();
     }
 
     async function updateNewRankedsPpScores(data, progressCallback = null) {
-        label = "";
-        subLabel = "";
-        errorMsg = "";
+        $state.label = "";
+        $state.subLabel = "";
+        $state.errorMsg = "";
 
         // check if scores has been updated max 1 minute ago
         const MAX_TIME_AFTER_UPDATE = 60 * 1000;
@@ -54,8 +57,8 @@
             throw 'Please update song data first';
         }
 
-        label = "";
-        subLabel = 'Pobieranie nowych rankedów';
+        $state.label = "";
+        $state.subLabel = 'Pobieranie nowych rankedów';
 
         const newlyRanked = await getNewlyRanked();
         if (!newlyRanked) return {data, newlyRanked};
@@ -94,8 +97,8 @@
                 return cum;
             }, {});
 
-            label = "";
-            subLabel = 'Aktualizacja wyników nowych rankedów';
+            $state.label = "";
+            $state.subLabel = 'Aktualizacja wyników nowych rankedów';
 
             const totalPages = Object.values(usersToUpdate).reduce((sum, u) => (sum += Object.keys(u).length), 0);
 
@@ -168,14 +171,14 @@
     }
 
     async function refresh() {
-        errorMsg = "";
-        label = "";
-        subLabel = "Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...';
+        $state.errorMsg = "";
+        $state.label = "";
+        $state.subLabel = "Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...';
 
         const users = await fetchUsers();
 
-        label = "";
-        subLabel = "";
+        $state.label = "";
+        $state.subLabel = "";
 
         const data = Object.assign({}, await getCacheAndConvertIfNeeded());
 
@@ -236,25 +239,25 @@
     }
 
     async function onRefresh() {
-        started = true;
+        $state.started = true;
 
-        progress = 0;
+        $state.progress = 0;
 
         refresh()
                 .then(newData => updateNewRankedsPpScores(newData, updateProgress))
                 .then(async newData => {
                     await setCache(newData.data);
 
-                    date = newData.data.lastUpdated;
+                    $state.date = newData.data.lastUpdated;
 
                     return newData;
                 })
                 .then(newData => updateNewRankeds(newData))
-                .then(_ => started = false)
+                .then(_ => $state.started = false)
                 .then(_ => dispatch('data-refreshed', {}))
                 .catch(e => {
-                    started = false
-                    errorMsg = 'Błąd pobierania danych. Spróbuj ponownie.';
+                    $state.started = false
+                    $state.errorMsg = 'Błąd pobierania danych. Spróbuj ponownie.';
                     log.error("Can not refresh users", e)
                 })
         ;
@@ -262,14 +265,14 @@
 </script>
 
 <div>
-    {#if started}
-        <Progress value={progress} label={label} subLabel={subLabel} maxWidth="16rem"/>
+    {#if $state.started}
+        <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}
-        <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={started} /></span>
-        {#if !errorMsg || !errorMsg.length}
-            <strong>Data pobrania:</strong> <span><FormattedDate {date} noDate="-" /></span>
+        <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={$state.started} /></span>
+        {#if !$state.errorMsg || !$state.errorMsg.length}
+            <strong>Data pobrania:</strong> <span><FormattedDate date={$state.date} noDate="-" /></span>
         {:else}
-            <span class="err">{errorMsg}</span>
+            <span class="err">{$state.errorMsg}</span>
         {/if}
     {/if}
 </div>
