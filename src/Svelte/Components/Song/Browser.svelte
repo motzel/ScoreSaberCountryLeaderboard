@@ -1,5 +1,6 @@
 <script>
     import log from '../../../utils/logger';
+    import {copyToClipboard} from '../../../utils/clipboard';
     import {findRawPp, getTotalUserPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
     import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
@@ -53,7 +54,7 @@
 
     const allItemsPerPage = [5, 10, 15, 20, 25, 50];
 
-    let shownIcons = ["bsr", "bs", "preview", "twitch"];
+    let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
     let initialized = false;
     let countryRanking = [];
@@ -985,42 +986,6 @@
         downloadCsv("scores.csv", csv);
     }
 
-    function fallbackCopyTextToClipboard(text) {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-
-        // Avoid scrolling to bottom
-        textArea.style.top = "0";
-        textArea.style.left = "0";
-        textArea.style.position = "fixed";
-
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        try {
-            document.execCommand('copy');
-        } catch (err) {
-            log.error('Fallback: Oops, unable to copy to clipboard', err);
-        }
-
-        document.body.removeChild(textArea);
-    }
-
-    function copyToClipboard(text) {
-        navigator.permissions.query({name: 'clipboard-write'})
-                .then(result => {
-                    if (result.state === 'granted' || result.state === 'prompt') {
-                        navigator.clipboard.writeText(text).then(() => {
-                        });
-                    } else {
-                        fallbackCopyTextToClipboard(text);
-                    }
-                })
-                .catch(() => fallbackCopyTextToClipboard(text))
-        ;
-    }
-
     let comparisionModified = false;
 
     async function onPlayerSelected(e, seriesIdx) {
@@ -1289,6 +1254,13 @@
                                             <Button icon={beatSaverSvg} title="Przejdź na Beat Saver"/>
                                         </a>
                                     {/if}
+
+                                    {#if shownIcons.includes('oneclick')}
+                                        <a href="beatsaver://{song.key}">
+                                            <Button iconFa="far fa-hand-pointer" title="OneClick&trade; Install"/>
+                                        </a>
+                                    {/if}
+
                                     {#if shownIcons.includes('preview')}
                                         <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank">
                                             <Button iconFa="fa fa-play-circle" title="Podgląd mapy"/>

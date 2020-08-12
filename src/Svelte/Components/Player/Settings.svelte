@@ -204,6 +204,7 @@
     const shownIcons = [
         {label: "!bsr", id: "bsr"},
         {label: "Beat Saver", id: "bs"},
+        {label: "OneClick Install", id: "oneclick"},
         {label: "Podgląd mapy", id: "preview"},
         {label: "Twitch", id: "twitch"}
     ];
