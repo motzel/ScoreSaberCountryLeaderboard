@@ -1,6 +1,7 @@
 import Profile from './Svelte/Components/Player/Profile.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
+import SongIcons from './Svelte/Components/Song/Icons.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
@@ -115,6 +116,15 @@ async function setupLeaderboard() {
                     }
                 });
             }
+        });
+    }
+
+    const songInfoBox = document.querySelector('.column.is-one-third-desktop .box:first-of-type');
+    const songHash = document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(/ID: <b>(.*?)<\/b>/)
+    if (songInfoBox && songHash && songHash.length) {
+        new SongIcons({
+            target: songInfoBox,
+            props: {hash: songHash[1]}
         });
     }
 

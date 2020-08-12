@@ -1,4 +1,8 @@
 # Changelog
+0.9.1.6
+ - add OneClick&trade; Install icon to song browser
+ - add !bsr/Beat Saver/OneClick&trade; Install icons to song page
+ 
 0.9.1.5
  - SS API error handling optimization
  
