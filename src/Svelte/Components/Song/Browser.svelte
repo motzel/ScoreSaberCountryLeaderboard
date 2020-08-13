@@ -22,6 +22,7 @@
         getSongMaxScoreWithDiffAndType
     } from "../../../song";
     import {generateCsv, downloadCsv} from '../../../utils/csv';
+    import {downloadJson} from '../../../utils/json';
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
     import {getConfig, getMainUserId} from "../../../plugin-config";
@@ -41,6 +42,7 @@
     import Button from "../Common/Button.svelte";
     import Select from "../Common/Select.svelte";
     import Leaderboard from "./Leaderboard.svelte";
+    import Checkbox from "../Common/Checkbox.svelte";
 
     export let playerId;
     export let snipedIds = [];
@@ -49,6 +51,9 @@
     const country = config.COUNTRY;
 
     let selectedColumns = [];
+
+    let showCheckboxes = false;
+    let checkedSongs = []
 
     const DEBOUNCE_DELAY = 400;
 
@@ -114,7 +119,11 @@
                 if (name) {
                     const newFields = [];
                     [
-                        {field: "timeset", label: "Data zagrania", enabled: pId !== playerId || allFilters.songType.id !== 'rankeds_unplayed'},
+                        {
+                            field: "timeset",
+                            label: "Data zagrania",
+                            enabled: pId !== playerId || allFilters.songType.id !== 'rankeds_unplayed'
+                        },
                         {
                             field: "diffPp",
                             label: "+PP global",
@@ -393,7 +402,7 @@
                     }
                     return cum;
                 }, [])
-                .sort((a, b) => a.label.toLowerCase().replace(/[^a-zAZ]/g,'').localeCompare(b.label.toLowerCase().replace(/[^a-zAZ]/g,'')))
+                .sort((a, b) => a.label.toLowerCase().replace(/[^a-zAZ]/g, '').localeCompare(b.label.toLowerCase().replace(/[^a-zAZ]/g, '')))
                 .slice(0, 50)
                 .filter(u => u.id !== playerId)
         ;
@@ -786,7 +795,6 @@
                         s.bestDiffPp = 0;
                         s.bestRealDiffPp = 0;
 
-
                         playersSeries.forEach((series, idx) => {
                             if (series.scores[s.leaderboardId]) {
                                 const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
@@ -870,8 +878,8 @@
                     // filter when sniper mode, player is the best and diff > minPpDiff
                     .filter(s =>
                             (
-                                filters.songType.id === 'sniper_mode' &&
-                                (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                                    filters.songType.id === 'sniper_mode' &&
+                                    (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
                             ) ||
 
                             (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
@@ -879,9 +887,9 @@
                             (
                                     'sniper_mode' !== allFilters.songType.id &&
                                     (
-                                        allFilters.songTypeOption.id === 'all' ||
-                                        (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
-                                        (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
+                                            allFilters.songTypeOption.id === 'all' ||
+                                            (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
+                                            (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
                                     )
                             )
                     )
@@ -986,6 +994,20 @@
         downloadCsv("scores.csv", csv);
     }
 
+    async function exportPlaylist() {
+        const allPlayedSongs = Object.values( Object.values((await getCacheAndConvertIfNeeded()).users).reduce((cum,u) => ({...cum, ...u.scores}), {}));
+        const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.id}));
+        const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
+        const playlist = {
+            playlistTitle: "SSPL playlist",
+            playlistAuthor: "https://github.com/motzel/ScoreSaberCountryLeaderboard",
+            playlistDescription: "",
+            image: bloodTrailImg,
+            songs
+        }
+        downloadJson("playlist-" + (new Date()).toISOString().replace(/:/g, '_') + '.json', JSON.stringify(playlist));
+    }
+
     let comparisionModified = false;
 
     async function onPlayerSelected(e, seriesIdx) {
@@ -1000,7 +1022,7 @@
 
     async function onPlayerRemove(seriesIdx) {
         if (snipedIds[seriesIdx - 1]) {
-            snipedIds = snipedIds.filter((s,idx) => idx !== seriesIdx - 1);
+            snipedIds = snipedIds.filter((s, idx) => idx !== seriesIdx - 1);
 
             await generateSortTypes();
 
@@ -1028,6 +1050,23 @@
 
             comparisionModified = false;
         }
+    }
+
+    function toggleChecked(leaderboardId) {
+        if (checkedSongs.includes(leaderboardId)) checkedSongs = checkedSongs.filter(cs => cs !== leaderboardId);
+        else checkedSongs = [...checkedSongs, leaderboardId];
+    }
+
+    async function checkAll() {
+        checkedSongs = checkedSongs.concat((await calcPromised).songs.map(s => s.leaderboardId));
+    }
+
+    async function checkPage() {
+        checkedSongs = checkedSongs.concat(songsPage.songs.map(s => s.leaderboardId));
+    }
+
+    function checkNone() {
+        checkedSongs = [];
     }
 
     $: shownColumns = allColumns.filter(c => c.displayed)
@@ -1106,6 +1145,7 @@
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
                     <tr>
+                        {#if showCheckboxes}<th class="check" rowspan={viewType.id === 'compact' ? 1 : 2}></th>{/if}
                         <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
 
                         {#each selectedSongCols as col,idx (col.key)}
@@ -1158,6 +1198,12 @@
                 <tbody>
                 {#each songsPage.songs as song (song.leaderboardId)}
                     <tr class="item" class:opened={!!song.leaderboardOpened}>
+                        {#if showCheckboxes}
+                            <td class="check">
+                                <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
+                            </td>
+                        {/if}
+
                         <td class="diff">
                             <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
                         </td>
@@ -1287,6 +1333,8 @@
                 {#if shouldCalculateTotalPp}
                     <tfoot>
                     <tr>
+                        {#if showCheckboxes}<th class="check"></th>{/if}
+
                         <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                             colspan={2 + selectedSongCols.length}>
                             Razem dla {songsPage.series[0].name}</th>
@@ -1344,7 +1392,17 @@
 
     {#if !calculating}
         <div class="actions">
-            <Button label="CSV" iconFa="fas fa-download" on:click={exportCsv}/>
+            <span class="button-group">
+                <Button iconFa={"fas fa-eye" + (showCheckboxes ? '-slash': '')} title={showCheckboxes ? "Ukryj checkboksy" : "Pokaż checkboksy"} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}/>
+                <Button iconFa="fas fa-check" title="Zaznacz wszystkie" on:click={checkAll}/>
+                <Button iconFa="far fa-file-alt" title="Zaznacz stronę" on:click={checkPage}/>
+                <Button iconFa="fas fa-broom" title="Wyczyść" disabled={!checkedSongs.length} on:click={checkNone}/>
+                <Button label={"Playlista"} iconFa="fas fa-music" title="Eksportuj playlistę" disabled={!checkedSongs.length} on:click={exportPlaylist}/>
+            </span>
+
+            <span class="button-group">
+                <Button label={"CSV"} iconFa="fas fa-download" title="Eksportuj do CSV" on:click={exportCsv}/>
+            </span>
         </div>
     {/if}
 {/if}
@@ -1371,6 +1429,10 @@
         vertical-align: middle !important;
         padding: 0.25em !important;
         border-color: var(--textColor) !important;
+    }
+
+    th.check, td.check {
+        width: 1.25rem;
     }
 
     thead th {
@@ -1649,6 +1711,15 @@
     }
 
     .actions {
+        margin-top: 1rem;
         font-size: .75rem;
+    }
+
+    .button-group {
+        display: inline-block;
+        margin-right: 1rem;
+    }
+    .button-group:last-of-type {
+        margin-right: 0;
     }
 </style>

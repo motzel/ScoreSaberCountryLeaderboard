@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.8
+ - add playlist generator
+ 
 0.9.1.7
  - add song stats and redesign song info box
  
