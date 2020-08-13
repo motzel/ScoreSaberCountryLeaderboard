@@ -42,7 +42,7 @@
         const config = await getConfig('songLeaderboard');
         showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
-        showBgCover = config.showBgCover === false ? false : true;
+        showBgCover = config.showBgCover !== false;
 
         await refreshLeaderboard();
 

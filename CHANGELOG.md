@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.7
+ - add song stats and redesign song info box
+ 
 0.9.1.6
  - add OneClick&trade; Install icon to song browser
  - add !bsr/Beat Saver/OneClick&trade; Install icons to song page

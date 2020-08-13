@@ -2,6 +2,7 @@ import Profile from './Svelte/Components/Player/Profile.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import SongIcons from './Svelte/Components/Song/Icons.svelte';
+import SongCard from './Svelte/Components/Song/Card.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Common/Refresh.svelte';
@@ -120,12 +121,42 @@ async function setupLeaderboard() {
     }
 
     const songInfoBox = document.querySelector('.column.is-one-third-desktop .box:first-of-type');
-    const songHash = document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(/ID: <b>(.*?)<\/b>/)
-    if (songInfoBox && songHash && songHash.length) {
-        new SongIcons({
-            target: songInfoBox,
-            props: {hash: songHash[1]}
+
+    const songInfoData = [
+        {id: 'hash', label: 'ID', value: null},
+        {id: 'scores', label: 'Scores', value: null},
+        {id: 'status', label: 'Status', value: null},
+        {id: 'totalScores', label: 'Total Scores', value: null},
+        {id: 'noteCount', label: 'Note Count', value: null},
+        {id: 'bpm', label: 'BPM', value: null},
+        {id: 'stars', label: 'Star Difficulty', value: null},
+    ]
+        .map(sid => ({...sid, value: document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
+        .reduce((cum, sid) => {
+            let value = Array.isArray(sid.value) ? sid.value[1] : null;
+            if (value && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseFloat(value.replace(/[^0-9\.]/, ''));
+            if (value) cum[sid.id] = value;
+
+            return cum;
+        }, {})
+    songInfoData.difficulty =  document.querySelector('.tabs.is-centered li.is-active a span').innerText.toLowerCase().replace('+', 'Plus');
+    if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
+        const newSongBox = document.createElement('div');
+        newSongBox.style.marginBottom = '1.5rem';
+        songInfoBox.parentNode.insertBefore(newSongBox, songInfoBox);
+
+        const songCard = new SongCard({
+            target: newSongBox,
+            props: {...songInfoData}
         });
+        songCard.$on('initialized', e => {
+            if (e.detail) songInfoBox.remove()
+            else {
+                newSongBox.remove();
+                new SongIcons({target: songInfoBox, props: {hash: songInfoData.hash}});
+            }
+        });
+
     }
 
     log.info("Setup leaderboard page / Done")
