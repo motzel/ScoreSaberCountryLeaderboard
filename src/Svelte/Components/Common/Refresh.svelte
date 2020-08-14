@@ -41,7 +41,7 @@
     }
 
     function updateProgress(info) {
-        updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString()});
+        updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.page.toString() + (info.wait ? ' ' + `[Czekam ${Math.floor(info.wait/1000)} s]` : '')});
     }
 
     async function refresh() {
@@ -54,7 +54,7 @@
             eventBus.publish('rankeds-changed', rankedChanges)
         }
 
-        updateState({errorMsg: '', label: '', subLabel:"Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...'});
+        updateState({errorMsg: '', label: '', subLabel: `Pobieranie listy top 50 ${config.COUNTRY.toUpperCase()}...`});
         const users = await fetchCountryPlayers();
 
         updateState({label: '', subLabel: ''});
@@ -84,21 +84,6 @@
                     (info) => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / users.length) * 100)}))
             );
 
-            if (playerLastUpdated) {
-                const playerRankedChanges = await getCumulativeRankedChangesSince(playerLastUpdated.getTime(), oldRankeds);
-                console.warn("changes", data.rankedSongsChanges);
-                console.warn("player", playerLastUpdated.getTime(), playerRankedChanges);
-
-                // TODO: fetch UPDATED ranked scores HERE AND CONCAT THEM WITH newScores
-                //  1. Dla każdego nowego rankeda sprawdzić czy była zagrana przed *POPRZEDNIM* odświeżeniem i tylko je pobierać
-                //  2. Bo jeśli została zagrana już po poprzednim odświeżeniu to wynik został pobrany razem z nowymi scorami
-                //  3. Jeśli nutka dostała unranka (czyli change.stars === null) to po prostu wyzerować PP zamiast pobierać od nowa!!!
-                //  4. ^ no chyba, że nie, bo jeśli jest błąd w API, a to prawdopodobne, to usuniemy legitny score
-                //  5. Tak więc nie, zawsze odświeżać ;-)
-            }
-            // TODO: test only
-            throw 'TODO: update ranked scores based on rankedChanges'
-
             if(newScores && newScores.scores) {
                 const prevScores = cum.users[u.id] ? cum.users[u.id].scores : {};
                 Object.keys(newScores.scores).map(leaderboardId => {
@@ -127,6 +112,59 @@
                 cum.users[u.id] = Object.assign({}, u, {lastUpdated: new Date().toISOString()});
             }
 
+            if (playerLastUpdated) {
+                const playerRankedChanges = (await getCumulativeRankedChangesSince(playerLastUpdated.getTime(), oldRankeds))
+                        .map(s => s.leaderboardId);
+
+                // fetch all user pages that need to be refetched
+                // {pageIdx: [leaderboardId, leaderboardId...]}
+                let playerScorePagesToUpdate = {};
+                if (playerRankedChanges.length)
+                    playerScorePagesToUpdate = Object.values(cum.users[u.id].scores)
+                            .map((s) => ({
+                                leaderboardId: s.leaderboardId,
+                                timeset: dateFromString(s.timeset)
+                            }))
+                            .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
+                            .reduce((cum, s, idx) => {
+                                if (playerRankedChanges.includes(s.leaderboardId) && s.timeset < playerLastUpdated) {
+                                    const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
+                                    cum[page] = (cum && cum[page] ? cum[page] : []).concat([
+                                        s.leaderboardId
+                                    ]);
+                                }
+                                return cum;
+                            }, {});
+
+                let idxProgress = 0;
+                let updatedUserScores = {};
+                for (const page in playerScorePagesToUpdate) {
+                    const progressInfo = {
+                        id: u.id,
+                        name: `Aktualizacja: ${u.name}`,
+                        page: idxProgress + 1,
+                        percent: stateObj.progress
+                    };
+
+                    updateProgress(progressInfo);
+
+                    const scores = convertArrayToObjectByKey(
+                            await fetchScores(
+                                    u.id,
+                                    page,
+                                    (time) => updateProgress(Object.assign({}, progressInfo, {wait: time})),
+                                    ...playerScorePagesToUpdate[page]
+                            ),
+                            'leaderboardId'
+                    );
+                    updatedUserScores = {...updatedUserScores, ...scores};
+
+                    idxProgress++;
+                }
+
+                cum.users[u.id].scores = {...cum.users[u.id].scores, ...updatedUserScores};
+            }
+
             idx++;
 
             return cum;
@@ -137,103 +175,10 @@
         return cache;
     }
 
-    async function updateNewRankedsPpScores(data, progressCallback = null) {
-        updateState({label: '', subLabel: '', errorMsg: ''});
-
-        // check if scores has been updated max 1 minute ago
-        const MAX_TIME_AFTER_UPDATE = 60 * 1000;
-        if (
-                new Date().getTime() -
-                dateFromString(data.lastUpdated).getTime() >
-                MAX_TIME_AFTER_UPDATE
-        ) {
-            log.error('Please update song data first');
-            throw 'Please update song data first';
-        }
-
-        // if not first fetch
-        if(newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length) {
-            const leaderboardsToUpdate = newlyRanked.newRanked
-                    .map((s) => s.leaderboardId)
-                    .concat(newlyRanked.changed.map((s) => s.leaderboardId));
-
-            const users = data.users;
-
-            // fetch all user pages that need to be fetched
-            // {userId: {pageId: [leaderboardId, leaderboardId...]}}
-            const usersToUpdate = Object.values(users).reduce((cum, u) => {
-                const userScoresToUpdate = Object.values(u.scores)
-                        .map((s) => ({
-                            leaderboardId: s.leaderboardId,
-                            timeset: dateFromString(s.timeset)
-                        }))
-                        .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
-                        .reduce((scum, s, idx) => {
-                            if (leaderboardsToUpdate.includes(s.leaderboardId)) {
-                                const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
-                                scum[page] = (scum && scum[page] ? scum[page] : []).concat([
-                                    s.leaderboardId
-                                ]);
-                            }
-                            return scum;
-                        }, {});
-
-                if (!isEmpty(userScoresToUpdate)) {
-                    cum[u.id] = userScoresToUpdate;
-                }
-
-                return cum;
-            }, {});
-
-            updateState({label: '', subLabel: 'Aktualizacja wyników nowych rankedów'});
-
-            const totalPages = Object.values(usersToUpdate).reduce((sum, u) => (sum += Object.keys(u).length), 0);
-
-            let idxGlobal = 0;
-            for (const userId in usersToUpdate) {
-                let idxLocal = 0;
-                for (const page in usersToUpdate[userId]) {
-                    const progressInfo = {
-                        id: userId,
-                        name: users[userId].name,
-                        page: idxLocal + 1,
-                        percent: Math.floor((idxGlobal / totalPages) * 100)
-                    };
-
-                    const scores = convertArrayToObjectByKey(
-                            await fetchScores(
-                                    userId,
-                                    page,
-                                    (time) => {
-                                        if (progressCallback) progressCallback(Object.assign({}, progressInfo, {wait: time}))
-                                    },
-                                    ...usersToUpdate[userId][page]
-                            ),
-                            'leaderboardId'
-                    );
-                    users[userId].scores = Object.assign(
-                            {},
-                            users[userId].scores,
-                            scores
-                    );
-
-                    if (progressCallback) progressCallback(progressInfo);
-
-                    idxLocal++;
-                    idxGlobal++;
-                }
-            }
-        }
-
-        return {data, newlyRanked};
-    }
-
     async function onRefresh() {
         updateState({started: true, progress: 0});
 
         refresh()
-                // TODO: remove it after moving to refresh
-                // .then(newData => updateNewRankedsPpScores(newData, updateProgress))
                 .then(async newData => {
                     await setCache(newData);
 
