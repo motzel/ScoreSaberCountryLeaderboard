@@ -5,7 +5,7 @@ export const convertArrayToObjectByKey = (arr, key) =>
         cum[item[key]] = item;
         return cum;
     }, {});
-export const arrayIntersection = (arr1, arr2) => arr1.filter((x) => !arr2.includes(x));
+export const arrayDifference = (arr1, arr2) => arr1.filter(x => !arr2.includes(x));
 export const arrayUnique = arr => [...new Set(arr)];
 export const nullIfUndefined = (val) => (typeof val !== 'undefined' ? val : null);
 export const defaultIfFalsy = (val, def) => (val ? val : def);
