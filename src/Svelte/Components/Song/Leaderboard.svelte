@@ -11,7 +11,6 @@
     import WhatIfPp from './WhatIfPp.svelte';
 
     import Refresh from '../Common/Refresh.svelte';
-    import NewRankeds from '../Song/NewRankeds.svelte';
 
     import {SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
     import {getConfig, getMainUserId} from "../../../plugin-config";
@@ -52,19 +51,15 @@
             await refreshLeaderboard();
         });
 
-        const unsubscriberNewRankeds = eventBus.on('new-rankeds', value => newRankeds = value);
 
         return () => {
             unsubscriberDataRefresh();
-            unsubscriberNewRankeds();
         }
     })
 
     let tooltip;
     let tooltipHistory = [];
     let leaderboardContainer;
-
-    let newRankeds = [];
 
     function onHover(event) {
         if (tableOnly) return;
@@ -96,7 +91,6 @@
 
 {#if !tableOnly}
     <div class="refresh"><Refresh /></div>
-    <NewRankeds rankeds={newRankeds} />
 {/if}
 
 {#if leaderboard && leaderboard.length}
