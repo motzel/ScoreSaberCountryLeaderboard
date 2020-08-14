@@ -16,7 +16,7 @@ import log from './utils/logger';
 import config from './temp';
 import {getCacheAndConvertIfNeeded, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
-import {getLeaderboard, getSongMaxScore} from "./song";
+import {getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 import importJsonData from "./utils/import";
 

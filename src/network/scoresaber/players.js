@@ -49,7 +49,7 @@ export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API
     return info;
 })
 
-export const fetchUsers = async (page = 1) => {
+export const fetchCountryPlayers = async (page = 1) => {
     const data = await getCacheAndConvertIfNeeded();
 
     return (await Promise.all(
@@ -74,7 +74,7 @@ export const fetchUsers = async (page = 1) => {
                     }
                 }
             )
-            .concat(getAdditionalPlayers().map(playerId => ({playerInfo: {playerId, inactive: false}})))
+            .concat(getAdditionalPlayers(config.COUNTRY).map(playerId => ({playerInfo: {playerId, inactive: false}})))
             .map(async info => {
                 const {lastUpdated, recentPlay, scores, userHistory} = data.users?.[info.playerInfo.playerId]
                     ? data.users?.[info.playerInfo.playerId]

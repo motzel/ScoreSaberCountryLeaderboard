@@ -2,11 +2,12 @@ import {getCacheAndConvertIfNeeded} from "../store";
 
 export const getRankedSongs = async (force = false) => (await getCacheAndConvertIfNeeded(force)).rankedSongs;
 export const getRankedChanges = async _ => (await getCacheAndConvertIfNeeded()).rankedSongsChanges ?? {};
-export const getCumulativeRankedChangesSince = async since => {
-    const currentRankeds = await getRankedSongs();
+export const getCumulativeRankedChangesSince = async (sinceTimestamp, currentRankeds = null) => {
+    currentRankeds = currentRankeds ?? await getRankedSongs();
+
     const changes = await getRankedChanges();
 
-    const matchingTimestamps = Object.keys(changes).filter(c => c > since).sort((a, b) => a - b);
+    const matchingTimestamps = Object.keys(changes).filter(c => c > sinceTimestamp).sort((a, b) => a - b);
 
     return Object.values(
         matchingTimestamps

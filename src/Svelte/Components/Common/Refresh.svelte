@@ -10,13 +10,14 @@
     import {convertArrayToObjectByKey, escapeHtml, isEmpty} from '../../../utils/js';
     import log from '../../../utils/logger';
 
-    import {getNewlyRanked} from "../../../network/scoresaber/rankeds";
+    import {getNewlyRanked, updateRankeds} from "../../../network/scoresaber/rankeds";
     import {fetchAllNewScores, fetchScores} from "../../../network/scoresaber/scores";
-    import {fetchUsers} from "../../../network/scoresaber/players";
+    import {fetchCountryPlayers} from "../../../network/scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
     import {getMainUserId} from "../../../plugin-config";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import {getCumulativeRankedChangesSince} from "../../../scoresaber/rankeds";
 
     let stateObj = {
         date: null,
@@ -43,6 +44,99 @@
         updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.wait ? '[Czekam ' + Math.floor(info.wait/1000) + 's]' : info.page.toString()});
     }
 
+    async function refresh() {
+        const data = Object.assign({}, await getCacheAndConvertIfNeeded());
+        const oldRankeds = {...data.rankedSongs};
+
+        updateState({subLabel: 'Pobieranie aktualnych rankedów'});
+        const rankedChanges = await updateRankeds();
+        if(rankedChanges && rankedChanges.length) {
+            eventBus.publish('rankeds-changed', rankedChanges)
+        }
+
+        updateState({errorMsg: '', label: '', subLabel:"Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...'});
+        const users = await fetchCountryPlayers();
+
+        updateState({label: '', subLabel: ''});
+
+        // set all cached country players as inactive
+        if(data.users) Object.keys(data.users).map(userId => {
+            if(data.users[userId].ssplCountryRank) {
+                data.users[userId].inactive = true;
+                data.users[userId].ssplCountryRank = null;
+            }
+        });
+
+        let idx = 0;
+        let cache = await users.reduce(async (promisedCum, u) => {
+            let cum = await promisedCum;
+
+            u.userHistory = cum.users && cum.users[u.id] && cum.users[u.id].userHistory ? cum.users[u.id].userHistory : {};
+            if(cum && cum.users && cum.users[u.id]) {
+                const {rank, pp, countryRank, ssplCountryRank} = cum.users[u.id];
+                u.userHistory = Object.assign({}, u.userHistory, {[toUTCDate(new Date())]: {rank, pp, countryRank, ssplCountryRank}})
+            }
+
+            const playerLastUpdated = dateFromString(cum.users[u.id] ? cum.users[u.id].lastUpdated : null);
+            let newScores = await fetchAllNewScores(
+                    u,
+                    playerLastUpdated,
+                    (info) => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / users.length) * 100)}))
+            );
+
+            if (playerLastUpdated) {
+                const playerRankedChanges = await getCumulativeRankedChangesSince(playerLastUpdated.getTime(), oldRankeds);
+                console.warn("changes", data.rankedSongsChanges);
+                console.warn("player", playerLastUpdated.getTime(), playerRankedChanges);
+
+                // TODO: fetch UPDATED ranked scores HERE AND CONCAT THEM WITH newScores
+                //  1. Dla każdego nowego rankeda sprawdzić czy była zagrana przed *POPRZEDNIM* odświeżeniem i tylko je pobierać
+                //  2. Bo jeśli została zagrana już po poprzednim odświeżeniu to wynik został pobrany razem z nowymi scorami
+                //  3. Jeśli nutka dostała unranka (czyli change.stars === null) to po prostu wyzerować PP zamiast pobierać od nowa!!!
+                //  4. ^ no chyba, że nie, bo jeśli jest błąd w API, a to prawdopodobne, to usuniemy legitny score
+                //  5. Tak więc nie, zawsze odświeżać ;-)
+            }
+            // TODO: test only
+            throw 'TODO: update ranked scores based on rankedChanges'
+
+            if(newScores && newScores.scores) {
+                const prevScores = cum.users[u.id] ? cum.users[u.id].scores : {};
+                Object.keys(newScores.scores).map(leaderboardId => {
+                    const prevScore = prevScores[leaderboardId] ? prevScores[leaderboardId] : null;
+                    if(prevScore) {
+                        if (!newScores.scores[leaderboardId].history) newScores.scores[leaderboardId].history = [];
+
+                        const {pp, rank, score, uScore, timeset} = prevScore;
+                        newScores.scores[leaderboardId].history.push(
+                                {pp, rank, score, uScore, timestamp: dateFromString(timeset).getTime()}
+                        )
+                    }
+                })
+
+                cum.users[u.id] = Object.assign({}, u, {
+                    previousLastUpdated: dateFromString(u.lastUpdated ? u.lastUpdated : null),
+                    lastUpdated: new Date().toISOString(),
+                    recentPlay: newScores.lastUpdated,
+                    scores: Object.assign(
+                            {},
+                            prevScores,
+                            newScores.scores
+                    )
+                });
+            } else {
+                cum.users[u.id] = Object.assign({}, u, {lastUpdated: new Date().toISOString()});
+            }
+
+            idx++;
+
+            return cum;
+        }, data);
+
+        cache.lastUpdated = new Date().toISOString();
+
+        return cache;
+    }
+
     async function updateNewRankedsPpScores(data, progressCallback = null) {
         updateState({label: '', subLabel: '', errorMsg: ''});
 
@@ -56,11 +150,6 @@
             log.error('Please update song data first');
             throw 'Please update song data first';
         }
-
-        updateState({subLabel: 'Pobieranie nowych rankedów'});
-
-        const newlyRanked = await getNewlyRanked();
-        if (!newlyRanked) return {data, newlyRanked};
 
         // if not first fetch
         if(newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length) {
@@ -136,121 +225,28 @@
             }
         }
 
-        data.rankedSongs = newlyRanked.allRanked;
-        data.rankedSongsLastUpdated = JSON.parse(JSON.stringify(new Date()));
-
         return {data, newlyRanked};
-    }
-
-    async function updateNewRankeds(newData) {
-        eventBus.publish('new-rankeds', []);
-
-        const data = newData.data
-        const newlyRanked = newData.newlyRanked;
-
-        if (!newlyRanked) return;
-
-        const mainUserId = await getMainUserId();
-        if (!mainUserId) return;
-
-        if (newlyRanked.newRanked.length !== Object.keys(newlyRanked.allRanked).length)
-            eventBus.publish(
-                    'new-rankeds',
-                    newlyRanked.newRanked.concat(newlyRanked.changed)
-                            .sort((a, b) => b.stars - a.stars)
-                            .map((m) =>
-                                    Object.assign({}, m, {
-                                        pp: data && data.users && data.users[mainUserId] && data.users[mainUserId].scores && data.users[mainUserId].scores[m.leaderboardId]
-                                                ? data.users[mainUserId].scores[m.leaderboardId].pp
-                                                : null
-                                    })
-                            )
-            );
-    }
-
-    async function refresh() {
-        updateState({errorMsg: '', label: '', subLabel:"Pobieranie listy top 50 " + config.COUNTRY.toUpperCase() + '...'});
-
-        const users = await fetchUsers();
-
-        updateState({label: '', subLabel: ''});
-
-        const data = Object.assign({}, await getCacheAndConvertIfNeeded());
-
-        // set all cached users as inactive
-        if(data.users) Object.keys(data.users).map(userId => data.users[userId].inactive = true);
-
-        let idx = 0;
-        let cache = await users.reduce(async (promisedCum, u) => {
-            let cum = await promisedCum;
-
-            u.userHistory = cum.users && cum.users[u.id] && cum.users[u.id].userHistory ? cum.users[u.id].userHistory : {};
-            if(cum && cum.users && cum.users[u.id]) {
-                const {rank, pp, countryRank, ssplCountryRank} = cum.users[u.id];
-                u.userHistory = Object.assign({}, u.userHistory, {[toUTCDate(new Date())]: {rank, pp, countryRank, ssplCountryRank}})
-            }
-
-            let newScores = await fetchAllNewScores(
-                    u,
-                    dateFromString(cum.users[u.id] ? cum.users[u.id].lastUpdated : null),
-                    (info) => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / users.length) * 100)}))
-            );
-
-            if(newScores && newScores.scores) {
-                const prevScores = cum.users[u.id] ? cum.users[u.id].scores : {};
-                Object.keys(newScores.scores).map(leaderboardId => {
-                    const prevScore = prevScores[leaderboardId] ? prevScores[leaderboardId] : null;
-                    if(prevScore) {
-                        if (!newScores.scores[leaderboardId].history) newScores.scores[leaderboardId].history = [];
-
-                        const {pp, rank, score, uScore, timeset} = prevScore;
-                        newScores.scores[leaderboardId].history.push(
-                                {pp, rank, score, uScore, timestamp: dateFromString(timeset).getTime()}
-                        )
-                    }
-                })
-
-                cum.users[u.id] = Object.assign({}, u, {
-                    lastUpdated: new Date().toISOString(),
-                    recentPlay: newScores.lastUpdated,
-                    scores: Object.assign(
-                            {},
-                            prevScores,
-                            newScores.scores
-                    )
-                });
-            } else {
-                cum.users[u.id] = Object.assign({}, u, {lastUpdated: new Date().toISOString()});
-            }
-
-            idx++;
-
-            return cum;
-        }, data);
-
-        cache.lastUpdated = new Date().toISOString();
-
-        return cache;
     }
 
     async function onRefresh() {
         updateState({started: true, progress: 0});
 
         refresh()
-                .then(newData => updateNewRankedsPpScores(newData, updateProgress))
+                // TODO: remove it after moving to refresh
+                // .then(newData => updateNewRankedsPpScores(newData, updateProgress))
                 .then(async newData => {
-                    await setCache(newData.data);
+                    await setCache(newData);
 
-                    updateState({date: newData.data.lastUpdated});
+                    updateState({date: newData.lastUpdated});
 
                     return newData;
                 })
-                .then(newData => updateNewRankeds(newData))
                 .then(_ => updateState({started: false}))
                 .then(_ => eventBus.publish('data-refreshed', {}))
                 .catch(e => {
                     updateState({started: false, errorMsg: 'Błąd pobierania danych. Spróbuj ponownie.'});
-                    log.error("Can not refresh users", e)
+                    log.error("Can not refresh users")
+                    console.error(e);
                 })
         ;
     }

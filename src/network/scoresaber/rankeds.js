@@ -74,6 +74,7 @@ export async function updateRankeds() {
 
     // store all new ranked songs
     data.rankedSongs = fetchedRankedSongs;
+    data.rankedSongsLastUpdated = new Date().toISOString();
 
     // store changes
     if (changed.length) {
