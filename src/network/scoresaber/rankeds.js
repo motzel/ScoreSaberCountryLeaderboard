@@ -5,7 +5,7 @@ import {SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
 
-export const convertFetchedRankedSongsToObj = (songs) =>
+const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
         ? songs.reduce((cum, s) => {
             cum[s.leaderboardId] = s;
@@ -13,7 +13,7 @@ export const convertFetchedRankedSongsToObj = (songs) =>
         }, {})
         : null;
 
-export const fetchRankedSongsArray = async () =>
+const fetchRankedSongsArray = async () =>
     fetchApiPage(queue.SCORESABER, SCORESABER_URL + '/api.php?function=get-leaderboards&cat=1&page=1&limit=5000&ranked=1')
         .then((songs) =>
             songs?.songs
@@ -30,10 +30,8 @@ export const fetchRankedSongsArray = async () =>
                 : []
         );
 
-export const fetchRankedSongs = async () => convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
-
 export async function getNewlyRanked() {
-    const fetchedRankedSongs = await fetchRankedSongs();
+    const fetchedRankedSongs = await convertFetchedRankedSongsToObj(await fetchRankedSongsArray());
     if (!fetchedRankedSongs) return null;
 
     const data = await getCacheAndConvertIfNeeded();
