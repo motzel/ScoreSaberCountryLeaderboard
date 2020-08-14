@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.9
+ - playlist bugfix 
+ 
 0.9.1.8
  - add playlist generator
  

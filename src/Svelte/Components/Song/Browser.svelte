@@ -1062,7 +1062,7 @@
     }
 
     async function checkPage() {
-        checkedSongs = checkedSongs.concat(songsPage.songs.map(s => s.leaderboardId));
+        checkedSongs = [...new Set(checkedSongs.concat(songsPage.songs.map(s => s.leaderboardId)))];
     }
 
     function checkNone() {
