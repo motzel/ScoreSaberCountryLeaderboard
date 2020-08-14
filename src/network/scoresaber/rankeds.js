@@ -1,7 +1,7 @@
 import {fetchApiPage} from "../fetch";
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {arrayDifference, nullIfUndefined} from "../../utils/js";
-import {SCORESABER_URL} from "./consts";
+import {PLAYS_PER_PAGE, SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
 

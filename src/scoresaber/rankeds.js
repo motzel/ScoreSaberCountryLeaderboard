@@ -2,29 +2,22 @@ import {getCacheAndConvertIfNeeded} from "../store";
 
 export const getRankedSongs = async (force = false) => (await getCacheAndConvertIfNeeded(force)).rankedSongs;
 export const getRankedChanges = async _ => (await getCacheAndConvertIfNeeded()).rankedSongsChanges ?? {};
-export const getCumulativeRankedChangesSince = async (sinceTimestamp, currentRankeds = null) => {
-    currentRankeds = currentRankeds ?? await getRankedSongs();
+export const getFilteredRankedChanges = async filterTimestampFunc => {
+    const rankedSongsChanges = await getRankedChanges();
 
-    const changes = await getRankedChanges();
+    const changeTimestampsSorted = Object.keys(rankedSongsChanges).sort((a, b) => a - b);
 
-    const matchingTimestamps = Object.keys(changes).filter(c => c > sinceTimestamp).sort((a, b) => a - b);
+    const timestampsMatchingFilter = changeTimestampsSorted.filter(filterTimestampFunc);
 
-    return Object.values(
-        matchingTimestamps
-            .reduce((cum, timestamp) => {
-                changes[timestamp].forEach(change => {
-                    if (!cum[change.leaderboardId]) cum[change.leaderboardId] = {
-                        leaderboardId: change.leaderboardId,
-                        stars: null
-                    };
-                    cum[change.leaderboardId].stars = change.stars;
-                })
+    // return all song changes for matched timestamps {leaderboardId: [{change1}, {change2}...]}
+    return timestampsMatchingFilter.reduce((cum, timestamp) => {
+        rankedSongsChanges[timestamp].forEach(c => {
+            cum[c.leaderboardId] = cum[c.leaderboardId] ?? [];
+            cum[c.leaderboardId].push({...c, timestamp: parseInt(timestamp, 10)});
+        });
 
-                return cum;
-            }, {})
-    )
-        .filter(c => c.stars !== currentRankeds?.[c.leaderboardId]?.stars)
-        .map(c => ({...c, oldStars: currentRankeds?.[c.leaderboardId]?.stars ?? null}))
+        return cum
+    }, {});
 }
 
 // errors in API
