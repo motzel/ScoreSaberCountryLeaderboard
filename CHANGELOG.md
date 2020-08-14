@@ -1,4 +1,7 @@
 # Changelog
+0.9.1.10
+ - playlist bugfix, thx Drakonno
+ 
 0.9.1.9
  - playlist bugfix 
  

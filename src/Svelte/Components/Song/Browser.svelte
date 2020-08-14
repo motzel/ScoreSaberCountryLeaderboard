@@ -1052,17 +1052,21 @@
         }
     }
 
+    function addToPlaylist(leaderboardIds) {
+        checkedSongs = [...new Set(checkedSongs.concat(leaderboardIds))];
+    }
+
     function toggleChecked(leaderboardId) {
         if (checkedSongs.includes(leaderboardId)) checkedSongs = checkedSongs.filter(cs => cs !== leaderboardId);
-        else checkedSongs = [...checkedSongs, leaderboardId];
+        else addToPlaylist([leaderboardId]);
     }
 
     async function checkAll() {
-        checkedSongs = checkedSongs.concat((await calcPromised).songs.map(s => s.leaderboardId));
+        addToPlaylist((await calcPromised).songs.map(s => s.leaderboardId));
     }
 
     async function checkPage() {
-        checkedSongs = [...new Set(checkedSongs.concat(songsPage.songs.map(s => s.leaderboardId)))];
+        addToPlaylist(songsPage.songs.map(s => s.leaderboardId));
     }
 
     function checkNone() {
