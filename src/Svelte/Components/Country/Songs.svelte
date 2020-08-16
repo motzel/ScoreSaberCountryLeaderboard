@@ -1,6 +1,5 @@
 <script>
-    import {filterByCountry} from "../../../scoresaber/players";
-    import {getCacheAndConvertIfNeeded} from "../../../store";
+    import {getAllActivePlayers} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
     import {extractDiffAndType, getSongDiffInfo} from "../../../song";
 
@@ -33,21 +32,18 @@
         {label: '%', key: 'acc', className: 'acc'},
         {label: 'PP', key: 'pp', className: 'pp'}
     ].filter(h => !noRank || h.key !== 'rank');
-    let rows = [];
 
     let users = [];
 
     export async function refreshUsers() {
-        const data = await getCacheAndConvertIfNeeded();
+        users = (await getAllActivePlayers(country))
+                .reduce((cum, user) => {
+                    if (user) {
+                        const {id, country, name} = user;
 
-        users = filterByCountry(data.users, country)
-                .reduce((cum, userId) => {
-                    if (data.users[userId]) {
-                        const {id, country, name} = data.users[userId];
-
-                        if (data.users[userId].scores)
-                            cum = cum.concat(Object.values(
-                                    data.users[userId].scores)
+                        if (user.scores)
+                            cum = cum.concat(
+                                Object.values(user.scores)
                                     .map(s => {
                                         s.scoreMult = s.uScore ? s.score / s.uScore : 1;
                                         s.acc = s.maxScoreEx ? s.score / s.maxScoreEx / s.scoreMult * 100 : null;

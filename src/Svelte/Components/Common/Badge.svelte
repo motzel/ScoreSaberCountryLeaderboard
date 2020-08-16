@@ -6,7 +6,7 @@
     export let color = "var(--textColor)";
     export let bgColor = "var(--background)"
     export let title;
-    export let zero = "0,00";
+    export let zero = "0";
     export let digits = 2;
 </script>
 

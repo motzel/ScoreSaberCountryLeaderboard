@@ -1,4 +1,4 @@
-import {fetchApiPage} from "../fetch";
+import {fetchApiPage, NotFoundError} from "../fetch";
 import {substituteVars} from "../../utils/format";
 import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
@@ -58,9 +58,16 @@ export async function fetchAllNewScores(
 
         if (progressCallback) progressCallback(progressInfo);
 
-        let scorePage = await fetchScores(user.id, page, (time) => {
-            if (progressCallback) progressCallback(Object.assign({}, progressInfo, {wait: time}))
-        });
+        let scorePage;
+        try {
+            scorePage = await fetchScores(user.id, page, (time) => {
+                if (progressCallback) progressCallback(Object.assign({}, progressInfo, {wait: time}))
+            });
+        }
+        catch(err) {
+            // skip 404 errors
+            if (! (err instanceof NotFoundError)) throw err;
+        }
         if (!scorePage) break;
 
         // remember most recent play time

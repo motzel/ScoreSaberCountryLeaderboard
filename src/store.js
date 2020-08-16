@@ -1,7 +1,6 @@
 import log from './utils/logger';
 import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
-import {dateFromString} from "./utils/date";
-import config, {getMainUserId as getSseMainUserId} from "./temp";
+import config, {getSseMainUserId} from "./temp";
 import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from "./network/scoresaber/players";
 
 const CACHE_KEY = 'sspl_users';

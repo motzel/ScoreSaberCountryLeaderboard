@@ -6,7 +6,12 @@
 
     import {getConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
-    import {getPlayerInfo} from "../../../scoresaber/players";
+    import {
+        addPlayerToGroup,
+        getAllActivePlayersIds, getManuallyAddedPlayersIds,
+        getPlayerInfo,
+        isDataAvailable, removePlayerFromGroup
+    } from "../../../scoresaber/players";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {dateFromString} from "../../../utils/date";
     import importJsonData from "../../../utils/import";
@@ -18,6 +23,9 @@
 
     let mainUserId;
     let playerInfo;
+    let isActivePlayer = false;
+    let isManuallyAddedPlayer = false;
+    let dataAvailable = false;
 
     let showTwitchBtn = true;
     let twitchBtnLabel = '';
@@ -27,6 +35,7 @@
     let showSettingsModal = false;
 
     let importBtn;
+    let noDataImportBtn;
 
     let config;
 
@@ -214,10 +223,19 @@
     let itemsPerPage = allItemsPerPage.map(i => ({label: i, val: i}));
     let configItemsPerPage = itemsPerPage[1];
 
+    async function refreshPlayerStatus() {
+        isActivePlayer = (await getAllActivePlayersIds()).includes(profileId);
+        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds()).includes(profileId);
+    }
+
     (async () => {
+        dataAvailable = await isDataAvailable();
+
         config = await getConfig();
         mainUserId = config && config.users && config.users.main ? config.users.main : null;
         playerInfo = await getPlayerInfo(profileId);
+
+        await refreshPlayerStatus();
 
         const defaultSongType = songTypes.find(s => s.id === config.songBrowser.defaultType);
         if (defaultSongType) configSongType = defaultSongType;
@@ -296,7 +314,8 @@
     }
 
     function importData(e) {
-        importBtn.$set({disabled: true});
+        if (importBtn) importBtn.$set({disabled: true});
+        if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
 
         importJsonData(
                 e,
@@ -307,7 +326,8 @@
                 async json => {
                     await setCache(json);
 
-                    importBtn.$set({disabled: false});
+                    if (importBtn) importBtn.$set({disabled: false});
+                    if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
 
                     eventBus.publish('data-refreshed', {});
 
@@ -353,151 +373,179 @@
 
         window.location.reload();
     }
+
+    async function storePlayerStatusChanges() {
+        await setCache(await getCacheAndConvertIfNeeded());
+        await refreshPlayerStatus();
+    }
+
+    async function manuallyAddPlayer() {
+        await addPlayerToGroup(profileId);
+        await storePlayerStatusChanges();
+    }
+
+    async function manuallyRemovePlayer() {
+        await removePlayerFromGroup(profileId);
+        await storePlayerStatusChanges();
+
+        window.location.reload();
+    }
 </script>
 
-{#if playerInfo}
-    {#if showTwitchBtn}
-        <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
-                type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
+{#if profileId}
+    {#if (!dataAvailable)}
+        <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
+              on:change={importData}/>
+    {:else if (!isActivePlayer)}
+        <Button iconFa="fas fa-user-plus" type="primary" title="Dodaj użytkownika" on:click={manuallyAddPlayer}/>
+    {:else if playerInfo}
+        {#if showTwitchBtn}
+            <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
+                    type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
+        {/if}
+
+        {#if profileId !== mainUserId}
+            <Button iconFa="fas fa-user-check" type="primary" title="Ustaw jako główny profil" on:click={setAsMainProfile}/>
+        {:else}
+            <Button iconFa="fas fa-cog" title="Ustawienia" on:click={() => showSettingsModal = true}/>
+        {/if}
     {/if}
 
-    {#if profileId !== mainUserId}
-        <Button iconFa="fas fa-user-check" type="primary" title="Ustaw jako główny profil" on:click={setAsMainProfile}/>
-    {:else}
-        <Button iconFa="fas fa-cog" title="Ustawienia" on:click={() => showSettingsModal = true}/>
+    {#if isManuallyAddedPlayer}
+        <Button iconFa="fas fa-user-minus" type="danger" title="Usuń użytkownika" on:click={manuallyRemovePlayer}/>
     {/if}
-{/if}
 
-{#if showSettingsModal}
-    <Modal closeable={false} on:close={() => showSettingsModal = false}>
-        <header>
-            <div class="menu-label">Ustawienia</div>
-        </header>
+    {#if showSettingsModal}
+        <Modal closeable={false} on:close={() => showSettingsModal = false}>
+            <header>
+                <div class="menu-label">Ustawienia</div>
+            </header>
 
-        <main>
-            <section class="columns">
-                <div class="column is-one-third">
-                    <div class="menu-label">Motyw</div>
-                    <Select items={availableThemes} bind:value={theme} on:change={onThemeChange} />
-                </div>
-            </section>
-
-            <section>
-                <div class="menu-label">Przeglądarka nut</div>
-                <label class="checkbox">
-                    <input type="checkbox" bind:checked={config.songBrowser.autoTransform}>
-                    Automatycznie transformuj
-                </label>
-
-                <div class="columns">
+            <main>
+                <section class="columns">
                     <div class="column is-one-third">
-                        <label class="menu-label">Domyślny rodzaj</label>
-                        <Select bind:value={configSongType} items={songTypes} on:change={onSongTypeChange}/>
+                        <div class="menu-label">Motyw</div>
+                        <Select items={availableThemes} bind:value={theme} on:change={onThemeChange} />
+                    </div>
+                </section>
+
+                <section>
+                    <div class="menu-label">Przeglądarka nut</div>
+                    <label class="checkbox">
+                        <input type="checkbox" bind:checked={config.songBrowser.autoTransform}>
+                        Automatycznie transformuj
+                    </label>
+
+                    <div class="columns">
+                        <div class="column is-one-third">
+                            <label class="menu-label">Domyślny rodzaj</label>
+                            <Select bind:value={configSongType} items={songTypes} on:change={onSongTypeChange}/>
+                        </div>
+
+                        <div class="column is-one-third">
+                            <label class="menu-label">Domyślny widok</label>
+                            <Select bind:value={configViewType} items={viewTypes}/>
+                        </div>
+
+                        <div class="column is-one-third">
+                            <label class="menu-label">Domyślne kolumny</label>
+                            <Select multiple bind:value={configShowColumns} items={columns}/>
+                        </div>
                     </div>
 
-                    <div class="column is-one-third">
-                        <label class="menu-label">Domyślny widok</label>
-                        <Select bind:value={configViewType} items={viewTypes}/>
-                    </div>
+                    <div class="columns">
+                        <div class="column is-one-third">
+                            <label class="menu-label">Domyślne sortowanie</label>
+                            <Select bind:value={configSortType} items={sortTypes}/>
+                        </div>
 
-                    <div class="column is-one-third">
-                        <label class="menu-label">Domyślne kolumny</label>
-                        <Select multiple bind:value={configShowColumns} items={columns}/>
+                        <div class="column is-one-third">
+                            <label class="menu-label">Domyślne ikony</label>
+                            <Select multiple bind:value={configShowIcons} items={shownIcons} />
+                        </div>
+
+                        <div class="column is-one-third">
+                            <label class="menu-label">Liczba pozycji na stronę</label>
+                            <Select bind:value={configItemsPerPage} items={itemsPerPage} />
+                        </div>
                     </div>
+                </section>
+
+                <section>
+                    <div class="menu-label">Profil</div>
+                    <div>
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
+                            Powiększaj avatar
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.profile.showChart}>
+                            Pokazuj wykres
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
+                            Pokazuj kalkulator +1PP
+                        </label>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="menu-label">Ranking nutki</div>
+                    <div>
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.songLeaderboard.showDiff}>
+                            Pokazuj różnice
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.songLeaderboard.showWhatIfPp}>
+                            Pokazuj "jeśli tak zagrasz"
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.songLeaderboard.showBgCover}>
+                            Pokazuj okładkę w tle
+                        </label>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="menu-label">Domyślna lista nut</div>
+                    <div>
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.ss.song.enhance}>
+                            Dodawaj wynik/dokładność
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.ss.song.showDiff}>
+                            Pokazuj różnice
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
+                            Pokazuj "jeśli tak zagrasz"
+                        </label>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="columns">
+                <div class="column">
+                    <Button iconFa="fas fa-save" label="Zapisz" type="primary" on:click={saveConfig}/>
+                    <Button label="Anuluj" on:click={onCancel}/>
                 </div>
 
-                <div class="columns">
-                    <div class="column is-one-third">
-                        <label class="menu-label">Domyślne sortowanie</label>
-                        <Select bind:value={configSortType} items={sortTypes}/>
-                    </div>
-
-                    <div class="column is-one-third">
-                        <label class="menu-label">Domyślne ikony</label>
-                        <Select multiple bind:value={configShowIcons} items={shownIcons} />
-                    </div>
-
-                    <div class="column is-one-third">
-                        <label class="menu-label">Liczba pozycji na stronę</label>
-                        <Select bind:value={configItemsPerPage} items={itemsPerPage} />
-                    </div>
+                <div class="column">
+                    <Button iconFa="fas fa-download" label="Eksport" on:click={exportData}/>
+                    <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={importBtn}
+                          on:change={importData}/>
                 </div>
-            </section>
-
-            <section>
-                <div class="menu-label">Profil</div>
-                <div>
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
-                        Powiększaj avatar
-                    </label>
-
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.profile.showChart}>
-                        Pokazuj wykres
-                    </label>
-
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
-                        Pokazuj kalkulator +1PP
-                    </label>
-                </div>
-            </section>
-
-            <section>
-                <div class="menu-label">Ranking nutki</div>
-                <div>
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.songLeaderboard.showDiff}>
-                        Pokazuj różnice
-                    </label>
-
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.songLeaderboard.showWhatIfPp}>
-                        Pokazuj "jeśli tak zagrasz"
-                    </label>
-
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.songLeaderboard.showBgCover}>
-                        Pokazuj okładkę w tle
-                    </label>
-                </div>
-            </section>
-
-            <section>
-                <div class="menu-label">Domyślna lista nut</div>
-                <div>
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.ss.song.enhance}>
-                        Dodawaj wynik/dokładność
-                    </label>
-
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.ss.song.showDiff}>
-                        Pokazuj różnice
-                    </label>
-
-                    <label class="checkbox">
-                        <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
-                        Pokazuj "jeśli tak zagrasz"
-                    </label>
-                </div>
-            </section>
-        </main>
-
-        <footer class="columns">
-            <div class="column">
-                <Button iconFa="fas fa-save" label="Zapisz" type="primary" on:click={saveConfig}/>
-                <Button label="Anuluj" on:click={onCancel}/>
-            </div>
-
-            <div class="column">
-                <Button iconFa="fas fa-download" label="Eksport" on:click={exportData}/>
-                <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={importBtn}
-                      on:change={importData}/>
-            </div>
-        </footer>
-    </Modal>
+            </footer>
+        </Modal>
+    {/if}
 {/if}
 
 <style>

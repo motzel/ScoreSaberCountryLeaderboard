@@ -1,8 +1,9 @@
+import config from "./temp";
 import {capitalize} from "./utils/js";
 import {getCacheAndConvertIfNeeded} from "./store";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
-import {filterByCountry} from "./scoresaber/players";
+import {getAllActivePlayers} from "./scoresaber/players";
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -78,8 +79,8 @@ export function findDiffInfo(characteristics, ssDiff) {
 export async function getLeaderboard(leaderboardId) {
     const data = await getCacheAndConvertIfNeeded();
 
-    const scores = filterByCountry(data.users)
-        .map(playerId => data?.users?.[playerId]?.scores?.[leaderboardId] ? {playerId, songHash: data.users[playerId].scores[leaderboardId].id} : null)
+    const scores = (await getAllActivePlayers(config.COUNTRY))
+        .map(player => player?.scores?.[leaderboardId] ? {playerId: player.id, songHash: player?.scores[leaderboardId].id} : null)
         .filter(s => s)
     ;
     if (!scores.length) return scores;

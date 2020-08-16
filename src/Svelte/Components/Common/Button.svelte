@@ -45,6 +45,14 @@
             border: "transparent",
             activeBorder: "transparent"
         },
+        danger: {
+            color: "#dbdbdb",
+            activeColor: "#fff",
+            bgColor: "red",
+            activeBgColor: "#bf0000",
+            border: "transparent",
+            activeBorder: "transparent"
+        },
     }
     let selectedType = types[type] ? types[type] : types.default
     let margin = label && label.length ? ".45em" : "1px"

@@ -1,5 +1,5 @@
 export const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-export const isEmpty = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object;
+export const isEmpty = (obj) => obj && obj.constructor === Object && Object.keys(obj).length === 0
 export const convertArrayToObjectByKey = (arr, key) =>
     arr.reduce((cum, item) => {
         cum[item[key]] = item;

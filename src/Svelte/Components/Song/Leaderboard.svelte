@@ -10,7 +10,7 @@
     import Value from '../Common/Value.svelte';
     import WhatIfPp from './WhatIfPp.svelte';
 
-    import Refresh from '../Common/Refresh.svelte';
+    import Refresh from '../Player/Refresh.svelte';
 
     import {SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
     import {getConfig, getMainUserId} from "../../../plugin-config";

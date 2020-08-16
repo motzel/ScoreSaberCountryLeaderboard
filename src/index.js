@@ -5,10 +5,9 @@ import SongIcons from './Svelte/Components/Song/Icons.svelte';
 import SongCard from './Svelte/Components/Song/Card.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
-import Refresh from './Svelte/Components/Common/Refresh.svelte';
+import Refresh from './Svelte/Components/Player/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
-import File from './Svelte/Components/Common/File.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 
@@ -18,7 +17,6 @@ import {getCacheAndConvertIfNeeded, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
-import importJsonData from "./utils/import";
 
 import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
@@ -381,7 +379,7 @@ async function setupProfile() {
         header.appendChild(refreshDiv);
         new Refresh({
             target: refreshDiv,
-            props: {}
+            props: {profileId}
         })
         eventBus.on('data-refreshed', async _ => {
             window.location.reload(false);
@@ -460,58 +458,21 @@ async function setupProfile() {
             const songBrowserConfig = await getConfig('songBrowser');
             if (songBrowserConfig && songBrowserConfig.autoTransform) transformSongs()
             else transformBtn.$on('click', transformSongs)
+        }
 
-            const avatarColumn = document.querySelector('.column.avatar');
-            if (avatarColumn) {
-                const div = document.createElement('div')
-                div.style.marginTop = "1rem";
-                div.style.fontSize = "0.75rem";
-                div.classList.add('buttons')
-                div.classList.add('flex-center');
-                avatarColumn.appendChild(div);
+        const avatarColumn = document.querySelector('.column.avatar');
+        if (avatarColumn) {
+            const div = document.createElement('div')
+            div.style.marginTop = "1rem";
+            div.style.fontSize = "0.75rem";
+            div.classList.add('buttons')
+            div.classList.add('flex-center');
+            avatarColumn.appendChild(div);
 
-                new PlayerSettings({
-                    target: div,
-                    props: {profileId}
-                })
-            }
-        } else {
-            const avatarColumn = document.querySelector('.column.avatar');
-            if (avatarColumn) {
-                const div = document.createElement('div')
-                div.style.marginTop = "1rem";
-                div.style.fontSize = "0.75rem";
-                div.classList.add('buttons')
-                div.classList.add('flex-center');
-                avatarColumn.appendChild(div);
-
-                const importBtn = new File({
-                    target: div,
-                    props: {
-                        iconFa: "fas fa-upload",
-                        label: "Import",
-                        accept: "application/json"
-                    }
-                });
-                importBtn.$on('change', e => {
-                    importBtn.$set({disabled: true});
-
-                    importJsonData(
-                        e,
-                        msg => {
-                            alert(msg)
-                            importBtn.$set({disabled: false});
-                        },
-                        async json => {
-                            await setCache(json);
-
-                            importBtn.$set({disabled: false});
-
-                            window.location.reload(false);
-                        }
-                    )
-                });
-            }
+            new PlayerSettings({
+                target: div,
+                props: {profileId}
+            })
         }
     }
 

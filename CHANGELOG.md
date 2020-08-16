@@ -1,4 +1,7 @@
 # Changelog
+0.9.2
+ - add the possibility to manually add players to the plugin
+ 
 0.9.1.10
  - playlist bugfix, thx Drakonno
  

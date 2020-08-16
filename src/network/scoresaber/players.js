@@ -5,7 +5,12 @@ import {PLAYER_INFO_URL,  USERS_URL} from "./consts";
 import queue from "../queue";
 import config from '../../temp';
 import {getCacheAndConvertIfNeeded} from "../../store";
-import {getPlayerInfo, getPlayerRankedsScorePagesToUpdate, USER_PROFILE_URL} from "../../scoresaber/players";
+import {
+    getManuallyAddedPlayersIds,
+    getPlayerInfo,
+    getPlayerRankedsScorePagesToUpdate,
+    USER_PROFILE_URL
+} from "../../scoresaber/players";
 import {dateFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchScores} from "./scores";
 
@@ -51,7 +56,26 @@ export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API
     return info;
 })
 
-export const updateCountryPlayers = async (page = 1) => {
+const updatePlayerInfo = async (info, players) => {
+    const {lastUpdated, recentPlay, scores, userHistory} = players?.[info.playerInfo.playerId]
+        ? players?.[info.playerInfo.playerId]
+        : {lastUpdated: null, recentPlay: null, userHistory: {}, scores: {}};
+
+    if (!info.scoreStats || !players?.[info.playerInfo.playerId]) {
+        const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
+        if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
+
+        return Object.assign({}, players[info.playerInfo.playerId] ?? {}, convertPlayerInfo(playerInfo), {
+            lastUpdated,
+            recentPlay,
+            scores,
+            userHistory
+        });
+    }
+
+    return Object.assign({}, players[info.playerInfo.playerId] ?? {}, info.playerInfo, info.scoreStats);
+}
+export const updateActivePlayers = async (page = 1) => {
     const data = await getCacheAndConvertIfNeeded();
 
     // set all cached country players as inactive
@@ -92,36 +116,33 @@ export const updateCountryPlayers = async (page = 1) => {
                         inactive: false
                     }
                 })))
-                .map(async info => {
-                    const {lastUpdated, recentPlay, scores, userHistory} = data.users?.[info.playerInfo.playerId]
-                        ? data.users?.[info.playerInfo.playerId]
-                        : {lastUpdated: null, recentPlay: null, userHistory: {}, scores: {}};
-
-                    if (!info.scoreStats || !data.users?.[info.playerInfo.playerId]) {
-                        const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
-                        if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
-
-                        return Object.assign({}, data.users[info.playerInfo.playerId], convertPlayerInfo(playerInfo), {
-                            lastUpdated,
-                            recentPlay,
-                            scores,
-                            userHistory
-                        });
-                    }
-
-                    return Object.assign({}, data.users[info.playerInfo.playerId], info.playerInfo, info.scoreStats);
-                })
+                .map(async info => updatePlayerInfo(info, data?.users))
         ))
             .sort((a, b) => b.pp - a.pp)
             .map((u, idx) => ({...u, ssplCountryRank: {[config.COUNTRY]: idx + 1}}))
             .slice(0, 50);
 
-    data.users = {
-        ...data.users,
-        ...convertArrayToObjectByKey(countryPlayers, 'id')
+    const manuallyAddedPlayers = await Promise.all(
+        (await getManuallyAddedPlayersIds())
+            .map(playerId => updatePlayerInfo({
+                playerInfo: {
+                    playerId,
+                    inactive: false
+                }
+            }, data?.users))
+    );
+
+    const allPlayers = {
+        ...convertArrayToObjectByKey(countryPlayers, 'id'),
+        ...convertArrayToObjectByKey(manuallyAddedPlayers, 'id')
     }
 
-    return countryPlayers;
+    data.users = {
+        ...data.users,
+        ...allPlayers
+    }
+
+    return Object.values(allPlayers);
 }
 
 export const getPlayerWithUpdatedScores = async (playerId, progressCallback = null) => {

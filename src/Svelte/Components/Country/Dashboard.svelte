@@ -8,7 +8,7 @@
     import Button from "../Common/Button.svelte";
     import Range from "../Common/Range.svelte";
     import Select from "../Common/Select.svelte";
-    import Refresh from "../Common/Refresh.svelte";
+    import Refresh from "../Player/Refresh.svelte";
     import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let country = config.COUNTRY;

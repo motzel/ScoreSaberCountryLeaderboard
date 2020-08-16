@@ -1,8 +1,8 @@
 <!--suppress JSUnfilteredForInLoop -->
 <script>
-    import Progress from './Progress.svelte';
-    import Button from './Button.svelte';
-    import FormattedDate from './FormattedDate.svelte';
+    import Progress from '../Common/Progress.svelte';
+    import Button from '../Common/Button.svelte';
+    import FormattedDate from '../Common/FormattedDate.svelte';
 
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
     import config from '../../../temp';
@@ -10,10 +10,13 @@
     import log from '../../../utils/logger';
 
     import {updateRankeds} from "../../../network/scoresaber/rankeds";
-    import {updateCountryPlayers, getPlayerWithUpdatedScores} from "../../../network/scoresaber/players";
+    import {updateActivePlayers, getPlayerWithUpdatedScores} from "../../../network/scoresaber/players";
     import {dateFromString} from "../../../utils/date";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import {getPlayerInfo} from "../../../scoresaber/players";
+
+    export let profileId;
 
     let stateObj = {
         date: null,
@@ -25,10 +28,15 @@
     };
     let state = createBroadcastChannelStore('refresh-widget', stateObj);
 
-    setLastRefershDate();
+    setLastRefreshDate();
 
-    function setLastRefershDate() {
-        lastUpdated().then(d => $state.date = dateFromString(d));
+    async function setLastRefreshDate() {
+        if (profileId) {
+            const playerInfo = await getPlayerInfo(profileId);
+            if (playerInfo && playerInfo.lastUpdated) $state.date = dateFromString(playerInfo.lastUpdated);
+        } else {
+            lastUpdated().then(d => $state.date = dateFromString(d));
+        }
     }
 
     function updateState(obj) {
@@ -50,7 +58,7 @@
 
         updateState({errorMsg: '', label: '', subLabel: `Pobieranie listy top 50 ${config.COUNTRY.toUpperCase()}...`});
 
-        const countryPlayers = await updateCountryPlayers();
+        const countryPlayers = await updateActivePlayers();
 
         updateState({label: '', subLabel: ''});
 
@@ -74,7 +82,9 @@
 
         await setCache(cache);
 
-        updateState({date: cache.lastUpdated, started: false});
+        updateState({started: false});
+
+        await setLastRefreshDate();
 
         eventBus.publish('data-refreshed', {});
     }

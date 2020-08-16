@@ -4,9 +4,10 @@
 
     export let date = new Date();
     export let prevDate = null;
+    export let noDate = "";
 
     $: dateObj = date instanceof Date ? date : dateFromString(date);
-    $: formatted = date ? formatDate(dateObj.toISOString()) : "";
+    $: formatted = date ? formatDate(dateObj.toISOString()) : noDate;
     $: prevDateObj = prevDate ? (prevDate instanceof Date ? prevDate : dateFromString(date)) : null;
     $: prevFormatted = prevDate ? formatDate(prevDateObj.toISOString()) : "";
 </script>

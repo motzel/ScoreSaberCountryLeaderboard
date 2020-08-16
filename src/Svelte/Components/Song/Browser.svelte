@@ -9,10 +9,10 @@
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import {
-        filterByCountry,
+        getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
-        getPlayerRankedScores,
+        getPlayerRankedScores, getPlayers,
         getPlayerScores
     } from "../../../scoresaber/players";
     import {
@@ -343,11 +343,11 @@
 
         // add snipeds if not defined
         if (!snipedIds || !snipedIds.length) {
-            countryRanking = await getCountryRanking();
+            countryRanking = await getCountryRanking(country);
             const player = countryRanking.find(p => p.id === playerId)
             if (player) {
-                if (player.countryRank > 1) sniperModeIds.push(countryRanking[player.countryRank - 1 - 1].id);
-                if (player.countryRank < countryRanking.length) sniperModeIds.push(countryRanking[player.countryRank + 1 - 1].id);
+                if (player.ssplCountryRank[country] > 1) sniperModeIds.push(countryRanking[player.ssplCountryRank[country] - 1 - 1].id);
+                if (player.ssplCountryRank[country] < countryRanking.length) sniperModeIds.push(countryRanking[player.ssplCountryRank[country] + 1 - 1].id);
             }
 
             if (config.compareTo && Array.isArray(config.compareTo)) snipedIds = [...config.compareTo];
@@ -391,19 +391,16 @@
 
         await generateSortTypes();
 
-        const data = await getCacheAndConvertIfNeeded();
-        users = filterByCountry(data.users, country)
-                .reduce((cum, userId) => {
-                    if (data.users[userId] && data.users[userId].scores) {
-                        let {id, name, avatar, ssplCountryRank} = data.users[userId];
-                        ssplCountryRank = typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
+        users = (await getAllActivePlayers(country))
+                .reduce((cum, player) => {
+                    if (player && player.scores) {
+                        let {id, name, avatar} = player;
 
-                        cum.push({id, label: name, avatar, ssplCountryRank});
+                        cum.push({id, label: name, avatar});
                     }
                     return cum;
                 }, [])
                 .sort((a, b) => a.label.toLowerCase().replace(/[^a-zAZ]/g, '').localeCompare(b.label.toLowerCase().replace(/[^a-zAZ]/g, '')))
-                .slice(0, 50)
                 .filter(u => u.id !== playerId)
         ;
 
@@ -995,7 +992,7 @@
     }
 
     async function exportPlaylist() {
-        const allPlayedSongs = Object.values( Object.values((await getCacheAndConvertIfNeeded()).users).reduce((cum,u) => ({...cum, ...u.scores}), {}));
+        const allPlayedSongs = Object.values(Object.values(await getPlayers()).reduce((cum,u) => ({...cum, ...u.scores}), {}));
         const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.id}));
         const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {

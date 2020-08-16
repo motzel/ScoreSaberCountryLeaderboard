@@ -8,11 +8,10 @@
 
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
-    import {filterByCountry} from "../../../scoresaber/players";
-    import {getMainUserId} from "../../../plugin-config";
-    import {getCacheAndConvertIfNeeded} from "../../../store";
+    import {getCountryRanking} from "../../../scoresaber/players";
+    import config from "../../../temp";
 
-    export let country;
+    export let country = config.COUNTRY;
     export let itemsPerPage = 25;
     export let diff = 6;
 
@@ -22,13 +21,9 @@
         {value: 29, text: 'Miesiąc'}
     ];
 
-    let mainUserId;
-    let users = {};
+    let users = [];
     (async () => {
-        mainUserId = await getMainUserId()
-
-        const data = await getCacheAndConvertIfNeeded();
-        users = data.users;
+        users = await getCountryRanking(country);
     })();
 
     let selectedDiff = diffOptions.find(i => i.value === diff);
@@ -44,9 +39,9 @@
     let rows = [];
 
     $: if (selectedDiff) {
-        ranking = filterByCountry(users, country)
-                .reduce((cum, userId) => {
-                    const {id, name, country, pp, rank, userHistory, weeklyDiff} = users[userId];
+        ranking = users
+                .reduce((cum, user) => {
+                    const {id, name, country, pp, rank, userHistory, weeklyDiff} = user;
 
                     const historicalTimestamp = userHistory ? getFirstNotNewerThan(toUTCDate(daysAgo(selectedDiff.value + 1)), Object.keys(userHistory)) : null;
 
@@ -66,8 +61,6 @@
 
                     return cum;
                 }, [])
-                .sort((a, b) => b.pp - a.pp)
-                .slice(0, 50)
     }
 </script>
 

@@ -5,38 +5,71 @@ import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, SCORESABER_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
+import {isEmpty} from "../utils/js";
 
 export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 
-export const isActiveCountryUser = (u, country = config.COUNTRY) => !u.inactive && (getAdditionalPlayers().includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
+export const isActiveCountryPlayer = (u, country = config.COUNTRY) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers().includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
-export const filterByCountry = (players, country = config.COUNTRY) => Object.keys(players)
-    .filter(userId => isActiveCountryUser(players[userId]), country)
+export const getActiveCountryPlayers = async (country = config.COUNTRY) => {
+    const players = (await getPlayers()) ?? {};
+    return Object.values(players).filter(p => isActiveCountryPlayer(p, country))
+}
+export const getActiveCountryPlayersIds = async (country = config.COUNTRY) => (await getActiveCountryPlayers(country)).map(p => p.id);
 
-export const mapUsersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
-    cum[playerId] = players[playerId];
+export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
+    cum[playerId] = players[playerId] ?? {};
     return cum;
 }, {})
 
 export const getCountryRanking = async (country = config.COUNTRY) => {
-    const players = (await getCacheAndConvertIfNeeded())?.users;
-    return players
-        ? Object.values(players)
-            .filter(p => isActiveCountryUser(p, country))
-            .sort((a,b) => b.pp - a.pp)
-            .map((p, idx) => {
-                p.countryRank = idx + 1
-
-                return p;
-            })
-            .slice(0, 50)
-        : null;
+    const players = await getActiveCountryPlayers(country);
+    return players ? players.sort((a,b) => b.pp - a.pp).slice(0, config.COUNTRY_PLAYERS_QTY) : null;
 }
 
-export const getPlayerInfo = async playerId => {
+export const isDataAvailable = async () => !isEmpty(await getPlayers());
+
+export const getPlayers = async () => (await getCacheAndConvertIfNeeded())?.users;
+
+export const getPlayerInfo = async playerId => (await getPlayers())?.[playerId] ?? null;
+
+export const getPlayerGroups = async () => (await getCacheAndConvertIfNeeded())?.groups ?? null;
+
+export const addPlayerToGroup = async (playerId, groupId = 'default', groupName = 'Default') => {
     const data = await getCacheAndConvertIfNeeded();
-    return data?.users?.[playerId] ?? null;
+    if (!data?.groups) data.groups = {};
+
+    const groups = data.groups;
+    if(!groups[groupId]) groups[groupId] = {name: groupName, players: []};
+
+    groups[groupId].players = [...new Set(groups[groupId].players.concat([playerId]))];
 }
+
+export const removePlayerFromGroup = async (playerId, groupId = 'default') => {
+    const data = await getCacheAndConvertIfNeeded();
+    if (!data?.groups?.[groupId]?.players) return;
+
+    data.groups[groupId].players = data.groups[groupId].players.filter(pId => pId !== playerId);
+    if (data?.users?.[playerId]) delete data.users[playerId];
+}
+
+export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[groupId] ?? null;
+
+export const getManuallyAddedPlayersIds = async () => {
+    const groups = await getPlayerGroups();
+    if (!groups) return [];
+
+    const players = await getPlayers();
+
+    return Object.keys(groups)
+        .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
+        .filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null))
+        ;
+}
+
+export const getAllActivePlayersIds = async (country = config.COUNTRY) => [...new Set((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds()))];
+
+export const getAllActivePlayers = async (country = config.COUNTRY) => Object.values(mapPlayersToObj(await getAllActivePlayersIds(country), await getPlayers()));
 
 export const getPlayerProfileUrl = playerId => substituteVars(USER_PROFILE_URL, {userId: playerId})
 
