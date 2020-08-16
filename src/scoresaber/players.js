@@ -1,9 +1,10 @@
 import {getAdditionalPlayers} from "../network/scoresaber/players";
 import {default as config} from '../temp';
 import {getCacheAndConvertIfNeeded} from "../store";
-import {getRankedSongs} from "./rankeds";
-import {NEW_SCORESABER_URL, SCORESABER_URL} from "../network/scoresaber/consts";
+import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
+import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, SCORESABER_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
+import {dateFromString} from "../utils/date";
 
 export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 
@@ -34,7 +35,7 @@ export const getCountryRanking = async (country = config.COUNTRY) => {
 
 export const getPlayerInfo = async playerId => {
     const data = await getCacheAndConvertIfNeeded();
-    return data?.users?.[playerId] ? data.users[playerId] : null;
+    return data?.users?.[playerId] ?? null;
 }
 
 export const getPlayerProfileUrl = playerId => substituteVars(USER_PROFILE_URL, {userId: playerId})
@@ -65,4 +66,45 @@ export const getPlayerSongScore = async (playerId, leaderboardId) => {
     const score = (await getPlayerScores(playerId))?.[leaderboardId];
 
     return score ? score : null;
+}
+
+const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
+    const songsChangedAfterPreviousUpdate = await getFilteredRankedChanges(timestamp => timestamp >= previousLastUpdated);
+
+    // check all song changed after previous update
+    return Object.keys(songsChangedAfterPreviousUpdate).reduce((cum, leaderboardId) => {
+        // skip if the player didn't play the song
+        if (!scores[leaderboardId]) return cum;
+
+        const songLastPlayTimestamp = dateFromString(scores[leaderboardId].timeset).getTime();
+
+        // skip if song was played AFTER previous update (because all new scores were downloaded with current update, changed or not)
+        if (songLastPlayTimestamp > previousLastUpdated) return cum;
+
+        // mark song to update
+        cum.push(parseInt(leaderboardId, 10));
+
+        return cum;
+    }, [])
+}
+
+export const getPlayerRankedsScorePagesToUpdate = async (scores, previousLastUpdated) => {
+    const songsToUpdate = await getPlayerRankedsToUpdate(scores, previousLastUpdated);
+    if (!songsToUpdate.length) return {};
+
+    return Object.values(scores)
+        .map((s) => ({
+            leaderboardId: s.leaderboardId,
+            timeset: dateFromString(s.timeset)
+        }))
+        .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
+        .reduce((cum, s, idx) => {
+            if (songsToUpdate.includes(s.leaderboardId)) {
+                const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
+                cum[page] = (cum && cum[page] ? cum[page] : []).concat([
+                    s.leaderboardId
+                ]);
+            }
+            return cum;
+        }, {});
 }

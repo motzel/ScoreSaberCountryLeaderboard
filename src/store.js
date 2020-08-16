@@ -30,7 +30,8 @@ export async function getCacheAndConvertIfNeeded(force = false) {
         lastUpdated: null,
         users: {},
         rankedSongs: null,
-        rankedSongsLastUpdated: null
+        rankedSongsLastUpdated: null,
+        beatSaver: {}
     });
 
     let cache = (await getCache()) ?? prepareFreshCache();
