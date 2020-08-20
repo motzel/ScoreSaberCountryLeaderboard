@@ -54,13 +54,20 @@ export async function queueFetch(queue, url, options, rateLimitCallback = null) 
     const controller = new AbortController();
     const signal = controller.signal;
 
+    const rateLimiteDelaySteps = [1000, 5000, 10000];
+    let rateLimitTry = 0;
+
     return queueRetriedPromise(
         queue,
         () => window.fetch(url, {...options, signal, mode: 'cors'})
             .then(async response => {
                 if (429 === response.status) {
                     const rateLimitReset = parseInt(response.headers.get('x-ratelimit-reset'), 10);
-                    const waitTimeForLimitReset = rateLimitReset && !isNaN(rateLimitReset) ? (new Date(rateLimitReset * 1000)).getTime() - (new Date()).getTime() : null;
+                    const waitTimeForLimitReset = (
+                        rateLimitReset && !isNaN(rateLimitReset)
+                            ? (new Date(rateLimitReset * 1000)).getTime() - (new Date()).getTime()
+                            : 0
+                    ) + rateLimiteDelaySteps[rateLimitTry++];
 
                     if(waitTimeForLimitReset && waitTimeForLimitReset > 0) {
                         let intId;
@@ -87,7 +94,8 @@ export async function queueFetch(queue, url, options, rateLimitCallback = null) 
                 }
 
                 return response;
-            })
+            }),
+            controller
     );
 }
 

@@ -1,4 +1,7 @@
 # Changelog
+0.9.2.1
+ - SS API rate limit handling fix
+ 
 0.9.2
  - add the possibility to manually add players to the plugin
  
