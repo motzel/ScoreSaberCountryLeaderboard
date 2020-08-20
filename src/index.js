@@ -22,6 +22,7 @@ import twitch from './services/twitch';
 import {getConfig, getMainUserId} from "./plugin-config";
 import {setSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
+import initNodeSync from './network/multinode-sync';
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -617,6 +618,8 @@ async function init() {
     if (initialized) {
         return;
     }
+
+    initNodeSync();
 
     // fetch cache
     const data = await getCacheAndConvertIfNeeded();
