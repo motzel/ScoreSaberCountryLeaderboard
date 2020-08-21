@@ -137,7 +137,8 @@ async function setupLeaderboard() {
 
             return cum;
         }, {})
-    songInfoData.difficulty =  document.querySelector('.tabs.is-centered li.is-active a span').innerText.toLowerCase().replace('+', 'Plus');
+    const difficulty = document.querySelector('.tabs.is-centered li.is-active a span');
+    songInfoData.difficulty =  difficulty ? difficulty.innerText.toLowerCase().replace('+', 'Plus') : null;
     if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
         const newSongBox = document.createElement('div');
         newSongBox.style.marginBottom = '1.5rem';
@@ -145,7 +146,7 @@ async function setupLeaderboard() {
 
         const songCard = new SongCard({
             target: newSongBox,
-            props: {...songInfoData}
+            props: {...songInfoData, leaderboardId}
         });
         songCard.$on('initialized', e => {
             if (e.detail) songInfoBox.remove()

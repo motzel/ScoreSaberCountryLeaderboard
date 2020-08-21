@@ -1,5 +1,5 @@
 <script>
-    import {getSongDiffInfo} from "../../../song";
+    import {extractDiffAndType, getSongDiffInfo} from "../../../song";
     import {getConfig} from "../../../plugin-config";
 
     import Icons from "./Icons.svelte";
@@ -8,9 +8,11 @@
     import Duration from "../Common/Duration.svelte";
 
     import {createEventDispatcher} from 'svelte';
+    import {getAllActivePlayers} from "../../../scoresaber/players";
 
     const dispatch = createEventDispatcher();
 
+    export let leaderboardId;
     export let hash;
     export let scores;
     export let totalScores;
@@ -33,8 +35,15 @@
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
         showBgCover = config.showBgCover !== false;
 
-        // TODO: get difficulty from leaderboard
         diffInfo = {diff: difficulty, type: 'Standard'};
+        if (leaderboardId) {
+            const diff = (await getAllActivePlayers(config.COUNTRY))
+                    .map(player => player && player.scores && player.scores[leaderboardId] ? player.scores[leaderboardId].diff : null)
+                    .filter(diff => diff)
+                    .slice(0, 1)
+            ;
+            if(diff && diff.length) diffInfo = extractDiffAndType(diff[0]);
+        }
 
         songInfo = await getSongDiffInfo(hash, diffInfo);
         if (songInfo) {
