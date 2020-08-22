@@ -301,6 +301,9 @@
         } else {
             showTwitchBtn = false;
         }
+
+        // TODO: reload profile page for now, try to do it to be more dynamic
+        eventBus.on('config-changed', () => window.location.reload(false))
     })()
 
     async function setAsMainProfile() {
@@ -369,7 +372,9 @@
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);
 
-        window.location.reload();
+        eventBus.publish('config-changed', config)
+
+        showSettingsModal = false;
     }
 
     async function storePlayerStatusChanges() {
