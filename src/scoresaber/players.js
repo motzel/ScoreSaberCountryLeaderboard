@@ -33,6 +33,9 @@ export const getPlayers = async () => (await getCacheAndConvertIfNeeded())?.user
 
 export const getPlayerInfo = async playerId => (await getPlayers())?.[playerId] ?? null;
 
+export const getPlayerLastUpdated = async playerId => (await getPlayerInfo(playerId))?.lastUpdated ?? null;
+export const getPlayerProfileLastUpdated = async playerId => (await getPlayerInfo(playerId))?.profileLastUpdated ?? null;
+
 export const getPlayerGroups = async () => (await getCacheAndConvertIfNeeded())?.groups ?? null;
 
 export const addPlayerToGroup = async (playerId, groupId = 'default', groupName = 'Default') => {

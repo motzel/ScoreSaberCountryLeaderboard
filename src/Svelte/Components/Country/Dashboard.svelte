@@ -1,7 +1,9 @@
 <script>
     import config from "../../../temp";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import nodeSync from '../../../network/multinode-sync';
     import {onMount} from 'svelte';
+    import debounce from '../../../utils/debounce';
 
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
@@ -12,6 +14,8 @@
     import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let country = config.COUNTRY;
+
+    const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 3000;
 
     const lastSongsPeriods = [
         {label: 'Ostatnie 3 dni', value: 3},
@@ -34,12 +38,22 @@
     let lastScoresComponent;
     let topScoresComponent;
     onMount(() => {
-        return eventBus.on('data-refreshed', async (value, local) => {
-            if (!local) await getCacheAndConvertIfNeeded(true);
+        const refresh = async nodeId => {
+            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
 
             lastScoresComponent.refreshUsers();
             topScoresComponent.refreshUsers();
-        });
+        }
+
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
+
+        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
+
+        return () => {
+            dataRefreshedUnsubscriber();
+            playerScoresUpdatedUnsubscriber();
+        }
     })
 </script>
 

@@ -8,7 +8,7 @@ export const getConfig = async (key = null, refreshCache = false) => {
     return key ? (data.config[key] ? data.config[key] : null) : data.config;
 }
 
-export const getMainUserId = async () => {
+export const getMainPlayerId = async () => {
     const usersConfig = await getConfig('users');
     return usersConfig && usersConfig.main ? usersConfig.main : null;
 }

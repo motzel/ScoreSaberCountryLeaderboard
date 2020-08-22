@@ -16,33 +16,37 @@ let nodeId;
 let masterNodeId;
 let knownNodes = {};
 
-export default () => {
+const initNodeSync = () => {
     let intervalId;
 
     const getId = () => nodeId;
     const getMasterId = () => masterNodeId;
-    const isMaster = (nodeId = nodeId) => getMasterId() === nodeId;
+    const isMaster = (nodeId = getId()) => getMasterId() === nodeId;
     const addNode = (nodeId, lastSeen = Date.now(), since = Date.now()) => knownNodes[nodeId] = {
         nodeId,
         lastSeen,
         since
     }
-    const updateLastSeen = (nodeId, lastSeen = Date.now()) => {
+    const updateLastSeen = (nodeId = getId(), lastSeen = Date.now()) => {
         if (knownNodes[nodeId]) knownNodes[nodeId].lastSeen = lastSeen;
     }
     const removeDeadNodes = () => knownNodes = convertArrayToObjectByKey(Object.values(knownNodes).filter(n => n.lastSeen + HEARTBEAT_TIMEOUT >= Date.now() || n.nodeId === nodeId), 'nodeId');
-    const electNewMaster = (oldMasterId) => {
+    const electNewMaster = (oldMasterNodeId) => {
         masterNodeId = (Object.values(knownNodes).sort((a, b) => a.since - b.since)?.[0] ?? undefined)?.nodeId;
-        if (oldMasterId !== masterNodeId) logger.info(`Node ${masterNodeId} is NEW MASTER, replacing ${oldMasterId}`);
+        if (oldMasterNodeId !== masterNodeId) {
+            eventBus.publish('master-node-elected', masterNodeId)
+
+            logger.info(`Node ${masterNodeId} is NEW MASTER, replacing ${oldMasterNodeId}`, 'NodeSync');
+        }
     }
     const publishKnowNodes = (status = statuses.HEARTBEAT) => {
         // update own lastSeen before send a message
-        updateLastSeen(nodeId);
+        updateLastSeen();
 
         const messagePayload = {nodeId, masterNodeId, status, knownNodes: Object.values(knownNodes)};
 
-        logger.debug(`Send heartbeat from node ${nodeId}`);
-        logger.trace(`Payload: ${JSON.stringify(messagePayload)}`)
+        logger.debug(`Send heartbeat from node ${nodeId}`, 'NodeSync');
+        logger.trace(`Payload: ${JSON.stringify(messagePayload)}`, 'NodeSync')
 
         eventBus.publish(CHANNEL_NAME, messagePayload);
     }
@@ -59,7 +63,7 @@ export default () => {
         nodeId = uuid();
         addNode(nodeId);
 
-        logger.info(`NEW node ${nodeId} has been created`);
+        logger.info(`NEW node ${nodeId} has been created`, 'NodeSync');
 
         publishKnowNodes(statuses.CREATED);
 
@@ -68,7 +72,7 @@ export default () => {
 
     eventBus.on(CHANNEL_NAME, ({nodeId: heartbeatNodeId, masterNodeId: heartbeatMasterNodeId, status: heartbeatStatus, knownNodes: heartbeatKnownNodes}) => {
         // skip messages from myself, unless it's (first) HEARTBEAT and masterNodeId is undefined yet
-        if (nodeId === heartbeatNodeId && (!!masterNodeId || heartbeatStatus === statuses.CREATED)) {
+        if (getId() === heartbeatNodeId && (!!masterNodeId || heartbeatStatus === statuses.CREATED)) {
             removeDeadNodes();
             electNewMaster(getMasterId());
 
@@ -77,8 +81,8 @@ export default () => {
 
         const oldMaster = getMasterId();
 
-        logger.debug(`Received heartbeat from node ${heartbeatNodeId}. His master is ${heartbeatMasterNodeId}`);
-        logger.trace(`Known nodes: ${JSON.stringify(heartbeatKnownNodes)}`);
+        logger.debug(`Received heartbeat from node ${heartbeatNodeId}. His master is ${heartbeatMasterNodeId}`, 'NodeSync');
+        logger.trace(`Known nodes: ${JSON.stringify(heartbeatKnownNodes)}`, 'NodeSync');
 
         if (heartbeatKnownNodes)
             heartbeatKnownNodes
@@ -92,12 +96,12 @@ export default () => {
 
         electNewMaster(oldMaster);
 
-        if (logger.level() === logger.TRACE)
-            console.table(
-                Object.values(knownNodes)
-                    .map(n => ({...n, me: n.nodeId === nodeId, masterNode: n.nodeId === masterNodeId}))
-                    .sort((a, b) => a.since - b.since)
-            )
+        logger.table(
+            Object.values(knownNodes)
+                .map(n => ({...n, me: n.nodeId === nodeId, masterNode: n.nodeId === masterNodeId}))
+                .sort((a, b) => a.since - b.since),
+            logger.TRACE
+        )
 
         // node sending heartbeat has just started, send him some info immediately
         if (heartbeatStatus === statuses.CREATED) publishKnowNodes();
@@ -109,3 +113,7 @@ export default () => {
         isMaster
     }
 }
+
+const nodeSync = initNodeSync();
+
+export default nodeSync;

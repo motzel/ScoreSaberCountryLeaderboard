@@ -1,4 +1,5 @@
 <script>
+    import {onMount} from 'svelte';
     import {extractDiffAndType, getSongDiffInfo} from "../../../song";
     import {getConfig} from "../../../plugin-config";
 
@@ -30,7 +31,7 @@
     let diffInfo;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
-    (async () => {
+    onMount(async () => {
         const config = await getConfig('songBrowser');
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
         showBgCover = config.showBgCover !== false;
@@ -53,7 +54,7 @@
         } else {
             dispatch('initialized', false);
         }
-    })();
+    });
 </script>
 
 {#if songInfo}

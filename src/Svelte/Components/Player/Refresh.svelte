@@ -5,23 +5,28 @@
     import Button from '../Common/Button.svelte';
     import FormattedDate from '../Common/FormattedDate.svelte';
 
-    import {getCacheAndConvertIfNeeded, setCache, lastUpdated} from '../../../store';
+    import {getCacheAndConvertIfNeeded, setCache, lastUpdated as getAnyLastUpdated} from '../../../store';
     import config from '../../../temp';
     import {escapeHtml} from '../../../utils/js';
     import log from '../../../utils/logger';
 
     import {updateRankeds} from "../../../network/scoresaber/rankeds";
-    import {updateActivePlayers, getPlayerWithUpdatedScores} from "../../../network/scoresaber/players";
+    import {
+        updateActivePlayers,
+        updatePlayerScores
+    } from "../../../network/scoresaber/players";
     import {dateFromString} from "../../../utils/date";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import {getPlayerInfo} from "../../../scoresaber/players";
+    import {getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
+    import nodeSync from '../../../network/multinode-sync';
+
+    import logger from "../../../utils/logger";
 
     export let profileId;
 
     let stateObj = {
-        date: null,
         started: false,
         progress: 0,
         label: '',
@@ -29,25 +34,79 @@
         errorMsg: ''
     };
     let state = createBroadcastChannelStore('refresh-widget', stateObj);
+    
+    let lastUpdated = null
+    let lastUpdatedState = createBroadcastChannelStore(`refresh-widget-last-update${profileId ? '-' + profileId : ''}`, lastUpdated)
 
     let bgDownload = true;
+    let isBackgroundDownloadInProgress = false;
+    let hasBackgroundDownloadError = false;
 
     onMount(async () => {
-        await setLastRefreshDate();
-
         bgDownload = await isBackgroundDownloadEnabled();
 
-        eventBus.on('config-changed', async () => {
+        const unsubscriberConfig = eventBus.on('config-changed', async () => {
             bgDownload = await isBackgroundDownloadEnabled(true);
         })
+
+        const unsubscriberBgStart = eventBus.on('bg-download-started', ({size}) => {
+            logger.debug(`Background download STARTED event. Queue size: ${size}`, 'RefreshWidget');
+
+            isBackgroundDownloadInProgress = true;
+            hasBackgroundDownloadError = false;
+        })
+
+        const unsubscriberBgProgress = eventBus.on('bg-download-progress', ({size, label, name, page, wait}) => {
+            logger.debug(`Background download PROGRESS event. Queue size: ${size}, Job label: ${label}. Progress label: ${name} / ${wait ? '[Waiting ' + Math.round(wait/1000) + 's]' : page}`, 'RefreshWidget');
+
+            isBackgroundDownloadInProgress = true;
+            hasBackgroundDownloadError = false;
+        })
+
+        const unsubscriberBgError = eventBus.on('bg-download-error', err => {
+            logger.debug(`Background download ERROR event.`, 'RefreshWidget');
+
+            logger.error(err);
+
+            isBackgroundDownloadInProgress = false;
+            hasBackgroundDownloadError = true;
+        })
+
+        const unsubscriberBgStopped = eventBus.on('bg-download-stopped', async _ => {
+            logger.debug(`Background download STOPPED event.`, 'RefreshWidget');
+
+            isBackgroundDownloadInProgress = false;
+
+            await setLastRefreshDate();
+        })
+
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
+            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
+
+            if (player && player.id === profileId) {
+                await setLastRefreshDate();
+            }
+        })
+
+        await setLastRefreshDate();
+        setInterval(() => setLastRefreshDate(), 1000 * 60);
+
+        return () => {
+            unsubscriberConfig();
+            unsubscriberBgStart();
+            unsubscriberBgProgress();
+            unsubscriberBgError();
+            unsubscriberBgStopped();
+            unsubscriberScoresUpdated();
+        }
     })
 
     async function setLastRefreshDate() {
         if (profileId) {
-            const playerInfo = await getPlayerInfo(profileId);
-            if (playerInfo && playerInfo.lastUpdated) $state.date = dateFromString(playerInfo.lastUpdated);
+            const playerLastUpdated = await getPlayerLastUpdated(profileId);
+            if (playerLastUpdated) $lastUpdatedState = dateFromString(playerLastUpdated);
         } else {
-            lastUpdated().then(d => $state.date = dateFromString(d));
+            getAnyLastUpdated().then(d => $lastUpdatedState = dateFromString(d));
         }
     }
 
@@ -62,43 +121,29 @@
 
     async function refresh() {
         updateState({started: true, progress: 0, subLabel: 'Pobieranie aktualnych rankedów'});
-
-        const rankedChanges = await updateRankeds();
-        if (rankedChanges && rankedChanges.length) {
-            eventBus.publish('rankeds-changed', rankedChanges)
-        }
+        await updateRankeds();
 
         updateState({errorMsg: '', label: '', subLabel: `Pobieranie listy top 50 ${config.COUNTRY.toUpperCase()}...`});
-
-        const countryPlayers = await updateActivePlayers();
+        const activePlayers = await updateActivePlayers(false);
 
         updateState({label: '', subLabel: ''});
 
-        const data = {...await getCacheAndConvertIfNeeded()};
-
-        let idx = 0;
-        let cache = await countryPlayers.reduce(async (promisedCum, player) => {
-            let cum = await promisedCum;
-
-            cum.users[player.id] = await getPlayerWithUpdatedScores(
-                    player.id,
-                    (info) => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / countryPlayers.length) * 100)}))
+        for(let idx = 0; idx < activePlayers.length; idx++) {
+            await updatePlayerScores(
+                activePlayers[idx].id,
+                false,
+                false,
+                info => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / activePlayers.length) * 100)}))
             );
+        }
 
-            idx++;
-
-            return cum;
-        }, data);
-
-        cache.lastUpdated = new Date().toISOString();
-
-        await setCache(cache);
+        await setCache(await getCacheAndConvertIfNeeded());
 
         updateState({started: false});
 
         await setLastRefreshDate();
 
-        eventBus.publish('data-refreshed', {});
+        eventBus.publish('data-refreshed', {nodeId: nodeSync.getId()});
     }
 
     async function onRefresh() {
@@ -112,7 +157,7 @@
     }
 </script>
 
-<div class="refresh-widget">
+<div class="refresh-widget" class:pulse={isBackgroundDownloadInProgress} class:error={hasBackgroundDownloadError}>
     {#if $state.started}
         <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}
@@ -120,9 +165,9 @@
             <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={$state.started} /></span>
         {/if}
         {#if !$state.errorMsg || !$state.errorMsg.length}
-            <strong>Pobrano:</strong> <span><FormattedDate date={$state.date} noDate="-" /></span>
+            <strong>Pobrano:</strong> <span><FormattedDate date={$lastUpdatedState} noDate="-" /></span>
         {:else}
-            <span class="err">{$state.errorMsg}</span>
+            <span class="error">{$state.errorMsg}</span>
         {/if}
     {/if}
 </div>
@@ -132,14 +177,31 @@
         color: var(--faded, #666);
     }
     .refresh-widget strong {
-        color: var(--faded, #666) !important;
+        color: inherit !important;
+    }
+    .refresh-widget.pulse {
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            color: var(--faded);
+        }
+
+        50% {
+            color: var(--foreground);
+        }
+
+        100% {
+            color: var(--faded);
+        }
     }
 
     .btn-cont {
         font-size: .5rem;
     }
 
-    .err {
+    .error {
         color: var(--decrease, red) !important;
     }
 </style>

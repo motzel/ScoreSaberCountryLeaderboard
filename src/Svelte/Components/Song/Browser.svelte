@@ -1,4 +1,5 @@
 <script>
+    import {onMount} from 'svelte';
     import log from '../../../utils/logger';
     import {copyToClipboard} from '../../../utils/clipboard';
     import {findRawPp, getTotalUserPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
@@ -8,6 +9,8 @@
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
     import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import nodeSync from '../../../network/multinode-sync';
     import {
         getAllActivePlayers,
         getCountryRanking,
@@ -25,7 +28,7 @@
     import {downloadJson} from '../../../utils/json';
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
-    import {getConfig, getMainUserId} from "../../../plugin-config";
+    import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import config from "../../../temp";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
 
@@ -48,12 +51,14 @@
     export let snipedIds = [];
     export let minPpPerMap = 1;
 
+    let refreshTag = 0;
+
     const country = config.COUNTRY;
 
     let selectedColumns = [];
 
     let showCheckboxes = false;
-    let checkedSongs = []
+    let checkedSongs = [];
 
     const DEBOUNCE_DELAY = 400;
 
@@ -95,6 +100,17 @@
         sortOrder: sortOrders[0]
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
+
+    const generateRefreshTag = async (force = false) => {
+        const data = await getCacheAndConvertIfNeeded(force);
+
+        const playerIds = [playerId].concat(snipedIds);
+
+        const newRefreshTag = playerIds.reduce((tag, pId) => tag + pId + ':' + (data.users && data.users[pId] && data.users[pId].recentPlay ? dateFromString(data.users[pId].recentPlay).getTime() : 'null'), '')
+
+        if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
+    }
+
     const generateSortTypes = async _ => {
         let types = [];
 
@@ -112,7 +128,7 @@
         if (allFilters.songType.id !== 'unrankeds')
             types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', enabled: true});
 
-        const userIds = [playerId].concat(snipedIds.concat(!snipedIds.length && 'sniper_mode' === allFilters.songType.id ? sniperModeIds : []));
+        const userIds = [playerId].concat(snipedIds);
         if (data && data.users) {
             userIds.forEach((pId, idx) => {
                 const name = data.users[pId] ? data.users[pId].name : null;
@@ -164,6 +180,8 @@
         const sortBy = allFilters.songType.id === 'sniper_mode' ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
         const defaultSort = sortTypes.find(s => s.field === sortBy);
         allFilters.sortBy = defaultSort ? defaultSort : types[0];
+
+        await generateRefreshTag();
     }
 
     const findSort = (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field);
@@ -185,7 +203,7 @@
     }
     const getCachedMinStars = memoize(getMinStars);
 
-    const getMaxScoreExFromPlayersScores = async leaderboardId => Object.values((await getCacheAndConvertIfNeeded()).users).reduce((maxScore, player) => !maxScore && player.scores && player.scores[leaderboardId] && player.scores[leaderboardId].maxScoreEx ? player.scores[leaderboardId].maxScoreEx : maxScore, null)
+    const getMaxScoreExFromPlayersScores = async leaderboardId => Object.values((await getCacheAndConvertIfNeeded()).users).reduce((maxScore, player) => !maxScore && player && player.scores && player.scores[leaderboardId] && player.scores[leaderboardId].maxScoreEx ? player.scores[leaderboardId].maxScoreEx : maxScore, null)
     const getCachedMaxScoreExFromPlayersScores = memoize(getMaxScoreExFromPlayersScores);
 
     let calculating = true;
@@ -336,8 +354,8 @@
     let users = [];
 
     // initialize async values
-    (async () => {
-        if (!playerId) playerId = await getMainUserId()
+    onMount(async () => {
+        if (!playerId) playerId = await getMainPlayerId()
 
         const config = await getConfig('songBrowser');
 
@@ -404,8 +422,18 @@
                 .filter(u => u.id !== playerId)
         ;
 
+        const forceRefresh = async (nodeId, player) => {
+            // return if not relevant for current dataset
+            if (!player || !player.id || !playerId || ![playerId].concat(snipedIds).includes(player.id)) return;
+
+            await generateRefreshTag(nodeId !== nodeSync.getId());
+        }
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, player}) => await forceRefresh(nodeId, player))
+
         initialized = true;
-    })();
+
+        return playerScoresUpdatedUnsubscriber;
+    });
 
     const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
 
@@ -678,7 +706,7 @@
     const onFilterStarsChange = debounce(e => allFilters.starsFilter = Object.assign({}, allFilters.starsFilter), DEBOUNCE_DELAY);
     const onFilterMinPlusPpChanged = debounce(e => allFilters.minPpDiff = e.detail, DEBOUNCE_DELAY * 2);
 
-    async function calculate(playerId, snipedIds, filters) {
+    async function calculate(playerId, snipedIds, filters, forceRefresh) {
         calculating = true;
 
         currentPage = 0;
@@ -1075,7 +1103,7 @@
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
-    $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters) : null;
+    $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters, refreshTag) : null;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
     $: comparePossible = users.length && snipedIds.length < 3;
 </script>

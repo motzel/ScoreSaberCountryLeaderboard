@@ -1,4 +1,5 @@
 <script>
+    import {onMount} from 'svelte';
     import {getSongByHash} from "../../../network/beatsaver";
     import {getConfig} from "../../../plugin-config";
     import {copyToClipboard} from '../../../utils/clipboard';
@@ -11,7 +12,7 @@
     let songKey;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
-    (async () => {
+    onMount(async () => {
         const config = await getConfig('songBrowser');
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
 
@@ -19,7 +20,7 @@
         if (songInfo && songInfo.key) {
             songKey = songInfo.key;
         }
-    })();
+    });
 </script>
 
 <div>

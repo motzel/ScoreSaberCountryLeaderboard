@@ -1,4 +1,6 @@
 <script>
+    import {onMount} from "svelte";
+
     import Button from '../Common/Button.svelte';
     import Select from '../Common/Select.svelte';
     import File from '../Common/File.svelte';
@@ -18,10 +20,11 @@
     import exportJsonData from "../../../utils/export";
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import nodeSync from '../../../network/multinode-sync';
 
     export let profileId;
 
-    let mainUserId;
+    let mainPlayerId;
     let playerInfo;
     let isActivePlayer = false;
     let isManuallyAddedPlayer = false;
@@ -235,11 +238,13 @@
         isManuallyAddedPlayer = (await getManuallyAddedPlayersIds()).includes(profileId);
     }
 
-    (async () => {
+    onMount(async () => {
+        const data = await getCacheAndConvertIfNeeded();
+
         dataAvailable = await isDataAvailable();
 
         config = await getConfig();
-        mainUserId = config && config.users && config.users.main ? config.users.main : null;
+        mainPlayerId = config && config.users && config.users.main ? config.users.main : null;
         playerInfo = await getPlayerInfo(profileId);
 
         await refreshPlayerStatus();
@@ -274,8 +279,6 @@
 
         let twitchProfile = await twitch.getProfileName(profileId);
         if (profileId && twitchProfile) {
-            const data = await getCacheAndConvertIfNeeded();
-
             const twitchToken = await twitch.getCurrentToken();
             const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
             const tokenExpireSoon = tokenExpireInDays <= 3;
@@ -312,9 +315,22 @@
             showTwitchBtn = false;
         }
 
+        const profileExists = !!profileId && !!data.users[profileId] && !!data.users[profileId].scores;
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
+            if (!profileExists && player && player.id === profileId) {
+                // TODO: reload profile page for now, try to do it to be more dynamic
+                window.location.reload();
+            }
+        })
+
         // TODO: reload profile page for now, try to do it to be more dynamic
-        eventBus.on('config-changed', () => window.location.reload(false))
-    })()
+        const unsubscriberConfigChanged = eventBus.on('config-changed', () => window.location.reload());
+
+        return () => {
+            unsubscriberScoresUpdated();
+            unsubscriberConfigChanged();
+        }
+    })
 
     async function setAsMainProfile() {
         if (!profileId) return;
@@ -396,6 +412,8 @@
     async function manuallyAddPlayer() {
         await addPlayerToGroup(profileId);
         await storePlayerStatusChanges();
+
+        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()})
     }
 
     async function manuallyRemovePlayer() {
@@ -418,7 +436,7 @@
                     type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
         {/if}
 
-        {#if profileId !== mainUserId}
+        {#if profileId !== mainPlayerId}
             <Button iconFa="fas fa-user-check" type="primary" title="Ustaw jako główny profil" on:click={setAsMainProfile}/>
         {:else}
             <Button iconFa="fas fa-cog" title="Ustawienia" on:click={() => showSettingsModal = true}/>

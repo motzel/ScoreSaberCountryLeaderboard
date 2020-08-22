@@ -1,11 +1,14 @@
 <script>
+    import {onMount} from 'svelte';
     import ProfileLine from './ProfileLine.svelte';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Button from '../Common/Button.svelte';
+    import Badge from "../Common/Badge.svelte";
+
     import {getConfig} from '../../../plugin-config';
     import {UNRANKED} from '../../../scoresaber/rankeds';
     import {diffColors} from '../../../song';
-    import Badge from "../Common/Badge.svelte";
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
 
     export let profile;
 
@@ -21,12 +24,15 @@
         {name: 'SS+', min: 95, max: null, value: 0, color: diffColors.expertPlus},
     ];
 
-    (async () => {
+    onMount(async() => {
         const profileConfig = await getConfig('profile');
         if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
 
         if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
-    })()
+
+        // TODO: reload profile page for now, try to do it to be more dynamic
+        return eventBus.on('data-refreshed', ({nodeId}) => window.location.reload());
+    })
 
     function getPlayerStats(scores) {
         if (!scores || !scores.length) return null;
@@ -69,13 +75,13 @@
     $: stats = getPlayerStats(allRankedScores);
 </script>
 
-{#if profile && profile.stats}
+{#if profile && stats}
     <ProfileLine label="Ranked play count" value={stats.playCount} precision={0}/>
     <ProfileLine label="Total ranked score" value={stats.totalScore} precision={0}/>
     <ProfileLine label="Average ranked accuracy" value={stats.avgAcc} suffix="%"/>
 {/if}
 
-{#if showCalc && scores}
+{#if showCalc && scores && scores.length}
     <li class="calc">
         <div>
             <ProfilePpCalc scores={scores} playerId={profile.id} mode={mode}/>
@@ -84,7 +90,7 @@
     </li>
 {/if}
 
-{#if showBadges && scores}
+{#if showBadges && stats && stats.badges}
     <div class="badges">
         {#each stats.badges.reverse() as badge (badge)}
             <Badge name={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>

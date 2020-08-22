@@ -19,10 +19,13 @@ import {getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
-import {getConfig, getMainUserId} from "./plugin-config";
+import {getConfig, getMainPlayerId} from "./plugin-config";
 import {setSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
-import initNodeSync from './network/multinode-sync';
+import initDownloadManager from './network/download-manager';
+import logger from "./utils/logger";
+import {removePlayerFromGroup} from "./scoresaber/players";
+import {getPlayerWithUpdatedScores, updateActivePlayers} from "./network/scoresaber/players";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -101,8 +104,8 @@ async function setupLeaderboard() {
 
     // TODO: dont show when no user data is available
     const config = await getConfig('songLeaderboard');
-    const mainUserId = await getMainUserId();
-    if (mainUserId && !!config.showWhatIfPp) {
+    const mainPlayerId = await getMainPlayerId();
+    if (mainPlayerId && !!config.showWhatIfPp) {
         [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
             const pp = parseFloat(
                 span.innerText.replace(/\s/, '').replace(',', '.')
@@ -383,16 +386,13 @@ async function setupProfile() {
             target: refreshDiv,
             props: {profileId}
         })
-        eventBus.on('data-refreshed', async _ => {
-            window.location.reload(false);
-        })
     }
 
     const mainColumn = document.querySelector('.content .column ul').closest('.column');
     if (mainColumn) {
         if (data.users?.[profileId]?.stats) {
             let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
-            ssplCountryRank = typeof ssplCountryRank === "object" && ssplCountryRank[config.COUNTRY] ? ssplCountryRank[config.COUNTRY] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
+            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[config.COUNTRY] ? ssplCountryRank[config.COUNTRY] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
             if(ssplCountryRank) {
                 const rankLi = mainColumn.querySelector('ul li:first-of-type');
                 if (rankLi) {
@@ -582,6 +582,8 @@ async function setupDelayed() {
     if (isProfilePage()) {
         await setupProfile();
     }
+
+    await initDownloadManager();
 }
 
 function rafAsync() {
@@ -619,13 +621,11 @@ async function init() {
         return;
     }
 
-    initNodeSync();
-
     // fetch cache
     const data = await getCacheAndConvertIfNeeded();
 
     // reload page when data was imported
-    eventBus.on('data-imported', () => window.location.reload(false));
+    eventBus.on('data-imported', () => window.location.reload());
 
     await Promise.allSettled([
         setupStyles(),
