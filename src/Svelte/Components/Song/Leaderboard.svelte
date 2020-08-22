@@ -199,6 +199,8 @@
     .refresh {
         text-align: right;
         margin-bottom: 1rem;
+        padding-top: .5rem;
+        margin-right: .5rem;
     }
 
     .first-fetch {

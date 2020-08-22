@@ -11,7 +11,8 @@ export const themes = {
             ['hover', '#333'],
             ['highlight', '#484848'],
             ['decrease', '#f94022'],
-            ['increase', '#42b129']
+            ['increase', '#42b129'],
+            ['faded', '#3e3e3e'],
         ]
     },
 
@@ -30,7 +31,8 @@ export const themes = {
             ['increase', '#42b129'],
             ['navBg', '#252525'],
             ['navText', '#eee'],
-            ['navHover', '#111']
+            ['navHover', '#111'],
+            ['faded', '#dedede'],
         ]
     },
 
@@ -46,7 +48,8 @@ export const themes = {
             ['hover', '#285661'],
             ['highlight', '#162c31'],
             ['decrease', '#f94022'],
-            ['increase', '#42b129']
+            ['increase', '#42b129'],
+            ['faded', '#0a4c5d'],
         ]
     },
 
@@ -62,7 +65,8 @@ export const themes = {
             ['hover', '#0f008f'],
             ['highlight', '#0f008f'],
             ['decrease', '#f94022'],
-            ['increase', '#42b129']
+            ['increase', '#42b129'],
+            ['faded', '#680092'],
         ]
     },
 }

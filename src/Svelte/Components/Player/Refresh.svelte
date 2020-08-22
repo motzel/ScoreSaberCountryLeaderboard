@@ -1,5 +1,6 @@
 <!--suppress JSUnfilteredForInLoop -->
 <script>
+    import {onMount} from 'svelte';
     import Progress from '../Common/Progress.svelte';
     import Button from '../Common/Button.svelte';
     import FormattedDate from '../Common/FormattedDate.svelte';
@@ -15,6 +16,7 @@
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {getPlayerInfo} from "../../../scoresaber/players";
+    import {isBackgroundDownloadEnabled} from "../../../plugin-config";
 
     export let profileId;
 
@@ -28,7 +30,17 @@
     };
     let state = createBroadcastChannelStore('refresh-widget', stateObj);
 
-    setLastRefreshDate();
+    let bgDownload = true;
+
+    onMount(async () => {
+        await setLastRefreshDate();
+
+        bgDownload = await isBackgroundDownloadEnabled();
+
+        eventBus.on('config-changed', async () => {
+            bgDownload = await isBackgroundDownloadEnabled(true);
+        })
+    })
 
     async function setLastRefreshDate() {
         if (profileId) {
@@ -100,13 +112,15 @@
     }
 </script>
 
-<div>
+<div class="refresh-widget">
     {#if $state.started}
         <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}
-        <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={$state.started} /></span>
+        {#if !bgDownload}
+            <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={$state.started} /></span>
+        {/if}
         {#if !$state.errorMsg || !$state.errorMsg.length}
-            <strong>Data pobrania:</strong> <span><FormattedDate date={$state.date} noDate="-" /></span>
+            <strong>Pobrano:</strong> <span><FormattedDate date={$state.date} noDate="-" /></span>
         {:else}
             <span class="err">{$state.errorMsg}</span>
         {/if}
@@ -114,6 +128,13 @@
 </div>
 
 <style>
+    .refresh-widget {
+        color: var(--faded, #666);
+    }
+    .refresh-widget strong {
+        color: var(--faded, #666) !important;
+    }
+
     .btn-cont {
         font-size: .5rem;
     }

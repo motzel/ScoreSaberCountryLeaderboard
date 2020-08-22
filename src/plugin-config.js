@@ -1,7 +1,7 @@
 import {getCacheAndConvertIfNeeded} from "./store";
 
-export const getConfig = async (key = null) => {
-    const data = await getCacheAndConvertIfNeeded();
+export const getConfig = async (key = null, refreshCache = false) => {
+    const data = await getCacheAndConvertIfNeeded(refreshCache);
 
     if (!data && data.config) return null;
 
@@ -11,4 +11,9 @@ export const getConfig = async (key = null) => {
 export const getMainUserId = async () => {
     const usersConfig = await getConfig('users');
     return usersConfig && usersConfig.main ? usersConfig.main : null;
+}
+
+export const isBackgroundDownloadEnabled = async (refreshCache = false) => {
+    const config =await getConfig('others', refreshCache);
+    return !!config.bgDownload;
 }
