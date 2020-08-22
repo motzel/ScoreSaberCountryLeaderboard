@@ -223,6 +223,13 @@
     let itemsPerPage = allItemsPerPage.map(i => ({label: i, val: i}));
     let configItemsPerPage = itemsPerPage[1];
 
+    const viewUpdateTypes = [
+        {label: "Zawsze odświeżaj", id: "always"},
+        {label: "Utrzymuj widok", id: "keep-view"},
+        {label: "Tylko powiadamiaj", id: "notify"},
+    ];
+    let configViewUpdate = viewUpdateTypes[1];
+
     async function refreshPlayerStatus() {
         isActivePlayer = (await getAllActivePlayersIds()).includes(profileId);
         isManuallyAddedPlayer = (await getManuallyAddedPlayersIds()).includes(profileId);
@@ -259,6 +266,9 @@
         }
 
         if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
+
+        const defaultViewUpdate = viewUpdateTypes.find(i => i.id === config.others.viewsUpdate);
+        if (defaultViewUpdate) configViewUpdate = defaultViewUpdate;
 
         filterSortTypes();
 
@@ -368,6 +378,7 @@
         config.songBrowser.showIcons = configShowIcons.map(i => i.id);
         config.songBrowser.itemsPerPage = configItemsPerPage.val;
         config.others.theme = theme.id;
+        config.others.viewsUpdate = configViewUpdate.id;
 
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);
@@ -531,6 +542,23 @@
                             <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
                             Pokazuj "jeśli tak zagrasz"
                         </label>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="menu-label">Inne</div>
+
+                    <div class="columns">
+                        <div class="column is-one-third">
+                            <label class="checkbox">
+                                <input type="checkbox" bind:checked={config.others.bgDownload}>
+                                Pobieraj w tle
+                            </label>
+                        </div>
+
+                        <div class="column is-one-third">
+                            <Select bind:value={configViewUpdate} items={viewUpdateTypes} top={true} />
+                        </div>
                     </div>
                 </section>
             </main>
