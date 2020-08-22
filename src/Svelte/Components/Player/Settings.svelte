@@ -329,9 +329,7 @@
                     if (importBtn) importBtn.$set({disabled: false});
                     if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
 
-                    eventBus.publish('data-refreshed', {});
-
-                    window.location.reload(false);
+                    eventBus.publish('data-imported', {});
                 }
         )
     }

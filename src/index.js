@@ -624,6 +624,9 @@ async function init() {
     // fetch cache
     const data = await getCacheAndConvertIfNeeded();
 
+    // reload page when data was imported
+    eventBus.on('data-imported', () => window.location.reload(false));
+
     await Promise.allSettled([
         setupStyles(),
         setupPlayerAvatar(),
