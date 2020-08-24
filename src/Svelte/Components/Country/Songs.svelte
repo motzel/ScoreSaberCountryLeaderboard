@@ -1,4 +1,8 @@
 <script>
+    import {onMount} from 'svelte';
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import nodeSync from '../../../network/multinode-sync';
+    import debounce from '../../../utils/debounce';
     import {getAllActivePlayers} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
     import {extractDiffAndType, getSongDiffInfo} from "../../../song";
@@ -13,6 +17,7 @@
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
     import Leaderboard from "../Song/Leaderboard.svelte";
+    import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let country;
     export let sortBy = 'timeset'
@@ -20,6 +25,8 @@
     export let noRank = false;
     export let itemsPerPage = 10;
     export let pagesDisplayMax = 10;
+
+    const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 2000;
 
     let currentPage = 0;
 
@@ -33,17 +40,17 @@
         {label: 'PP', key: 'pp', className: 'pp'}
     ].filter(h => !noRank || h.key !== 'rank');
 
-    let users = [];
+    let scores = [];
 
-    export async function refreshUsers() {
-        users = (await getAllActivePlayers(country))
-                .reduce((cum, user) => {
-                    if (user) {
-                        const {id, country, name} = user;
+    async function refreshScores() {
+        scores = (await getAllActivePlayers(country))
+                .reduce((cum, player) => {
+                    if (player) {
+                        const {id, country, name} = player;
 
-                        if (user.scores)
+                        if (player.scores)
                             cum = cum.concat(
-                                Object.values(user.scores)
+                                Object.values(player.scores)
                                     .map(s => {
                                         s.scoreMult = s.uScore ? s.score / s.uScore : 1;
                                         s.acc = s.maxScoreEx ? s.score / s.maxScoreEx / s.scoreMult * 100 : null;
@@ -62,9 +69,24 @@
         ;
     }
 
-    (async () => {
-        await refreshUsers();
-    })();
+    onMount(async () => {
+        const refresh = async nodeId => {
+            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
+
+            await refreshScores();
+        }
+
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
+        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
+
+        await refreshScores();
+
+        return () => {
+            dataRefreshedUnsubscriber();
+            playerScoresUpdatedUnsubscriber();
+        }
+    });
 
     async function onDataPage(data, page) {
         const promisesToResolve = [];
@@ -119,13 +141,15 @@
         }
     }
 
-    $: rows = users
+    const getRowIdentifier = row => !!row[sortBy] ? row[sortBy] : null;
+
+    $: rows = scores
             .filter(s => (!min || (s[sortBy] && s[sortBy] >= min)))
             .sort((a, b) => b[sortBy] - a[sortBy])
             .map((s, idx) => ({...s, rank: idx + 1}));
 </script>
 
-<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} bind:page={currentPage} className="ranking global sspl">
+<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} bind:page={currentPage} rowIdentifierFunc={getRowIdentifier} className="ranking global sspl">
     <span slot="head-col" let:col>{col.label}</span>
 
     <span slot="body-col" let:key let:row>

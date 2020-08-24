@@ -229,7 +229,6 @@
     const viewUpdateTypes = [
         {label: "Zawsze odświeżaj", id: "always"},
         {label: "Utrzymuj widok", id: "keep-view"},
-        {label: "Tylko powiadamiaj", id: "notify"},
     ];
     let configViewUpdate = viewUpdateTypes[1];
 
