@@ -51,6 +51,9 @@
     export let snipedIds = [];
     export let minPpPerMap = 1;
 
+    let viewUpdates = 'keep-view';
+    let currentFirstRowIdentifier = null;
+
     let refreshTag = 0;
 
     const country = config.COUNTRY;
@@ -182,6 +185,47 @@
         allFilters.sortBy = defaultSort ? defaultSort : types[0];
 
         await generateRefreshTag();
+    }
+
+    async function storeCurrentFirstIdentifier() {
+        currentFirstRowIdentifier = null;
+
+        if (!songsPage || !songsPage.songs.length) return;
+
+        const currentFirstIdx = currentPage * itemsPerPage;
+
+        const data = await calcPromised;
+
+        if (data && data.songs[currentFirstIdx]) {
+            const val = getSortValue(data.songs[currentFirstIdx], data.series, allFilters);
+            if (!val) return;
+
+            currentFirstRowIdentifier = val;
+        }
+    }
+
+    async function restorePage() {
+        if(currentFirstRowIdentifier) {
+            const data = await calcPromised;
+            if (!data) return;
+
+            switch (viewUpdates) {
+                case 'keep-view':
+                    const newIdx = data.songs.findIndex(
+                        s => allFilters.sortOrder.order === 'asc'
+                            ? getSortValue(s, data.series, allFilters) >= currentFirstRowIdentifier
+                            : getSortValue(s, data.series, allFilters) <= currentFirstRowIdentifier
+                    );
+                    const newPage = newIdx >= 0 ? Math.floor(newIdx / itemsPerPage) : 0;
+                    if (newPage !== currentPage) currentPage = newPage;
+                    break;
+
+                case 'always':
+                default:
+                    if (currentPage !== 0) currentPage = 0;
+                    break;
+            }
+        }
     }
 
     const findSort = (type, subtype, field) => sortTypes.find(st => st.type === type && st.subtype === subtype && st.field === field);
@@ -353,6 +397,11 @@
 
     let users = [];
 
+    async function updateViewUpdatesConfig() {
+        const config = await getConfig('others');
+        viewUpdates = config.viewUpdates ? config.viewUpdates : 'keep-view';
+    }
+
     // initialize async values
     onMount(async () => {
         if (!playerId) playerId = await getMainPlayerId()
@@ -428,11 +477,18 @@
 
             await generateRefreshTag(nodeId !== nodeSync.getId());
         }
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, player}) => await forceRefresh(nodeId, player))
+
+        await updateViewUpdatesConfig();
+
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, player}) => await forceRefresh(nodeId, player));
+        const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);
 
         initialized = true;
 
-        return playerScoresUpdatedUnsubscriber;
+        return () => {
+            playerScoresUpdatedUnsubscriber();
+            configChangedUnsubscriber();
+        }
     });
 
     const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
@@ -706,6 +762,20 @@
     const onFilterStarsChange = debounce(e => allFilters.starsFilter = Object.assign({}, allFilters.starsFilter), DEBOUNCE_DELAY);
     const onFilterMinPlusPpChanged = debounce(e => allFilters.minPpDiff = e.detail, DEBOUNCE_DELAY * 2);
 
+    const getSortValue = (song, playersSeries, filters) => {
+        switch (filters.sortBy.type) {
+            case 'song':
+                return song[filters.sortBy.field]
+
+            case 'series':
+            default:
+                const sortIdx = filters.sortBy.subtype;
+                const field = filters.sortBy.field;
+
+                return playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[song.leaderboardId] ? playersSeries[sortIdx].scores[song.leaderboardId][field] : null
+        }
+    }
+
     async function calculate(playerId, snipedIds, filters, forceRefresh) {
         calculating = true;
 
@@ -920,22 +990,8 @@
                     )
 
                     .sort((songA, songB) => {
-                        let a, b;
-
-                        switch (filters.sortBy.type) {
-                            case 'song':
-                                a = songA[filters.sortBy.field]
-                                b = songB[filters.sortBy.field]
-                                break;
-
-                            case 'series':
-                            default:
-                                const sortIdx = filters.sortBy.subtype;
-                                const field = filters.sortBy.field;
-                                a = playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[songA.leaderboardId] ? playersSeries[sortIdx].scores[songA.leaderboardId][field] : null
-                                b = playersSeries[sortIdx] && playersSeries[sortIdx].scores && playersSeries[sortIdx].scores[songB.leaderboardId] ? playersSeries[sortIdx].scores[songB.leaderboardId][field] : null
-                                break;
-                        }
+                        const a = getSortValue(songA, playersSeries, filters);
+                        const b = getSortValue(songB, playersSeries, filters);
 
                         return filters.sortOrder.order === 'asc' ? a - b : b - a;
                     })
@@ -1098,6 +1154,10 @@
         checkedSongs = [];
     }
 
+    function onPageChanged() {
+        storeCurrentFirstIdentifier();
+    }
+
     $: shownColumns = allColumns.filter(c => c.displayed)
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
@@ -1106,6 +1166,9 @@
     $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters, refreshTag) : null;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
     $: comparePossible = users.length && snipedIds.length < 3;
+    $: {
+        restorePage(refreshTag)
+    }
 </script>
 
 {#if initialized}
@@ -1416,7 +1479,7 @@
 
     {#if songsPage.songs && songsPage.songs.length}
         <Pager bind:currentPage={currentPage} bind:itemsPerPage={itemsPerPage} totalItems={pagerTotal}
-               itemsPerPageValues={allItemsPerPage} hide={calculating}/>
+               itemsPerPageValues={allItemsPerPage} hide={calculating} on:page-changed={onPageChanged}/>
     {/if}
 
     {#if !calculating}
