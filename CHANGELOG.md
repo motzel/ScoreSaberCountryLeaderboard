@@ -5,7 +5,6 @@
 [!] bug fix
 [*] other changes
 
-
 0.9.3
  - [+] background data downloading 
  
