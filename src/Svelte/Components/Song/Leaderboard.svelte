@@ -1,5 +1,6 @@
 <script>
     import {onMount} from 'svelte';
+    import debounce from '../../../utils/debounce';
     import {hoverable} from '../../Actions/hoverable';
 
     import Avatar from '../Common/Avatar.svelte';
@@ -13,9 +14,10 @@
     import Refresh from '../Player/Refresh.svelte';
 
     import {SCORES_PER_PAGE} from "../../../network/scoresaber/consts";
-    import {getConfig, getMainUserId} from "../../../plugin-config";
+    import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import {getLeaderboard} from "../../../song";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import nodeSync from '../../../network/multinode-sync';
     import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let leaderboardId;
@@ -24,6 +26,8 @@
     export let bgLeft = "0rem";
     export let bgTop = "0rem";
     export let highlight = [];
+
+    const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 3000;
 
     let leaderboard = [];
 
@@ -35,8 +39,8 @@
     }
 
     onMount(async () => {
-        const mainUserId = await getMainUserId()
-        if (mainUserId) highlight.push(mainUserId);
+        const mainPlayerId = await getMainPlayerId()
+        if (mainPlayerId) highlight.push(mainPlayerId);
 
         const config = await getConfig('songLeaderboard');
         showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
@@ -45,15 +49,20 @@
 
         await refreshLeaderboard();
 
-        const unsubscriberDataRefresh = eventBus.on('data-refreshed', async (value, local) => {
-            if (!local) await getCacheAndConvertIfNeeded(true);
+        const refresh = async nodeId => {
+            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
 
             await refreshLeaderboard();
-        });
+        }
 
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
+
+        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
 
         return () => {
-            unsubscriberDataRefresh();
+            dataRefreshedUnsubscriber();
+            playerScoresUpdatedUnsubscriber();
         }
     })
 
@@ -199,6 +208,8 @@
     .refresh {
         text-align: right;
         margin-bottom: 1rem;
+        padding-top: .5rem;
+        margin-right: .5rem;
     }
 
     .first-fetch {

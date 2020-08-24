@@ -1,8 +1,9 @@
 <script>
+    import {onMount} from 'svelte';
     import {hoverable} from '../../Actions/hoverable';
     import {getWhatIfScore, getUserSongScore} from '../../../scoresaber/pp';
     import {formatNumber, round} from '../../../utils/format';
-    import {getMainUserId} from "../../../plugin-config";
+    import {getMainPlayerId} from "../../../plugin-config";
 
     export let leaderboardId;
     export let pp = 0;
@@ -13,17 +14,17 @@
     let score = {currentTotalPp: 0, newTotalPp: 0, diff: 0};
 
     let userPp;
-    let mainUserId;
-    (async _ => {
-        mainUserId = await getMainUserId();
-        if (mainUserId) {
-            const score = await getUserSongScore(mainUserId, leaderboardId);
+    let mainPlayerId;
+    onMount(async _ => {
+        mainPlayerId = await getMainPlayerId();
+        if (mainPlayerId) {
+            const score = await getUserSongScore(mainPlayerId, leaderboardId);
             userPp = undefined !== score ? score.pp : undefined;
         }
-    })();
+    });
 
     async function onHover(event) {
-        const wi = await getWhatIfScore(await getMainUserId(), leaderboardId, pp);
+        const wi = await getWhatIfScore(await getMainPlayerId(), leaderboardId, pp);
         score = Object.assign({}, score, wi);
 
         tooltip.style.display = 'inline-block';
@@ -59,7 +60,7 @@
     .inc {color: #42b129!important}
 </style>
 
-{#if mainUserId && undefined !== userPp}
+{#if mainPlayerId && undefined !== userPp}
     {#if round(pp) > round(userPp)}
         <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
         </button>

@@ -1,8 +1,11 @@
 <script>
+    import {onMount} from "svelte";
     import {isPromise} from "../../../utils/js";
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
 
     import Pager from "./Pager.svelte";
     import Button from "../Common/Button.svelte";
+    import {getConfig} from "../../../plugin-config";
 
     export let header = [];
     export let rows = [];
@@ -18,6 +21,11 @@
     export let total = rows.length;
     export let className;
     export let withDetails = false;
+
+    export let rowIdentifierFunc = null;
+
+    let viewUpdates = 'keep-view';
+    let currentFirstRowIdentifier = null;
 
     let tableHeader;
     let tableFooter;
@@ -79,8 +87,54 @@
         return dataPage;
     }
 
+    async function updateViewUpdatesConfig() {
+        const config = await getConfig('others');
+        viewUpdates = config.viewUpdates ? config.viewUpdates : 'keep-view';
+    }
+
+    function storeCurrentFirstIdentifier() {
+        if (!rowIdentifierFunc) return;
+
+        const currentFirstIdx = page * itemsPerPage;
+        if (rows && rows[currentFirstIdx]) {
+            currentFirstRowIdentifier = rowIdentifierFunc(rows[currentFirstIdx]);
+        }
+    }
+
+    async function restorePage(rows) {
+        if(currentFirstRowIdentifier && rowIdentifierFunc) {
+            await currentPageDataPromise;
+
+            switch (viewUpdates) {
+                case 'keep-view':
+                    const newIdx = rows.findIndex(s => rowIdentifierFunc(s) <= currentFirstRowIdentifier);
+                    const newPage = newIdx >= 0 ? Math.floor(newIdx / itemsPerPage) : 0;
+                    if (newPage !== page) page = newPage;
+                    break;
+
+                case 'always':
+                default:
+                    if (page !== 0) page = 0;
+                    break;
+            }
+        }
+    }
+
+    function onPageChanged() {
+        storeCurrentFirstIdentifier();
+    }
+
+    onMount(async () => {
+        await updateViewUpdatesConfig();
+
+        return eventBus.on('config-changed', updateViewUpdatesConfig);
+    });
+
     $: currentPageDataPromise = getDataPage(rows, page, itemsPerPage);
     $: totalItems = rows.length;
+    $: {
+        restorePage(rows)
+    }
 </script>
 
 {#await currentPageDataPromise then _}
@@ -159,7 +213,7 @@
 
 {#if paged && totalItems > itemsPerPage}
     <Pager bind:currentPage={page} bind:itemsPerPage={itemsPerPage} {totalItems} {itemsPerPageValues}
-           displayMax={pagesDisplayMax}/>
+           displayMax={pagesDisplayMax} on:page-changed={onPageChanged}/>
 {/if}
 
 <style>

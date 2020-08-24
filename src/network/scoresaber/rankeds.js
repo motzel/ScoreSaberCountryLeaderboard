@@ -4,6 +4,8 @@ import {arrayDifference, nullIfUndefined} from "../../utils/js";
 import {PLAYS_PER_PAGE, SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
+import eventBus from "../../utils/broadcast-channel-pubsub"
+import nodeSync from "../multinode-sync";
 
 const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
@@ -30,7 +32,7 @@ const fetchRankedSongsArray = async () =>
                 : []
         );
 
-export async function updateRankeds() {
+export async function updateRankeds(persist = true) {
     let fetchedRankedSongs;
     try {
         fetchedRankedSongs = await fetchRankedSongsArray();
@@ -82,7 +84,13 @@ export async function updateRankeds() {
         data.rankedSongsChanges[Date.now()] = changed;
     }
 
-    await setCache(data);
+    if (persist) {
+        await setCache(data);
+    }
+
+    if (changed.length) {
+        eventBus.publish('rankeds-changed', {nodeId: nodeSync.getId(), changed, allRankeds: fetchedRankedSongs});
+    }
 
     return changed;
 }

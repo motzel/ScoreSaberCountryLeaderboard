@@ -1,15 +1,11 @@
 <script>
     import config from "../../../temp";
-    import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import {onMount} from 'svelte';
-
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
     import Button from "../Common/Button.svelte";
     import Range from "../Common/Range.svelte";
     import Select from "../Common/Select.svelte";
     import Refresh from "../Player/Refresh.svelte";
-    import {getCacheAndConvertIfNeeded} from "../../../store";
 
     export let country = config.COUNTRY;
 
@@ -30,17 +26,6 @@
         newCont.style.display = 'none';
         cont.style.display = 'block';
     }
-
-    let lastScoresComponent;
-    let topScoresComponent;
-    onMount(() => {
-        return eventBus.on('data-refreshed', async (value, local) => {
-            if (!local) await getCacheAndConvertIfNeeded(true);
-
-            lastScoresComponent.refreshUsers();
-            topScoresComponent.refreshUsers();
-        });
-    })
 </script>
 
 <div class="columns is-multiline">
@@ -70,7 +55,7 @@
                     <Select bind:value={selectedSongPeriod} items={lastSongsPeriods} right={true}/>
                 </nav>
             </header>
-            <Songs bind:this={lastScoresComponent} {country} sortBy="timeset"
+            <Songs {country} sortBy="timeset"
                    min={new Date(Date.now()-selectedSongPeriod.value*1000*60*60*24)}
                    itemsPerPage={5} pagesDisplayMax={7} noRank={true}/>
         </div>
@@ -83,7 +68,7 @@
                 </nav>
             </header>
 
-            <Songs bind:this={topScoresComponent} {country} sortBy="pp" min={minPp} itemsPerPage={5} pagesDisplayMax={7}/>
+            <Songs {country} sortBy="pp" min={minPp} itemsPerPage={5} pagesDisplayMax={7}/>
         </div>
     </div>
 </div>
@@ -110,7 +95,7 @@
 
     .box h2 .refresh {
         margin-left: 1rem;
-        margin-top: .5em;
+        margin-top: .25em;
         font-size: 1rem;
     }
 

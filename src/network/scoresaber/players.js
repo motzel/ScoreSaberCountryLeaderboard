@@ -4,7 +4,7 @@ import {convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL,  USERS_URL} from "./consts";
 import queue from "../queue";
 import config from '../../temp';
-import {getCacheAndConvertIfNeeded} from "../../store";
+import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
     getManuallyAddedPlayersIds,
     getPlayerInfo,
@@ -13,9 +13,12 @@ import {
 } from "../../scoresaber/players";
 import {dateFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchScores} from "./scores";
+import eventBus from "../../utils/broadcast-channel-pubsub";
+import nodeSync from '../../network/multinode-sync';
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
+export const getActivePlayersLastUpdate = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.activePlayersLastUpdate ?? null;
 export const getAdditionalPlayers = (country = config.COUNTRY) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 export const convertPlayerInfo = info => {
     const {
@@ -40,7 +43,6 @@ export const convertPlayerInfo = info => {
             url: substituteVars(USER_PROFILE_URL, {
                 userId: playerId
             }),
-            lastUpdated: null,
             recentPlay: null,
 
             userHistory: {},
@@ -57,16 +59,16 @@ export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API
 })
 
 const updatePlayerInfo = async (info, players) => {
-    const {lastUpdated, recentPlay, scores, userHistory} = players?.[info.playerInfo.playerId]
+    const {recentPlay, scores, userHistory} = players?.[info.playerInfo.playerId]
         ? players?.[info.playerInfo.playerId]
-        : {lastUpdated: null, recentPlay: null, userHistory: {}, scores: {}};
+        : {recentPlay: null, userHistory: {}, scores: {}};
 
     if (!info.scoreStats || !players?.[info.playerInfo.playerId]) {
         const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
         if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
 
         return Object.assign({}, players[info.playerInfo.playerId] ?? {}, convertPlayerInfo(playerInfo), {
-            lastUpdated,
+            profileLastUpdated: new Date(),
             recentPlay,
             scores,
             userHistory
@@ -75,17 +77,19 @@ const updatePlayerInfo = async (info, players) => {
 
     return Object.assign({}, players[info.playerInfo.playerId] ?? {}, info.playerInfo, info.scoreStats);
 }
-export const updateActivePlayers = async (page = 1) => {
+export const updateActivePlayers = async (persist = true) => {
     const data = await getCacheAndConvertIfNeeded();
 
     // set all cached country players as inactive
     if (data.users)
         Object.keys(data.users).map(userId => {
-            if (data.users[userId].ssplCountryRank) {
+            if (data.users?.[userId]?.ssplCountryRank) {
                 data.users[userId].inactive = true;
                 data.users[userId].ssplCountryRank = null;
             }
         })
+
+    const page = 1;
 
     const countryPlayers =
         (await Promise.all(
@@ -104,7 +108,8 @@ export const updateActivePlayers = async (page = 1) => {
                                 pp: parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
                                 country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
                                 inactive: false,
-                                weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10)
+                                weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
+                                profileLastUpdated: new Date()
                             },
                             scoreStats: {}
                         }
@@ -137,10 +142,18 @@ export const updateActivePlayers = async (page = 1) => {
         ...convertArrayToObjectByKey(manuallyAddedPlayers, 'id')
     }
 
+    data.activePlayersLastUpdate = new Date().toISOString();
+
     data.users = {
         ...data.users,
         ...allPlayers
     }
+
+    if (persist) {
+        await setCache(data);
+    }
+
+    eventBus.publish('active-players-updated', {nodeId: nodeSync.getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
 
     return Object.values(allPlayers);
 }
@@ -223,4 +236,19 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
     }
 
     return player;
+}
+
+export const updatePlayerScores = async (playerId, persist = true, emitEvents = true, progressCallback = null) => {
+    const data = await getCacheAndConvertIfNeeded();
+
+    data.users[playerId] = await getPlayerWithUpdatedScores(playerId, progressCallback);
+    data.lastUpdated = new Date().toISOString();
+
+    if (persist) {
+        await setCache(data);
+    }
+
+    if (emitEvents && data.users[playerId]) {
+        eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), player: data.users[playerId]});
+    }
 }

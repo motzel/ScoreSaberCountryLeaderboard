@@ -1,6 +1,7 @@
 import {getCacheAndConvertIfNeeded} from "../store";
 
-export const getRankedSongs = async (force = false) => (await getCacheAndConvertIfNeeded(force)).rankedSongs;
+export const getRankedSongs = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.rankedSongs ?? null;
+export const getRankedSongsLastUpdated = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.rankedSongsLastUpdated ?? null;
 export const getRankedChanges = async _ => (await getCacheAndConvertIfNeeded()).rankedSongsChanges ?? {};
 export const getFilteredRankedChanges = async filterTimestampFunc => {
     const rankedSongsChanges = await getRankedChanges();

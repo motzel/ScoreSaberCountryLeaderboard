@@ -15,6 +15,7 @@
     export let minSelected = 1;
     export let optionsMinSelected = 1;
     export let right = false;
+    export let top = false;
 
     function processItems(items, value, clickedIdx, multiple = false, minSelected = 1) {
         if (multiple) {
@@ -79,7 +80,7 @@
                 <span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>
             </button>
         </div>
-        <div class:right={right} class="dropdown-menu" role="menu" on:click={onMenuClick}>
+        <div class:right={right} class:top={top} class="dropdown-menu" role="menu" on:click={onMenuClick}>
             <div class="dropdown-content">
                 {#each items as item, idx (item)}
                     {#if item.type === 'divider'}
@@ -186,6 +187,11 @@
 
     .dropdown-menu.right {
         left: auto;
+    }
+
+    .dropdown-menu.top {
+        bottom: 2.25rem;
+        top: auto;
     }
 
     .dropdown-content {

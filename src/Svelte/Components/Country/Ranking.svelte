@@ -1,4 +1,5 @@
 <script>
+    import {onMount} from 'svelte';
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
     import Pp from '../Common/Pp.svelte';
@@ -22,9 +23,9 @@
     ];
 
     let users = [];
-    (async () => {
+    onMount(async () => {
         users = await getCountryRanking(country);
-    })();
+    });
 
     let selectedDiff = diffOptions.find(i => i.value === diff);
     let ranking = [];

@@ -1,6 +1,6 @@
 let bc;
 
-const createPubSub = () => {
+const createGlobalPubSub = () => {
     const subscribers = {}
     if (!bc) bc = new BroadcastChannel('global-pub-sub');
 
@@ -42,6 +42,6 @@ const createPubSub = () => {
     }
 }
 
-const pubSub = createPubSub();
+const pubSub = createGlobalPubSub();
 
 export default pubSub;
