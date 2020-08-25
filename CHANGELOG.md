@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.3.2
+- [!] fixed visual bug with playlist editing in sniper mode
+
 0.9.3.1
  - [!] fixed keep-view option in Song Browser
  

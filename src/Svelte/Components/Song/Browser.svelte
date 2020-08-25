@@ -1417,7 +1417,7 @@
                         {/each}
                     </tr>
                     {#if !!song.leaderboardOpened}
-                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length}>
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)}>
                         <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
                     </td></tr>
                     {/if}
@@ -1427,7 +1427,7 @@
                 {#if shouldCalculateTotalPp}
                     <tfoot>
                     <tr>
-                        {#if showCheckboxes}<th class="check"></th>{/if}
+                        {#if showCheckboxes}<th class="check" rowspan={songsPage.series.length > 2 ? 2 : 1}></th>{/if}
 
                         <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                             colspan={2 + selectedSongCols.length}>
