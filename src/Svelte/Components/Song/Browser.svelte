@@ -206,6 +206,8 @@
 
     async function restorePage() {
         if(currentFirstRowIdentifier) {
+            const rowId = currentFirstRowIdentifier;
+
             const data = await calcPromised;
             if (!data) return;
 
@@ -213,8 +215,8 @@
                 case 'keep-view':
                     const newIdx = data.songs.findIndex(
                         s => allFilters.sortOrder.order === 'asc'
-                            ? getSortValue(s, data.series, allFilters) >= currentFirstRowIdentifier
-                            : getSortValue(s, data.series, allFilters) <= currentFirstRowIdentifier
+                            ? getSortValue(s, data.series, allFilters) >= rowId
+                            : getSortValue(s, data.series, allFilters) <= rowId
                     );
                     const newPage = newIdx >= 0 ? Math.floor(newIdx / itemsPerPage) : 0;
                     if (newPage !== currentPage) currentPage = newPage;
