@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.4
+- [+] Add the accuracy chart, thx Modren
+
 0.9.3.2
 - [!] fixed visual bug with playlist editing in sniper mode
 

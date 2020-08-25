@@ -10,6 +10,7 @@ import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
+import Chart from './Svelte/Components/Player/Chart.svelte';
 
 import log from './utils/logger';
 import config from './temp';
@@ -24,8 +25,11 @@ import {setSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import logger from "./utils/logger";
-import {removePlayerFromGroup} from "./scoresaber/players";
+import {getPlayerScores, removePlayerFromGroup} from "./scoresaber/players";
 import {getPlayerWithUpdatedScores, updateActivePlayers} from "./network/scoresaber/players";
+import {getRankedSongs} from "./scoresaber/rankeds";
+import {formatDate, formatNumber, round, roundToPrecision} from "./utils/format";
+import {dateFromString} from "./utils/date";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -171,66 +175,24 @@ async function setupChart() {
     const chart = document.getElementById('rankChart');
     if(!chart) return;
 
+    const box = chart.closest('.box');
+    if(!box) return;
+
+    chart.closest('section').remove();
+
     const profileConfig = await getConfig('profile');
-    if (profileConfig && !profileConfig.showChart) {
-        chart.closest('.rankChart').remove();
-        return;
-    }
+    if (profileConfig && !profileConfig.showChart) return;
 
-    const chartSection = chart.closest('section');
-    chartSection.style.setProperty('margin', '0 auto', 'important');
-    chartSection.style.setProperty('height', '300px', 'important');
-    chartSection.closest('.box').appendChild(chartSection);
-
-    const history = getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML);
-    if(!history) return;
-
-    chart.parentNode.innerHTML = '<canvas class="chartjs-render-monitor" id="rankChart"></canvas>';
-
-    let myChart = new Chart(document.getElementById("rankChart"), {
-        responsive: true,
-        onResize: function(chart, size){
-            chart.resize();
-            chart.render(true);
-        },
-        type: 'line',
-        data: {
-            labels: Array(50).fill(0).map((v,i) => 0===i ? 'now' : 1===i ? 'yesterday' : i + ' days ago').reverse(),
-            datasets: [{
-                data: history.split(','),
-                label: "Rank",
-                borderColor: "#3e95cd",
-                fill: false
-            },]
-        },
-        options: {
-            maintainAspectRatio: false,
-            title: {
-                display: false,
-            },
-            tooltips: {
-                mode: 'index',
-                intersect: false,
-
-            },
-            hover: {
-                mode: 'nearest',
-                intersect: true
-            },
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        reverse: true,
-                        userCallback: function(label, index, labels) {
-                            if (Math.floor(label) === label) {
-                                return label;
-                            }
-                        },
-                    }
-                }],
+    const profileId = getProfileId();
+    if(profileId) {
+        new Chart({
+            target: box,
+            props: {
+                profileId,
+                history: getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML),
             }
-        }
-    });
+        });
+    }
 
     log.info("Setup chart / Done")
 }
