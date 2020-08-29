@@ -141,6 +141,10 @@ export default {
             info: 'It seems that no song meets all the selected requirements. Change something maybe?',
         }
     },
+    songLeaderboard: {
+        player: 'Player',
+        mods: 'Mods',
+    },
     themes: {
         dark: 'One and the only',
         light: 'Eyes burning',

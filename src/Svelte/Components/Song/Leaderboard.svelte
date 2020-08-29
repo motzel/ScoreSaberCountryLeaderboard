@@ -19,6 +19,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {getCacheAndConvertIfNeeded} from "../../../store";
+    import {_} from '../../stores/i18n';
 
     export let leaderboardId;
     export let tableOnly = false;
@@ -109,12 +110,12 @@
             <tr>
                 <th class="picture"></th>
                 <th class="rank">#</th>
-                <th class="player">Gracz</th>
-                <th class="score">Wynik</th>
-                <th class="timeset">Czas</th>
-                <th class="mods">Mody</th>
-                <th class="percentage">Procent</th>
-                <th class="pp">PP</th>
+                <th class="player">{$_.songLeaderboard.player}</th>
+                <th class="score">{$_.songBrowser.fields.score}</th>
+                <th class="timeset">{$_.songBrowser.fields.timeset}</th>
+                <th class="mods">{$_.songLeaderboard.mods}</th>
+                <th class="percentage">{$_.songBrowser.fields.acc}</th>
+                <th class="pp">{$_.songBrowser.fields.pp}</th>
             </tr>
             </thead>
 

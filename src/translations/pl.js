@@ -143,6 +143,10 @@ export default {
             info: 'Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?',
         },
     },
+    songLeaderboard: {
+        player: 'Gracz',
+        mods: 'Mody',
+    },
     themes: {
         dark: 'Jedyny słuszny',
         light: 'Wypalający oczy',

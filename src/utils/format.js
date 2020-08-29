@@ -1,5 +1,6 @@
 import config from '../temp';
 import {dateFromString} from "./date";
+import {getCurrentLang} from '../Svelte/stores/i18n';
 
 export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
     return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
@@ -16,7 +17,7 @@ export function formatNumber(num, digits = 2, addSign = false) {
 }
 
 export function formatDate(val) {
-    const rtf = new Intl.RelativeTimeFormat(config.COUNTRY, {
+    const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
         localeMatcher: 'best fit',
         numeric: 'auto',
         style: 'long'
