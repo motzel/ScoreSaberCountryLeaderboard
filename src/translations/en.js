@@ -145,6 +145,13 @@ export default {
         player: 'Player',
         mods: 'Mods',
     },
+    refresh: {
+        lastDownload: 'Downloaded:',
+        rankedsDownload: 'Downloading current rankeds',
+        countryPlayersDownload: 'Downloading the top 50 ${country}...',
+        waiting: '[Waiting ${seconds}s]',
+        error: 'Download error. Try again.',
+    },
     themes: {
         dark: 'One and the only',
         light: 'Eyes burning',

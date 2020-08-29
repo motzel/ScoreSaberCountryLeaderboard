@@ -147,6 +147,13 @@ export default {
         player: 'Gracz',
         mods: 'Mody',
     },
+    refresh: {
+        lastDownload: 'Pobrano:',
+        rankedsDownload: 'Pobieranie aktualnych rankedów',
+        countryPlayersDownload: 'Pobieranie listy top 50 ${country}...',
+        waiting: '[Czekam ${seconds}s]',
+        error: 'Błąd pobierania danych. Spróbuj ponownie.',
+    },
     themes: {
         dark: 'Jedyny słuszny',
         light: 'Wypalający oczy',

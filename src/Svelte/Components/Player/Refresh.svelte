@@ -23,6 +23,8 @@
     import nodeSync from '../../../network/multinode-sync';
 
     import logger from "../../../utils/logger";
+    import {_, trans} from '../../stores/i18n';
+    import {formatNumber} from "../../../utils/format";
 
     export let profileId;
 
@@ -116,14 +118,14 @@
     }
 
     function updateProgress(info) {
-        updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.page.toString() + (info.wait ? ' ' + `[Czekam ${Math.floor(info.wait/1000)} s]` : '')});
+        updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.page.toString() + (info.wait ? ' ' + trans('refresh.waiting', {seconds: formatNumber(Math.floor(info.wait/1000),0)}) : '')});
     }
 
     async function refresh() {
-        updateState({started: true, progress: 0, subLabel: 'Pobieranie aktualnych rankedów'});
+        updateState({started: true, progress: 0, subLabel: $_.refresh.rankedsDownload});
         await updateRankeds();
 
-        updateState({errorMsg: '', label: '', subLabel: `Pobieranie listy top 50 ${config.COUNTRY.toUpperCase()}...`});
+        updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: config.COUNTRY.toUpperCase()})});
         const activePlayers = await updateActivePlayers(false);
 
         updateState({label: '', subLabel: ''});
@@ -149,7 +151,7 @@
     async function onRefresh() {
         refresh()
                 .catch(e => {
-                    updateState({started: false, errorMsg: 'Błąd pobierania danych. Spróbuj ponownie.'});
+                    updateState({started: false, errorMsg: $_.refresh.error});
                     log.error("Can not refresh users")
                     console.error(e);
                 })
@@ -165,7 +167,7 @@
             <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={$state.started} /></span>
         {/if}
         {#if !$state.errorMsg || !$state.errorMsg.length}
-            <strong>Pobrano:</strong> <span><FormattedDate date={$lastUpdatedState} noDate="-" /></span>
+            <strong>{$_.refresh.lastDownload}</strong> <span><FormattedDate date={$lastUpdatedState} noDate="-" /></span>
         {:else}
             <span class="error">{$state.errorMsg}</span>
         {/if}
