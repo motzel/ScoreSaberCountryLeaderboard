@@ -4,6 +4,7 @@
     import {getWhatIfScore, getUserSongScore} from '../../../scoresaber/pp';
     import {formatNumber, round} from '../../../utils/format';
     import {getMainPlayerId} from "../../../plugin-config";
+    import {_} from '../../stores/i18n';
     import {getPlayerScores} from "../../../scoresaber/players";
 
     export let leaderboardId;
@@ -43,7 +44,7 @@
     <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
     </button>
     <div bind:this={tooltip} class="tooltip">
-        Jeśli tak zagrasz: {formatNumber(score.currentTotalPp)} + <strong>{formatNumber(score.diff)}</strong> =
+        {$_.whatif.label} {formatNumber(score.currentTotalPp)} + <strong>{formatNumber(score.diff)}</strong> =
         <strong class="inc">{formatNumber(score.newTotalPp)}pp</strong>
     </div>
 {/if}
@@ -72,3 +73,14 @@
 
     .inc {color: #42b129!important}
 </style>
+
+{#if mainPlayerId && undefined !== userPp}
+    {#if round(pp) > round(userPp)}
+        <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
+        </button>
+        <div bind:this={tooltip} class="tooltip">
+            Jeśli tak zagrasz: {formatNumber(score.currentTotalPp)} + <strong>{formatNumber(score.diff)}</strong> =
+            <strong class="inc">{formatNumber(score.newTotalPp)}pp</strong>
+        </div>
+    {/if}
+{/if}

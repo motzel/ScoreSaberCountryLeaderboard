@@ -154,6 +154,9 @@ export default {
         waiting: '[Czekam ${seconds}s]',
         error: 'Błąd pobierania danych. Spróbuj ponownie.',
     },
+    whatif: {
+        label: 'Jeśli tak zagrasz:',
+    },
     themes: {
         dark: 'Jedyny słuszny',
         light: 'Wypalający oczy',

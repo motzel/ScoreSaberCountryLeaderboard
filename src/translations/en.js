@@ -152,6 +152,9 @@ export default {
         waiting: '[Waiting ${seconds}s]',
         error: 'Download error. Try again.',
     },
+    whatif: {
+        label: 'If you play like this:',
+    },
     themes: {
         dark: 'One and the only',
         light: 'Eyes burning',
