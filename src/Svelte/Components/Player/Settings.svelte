@@ -21,6 +21,7 @@
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
+    import {_, trans, getSupportedLangs, setCurrentLang} from "../../stores/i18n";
 
     export let profileId;
 
@@ -42,195 +43,220 @@
 
     let config;
 
-    const availableThemes = Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def}));
-    let theme = availableThemes[0];
-    let origTheme = theme;
+    let availableLangs = getSupportedLangs();
 
-    const songTypes = [
-        {id: 'all', label: 'Wszystkie'},
-        {id: 'rankeds', label: 'Tylko rankingowe'},
-        {id: 'unrankeds', label: 'Tylko nierankingowe'},
-        {id: 'rankeds_unplayed', label: 'Tylko niezagrane'},
-        {id: 'sniper_mode', label: 'Tryb snajpera'},
-    ]
-    let configSongType = songTypes[0];
+    let strings = {
+        songTypes: [
+            {id: 'all', _key: 'songBrowser.types.all'},
+            {id: 'rankeds', _key: 'songBrowser.types.ranked_only'},
+            {id: 'unrankeds', _key: 'songBrowser.types.unranked_only'},
+            {id: 'rankeds_unplayed', _key: 'songBrowser.types.not_played_only'},
+            {id: 'sniper_mode', _key: 'songBrowser.types.sniper_mode'},
+        ],
 
-    const viewTypes = [
-        {id: 'compact', label: 'Kompaktowy'},
-        {id: 'tabular', label: 'Tabelaryczny'}
-    ]
-    let configViewType = viewTypes[0];
+        viewTypes: [
+            {id: 'compact', _key: 'songBrowser.viewTypes.compact'},
+            {id: 'tabular', _key: 'songBrowser.viewTypes.tabular'}
+        ],
 
-    const allSortTypes = [
-        {label: 'Data zagrania', field: 'timeset', onlyTypes: ['all', 'rankeds', 'unrankeds', 'sniper_mode']},
-        {label: 'Gwiazdki', field: 'stars', onlyTypes: ['all', 'rankeds', 'rankeds_unplayed', 'sniper_mode']},
-        {label: 'PP', field: 'pp', onlyTypes: ['rankeds', 'sniper_mode']},
-        {label: 'Celność', field: 'acc', onlyTypes: ['rankeds', 'sniper_mode']}
-    ]
-    const filterSortTypes = () => allSortTypes.filter(st => !st.onlyTypes || st.onlyTypes.includes(configSongType.id))
+        sortTypes: [
+            {_key: 'songBrowser.fields.timeset', field: 'timeset', onlyTypes: ['all', 'rankeds', 'unrankeds', 'sniper_mode']},
+            {_key: 'songBrowser.fields.stars', field: 'stars', onlyTypes: ['all', 'rankeds', 'rankeds_unplayed', 'sniper_mode']},
+            {_key: 'songBrowser.fields.pp', field: 'pp', onlyTypes: ['rankeds', 'sniper_mode']},
+            {_key: 'songBrowser.fields.acc', field: 'acc', onlyTypes: ['rankeds', 'sniper_mode']}
+        ],
+        
+        columns: [
+            {
+                _key: 'songBrowser.fields.stars',
+                name: '*',
+                key: 'stars',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "*"}
+            },
+            {
+                _key: 'songBrowser.fields.maxPp',
+                name: 'Max PP',
+                key: 'maxPp',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "pp"}
+            },
+            {
+                _key: 'songBrowser.fields.bpm',
+                name: 'BPM',
+                key: 'bpm',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "", digits: 0}
+            },
+            {
+                _key: 'songBrowser.fields.njs',
+                name: 'NJS',
+                key: 'njs',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "", digits: 0}
+            },
+            {
+                _key: 'songBrowser.fields.nps',
+                name: 'NPS',
+                key: 'nps',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: ""}
+            },
+            {
+                _key: 'songBrowser.fields.duration',
+                name: 'Czas',
+                key: 'length',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-"}
+            },
+            {
+                _key: 'songBrowser.fields.timeset',
+                compactLabel: null,
+                name: 'Data',
+                key: 'timeset',
+                selected: true,
+                type: 'series',
+                displayed: true,
+                valueProps: {prevValue: null}
+            },
+            {
+                _key: 'songBrowser.fields.diffPp',
+                compactLabel: null,
+                name: '+PP',
+                key: 'diffPp',
+                selected: false,
+                type: 'series',
+                displayed: false,
+                valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
+            },
+            {
+                _key: 'songBrowser.fields.pp',
+                name: 'PP',
+                key: 'pp',
+                selected: true,
+                type: 'series',
+                valueProps: {zero: "-", suffix: "pp"},
+                displayed: true
+            },
+            {
+                _key: 'songBrowser.fields.weightedPp',
+                compactLabel: 'Ważone',
+                name: 'wPP',
+                key: 'weightedPp',
+                selected: false,
+                type: 'series',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "pp"}
+            },
+            {
+                _key: 'songBrowser.fields.acc',
+                compactLabel: null,
+                name: 'Acc',
+                key: 'acc',
+                selected: true,
+                type: 'series',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "%"}
+            },
+            {
+                _key: 'songBrowser.fields.score',
+                compactLabel: null,
+                name: 'Wynik',
+                key: 'score',
+                selected: true,
+                type: 'series',
+                displayed: true,
+                valueProps: {digits: 0, zero: "-"}
+            },
+            {
+                _key: 'songBrowser.fields.diff',
+                name: 'Różnice',
+                key: 'diff',
+                selected: true,
+                type: 'other',
+                displayed: true
+            },
+            {
+                _key: 'songBrowser.fields.icons',
+                name: '',
+                key: 'icons',
+                type: 'additional',
+                displayed: true,
+                selected: true
+            },
+        ],
+
+        viewTypeUpdates: [
+            {_key: 'profile.settings.others.alwaysRefresh', id: "always"},
+            {_key: 'profile.settings.others.keepView', id: "keep-view"},
+        ],
+
+        icons: [
+            {_key: 'songBrowser.icons.bsr', id: 'bsr'},
+            {_key: 'songBrowser.icons.beatsaver', id: 'bs'},
+            {_key: 'songBrowser.icons.oneclick', id: 'oneclick'},
+            {_key: 'songBrowser.icons.preview', id: 'preview'},
+            {_key: 'songBrowser.icons.twitch', id: 'twitch'}
+        ],
+
+        themes: Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def, _key: e[1]._key})),
+    }
+
+    let values = {
+        songTypes: strings.songTypes[0],
+        viewTypes: strings.viewTypes[0],
+        viewTypeUpdates: strings.viewTypeUpdates[1],
+        shownIcons: strings.icons.map(i => i),
+        lang: availableLangs[0],
+        theme: strings.themes[0],
+    }
+
+    let origTheme = values.theme;
+    let origLang = values.lang;
+
+    const filterSortTypes = () => strings.sortTypes.filter(st => !st.onlyTypes || st.onlyTypes.includes(values.songTypes.id))
     let sortTypes = filterSortTypes();
     let configSortType = filterSortTypes()[0];
 
-    const allColumns = [
-        {
-            label: 'Gwiazdki',
-            name: '*',
-            key: 'stars',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "*"}
-        },
-        {
-            label: 'Max PP',
-            name: 'Max PP',
-            key: 'maxPp',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "pp"}
-        },
-        {
-            label: 'BPM',
-            name: 'BPM',
-            key: 'bpm',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "", digits: 0}
-        },
-        {
-            label: 'NJS',
-            name: 'NJS',
-            key: 'njs',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "", digits: 0}
-        },
-        {
-            label: 'NPS',
-            name: 'NPS',
-            key: 'nps',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: ""}
-        },
-        {
-            label: 'Czas',
-            name: 'Czas',
-            key: 'length',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-"}
-        },
-        {
-            label: 'Data zagrania',
-            compactLabel: null,
-            name: 'Data',
-            key: 'timeset',
-            selected: true,
-            type: 'series',
-            displayed: true,
-            valueProps: {prevValue: null}
-        },
-        {
-            label: '+PP global',
-            compactLabel: null,
-            name: '+PP',
-            key: 'diffPp',
-            selected: false,
-            type: 'series',
-            displayed: false,
-            valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
-        },
-        {
-            label: 'PP',
-            name: 'PP',
-            key: 'pp',
-            selected: true,
-            type: 'series',
-            valueProps: {zero: "-", suffix: "pp"},
-            displayed: true
-        },
-        {
-            label: 'Ważone PP',
-            compactLabel: 'Ważone',
-            name: 'wPP',
-            key: 'weightedPp',
-            selected: false,
-            type: 'series',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "pp"}
-        },
-        {
-            label: 'Celność',
-            compactLabel: null,
-            name: 'Acc',
-            key: 'acc',
-            selected: true,
-            type: 'series',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "%"}
-        },
-        {
-            label: 'Wynik',
-            compactLabel: null,
-            name: 'Wynik',
-            key: 'score',
-            selected: true,
-            type: 'series',
-            displayed: true,
-            valueProps: {digits: 0, zero: "-"}
-        },
-        {
-            label: 'Różnice',
-            name: 'Różnice',
-            key: 'diff',
-            selected: true,
-            type: 'other',
-            displayed: true
-        },
-        {
-            label: 'Pokazuj potencjał',
-            name: 'Potencjał',
-            key: 'estimate',
-            type: 'other',
-            displayed: false,
-            selected: false
-        },
-        {
-            label: 'Ikony akcji',
-            name: '',
-            key: 'icons',
-            type: 'additional',
-            displayed: true,
-            selected: true
-        },
-    ]
-    const columns = allColumns.filter(c => c.displayed);
+    let columns = strings.columns.filter(c => c.displayed);
     let configShowColumns = columns.filter(c => c.selected);
-
-    const shownIcons = [
-        {label: "!bsr", id: "bsr"},
-        {label: "Beat Saver", id: "bs"},
-        {label: "OneClick Install", id: "oneclick"},
-        {label: "Podgląd mapy", id: "preview"},
-        {label: "Twitch", id: "twitch"}
-    ];
-    let configShowIcons = shownIcons.map(i => i);
 
     const allItemsPerPage = [5, 10, 15, 20, 25, 50];
     let itemsPerPage = allItemsPerPage.map(i => ({label: i, val: i}));
     let configItemsPerPage = itemsPerPage[1];
 
-    const viewUpdateTypes = [
-        {label: "Zawsze odświeżaj", id: "always"},
-        {label: "Utrzymuj widok", id: "keep-view"},
-    ];
-    let configViewUpdate = viewUpdateTypes[1];
+    function translateAllStrings() {
+        Object.keys(strings).forEach(key => {
+            strings[key].forEach(item => {
+                if (item._key) item.label = trans(item._key);
+            })
+        })
+
+        strings = {...strings};
+        values = {...values};
+
+        // filtered data
+        const prevSortType = configSortType.id;
+        sortTypes = filterSortTypes();
+        configSortType = sortTypes.find(st => st.id === prevSortType);
+
+        const prevShowColumns = columns.filter(c => c.selected).map(c => c.key);
+        columns = strings.columns.filter(c => c.displayed);
+        configShowColumns = columns.filter(c => prevShowColumns.includes(c.key));
+
+    }
 
     async function refreshPlayerStatus() {
         isActivePlayer = (await getAllActivePlayersIds()).includes(profileId);
@@ -248,14 +274,14 @@
 
         await refreshPlayerStatus();
 
-        const defaultSongType = songTypes.find(s => s.id === config.songBrowser.defaultType);
-        if (defaultSongType) configSongType = defaultSongType;
+        const defaultSongType = strings.songTypes.find(s => s.id === config.songBrowser.defaultType);
+        if (defaultSongType) values.songTypes = defaultSongType;
 
         const defaultShowColumns = columns.filter(c => Array.isArray(config.songBrowser.showColumns) && config.songBrowser.showColumns.includes(c.key))
         if (defaultShowColumns) configShowColumns = defaultShowColumns;
 
-        const defaultShowIcons = shownIcons.filter(i => config.songBrowser.showIcons.includes(i.id))
-        if (defaultShowIcons) configShowIcons = defaultShowIcons;
+        const defaultShowIcons = strings.icons.filter(i => config.songBrowser.showIcons.includes(i.id))
+        if (defaultShowIcons) values.shownIcons = defaultShowIcons;
 
         const defaultSort = filterSortTypes().find(s => s.field === config.songBrowser.defaultSort)
         if (defaultSort) configSortType = defaultSort;
@@ -263,16 +289,22 @@
         const defaultItemsPerPage = itemsPerPage.find(i => i.val === config.songBrowser.itemsPerPage);
         if (defaultItemsPerPage) configItemsPerPage = defaultItemsPerPage;
 
-        const defaultTheme = availableThemes.find(t => t.id === config.others.theme)
+        const defaultTheme = strings.themes.find(t => t.id === config.others.theme)
         if (defaultTheme) {
-            theme = defaultTheme;
+            values.theme = defaultTheme;
             origTheme = defaultTheme;
+        }
+
+        const defaultLang = availableLangs.find(l => l.id === config.others.language)
+        if (defaultLang) {
+            values.lang = defaultLang;
+            origLang = defaultLang;
         }
 
         if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
 
-        const defaultViewUpdate = viewUpdateTypes.find(i => i.id === config.others.viewsUpdate);
-        if (defaultViewUpdate) configViewUpdate = defaultViewUpdate;
+        const defaultViewUpdate = strings.viewTypeUpdates.find(i => i.id === config.others.viewsUpdate);
+        if (defaultViewUpdate) values.viewTypeUpdates = defaultViewUpdate;
 
         filterSortTypes();
 
@@ -374,26 +406,29 @@
     }
 
     async function onThemeChange() {
-        setTheme(theme.id);
+        setTheme(values.theme.id);
     }
 
     function onCancel() {
-        theme = origTheme;
+        values.theme = origTheme;
+        values.lang = origLang
 
-        setTheme(theme.id);
+        setCurrentLang(values.lang.id);
+        setTheme(values.theme.id);
 
         showSettingsModal = false
     }
 
     async function saveConfig() {
-        config.songBrowser.defaultType = configSongType.id;
-        config.songBrowser.defaultView = configViewType.id;
+        config.songBrowser.defaultType = values.songTypes.id;
+        config.songBrowser.defaultView = values.viewTypes.id;
         config.songBrowser.defaultSort = configSortType.field;
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
-        config.songBrowser.showIcons = configShowIcons.map(i => i.id);
+        config.songBrowser.showIcons = values.shownIcons.map(i => i.id);
         config.songBrowser.itemsPerPage = configItemsPerPage.val;
-        config.others.theme = theme.id;
-        config.others.viewsUpdate = configViewUpdate.id;
+        config.others.theme = values.theme.id;
+        config.others.viewsUpdate = values.viewTypeUpdates.id;
+        config.others.language = values.lang.id;
 
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);
@@ -421,6 +456,14 @@
 
         window.location.reload();
     }
+
+    function onLangChange() {
+        setCurrentLang(values.lang.id);
+    }
+
+    $: {
+        translateAllStrings($_);
+    }
 </script>
 
 {#if profileId}
@@ -428,7 +471,7 @@
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
     {:else if (!isActivePlayer)}
-        <Button iconFa="fas fa-user-plus" type="primary" title="Dodaj użytkownika" on:click={manuallyAddPlayer}/>
+        <Button iconFa="fas fa-user-plus" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
     {:else if playerInfo}
         {#if showTwitchBtn}
             <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
@@ -436,145 +479,151 @@
         {/if}
 
         {#if profileId !== mainPlayerId}
-            <Button iconFa="fas fa-user-check" type="primary" title="Ustaw jako główny profil" on:click={setAsMainProfile}/>
+            <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
         {:else}
-            <Button iconFa="fas fa-cog" title="Ustawienia" on:click={() => showSettingsModal = true}/>
+            <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
         {/if}
     {/if}
 
     {#if isManuallyAddedPlayer}
-        <Button iconFa="fas fa-user-minus" type="danger" title="Usuń użytkownika" on:click={manuallyRemovePlayer}/>
+        <Button iconFa="fas fa-user-minus" type="danger" title={$_.profile.removePlayer} on:click={manuallyRemovePlayer}/>
     {/if}
 
     {#if showSettingsModal}
         <Modal closeable={false} on:close={() => showSettingsModal = false}>
             <header>
-                <div class="menu-label">Ustawienia</div>
+                <div class="menu-label">{$_.profile.settings.header}</div>
             </header>
 
             <main>
                 <section class="columns">
                     <div class="column is-one-third">
-                        <div class="menu-label">Motyw</div>
-                        <Select items={availableThemes} bind:value={theme} on:change={onThemeChange} />
+                        <div class="menu-label">{$_.profile.settings.language}</div>
+
+                        <Select items={availableLangs} bind:value={values.lang} on:change={onLangChange} />
+                    </div>
+
+                    <div class="column is-one-third">
+                        <div class="menu-label">{$_.profile.settings.theme}</div>
+                        <Select items={strings.themes} bind:value={values.theme} on:change={onThemeChange} />
                     </div>
                 </section>
 
                 <section>
-                    <div class="menu-label">Przeglądarka nut</div>
+                    <div class="menu-label">{$_.profile.settings.songBrowser.header}</div>
                     <label class="checkbox">
                         <input type="checkbox" bind:checked={config.songBrowser.autoTransform}>
-                        Automatycznie transformuj
+                        {$_.profile.settings.songBrowser.autoTransform}
                     </label>
 
                     <div class="columns">
                         <div class="column is-one-third">
-                            <label class="menu-label">Domyślny rodzaj</label>
-                            <Select bind:value={configSongType} items={songTypes} on:change={onSongTypeChange}/>
+                            <label class="menu-label">{$_.profile.settings.songBrowser.defaultTypeHeader}</label>
+                            <Select bind:value={values.songTypes} items={strings.songTypes} on:change={onSongTypeChange}/>
                         </div>
 
                         <div class="column is-one-third">
-                            <label class="menu-label">Domyślny widok</label>
-                            <Select bind:value={configViewType} items={viewTypes}/>
+                            <label class="menu-label">{$_.profile.settings.songBrowser.defaultViewHeader}</label>
+                            <Select bind:value={values.viewTypes} items={strings.viewTypes}/>
                         </div>
 
                         <div class="column is-one-third">
-                            <label class="menu-label">Domyślne kolumny</label>
+                            <label class="menu-label">{$_.profile.settings.songBrowser.defaultColumnsHeader}</label>
                             <Select multiple bind:value={configShowColumns} items={columns}/>
                         </div>
                     </div>
 
                     <div class="columns">
                         <div class="column is-one-third">
-                            <label class="menu-label">Domyślne sortowanie</label>
+                            <label class="menu-label">{$_.profile.settings.songBrowser.defaultSortHeader}</label>
                             <Select bind:value={configSortType} items={sortTypes}/>
                         </div>
 
                         <div class="column is-one-third">
-                            <label class="menu-label">Domyślne ikony</label>
-                            <Select multiple bind:value={configShowIcons} items={shownIcons} />
+                            <label class="menu-label">{$_.profile.settings.songBrowser.defaultIconsHeader}</label>
+                            <Select multiple bind:value={values.shownIcons} items={strings.icons} />
                         </div>
 
                         <div class="column is-one-third">
-                            <label class="menu-label">Liczba pozycji na stronę</label>
+                            <label class="menu-label">{$_.profile.settings.songBrowser.defaultItemsPerPageHeader}</label>
                             <Select bind:value={configItemsPerPage} items={itemsPerPage} />
                         </div>
                     </div>
                 </section>
 
                 <section>
-                    <div class="menu-label">Profil</div>
+                    <div class="menu-label">{$_.profile.settings.profile.header}</div>
                     <div>
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
-                            Powiększaj avatar
+                            {$_.profile.settings.profile.enlargeAvatar}
                         </label>
 
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.profile.showChart}>
-                            Pokazuj wykres
+                            {$_.profile.settings.profile.showChart}
                         </label>
 
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
-                            Pokazuj kalkulator +1PP
+                            {$_.profile.settings.profile.showOnePpCalc}
                         </label>
                     </div>
                 </section>
 
                 <section>
-                    <div class="menu-label">Ranking nutki</div>
+                    <div class="menu-label">{$_.profile.settings.songLeaderboard.header}</div>
                     <div>
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.songLeaderboard.showDiff}>
-                            Pokazuj różnice
+                            {$_.profile.settings.songLeaderboard.showDiff}
                         </label>
 
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.songLeaderboard.showWhatIfPp}>
-                            Pokazuj "jeśli tak zagrasz"
+                            {$_.profile.settings.songLeaderboard.showWhatIfPp}
                         </label>
 
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.songLeaderboard.showBgCover}>
-                            Pokazuj okładkę w tle
+                            {$_.profile.settings.songLeaderboard.showBgCover}
                         </label>
                     </div>
                 </section>
 
                 <section>
-                    <div class="menu-label">Domyślna lista nut</div>
+                    <div class="menu-label">{$_.profile.settings.defaultSongList.header}</div>
                     <div>
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.ss.song.enhance}>
-                            Dodawaj wynik/dokładność
+                            {$_.profile.settings.defaultSongList.enhance}
                         </label>
 
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.ss.song.showDiff}>
-                            Pokazuj różnice
+                            {$_.profile.settings.defaultSongList.showDiff}
                         </label>
 
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
-                            Pokazuj "jeśli tak zagrasz"
+                            {$_.profile.settings.songLeaderboard.showWhatIfPp}
                         </label>
                     </div>
                 </section>
 
                 <section>
-                    <div class="menu-label">Inne</div>
+                    <div class="menu-label">{$_.profile.settings.others.header}</div>
 
                     <div class="columns">
                         <div class="column is-one-third">
                             <label class="checkbox">
                                 <input type="checkbox" bind:checked={config.others.bgDownload}>
-                                Pobieraj w tle
+                                {$_.profile.settings.others.bgDownload}
                             </label>
                         </div>
 
                         <div class="column is-one-third">
-                            <Select bind:value={configViewUpdate} items={viewUpdateTypes} top={true} />
+                            <Select bind:value={values.viewTypeUpdates} items={strings.viewTypeUpdates} top={true} />
                         </div>
                     </div>
                 </section>
@@ -582,13 +631,13 @@
 
             <footer class="columns">
                 <div class="column">
-                    <Button iconFa="fas fa-save" label="Zapisz" type="primary" on:click={saveConfig}/>
-                    <Button label="Anuluj" on:click={onCancel}/>
+                    <Button iconFa="fas fa-save" label={$_.profile.settings.save} type="primary" on:click={saveConfig}/>
+                    <Button label={$_.profile.settings.cancel} on:click={onCancel}/>
                 </div>
 
                 <div class="column">
-                    <Button iconFa="fas fa-download" label="Eksport" on:click={exportData}/>
-                    <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={importBtn}
+                    <Button iconFa="fas fa-download" label={$_.profile.settings.export} on:click={exportData}/>
+                    <File iconFa="fas fa-upload" label={$_.profile.settings.import} accept="application/json" bind:this={importBtn}
                           on:change={importData}/>
                 </div>
             </footer>

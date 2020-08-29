@@ -30,6 +30,7 @@ import {getPlayerWithUpdatedScores, updateActivePlayers} from "./network/scoresa
 import {getRankedSongs} from "./scoresaber/rankeds";
 import {formatDate, formatNumber, round, roundToPrecision} from "./utils/format";
 import {dateFromString} from "./utils/date";
+import {setLangFromConfig} from "./Svelte/stores/i18n";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -590,6 +591,7 @@ async function init() {
     eventBus.on('data-imported', () => window.location.reload());
 
     await Promise.allSettled([
+        setLangFromConfig(),
         setupStyles(),
         setupPlayerAvatar(),
         setupTwitch()
