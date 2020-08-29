@@ -2,7 +2,7 @@
     import {getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerScores} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
-    import {formatDate, formatNumber, round} from "../../../utils/format";
+    import {formatDateRelative, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import Button from "../Common/Button.svelte";
 
@@ -176,7 +176,7 @@
 
                                     const song = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
                                     if (song) {
-                                        ret.push(formatDate(song.timeset));
+                                        ret.push(formatDateRelative(song.timeset));
                                         ret.push(song.name);
                                         ret.push(`${song.songAuthor} / ${song.levelAuthor}`);
                                     }

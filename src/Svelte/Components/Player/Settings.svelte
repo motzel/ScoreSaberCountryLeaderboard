@@ -21,7 +21,7 @@
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
-    import {_, trans, getSupportedLangs, setCurrentLang} from "../../stores/i18n";
+    import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
 
     export let profileId;
 
@@ -44,6 +44,7 @@
     let config;
 
     let availableLangs = getSupportedLangs();
+    let availableLocales = getSupportedLocales();
 
     let strings = {
         songTypes: [
@@ -220,11 +221,13 @@
         viewTypeUpdates: strings.viewTypeUpdates[1],
         shownIcons: strings.icons.map(i => i),
         lang: availableLangs[0],
+        locale: availableLocales[1],
         theme: strings.themes[0],
     }
 
     let origTheme = values.theme;
     let origLang = values.lang;
+    let origLocale = values.locale;
 
     const filterSortTypes = () => strings.sortTypes.filter(st => !st.onlyTypes || st.onlyTypes.includes(values.songTypes.id))
     let sortTypes = filterSortTypes();
@@ -302,6 +305,12 @@
         if (defaultLang) {
             values.lang = defaultLang;
             origLang = defaultLang;
+        }
+
+        const defaultLocale = availableLocales.find(l => l.id === config.others.locale)
+        if (defaultLocale) {
+            values.locale = defaultLocale;
+            origLocale = defaultLocale;
         }
 
         if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
@@ -415,8 +424,10 @@
     function onCancel() {
         values.theme = origTheme;
         values.lang = origLang
+        values.locale = origLocale;
 
         setCurrentLang(values.lang.id);
+        setCurrentLocale(values.locale.id);
         setTheme(values.theme.id);
 
         showSettingsModal = false
@@ -432,6 +443,7 @@
         config.others.theme = values.theme.id;
         config.others.viewsUpdate = values.viewTypeUpdates.id;
         config.others.language = values.lang.id;
+        config.others.locale = values.locale.id;
 
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);
@@ -462,6 +474,10 @@
 
     function onLangChange() {
         setCurrentLang(values.lang.id);
+    }
+
+    function onLocaleChange() {
+        setCurrentLocale(values.locale.id);
     }
 
     $: {
@@ -504,6 +520,12 @@
                         <div class="menu-label">{$_.profile.settings.language}</div>
 
                         <Select items={availableLangs} bind:value={values.lang} on:change={onLangChange} />
+                    </div>
+
+                    <div class="column is-one-third">
+                        <div class="menu-label">{$_.profile.settings.locale}</div>
+
+                        <Select items={availableLocales} bind:value={values.locale} on:change={onLocaleChange} />
                     </div>
 
                     <div class="column is-one-third">

@@ -3,6 +3,7 @@ export default {
         settings: {
             header: 'Settings',
             language: 'Language',
+            locale: 'Localization',
             theme: 'Theme',
             songBrowser: {
                 header: 'Song browser',

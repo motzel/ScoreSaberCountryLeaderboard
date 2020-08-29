@@ -1,6 +1,5 @@
-import config from '../temp';
 import {dateFromString} from "./date";
-import {getCurrentLang} from '../Svelte/stores/i18n';
+import {getCurrentLang, getCurrentLocale} from '../Svelte/stores/i18n';
 
 export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
     return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
@@ -9,7 +8,7 @@ export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false)
 export function formatNumber(num, digits = 2, addSign = false) {
     return (
         (addSign && num > 0 ? '+' : '') +
-        num.toLocaleString(config.COUNTRY, {
+        num.toLocaleString(getCurrentLocale(), {
             minimumFractionDigits: digits,
             maximumFractionDigits: digits
         })
@@ -17,6 +16,16 @@ export function formatNumber(num, digits = 2, addSign = false) {
 }
 
 export function formatDate(val) {
+    const rtf = new Intl.DateTimeFormat(getCurrentLocale(), {
+        localeMatcher: 'best fit',
+        dateStyle: 'short',
+        timeStyle: 'medium',
+    });
+
+    return rtf.format(val);
+}
+
+export function formatDateRelative(val) {
     const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
         localeMatcher: 'best fit',
         numeric: 'auto',

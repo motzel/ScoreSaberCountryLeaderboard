@@ -28,7 +28,7 @@ import logger from "./utils/logger";
 import {getPlayerScores, removePlayerFromGroup} from "./scoresaber/players";
 import {getPlayerWithUpdatedScores, updateActivePlayers} from "./network/scoresaber/players";
 import {getRankedSongs} from "./scoresaber/rankeds";
-import {formatDate, formatNumber, round, roundToPrecision} from "./utils/format";
+import {formatDateRelative, formatNumber, round, roundToPrecision} from "./utils/format";
 import {dateFromString} from "./utils/date";
 import {setLangFromConfig} from "./Svelte/stores/i18n";
 

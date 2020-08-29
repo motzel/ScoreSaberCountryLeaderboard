@@ -3,6 +3,7 @@ export default {
         settings: {
             header: 'Ustawienia',
             language: 'Język',
+            locale: 'Lokalizacja',
             theme: 'Motyw',
             songBrowser: {
                 header: 'Przeglądarka nut',
