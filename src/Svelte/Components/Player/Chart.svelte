@@ -248,8 +248,6 @@
 
     $: {
         setupChart(type, canvas, chartData, history)
-        // setupRankChart(canvas, history && history.length ? history.split(',') : null);
-        // setupAccChart(canvas, chartData);
     }
 </script>
 
@@ -258,12 +256,14 @@
         <canvas class="chartjs-render-monitor" id="rankChart"></canvas>
     </main>
 
-    <aside>
-        <Button iconFa="fa fa-chart-line" type={type === 'rank' ? 'primary' : 'default'} label="Ranking"
-                on:click={() => type = 'rank'} disabled={type === 'rank'} />
-        <Button iconFa="fa fa-crosshairs" type={type === 'acc' ? 'primary' : 'default'} label="Celność"
-                on:click={() => type = 'acc'} disabled={type === 'acc'} />
-    </aside>
+    {#if chartData && chartData.length}
+        <aside>
+            <Button iconFa="fa fa-chart-line" type={type === 'rank' ? 'primary' : 'default'} label="Ranking"
+                    on:click={() => type = 'rank'} disabled={type === 'rank'} />
+            <Button iconFa="fa fa-crosshairs" type={type === 'acc' ? 'primary' : 'default'} label="Celność"
+                    on:click={() => type = 'acc'} disabled={type === 'acc'} />
+        </aside>
+    {/if}
 </section>
 
 <style>

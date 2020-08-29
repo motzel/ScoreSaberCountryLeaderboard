@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.4.1
+- [!] some minor bug fixes
+
 0.9.4
 - [+] Add the accuracy chart, thx Modren
 
