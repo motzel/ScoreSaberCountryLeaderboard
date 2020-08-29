@@ -83,7 +83,7 @@ export async function getLeaderboard(leaderboardId) {
         .map(player => player?.scores?.[leaderboardId] ? {playerId: player.id, songHash: player?.scores[leaderboardId].id} : null)
         .filter(s => s)
     ;
-    if (!scores.length) return scores;
+    if (!scores.length) return [];
 
     const songInfo = scores[0].songHash ? await getSongByHash(scores[0].songHash) : null;
     const songCharacteristics = songInfo?.metadata?.characteristics;

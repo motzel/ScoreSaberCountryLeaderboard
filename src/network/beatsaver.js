@@ -60,6 +60,8 @@ async function cacheSongInfo(songInfo) {
     delete songInfo.description;
 
     if (!data.beatSaver) data.beatSaver = {hashes: {}, keys: {}};
+    if (!data.beatSaver.hashes) data.beatSaver.hashes = {};
+    if (!data.beatSaver.keys) data.beatSaver.keys = {};
 
     if (songInfo.hash) {
         data.beatSaver.hashes[songInfo.hash.toLowerCase()] = songInfo;
