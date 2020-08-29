@@ -1,5 +1,6 @@
 <script>
     import {createEventDispatcher} from 'svelte';
+    import {_} from '../../stores/i18n';
 
     const dispatch = createEventDispatcher();
 
@@ -21,7 +22,7 @@
 <div>
     <input type="number" bind:value={value.from} {min} {max} {step} {disabled}
            on:input={e => {value.from = value.from ? (value.from > value.to ? value.to : value.from) : min; onChange();}} on:keydown={onKeyDown}/>
-    <span>do</span>
+    <span>{$_.common.to}</span>
     <input type="number" bind:value={value.to} {min} {max} {step} {disabled}
            on:input={e => {value.to = value.to ? (value.to < value.from ? value.from : value.to) : max; onChange();}} on:keydown={onKeyDown}/>
 </div>

@@ -1,5 +1,6 @@
 <script>
     import {createEventDispatcher} from 'svelte';
+    import {_} from '../../stores/i18n';
 
     const dispatch = createEventDispatcher();
 
@@ -7,7 +8,7 @@
     export let multiple = false;
     export let value = multiple ? [] : null
     export let items = [];
-    export let optionsLabel = 'Opcje';
+    export let optionsLabel = $_.common.options;
     export let optionMultiple = false;
     export let option = optionMultiple ? [] : null;
     export let optionItems  = [];

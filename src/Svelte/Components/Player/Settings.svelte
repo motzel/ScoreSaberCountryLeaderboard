@@ -277,6 +277,9 @@
         const defaultSongType = strings.songTypes.find(s => s.id === config.songBrowser.defaultType);
         if (defaultSongType) values.songTypes = defaultSongType;
 
+        const defaultView = strings.viewTypes.find(i => i.id === config.songBrowser.defaultView);
+        if (defaultView) values.viewTypes = defaultView;
+
         const defaultShowColumns = columns.filter(c => Array.isArray(config.songBrowser.showColumns) && config.songBrowser.showColumns.includes(c.key))
         if (defaultShowColumns) configShowColumns = defaultShowColumns;
 
@@ -631,8 +634,8 @@
 
             <footer class="columns">
                 <div class="column">
-                    <Button iconFa="fas fa-save" label={$_.profile.settings.save} type="primary" on:click={saveConfig}/>
-                    <Button label={$_.profile.settings.cancel} on:click={onCancel}/>
+                    <Button iconFa="fas fa-save" label={$_.common.save} type="primary" on:click={saveConfig}/>
+                    <Button label={$_.common.cancel} on:click={onCancel}/>
                 </div>
 
                 <div class="column">

@@ -46,6 +46,7 @@
     import Select from "../Common/Select.svelte";
     import Leaderboard from "./Leaderboard.svelte";
     import Checkbox from "../Common/Checkbox.svelte";
+    import {_, trans} from "../../stores/i18n";
 
     export let playerId;
     export let snipedIds = [];
@@ -74,35 +75,235 @@
     let sniperModeIds = [];
     let minStarsForSniper = 0;
     let maxStars = 100;
-    let songTypes = [
-        {id: 'all', label: 'Wszystkie'},
-        {id: 'rankeds', label: 'Tylko rankingowe'},
-        {id: 'unrankeds', label: 'Tylko nierankingowe'},
-        {id: 'rankeds_unplayed', label: 'Tylko niezagrane'},
-        {id: 'sniper_mode', label: 'Tryb snajpera'},
-    ]
-    let songTypeOptions = [
-        {id: 'all', label: 'Wszystkie'},
-        {id: 'not_best', label: 'Gdy NIEnajlepszy'},
-        {id: 'best', label: 'Gdy NAJlepszy'},
-    ];
+
+    let strings = {
+        songTypes: [
+            {id: 'all', _key: 'songBrowser.types.all'},
+            {id: 'rankeds', _key: 'songBrowser.types.ranked_only'},
+            {id: 'unrankeds', _key: 'songBrowser.types.unranked_only'},
+            {id: 'rankeds_unplayed', _key: 'songBrowser.types.not_played_only'},
+            {id: 'sniper_mode', _key: 'songBrowser.types.sniper_mode'},
+        ],
+
+        songTypeOptions: [
+            {id: 'all', _key: 'songBrowser.typesOptions.all'},
+            {id: 'not_best', _key: 'songBrowser.typesOptions.not_best'},
+            {id: 'best', _key: 'songBrowser.typesOptions.best'},
+        ],
+
+        viewTypes: [
+            {id: 'compact', _key: 'songBrowser.viewTypes.compact'},
+            {id: 'tabular', _key: 'songBrowser.viewTypes.tabular'}
+        ],
+
+        sortTypes: [
+            {_key: 'songBrowser.fields.timeset', field: 'timeset'},
+            {_key: 'songBrowser.fields.stars', field: 'stars'},
+            {_key: 'songBrowser.fields.pp', field: 'pp'},
+            {_key: 'songBrowser.fields.acc', field: 'acc'},
+            {_key: 'songBrowser.fields.diffPp', field: 'diffPp'},
+            {_key: 'songBrowser.fields.diffPp', field: 'bestDiffPp'},
+        ],
+
+        sortOrders: [
+            {_key: 'songBrowser.sort.descending', order: 'desc'},
+            {_key: 'songBrowser.sort.ascending', order: 'asc'}
+        ],
+
+        columns: [
+            {
+                _key: 'songBrowser.fields.stars',
+                _keyName: 'songBrowser.fields.starsShort',
+                name: '*',
+                key: 'stars',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "*"}
+            },
+            {
+                _key: 'songBrowser.fields.maxPp',
+                _keyName: 'songBrowser.fields.maxPpShort',
+                name: 'Max PP',
+                key: 'maxPp',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "pp"}
+            },
+            {
+                _key: 'songBrowser.fields.bpm',
+                _keyName: 'songBrowser.fields.bpmShort',
+                name: 'BPM',
+                key: 'bpm',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "", digits: 0}
+            },
+            {
+                _key: 'songBrowser.fields.njs',
+                _keyName: 'songBrowser.fields.njsShort',
+                name: 'NJS',
+                key: 'njs',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "", digits: 0}
+            },
+            {
+                _key: 'songBrowser.fields.nps',
+                _keyName: 'songBrowser.fields.npsShort',
+                name: 'NPS',
+                key: 'nps',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-", suffix: ""}
+            },
+            {
+                _key: 'songBrowser.fields.duration',
+                _keyName: 'songBrowser.fields.durationShort',
+                name: 'Czas',
+                key: 'length',
+                selected: false,
+                type: 'song',
+                displayed: true,
+                valueProps: {zero: "-"}
+            },
+            {
+                _key: 'songBrowser.fields.timeset',
+                _keyName: 'songBrowser.fields.timesetShort',
+                compactLabel: null,
+                name: 'Data',
+                key: 'timeset',
+                selected: true,
+                type: 'series',
+                displayed: true,
+                valueProps: {prevValue: null}
+            },
+            {
+                _key: 'songBrowser.fields.diffPp',
+                _keyName: 'songBrowser.fields.diffPpShort',
+                compactLabel: null,
+                name: '+PP',
+                key: 'diffPp',
+                selected: false,
+                type: 'series',
+                displayed: false,
+                valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
+            },
+            {
+                _key: 'songBrowser.fields.pp',
+                _keyName: 'songBrowser.fields.ppShort',
+                name: 'PP',
+                key: 'pp',
+                selected: true,
+                type: 'series',
+                valueProps: {zero: "-", suffix: "pp"},
+                displayed: true
+            },
+            {
+                _key: 'songBrowser.fields.weightedPp',
+                _keyName: 'songBrowser.fields.weightedPpShort',
+                _keyCompactLabel: 'songBrowser.fields.weighted',
+                compactLabel: 'Waż.',
+                name: 'wPP',
+                key: 'weightedPp',
+                selected: false,
+                type: 'series',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "pp"}
+            },
+            {
+                _key: 'songBrowser.fields.acc',
+                _keyName: 'songBrowser.fields.accShort',
+                compactLabel: null,
+                name: 'Acc',
+                key: 'acc',
+                selected: true,
+                type: 'series',
+                displayed: true,
+                valueProps: {zero: "-", suffix: "%"}
+            },
+            {
+                _key: 'songBrowser.fields.score',
+                _keyName: 'songBrowser.fields.scoreShort',
+                compactLabel: null,
+                name: 'Wynik',
+                key: 'score',
+                selected: true,
+                type: 'series',
+                displayed: true,
+                valueProps: {digits: 0, zero: "-"}
+            },
+            {
+                _key: 'songBrowser.fields.diff',
+                _keyName: 'songBrowser.fields.diffShort',
+                name: 'Różnice',
+                key: 'diff',
+                selected: true,
+                type: 'other',
+                displayed: true
+            },
+            {
+                _key: 'songBrowser.fields.icons',
+                name: '',
+                key: 'icons',
+                type: 'additional',
+                displayed: true,
+                selected: true
+            },
+        ],
+
+        icons: [
+            {_key: 'songBrowser.icons.bsr', id: 'bsr'},
+            {_key: 'songBrowser.icons.beatsaver', id: 'bs'},
+            {_key: 'songBrowser.icons.oneclick', id: 'oneclick'},
+            {_key: 'songBrowser.icons.preview', id: 'preview'},
+            {_key: 'songBrowser.icons.twitch', id: 'twitch'}
+        ],
+    }
+
+    const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
+
     let sortTypes = [
-        {label: 'Data zagrania', type: 'series', subtype: 0, field: 'timeset', enabled: true},
-    ];
-    let sortOrders = [
-        {label: 'Malejąco', order: 'desc'},
-        {label: 'Rosnąco', order: 'asc'}
+        {...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'), type: 'series', subtype: 0, field: 'timeset', enabled: true},
     ];
     let allFilters = {
-        songType: songTypes[0],
-        songTypeOption: songTypeOptions[0],
+        songType: strings.songTypes[0],
+        songTypeOption: strings.songTypeOptions[0],
         name: "",
         starsFilter: {from: 0, to: maxStars},
         minPpDiff: 1,
         sortBy: sortTypes[0],
-        sortOrder: sortOrders[0]
+        sortOrder: strings.sortOrders[0]
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
+
+    function translateAllStrings() {
+        Object.keys(strings).forEach(key => {
+            strings[key].forEach(item => {
+                switch (key) {
+                    case 'columns':
+                        if (item._keyName) item.name = trans(item._keyName);
+                        if (item._keyCompactLabel) item.compactLabel = trans(item._keyCompactLabel);
+                        break;
+                }
+
+                if (item._key) item.label = trans(item._key);
+            })
+        });
+
+        sortTypes.forEach(item => {
+            if (item._key) item.label = trans(item._key);
+        })
+        sortTypes = [...sortTypes];
+
+        strings = {...strings};
+
+        forceFiltersChanged();
+    }
 
     const generateRefreshTag = async (force = false) => {
         const data = await getCacheAndConvertIfNeeded(force);
@@ -121,7 +322,7 @@
 
         if (allFilters.songType.id === 'sniper_mode')
             types.push({
-                label: '+PP global',
+                ...getObjectFromArrayByKey(strings.sortTypes, 'bestDiffPp', 'field'),
                 type: 'song',
                 subtype: null,
                 field: 'bestDiffPp',
@@ -129,7 +330,7 @@
             });
 
         if (allFilters.songType.id !== 'unrankeds')
-            types.push({label: 'Gwiazdki', type: 'song', subtype: null, field: 'stars', enabled: true});
+            types.push({...getObjectFromArrayByKey(strings.sortTypes, 'stars', 'field'), type: 'song', subtype: null, field: 'stars', enabled: true});
 
         const userIds = [playerId].concat(snipedIds);
         if (data && data.users) {
@@ -139,28 +340,29 @@
                     const newFields = [];
                     [
                         {
+                            ...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'),
                             field: "timeset",
-                            label: "Data zagrania",
                             enabled: pId !== playerId || allFilters.songType.id !== 'rankeds_unplayed'
                         },
                         {
+                            ...getObjectFromArrayByKey(strings.sortTypes, 'diffPp', 'field'),
                             field: "diffPp",
-                            label: "+PP global",
                             enabled: 'sniper_mode' === allFilters.songType.id && idx !== 0
                         },
                         {
+                            ...getObjectFromArrayByKey(strings.sortTypes, 'pp', 'field'),
                             field: "pp",
-                            label: "PP",
                             enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                         {
+                            ...getObjectFromArrayByKey(strings.sortTypes, 'acc', 'field'),
                             field: "acc",
-                            label: "Celność",
                             enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                     ].forEach(field => {
                         if (field.enabled)
                             newFields.push({
+                                _key: field._key,
                                 label: field.label,
                                 type: 'series',
                                 subtype: idx,
@@ -258,144 +460,9 @@
     let itemsPerPage = 10;
     let pagerTotal = 0;
 
-    let allColumns = [
-        {
-            label: 'Gwiazdki',
-            name: '*',
-            key: 'stars',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "*"}
-        },
-        {
-            label: 'Max PP',
-            name: 'Max PP',
-            key: 'maxPp',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "pp"}
-        },
-        {
-            label: 'BPM',
-            name: 'BPM',
-            key: 'bpm',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "", digits: 0}
-        },
-        {
-            label: 'NJS',
-            name: 'NJS',
-            key: 'njs',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "", digits: 0}
-        },
-        {
-            label: 'NPS',
-            name: 'NPS',
-            key: 'nps',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-", suffix: ""}
-        },
-        {
-            label: 'Czas',
-            name: 'Czas',
-            key: 'length',
-            selected: false,
-            type: 'song',
-            displayed: true,
-            valueProps: {zero: "-"}
-        },
-        {
-            label: 'Data zagrania',
-            compactLabel: null,
-            name: 'Data',
-            key: 'timeset',
-            selected: true,
-            type: 'series',
-            displayed: true,
-            valueProps: {prevValue: null}
-        },
-        {
-            label: '+PP global',
-            compactLabel: null,
-            name: '+PP',
-            key: 'diffPp',
-            selected: false,
-            type: 'series',
-            displayed: false,
-            valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
-        },
-        {
-            label: 'PP',
-            name: 'PP',
-            key: 'pp',
-            selected: true,
-            type: 'series',
-            valueProps: {zero: "-", suffix: "pp"},
-            displayed: true
-        },
-        {
-            label: 'Ważone PP',
-            compactLabel: 'Ważone',
-            name: 'wPP',
-            key: 'weightedPp',
-            selected: false,
-            type: 'series',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "pp"}
-        },
-        {
-            label: 'Celność',
-            compactLabel: null,
-            name: 'Acc',
-            key: 'acc',
-            selected: true,
-            type: 'series',
-            displayed: true,
-            valueProps: {zero: "-", suffix: "%"}
-        },
-        {
-            label: 'Wynik',
-            compactLabel: null,
-            name: 'Wynik',
-            key: 'score',
-            selected: true,
-            type: 'series',
-            displayed: true,
-            valueProps: {digits: 0, zero: "-"}
-        },
-        {
-            label: 'Różnice',
-            name: 'Różnice',
-            key: 'diff',
-            selected: true,
-            type: 'other',
-            displayed: true
-        },
-        {
-            label: 'Ikony akcji',
-            name: '',
-            key: 'icons',
-            type: 'additional',
-            displayed: true,
-            selected: true
-        },
-    ]
-    selectedColumns = allColumns.filter(c => c.selected && c.displayed)
+    selectedColumns = strings.columns.filter(c => c.selected && c.displayed)
 
-    const viewTypes = [
-        {id: 'compact', label: 'Kompaktowy'},
-        {id: 'tabular', label: 'Tabelaryczny'}
-    ]
-    let viewType = viewTypes[0];
+    let viewType = strings.viewTypes[0];
 
     let users = [];
 
@@ -441,17 +508,17 @@
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
 
         if (config.defaultView) {
-            const defaultView = viewTypes.find(v => v.id === config.defaultView);
+            const defaultView = strings.viewTypes.find(v => v.id === config.defaultView);
             if (defaultView) viewType = defaultView;
         }
 
         if (config.defaultType) {
-            const defaultType = songTypes.find(t => t.id === config.defaultType);
+            const defaultType = strings.songTypes.find(t => t.id === config.defaultType);
             if (defaultType) allFilters.songType = defaultType;
         }
 
         if (config.showColumns) {
-            selectedColumns = allColumns.filter(c => config.showColumns.includes(c.key) && c.displayed)
+            selectedColumns = strings.columns.filter(c => config.showColumns.includes(c.key) && c.displayed)
         }
 
         if (config.itemsPerPage) {
@@ -492,8 +559,6 @@
             configChangedUnsubscriber();
         }
     });
-
-    const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
 
     const getCachedTotalPlayerPp = memoize(getTotalUserPp);
     const getScoreWithNewPp = async (playerId, newSongPp) => {
@@ -689,21 +754,21 @@
     async function onSongTypeChange() {
         switch (allFilters.songType.id) {
             case 'unrankeds':
-                getObjectFromArrayByKey(allColumns, 'pp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = false;
-                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'pp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
+                selectedColumns = strings.columns.filter(c => c.displayed && selectedColumns.includes(c))
 
                 await generateSortTypes();
                 break;
 
             case 'all':
-                getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && selectedColumns.includes(c))
+                selectedColumns = strings.columns.filter(c => c.displayed && selectedColumns.includes(c))
 
                 allFilters.starsFilter.from = 0;
 
@@ -711,11 +776,11 @@
                 break;
 
             case 'sniper_mode':
-                getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = true;
 
-                selectedColumns = allColumns.filter(c => c.displayed && (selectedColumns.includes(c) || ['diffPp', 'pp'].includes(c.key)))
+                selectedColumns = strings.columns.filter(c => c.displayed && (selectedColumns.includes(c) || ['diffPp', 'pp'].includes(c.key)))
 
                 allFilters.starsFilter.from = allFilters.starsFilter.from > minStarsForSniper ? allFilters.starsFilter.from : round(minStarsForSniper, 1);
 
@@ -726,11 +791,11 @@
 
             case 'rankeds':
             default:
-                getObjectFromArrayByKey(allColumns, 'pp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'weightedPp').displayed = true;
-                getObjectFromArrayByKey(allColumns, 'diffPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = false;
 
-                selectedColumns = allColumns.filter(c => c.displayed && (selectedColumns.includes(c) || ['pp'].includes(c.key)))
+                selectedColumns = strings.columns.filter(c => c.displayed && (selectedColumns.includes(c) || ['pp'].includes(c.key)))
 
                 allFilters.starsFilter.from = 0;
 
@@ -741,7 +806,7 @@
         currentPage = 0;
 
         // force refresh
-        allColumns = allColumns.splice(0);
+        strings.columns = strings.columns.splice(0);
 
         forceFiltersChanged()
     }
@@ -1160,7 +1225,7 @@
         storeCurrentFirstIdentifier();
     }
 
-    $: shownColumns = allColumns.filter(c => c.displayed)
+    $: shownColumns = strings.columns.filter(c => c.displayed)
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
@@ -1171,67 +1236,70 @@
     $: {
         restorePage(refreshTag)
     }
+    $: {
+        translateAllStrings($_);
+    }
 </script>
 
 {#if initialized}
     <div class="filters">
         <div>
-            <header>Rodzaj</header>
-            <Select bind:value={allFilters.songType} items={songTypes} on:change={onSongTypeChange}
-                    bind:option={allFilters.songTypeOption} optionItems={snipedIds && snipedIds.length && 'sniper_mode' !== allFilters.songType.id ? songTypeOptions : []}
+            <header>{$_.songBrowser.typeHeader}</header>
+            <Select bind:value={allFilters.songType} items={strings.songTypes} on:change={onSongTypeChange}
+                    bind:option={allFilters.songTypeOption} optionItems={snipedIds && snipedIds.length && 'sniper_mode' !== allFilters.songType.id ? strings.songTypeOptions : []}
             />
         </div>
 
         <div class="filter-name">
-            <header>Nutka</header>
-            <input type="text" placeholder="Zacznij wpisywać..." on:input={onFilterNameChange}/>
+            <header>{$_.songBrowser.songHeader}</header>
+            <input type="text" placeholder={$_.songBrowser.songPlaceholder} on:input={onFilterNameChange}/>
         </div>
 
         <div class="filter-diff-pp"
              style="display: {allFilters.songType.id === 'sniper_mode' ? 'flex' : 'none'}">
-            <header>+PP global</header>
+            <header>{$_.songBrowser.fields.diffPp}</header>
             <Range value={allFilters.minPpDiff} min={1} max={20} step={0.1} suffix="pp" inline={true}
                    on:change={onFilterMinPlusPpChanged}/>
         </div>
 
         <div style="display: { allFilters.songType.id !== 'unrankeds' ? 'flex' : 'none'}">
-            <header>Gwiazdki</header>
-            <MultiRange label="Gwiazdki" value={allFilters.starsFilter}
+            <header>{$_.songBrowser.fields.stars}</header>
+            <MultiRange value={allFilters.starsFilter}
                         min={allFilters.songType.id === 'sniper_mode' ? round(minStarsForSniper,1) : 0}
                         max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true}
                         on:change={onFilterStarsChange}/>
         </div>
 
         <div>
-            <header>Widok</header>
-            <Select bind:value={viewType} items={viewTypes}/>
+            <header>{$_.songBrowser.viewHeader}</header>
+            <Select bind:value={viewType} items={strings.viewTypes}/>
         </div>
 
         <div class="columns">
             <div>
-                <header>Pokazuj</header>
+                <header>{$_.songBrowser.showHeader}</header>
 
-                <Select multiple bind:value={selectedColumns} bind:items={shownColumns} noSelected="Nic nie wybrano"/>
+                <Select multiple bind:value={selectedColumns} bind:items={shownColumns} noSelected={$_.common.nothingSelected}/>
             </div>
         </div>
 
         <div>
-            <header>Sortowanie</header>
-            <Select bind:value={allFilters.sortBy} items={sortTypes} bind:option={allFilters.sortOrder} optionItems={sortOrders}/>
+            <header>{$_.songBrowser.sortingHeader}</header>
+            <Select bind:value={allFilters.sortBy} items={sortTypes} bind:option={allFilters.sortOrder} optionItems={strings.sortOrders}/>
         </div>
 
         <div class="player-compare-btns">
             <header></header>
-            <Button iconFa="fas fa-balance-scale" label="Porównaj" title="Dodaj gracza do porównania" on:click={onAddPlayerToCompare} disabled={!comparePossible} />
+            <Button iconFa="fas fa-balance-scale" label={$_.songBrowser.compare.label} title={$_.songBrowser.compare.add} on:click={onAddPlayerToCompare} disabled={!comparePossible} />
             {#if comparisionModified}
-                <Button iconFa="fas fa-save" type="primary" label="Zapisz" title="Zapisz jako domyślne" on:click={onSaveComparision} />
+                <Button iconFa="fas fa-save" type="primary" label={$_.common.save} title={$_.songBrowser.compare.saveAsDefault} on:click={onSaveComparision} />
             {/if}
         </div>
     </div>
 
     {#await pagedPromised}
         <div class="info">
-            <h3>Transformacja wszechświata w toku...</h3>
+            <h3>{$_.songBrowser.transformingTheUniverse}</h3>
         </div>
     {:then calc}
         {#if songsPage.songs.length}
@@ -1240,7 +1308,7 @@
                     <thead>
                     <tr>
                         {#if showCheckboxes}<th class="check" rowspan={viewType.id === 'compact' ? 1 : 2}></th>{/if}
-                        <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">Nuta</th>
+                        <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">{$_.songBrowser.songHeader}</th>
 
                         {#each selectedSongCols as col,idx (col.key)}
                             <th class={"left middle " + col.key}
@@ -1252,7 +1320,7 @@
                                 <th class="left down player-sel">
                                     {#if sIdx > 0}
                                         <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
-                                        <i class="fas fa-times player-remove" title="Usuń z porównania" on:click={() => onPlayerRemove(sIdx)}></i>
+                                        <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onPlayerRemove(sIdx)}></i>
                                     {:else}
                                         {series.name}
                                     {/if}
@@ -1345,7 +1413,7 @@
                                                 {#if getScoreValueByKey(series, song, col.key)}
                                                     <div>
                                                         {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
-                                                            :{/if}
+                                                        {/if}
                                                         <strong class={'compact-' + col.key + '-val'}>
                                                             <Value value={getScoreValueByKey(series, song, col.key)}
                                                                    prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
@@ -1386,31 +1454,31 @@
                             <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
                                 {#if song.key && song.key.length}
                                     {#if shownIcons.includes('bsr')}
-                                        <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr"
+                                        <Button iconFa="fas fa-exclamation" title={$_.songBrowser.icons.bsrTooltip}
                                                 on:click={copyToClipboard('!bsr ' + song.key)}/>
                                     {/if}
                                     {#if shownIcons.includes('bs')}
                                         <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank">
-                                            <Button icon={beatSaverSvg} title="Przejdź na Beat Saver"/>
+                                            <Button icon={beatSaverSvg} title={$_.songBrowser.icons.beatSaverTooltip}/>
                                         </a>
                                     {/if}
 
                                     {#if shownIcons.includes('oneclick')}
                                         <a href="beatsaver://{song.key}">
-                                            <Button iconFa="far fa-hand-pointer" title="OneClick&trade; Install"/>
+                                            <Button iconFa="far fa-hand-pointer" title={$_.songBrowser.icons.oneclick}/>
                                         </a>
                                     {/if}
 
                                     {#if shownIcons.includes('preview')}
                                         <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank">
-                                            <Button iconFa="fa fa-play-circle" title="Podgląd mapy"/>
+                                            <Button iconFa="fa fa-play-circle" title={$_.songBrowser.icons.preview}/>
                                         </a>
                                     {/if}
                                 {/if}
 
                                 {#if song.video && song.video.url && shownIcons.includes('twitch')}
                                     <a class="video" href="{song.video.url}" target="_blank">
-                                        <Button iconFa="fab fa-twitch" type="twitch" title="Podgląd video"/>
+                                        <Button iconFa="fab fa-twitch" type="twitch" title={$_.songBrowser.icons.twitchTooltip}/>
                                     </a>
                                 {/if}
                             </td>
@@ -1473,8 +1541,8 @@
             </table>
         {:else}
             <div class="info">
-                <h3>Strasznie tu pusto</h3>
-                <p>Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?</p>
+                <h3>{$_.songBrowser.noData.title}</h3>
+                <p>{$_.songBrowser.noData.info}</p>
             </div>
         {/if}
     {/await}
@@ -1487,15 +1555,15 @@
     {#if !calculating}
         <div class="actions">
             <span class="button-group">
-                <Button iconFa={"fas fa-eye" + (showCheckboxes ? '-slash': '')} title={showCheckboxes ? "Ukryj checkboksy" : "Pokaż checkboksy"} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}/>
-                <Button iconFa="fas fa-check" title="Zaznacz wszystkie" on:click={checkAll}/>
-                <Button iconFa="far fa-file-alt" title="Zaznacz stronę" on:click={checkPage}/>
-                <Button iconFa="fas fa-broom" title="Wyczyść" disabled={!checkedSongs.length} on:click={checkNone}/>
-                <Button label={"Playlista"} iconFa="fas fa-music" title="Eksportuj playlistę" disabled={!checkedSongs.length} on:click={exportPlaylist}/>
+                <Button iconFa={"fas fa-eye" + (showCheckboxes ? '-slash': '')} title={showCheckboxes ? $_.songBrowser.playlist.hideChecks : $_.songBrowser.playlist.showChecks} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}/>
+                <Button iconFa="fas fa-check" title={$_.songBrowser.playlist.checkAll} on:click={checkAll}/>
+                <Button iconFa="far fa-file-alt" title={$_.songBrowser.playlist.checkPage} on:click={checkPage}/>
+                <Button iconFa="fas fa-broom" title={$_.songBrowser.playlist.clear} disabled={!checkedSongs.length} on:click={checkNone}/>
+                <Button label={$_.songBrowser.playlist.label} iconFa="fas fa-music" title={$_.songBrowser.playlist.export} disabled={!checkedSongs.length} on:click={exportPlaylist}/>
             </span>
 
             <span class="button-group">
-                <Button label={"CSV"} iconFa="fas fa-download" title="Eksportuj do CSV" on:click={exportCsv}/>
+                <Button label={$_.songBrowser.csv.label} iconFa="fas fa-download" title={$_.songBrowser.csv.export} on:click={exportCsv}/>
             </span>
         </div>
     {/if}
