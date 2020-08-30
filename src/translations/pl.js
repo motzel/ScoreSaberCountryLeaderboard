@@ -158,6 +158,33 @@ export default {
     whatif: {
         label: 'Jeśli tak zagrasz:',
     },
+    dashboard: {
+        rankingHeader: 'Ranking',
+        showOriginal: 'Pokaż oryginał',
+        lastScores: 'Ostatnie wyniki',
+        bestScores: 'Najlepsze wyniki',
+        ranking: {
+            header: {
+                player: 'Gracz',
+                song: 'Nuta',
+                timeset: 'Data',
+                acc: '%',
+                pp: 'PP',
+                change: 'Różnica',
+            },
+            changeOptions: {
+                day: 'Dzień',
+                week: 'Tydzień',
+                month: 'Miesiąc',
+            },
+        },
+        periods: {
+            last3Days: 'Ostatnie 3 dni',
+            lastWeek: 'Ostatni tydzień',
+            last2Weeks: 'Ostatnie 2 tygodnie',
+            lastMonth: 'Ostatni miesiąc',
+        },
+    },
     themes: {
         dark: 'Jedyny słuszny',
         light: 'Wypalający oczy',

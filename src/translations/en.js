@@ -156,6 +156,33 @@ export default {
     whatif: {
         label: 'If you play like this:',
     },
+    dashboard: {
+        rankingHeader: 'Ranking',
+        showOriginal: 'Show the original',
+        lastScores: 'Recent scores',
+        bestScores: 'Best scores',
+        ranking: {
+            header: {
+                player: 'Player',
+                song: 'Song',
+                timeset: 'Date',
+                acc: 'Acc',
+                pp: 'PP',
+                change: 'Change',
+            },
+            changeOptions: {
+                day: 'Daily change',
+                week: 'Weekly change',
+                month: 'Monthly change',
+            },
+        },
+        periods: {
+            last3Days: 'Last 3 days',
+            lastWeek: 'Last week',
+            last2Weeks: 'Last 2 weeks',
+            lastMonth: 'Last month',
+        },
+    },
     themes: {
         dark: 'One and the only',
         light: 'Eyes burning',
