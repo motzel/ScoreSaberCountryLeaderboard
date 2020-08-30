@@ -4,6 +4,7 @@
     import {getConfig} from "../../../plugin-config";
     import {copyToClipboard} from '../../../utils/clipboard';
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
+    import {_, trans} from "../../stores/i18n";
 
     import Button from "../Common/Button.svelte";
 
@@ -26,24 +27,24 @@
 <div>
     {#if songKey && songKey.length}
         {#if shownIcons.includes('bsr')}
-            <Button iconFa="fas fa-exclamation" title="Skopiuj !bsr"
+            <Button iconFa="fas fa-exclamation" title={$_.songBrowser.icons.bsrTooltip}
                     on:click={copyToClipboard('!bsr ' + songKey)}/>
         {/if}
         {#if shownIcons.includes('bs')}
             <a href="https://beatsaver.com/beatmap/{songKey}" target="_blank">
-                <Button icon={beatSaverSvg} title="Przejdź na Beat Saver"/>
+                <Button icon={beatSaverSvg} title={$_.songBrowser.icons.beatSaverTooltip}/>
             </a>
         {/if}
 
         {#if shownIcons.includes('oneclick')}
             <a href="beatsaver://{songKey}">
-                <Button iconFa="far fa-hand-pointer" title="OneClick&trade; Install"/>
+                <Button iconFa="far fa-hand-pointer" title={$_.songBrowser.icons.oneclick}/>
             </a>
         {/if}
 
         {#if shownIcons.includes('preview')}
             <a href="https://skystudioapps.com/bs-viewer/?id={songKey}" target="_blank">
-                <Button iconFa="fa fa-play-circle" title="Podgląd mapy"/>
+                <Button iconFa="fa fa-play-circle" title={$_.songBrowser.icons.preview}/>
             </a>
         {/if}
     {/if}
