@@ -1,6 +1,7 @@
 <script>
-    import {formatNumber} from '../../../utils/format';
+    import {formatNumber, parseFormattedNumber} from '../../../utils/format';
     import {findRawPp, ppFromScore, PP_PER_STAR, getWhatIfScore} from '../../../scoresaber/pp';
+    import {_, trans} from '../../stores/i18n';
     import Value from "../Common/Value.svelte";
     import Range from "../Common/Range.svelte";
     import {getRankedSongs} from "../../../scoresaber/rankeds";
@@ -38,14 +39,21 @@
         diffPpFromStars = newDiffPpFromStars;
     }
 
-    $: if (mode === 'pp-stars' && /^\s*\d+((,|.)\d+)?$/.test(expectedStr)) {
-        rawPp = findRawPp(scores, parseFloat(expectedStr.replace(/\s/, '').replace(',', '.')));
-        rawPpFormatted = formatNumber(rawPp)
-        error = "";
+    $: if (mode === 'pp-stars') {
+        rawPp = findRawPp(scores, parseFormattedNumber(expectedStr.trim()));
+        if (!isNaN(rawPp)) {
+            rawPpFormatted = formatNumber(rawPp)
+            error = "";
 
-        if(stars === 10) stars = getStarsForAcc(thresholds[0]);
-    } else {
-        error = `Wpisz może jakąś liczbę, ok? 1 jest liczbą, 10 jest, a nawet 100. Ale "${expectedStr}"?`;
+            if (stars === 10) stars = getStarsForAcc(thresholds[0]);
+        } else {
+            error = trans('profile.onePpParseError', {
+                num1: formatNumber(1),
+                num2: formatNumber(21.1),
+                num3: formatNumber(100.69),
+                expectedStr
+            });
+        }
     }
 
     $: if(playerId && mode === 'stars-pp') {
@@ -58,7 +66,7 @@
 <strong>pp = </strong>
 {#if !error.length}
     <span><Value value={rawPp} /></span>
-    <span>raw pp new play</span>
+    <span>{$_.profile.rawNewPlay}</span>
 
     <table>
         <thead>
@@ -84,9 +92,7 @@
     <div class="stars-pp">
         <Range bind:value={stars} min={0.1} max={maxStars} step={0.01} suffix="*" inline={true} />
         <Range bind:value={percent} min={70} max={100} step={0.1} suffix="%" inline={true} />
-        <div>
-            Mapa <Value value={stars} suffix="*" /> przy <Value value={percent} suffix="%" /> da <Value value={rawPpFromStars} withZeroSuffix={true} suffix="pp raw" /> i <Value value={diffPpFromStars} withSign={true} withZeroSuffix={true} suffix="pp global" />
-        </div>
+        <div>{trans('profile.mapToPp', {stars: formatNumber(stars), acc: formatNumber(percent), rawPp: formatNumber(rawPpFromStars), pp: formatNumber(diffPpFromStars)})}</div>
     </div>
 {/if}
 

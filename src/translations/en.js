@@ -48,6 +48,9 @@ export default {
         addPlayer: 'Add player',
         setAsDefault: 'Set as your profile',
         removePlayer: 'Remove player',
+        rawNewPlay: 'raw pp new play',
+        onePpParseError: 'Type in a number, ok? ${num1} is a number, ${num2} is, and even ${num3} is. But "${expectedStr}"?',
+        mapToPp: 'Map of ${stars}* at ${acc}% will give ${rawPp}pp raw and +${pp}pp global',
     },
     songBrowser: {
         types: {

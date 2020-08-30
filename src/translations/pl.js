@@ -49,7 +49,9 @@ export default {
         addPlayer: 'Dodaj gracza',
         setAsDefault: 'Ustaw jako Twój profil',
         removePlayer: 'Usuń gracza',
-
+        rawNewPlay: 'raw pp new play',
+        onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, ${num2} jest, a nawet ${num3}. Ale "${expectedStr}"?',
+        mapToPp: 'Mapa ${stars}* przy ${acc}% da ${rawPp}pp raw i +${pp}pp global',
     },
     songBrowser: {
         types: {
