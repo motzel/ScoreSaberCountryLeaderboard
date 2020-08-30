@@ -183,6 +183,16 @@ export default {
             lastMonth: 'Last month',
         },
     },
+    chart: {
+        timeLabel: 'Time',
+        rankLabel: 'Rank',
+        rankTooltip: 'Rank ${rank}',
+        starsLabel: 'Stars',
+        accuracyLabel: 'Accuracy',
+        accTooltip: 'Accuracy: ${acc}% | Stars: ${stars}*',
+        rankingButton: 'Ranking',
+        accuracyButton: 'Accuracy',
+    },
     themes: {
         dark: 'One and the only',
         light: 'Eyes burning',

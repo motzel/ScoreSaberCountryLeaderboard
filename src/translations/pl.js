@@ -185,6 +185,16 @@ export default {
             lastMonth: 'Ostatni miesiąc',
         },
     },
+    chart: {
+        timeLabel: 'Czas',
+        rankLabel: 'Pozycja',
+        rankTooltip: 'Pozycja ${rank}',
+        starsLabel: 'Gwiazdki',
+        accuracyLabel: 'Celność',
+        accTooltip: 'Celność: ${acc}% | Gwiazdki: ${stars}*',
+        rankingButton: 'Ranking',
+        accuracyButton: 'Celność',
+    },
     themes: {
         dark: 'Jedyny słuszny',
         light: 'Wypalający oczy',

@@ -25,6 +25,16 @@ export function formatDate(val) {
     return rtf.format(val);
 }
 
+export function formatDateRelativeInUnits(val, unit = 'day') {
+    const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
+        localeMatcher: 'best fit',
+        numeric: 'auto',
+        style: 'long'
+    });
+
+    return rtf.format(val, 'day');
+}
+
 export function formatDateRelative(val) {
     const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
         localeMatcher: 'best fit',
