@@ -73,14 +73,3 @@
 
     .inc {color: #42b129!important}
 </style>
-
-{#if mainPlayerId && undefined !== userPp}
-    {#if round(pp) > round(userPp)}
-        <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
-        </button>
-        <div bind:this={tooltip} class="tooltip">
-            Jeśli tak zagrasz: {formatNumber(score.currentTotalPp)} + <strong>{formatNumber(score.diff)}</strong> =
-            <strong class="inc">{formatNumber(score.newTotalPp)}pp</strong>
-        </div>
-    {/if}
-{/if}
