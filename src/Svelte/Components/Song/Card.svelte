@@ -10,6 +10,7 @@
 
     import {createEventDispatcher} from 'svelte';
     import {getAllActivePlayers} from "../../../scoresaber/players";
+    import {_} from '../../stores/i18n';
 
     const dispatch = createEventDispatcher();
 
@@ -78,27 +79,27 @@
                 </header>
 
                 <main>
-                    <div><i class="fas fa-align-justify"></i> Wyniki: <strong>
+                    <div><i class="fas fa-align-justify"></i> {$_.songCard.scores}: <strong>
                         <Value value={scores} digits={0}/>
                     </strong>{#if scores !== totalScores}&nbsp;/ <strong>
                         <Value value={totalScores} digits={0}/>
                     </strong>{/if}</div>
-                    <div><i class="fas fa-music"></i> Klocki: <strong>
+                    <div><i class="fas fa-music"></i> {$_.songCard.notes}: <strong>
                         <Value value={songInfo.notes || noteCount} digits={0}/>
                     </strong></div>
-                    <div><i class="fas fa-drum"></i> BPM: <strong>
+                    <div><i class="fas fa-drum"></i> {$_.songBrowser.fields.bpm}: <strong>
                         <Value value={songInfo.bpm || bpm} digits={0}/>
                     </strong></div>
-                    <div><i class="fas fa-tachometer-alt"></i> NJS: <strong>
+                    <div><i class="fas fa-tachometer-alt"></i> {$_.songBrowser.fields.njs}: <strong>
                         <Value value={songInfo.njs} digits={0}/>
                     </strong></div>
-                    <div><i class="fas fa-fire"></i> NPS: <strong>
+                    <div><i class="fas fa-fire"></i> {$_.songBrowser.fields.nps}: <strong>
                         <Value value={songInfo.nps} digits={2}/>
                     </strong></div>
-                    <div><i class="fas fa-bomb"></i> Bomby: <strong>
+                    <div><i class="fas fa-bomb"></i> {$_.songCard.bombs}: <strong>
                         <Value value={songInfo.bombs} digits={0} zero="0"/>
                     </strong></div>
-                    <div><i class="fas fa-skull"></i> Przeszkody: <strong>
+                    <div><i class="fas fa-skull"></i> {$_.songCard.obstacles}: <strong>
                         <Value value={songInfo.obstacles} digits={0} zero="0"/>
                     </strong></div>
                 </main>

@@ -151,6 +151,12 @@ export default {
         nobodyPlayed: 'It seems that nobody has played this song yet.',
         searching: 'Searching for results...',
     },
+    songCard: {
+        scores: 'Scores',
+        notes: 'Notes',
+        bombs: 'Bombs',
+        obstacles: 'Obstacles',
+    },
     refresh: {
         lastDownload: 'Downloaded:',
         rankedsDownload: 'Downloading current rankeds',

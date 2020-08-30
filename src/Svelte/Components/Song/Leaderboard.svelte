@@ -112,7 +112,7 @@
                 <th class="rank">#</th>
                 <th class="player">{$_.songLeaderboard.player}</th>
                 <th class="score">{$_.songBrowser.fields.score}</th>
-                <th class="timeset">{$_.songBrowser.fields.timeset}</th>
+                <th class="timeset">{$_.songBrowser.fields.timesetShort}</th>
                 <th class="mods">{$_.songLeaderboard.mods}</th>
                 <th class="percentage">{$_.songBrowser.fields.acc}</th>
                 <th class="pp">{$_.songBrowser.fields.pp}</th>

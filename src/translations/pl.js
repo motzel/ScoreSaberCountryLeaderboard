@@ -152,6 +152,12 @@ export default {
         nobodyPlayed: 'Wygląda na to, że nikt jeszcze nie zagrał tej nutki.',
         searching: 'Wyszukiwanie wyników...',
     },
+    songCard: {
+        scores: 'Wyniki',
+        notes: 'Klocki',
+        bombs: 'Bomby',
+        obstacles: 'Przeszkody',
+    },
     refresh: {
         lastDownload: 'Pobrano:',
         rankedsDownload: 'Pobieranie aktualnych rankedów',
