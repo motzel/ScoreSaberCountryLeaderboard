@@ -4,6 +4,7 @@
     import {getWhatIfScore, getUserSongScore} from '../../../scoresaber/pp';
     import {formatNumber, round} from '../../../utils/format';
     import {getMainPlayerId} from "../../../plugin-config";
+    import {getPlayerScores} from "../../../scoresaber/players";
 
     export let leaderboardId;
     export let pp = 0;
@@ -15,9 +16,12 @@
 
     let userPp;
     let mainPlayerId;
+    let mainPlayerScores;
     onMount(async _ => {
         mainPlayerId = await getMainPlayerId();
         if (mainPlayerId) {
+            mainPlayerScores = await getPlayerScores(mainPlayerId);
+
             const score = await getUserSongScore(mainPlayerId, leaderboardId);
             userPp = undefined !== score ? score.pp : undefined;
         }
@@ -34,6 +38,15 @@
         tooltip.style.display = 'none';
     }
 </script>
+
+{#if mainPlayerId && mainPlayerScores && (!userPp || round(pp) > round(userPp))}
+    <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
+    </button>
+    <div bind:this={tooltip} class="tooltip">
+        Jeśli tak zagrasz: {formatNumber(score.currentTotalPp)} + <strong>{formatNumber(score.diff)}</strong> =
+        <strong class="inc">{formatNumber(score.newTotalPp)}pp</strong>
+    </div>
+{/if}
 
 <style>
     .tooltip {
@@ -59,14 +72,3 @@
 
     .inc {color: #42b129!important}
 </style>
-
-{#if mainPlayerId && undefined !== userPp}
-    {#if round(pp) > round(userPp)}
-        <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
-        </button>
-        <div bind:this={tooltip} class="tooltip">
-            Jeśli tak zagrasz: {formatNumber(score.currentTotalPp)} + <strong>{formatNumber(score.diff)}</strong> =
-            <strong class="inc">{formatNumber(score.newTotalPp)}pp</strong>
-        </div>
-    {/if}
-{/if}
