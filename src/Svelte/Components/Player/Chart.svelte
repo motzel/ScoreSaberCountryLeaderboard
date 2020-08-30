@@ -36,6 +36,7 @@
                     return {
                         x: rankeds[s.leaderboardId].stars,
                         y: acc,
+                        leaderboardId: s.leaderboardId,
                         name: s.name + ' ' + s.songSubName,
                         songAuthor: s.songAuthorName,
                         levelAuthor: s.levelAuthorName,
@@ -151,6 +152,11 @@
                         maintainAspectRatio: false,
                         title: {
                             display: false,
+                        },
+                        onClick(e, item) {
+                            if(!chartData || !chartData.length || !item || !item.length || !item[0]._index || !chartData[item[0]._index]) return;
+
+                            window.open(`/leaderboard/${chartData[item[0]._index].leaderboardId}`, '_blank');
                         },
                         tooltips: {
                             displayColors: false,

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.4.2
+- [+] items in the accuracy chart are now clickable, thx Drakonno
+
 0.9.4.1
 - [!] some minor bug fixes
 
