@@ -211,6 +211,9 @@ export default {
         drakonno: 'Drakonno',
         sombra: 'Sombra'
     },
+    plugin: {
+        transformButton: 'Transformuj',
+    },
     common: {
         save: 'Zapisz',
         cancel: 'Anuluj',

@@ -30,7 +30,7 @@ import {getPlayerWithUpdatedScores, updateActivePlayers} from "./network/scoresa
 import {getRankedSongs} from "./scoresaber/rankeds";
 import {formatDateRelative, formatNumber, round, roundToPrecision} from "./utils/format";
 import {dateFromString} from "./utils/date";
-import {setLangFromConfig} from "./Svelte/stores/i18n";
+import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -395,7 +395,7 @@ async function setupProfile() {
             const transformBtn = new Button({
                 target: div,
                 props: {
-                    label: "Transformuj",
+                    label: trans('plugin.transformButton'),
                     iconFa: "fas fa-expand-arrows-alt",
                     type: 'primary'
                 }
