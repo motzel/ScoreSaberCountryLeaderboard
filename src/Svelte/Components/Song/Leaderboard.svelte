@@ -187,12 +187,12 @@
         {/if}
     {:else}
         <div class="first-fetch">
-            <p>Wygląda na to, że nikt jeszcze nie zagrał tej nutki.</p>
+            <p>{$_.songLeaderboard.nobodyPlayed}</p>
         </div>
     {/if}
 {:else}
     <div class="first-fetch">
-        <p>Wyszukiwanie wyników...</p>
+        <p>{$_.songLeaderboard.searching}</p>
     </div>
 {/if}
 </div>

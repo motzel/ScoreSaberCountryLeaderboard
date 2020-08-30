@@ -145,6 +145,8 @@ export default {
     songLeaderboard: {
         player: 'Player',
         mods: 'Mods',
+        nobodyPlayed: 'It seems that nobody has played this song yet.',
+        searching: 'Searching for results...',
     },
     refresh: {
         lastDownload: 'Downloaded:',

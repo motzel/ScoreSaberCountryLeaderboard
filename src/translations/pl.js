@@ -147,6 +147,8 @@ export default {
     songLeaderboard: {
         player: 'Gracz',
         mods: 'Mody',
+        nobodyPlayed: 'Wygląda na to, że nikt jeszcze nie zagrał tej nutki.',
+        searching: 'Wyszukiwanie wyników...',
     },
     refresh: {
         lastDownload: 'Pobrano:',
