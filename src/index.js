@@ -1,4 +1,5 @@
 import Profile from './Svelte/Components/Player/Profile.svelte';
+import ProfileStats from './Svelte/Components/Player/ProfileStats.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import SongIcons from './Svelte/Components/Song/Icons.svelte';
@@ -351,23 +352,53 @@ async function setupProfile() {
         })
     }
 
-    const mainColumn = document.querySelector('.content .column ul').closest('.column');
+    const mainUl = document.querySelector('.content .column ul');
+    const mainColumn = mainUl.closest('.column');
     if (mainColumn) {
         if (data.users?.[profileId]?.stats) {
             let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
             ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[config.COUNTRY] ? ssplCountryRank[config.COUNTRY] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
-            if(ssplCountryRank) {
-                const rankLi = mainColumn.querySelector('ul li:first-of-type');
-                if (rankLi) {
-                    const globalRankA = rankLi.querySelector('a:first-of-type');
-                    const rankA = rankLi.querySelector('a[href^="/global?country="]');
-                    if(globalRankA && rankA) {
-                        const originalGlobalRank = globalRankA.innerText.replace(/[^\d]/g,'');
-                        const originalRank = getFirstRegexpMatch(/(\d+)$/, rankA.innerText);
-                        const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
-                        if (originalGlobalRank && originalRank && originalCountry) {
-                           rankLi.innerHTML = `<strong>Player Ranking:</strong> <a href="/global">#${originalGlobalRank}</a> ( ${originalCountry === config.COUNTRY ? `<a href="/global?country=${config.COUNTRY}"><img src="/imports/images/flags/${config.COUNTRY}.png" /> <strong>#${ssplCountryRank}</strong>${parseInt(originalRank, 10) !== ssplCountryRank ? ` / <small>#${originalRank}</small>` : ''}</a>` : `<a href="/global?country=${config.COUNTRY}"><img src="/imports/images/flags/${config.COUNTRY}.png" /> <strong>#${ssplCountryRank}</strong></a> / <a href="/global?country=${originalCountry}"><img src="/imports/images/flags/${originalCountry}.png" /> <small>#${originalRank}</small></a>`} )`;
-                        }
+            const rankLi = mainColumn.querySelector('ul li:first-of-type');
+            if (rankLi) {
+                const globalRankA = rankLi.querySelector('a:first-of-type');
+                const rankA = rankLi.querySelector('a[href^="/global?country="]');
+                if(globalRankA && rankA) {
+                    const originalGlobalRank = parseInt(globalRankA.innerText.replace(/[^\d]/g,''), 10);
+                    const originalRank = parseInt(getFirstRegexpMatch(/([0-9,]+)$/, rankA.innerText).replace(/[^\d]/g, ''), 10);
+                    const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
+                    if (originalGlobalRank && originalRank && originalCountry) {
+                        const pageStats =
+                            [
+                                {label: trans('profile.stats.ranking'), type: 'rank', value: originalGlobalRank, originalCountry: originalCountry, ssplCountryRank, originalRank}
+                            ].concat(
+                                [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
+                                    .map(li => {
+                                        const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:\s*<\/strong>\s*(.*)$/);
+                                        if (!matches) return null;
+
+                                        const mapping = [
+                                            {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true},
+                                            {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true},
+                                            {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true},
+                                            {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replays'), number: true},
+                                            {key: 'Role', label: trans('profile.stats.role'), number: false},
+                                        ];
+
+                                        const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
+                                            ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
+                                            : matches[2];
+
+                                        const item = mapping.find(m => m.key === matches[1]);
+                                        return item ? {...item, value} : {label: matches[1], value};
+                                    })
+                                    .filter(s => s)
+                            );
+
+                        mainUl.innerHTML = '';
+                        new ProfileStats({
+                            target: mainColumn,
+                            props: {stats: pageStats}
+                        })
                     }
                 }
             }

@@ -49,9 +49,20 @@ export default {
         addPlayer: 'Dodaj gracza',
         setAsDefault: 'Ustaw jako Twój profil',
         removePlayer: 'Usuń gracza',
-        rawNewPlay: 'raw pp new play',
+        rawNewPlay: 'pp w nowej grze',
         onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, ${num2} jest, a nawet ${num3}. Ale "${expectedStr}"?',
         mapToPp: 'Mapa ${stars}* przy ${acc}% da ${rawPp}pp raw i +${pp}pp global',
+        stats: {
+            ranking: 'Ranking',
+            pp: 'Punkty',
+            playCount: 'Liczba gier',
+            totalScore: 'Wynik razem',
+            replays: 'Obejrzane powtórki',
+            role: 'Rola',
+            rankedPlayCount: 'Liczba zagranych rankedów',
+            totalRankedScore: 'Wynik rankedów razem',
+            avgRankedAccuracy: 'Średnia celność rankedów',
+        },
     },
     songBrowser: {
         types: {
