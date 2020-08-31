@@ -2,7 +2,7 @@ const path = require('path');
 const monkey = require('./monkey.config');
 const webpack = require('webpack');
 
-const Terser = require('terser-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const BannerPlugin = require('webpack/lib/BannerPlugin');
 const MinifyPlugin = require('babel-minify-webpack-plugin');
 
@@ -18,6 +18,20 @@ module.exports = {
             svelte: path.resolve('node_modules', 'svelte')
         },
         mainFields: ['svelte', 'browser', 'module', 'main']
+    },
+    optimization: {
+        minimize: true,
+        minimizer: [
+            new TerserPlugin({
+                terserOptions: {
+                    mangle: true,
+                    output: {
+                        comments: /(UserScript|@name|@namespace|@version|@description|@author|@icon|@.*URL|@match|@include|@require|@grant|@run-at)/i
+                    }
+                },
+                extractComments: true
+            })
+        ]
     },
     mode: 'none',
     module: {
@@ -48,7 +62,7 @@ module.exports = {
         new webpack.optimize.LimitChunkCountPlugin({
             maxChunks: 1
         }),
-        new Terser({
+        new TerserPlugin({
             terserOptions: {
                 mangle: false,
                 output: {
