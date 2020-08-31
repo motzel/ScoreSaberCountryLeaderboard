@@ -11,8 +11,8 @@
   -webkit-text-fill-color: transparent;
 }
 .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
-.sspl .inc, .sspl .diff.inc {color: var(--increase) !important;}
-.sspl .dec, .sspl .diff.dec {color: var(--decrease) !important;}
+.sspl .inc, .sspl .diff.inc, .card-view .inc {color: var(--increase) !important;}
+.sspl .dec, .sspl .diff.dec, .card-view .dec {color: var(--decrease) !important;}
 .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
 table.ranking.songs th.score, table.ranking td.pp {position: relative;}
 table.ranking tbody tr.hidden {opacity: 0.05;}
@@ -112,4 +112,11 @@ body .select select {
   background-size: 85%;
   width: 100%;
   height: 100%;
+}
+
+@media screen and (min-width: 1024px) and (max-width: 1407px) {
+  .container {
+    max-width: none;
+    width: auto;
+  }
 }

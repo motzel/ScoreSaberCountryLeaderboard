@@ -3,7 +3,7 @@ import ProfileStats from './Svelte/Components/Player/ProfileStats.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import SongIcons from './Svelte/Components/Song/Icons.svelte';
-import SongCard from './Svelte/Components/Song/Card.svelte';
+import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
 import Refresh from './Svelte/Components/Player/Refresh.svelte';

@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.5
+- [+] add cards view to Song Browser
+- [+] add i18n support
+
 0.9.4.2
 - [+] items in the accuracy chart are now clickable, thx Drakonno
 

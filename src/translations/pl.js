@@ -79,7 +79,8 @@ export default {
         },
         viewTypes: {
             compact: 'Kompaktowy',
-            tabular: 'Tabelaryczny'
+            tabular: 'Tabelaryczny',
+            cards: 'Karty',
         },
         fields: {
             timeset: 'Data zagrania',
@@ -156,12 +157,16 @@ export default {
             title: 'Strasznie tu pusto',
             info: 'Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?',
         },
+        noScore: 'Brak wyniku',
     },
     songLeaderboard: {
         player: 'Gracz',
         mods: 'Mody',
         nobodyPlayed: 'Wygląda na to, że nikt jeszcze nie zagrał tej nutki.',
         searching: 'Wyszukiwanie wyników...',
+        ranked: 'Rankingowa',
+        unranked: 'Nierankingowa',
+        maxPpSuffix: 'pp maks.',
     },
     songCard: {
         scores: 'Wyniki',

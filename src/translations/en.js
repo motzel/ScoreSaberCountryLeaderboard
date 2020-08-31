@@ -78,7 +78,8 @@ export default {
         },
         viewTypes: {
             compact: 'Compact',
-            tabular: 'Tabular'
+            tabular: 'Tabular',
+            cards: 'Cards',
         },
         fields: {
             timeset: 'Date of play',
@@ -154,13 +155,17 @@ export default {
         noData: {
             title: 'It\'s so empty here.',
             info: 'It seems that no song meets all the selected requirements. Change something maybe?',
-        }
+        },
+        noScore: 'No score',
     },
     songLeaderboard: {
         player: 'Player',
         mods: 'Mods',
         nobodyPlayed: 'It seems that nobody has played this song yet.',
         searching: 'Searching for results...',
+        ranked: 'Ranked',
+        unranked: 'Unranked',
+        maxPpSuffix: 'pp max',
     },
     songCard: {
         scores: 'Scores',

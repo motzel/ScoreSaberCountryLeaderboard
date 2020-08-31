@@ -47,6 +47,7 @@
     import Leaderboard from "./Leaderboard.svelte";
     import Checkbox from "../Common/Checkbox.svelte";
     import {_, trans} from "../../stores/i18n";
+    import Card from "./Card.svelte";
 
     export let playerId;
     export let snipedIds = [];
@@ -66,7 +67,7 @@
 
     const DEBOUNCE_DELAY = 400;
 
-    const allItemsPerPage = [5, 10, 15, 20, 25, 50];
+    const allItemsPerPage = [5, 8, 10, 12, 15, 20, 24, 25, 48, 50];
 
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
@@ -93,7 +94,8 @@
 
         viewTypes: [
             {id: 'compact', _key: 'songBrowser.viewTypes.compact'},
-            {id: 'tabular', _key: 'songBrowser.viewTypes.tabular'}
+            {id: 'tabular', _key: 'songBrowser.viewTypes.tabular'},
+            {id: 'cards', _key: 'songBrowser.viewTypes.cards'},
         ],
 
         sortTypes: [
@@ -268,7 +270,13 @@
     const getObjectFromArrayByKey = (shownColumns, value, key = 'key') => shownColumns.find(c => c[key] && c[key] === value);
 
     let sortTypes = [
-        {...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'), type: 'series', subtype: 0, field: 'timeset', enabled: true},
+        {
+            ...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'),
+            type: 'series',
+            subtype: 0,
+            field: 'timeset',
+            enabled: true
+        },
     ];
     let allFilters = {
         songType: strings.songTypes[0],
@@ -330,7 +338,13 @@
             });
 
         if (allFilters.songType.id !== 'unrankeds')
-            types.push({...getObjectFromArrayByKey(strings.sortTypes, 'stars', 'field'), type: 'song', subtype: null, field: 'stars', enabled: true});
+            types.push({
+                ...getObjectFromArrayByKey(strings.sortTypes, 'stars', 'field'),
+                type: 'song',
+                subtype: null,
+                field: 'stars',
+                enabled: true
+            });
 
         const userIds = [playerId].concat(snipedIds);
         if (data && data.users) {
@@ -407,7 +421,7 @@
     }
 
     async function restorePage() {
-        if(currentFirstRowIdentifier) {
+        if (currentFirstRowIdentifier) {
             const rowId = currentFirstRowIdentifier;
 
             const data = await calcPromised;
@@ -1143,7 +1157,7 @@
     }
 
     async function exportPlaylist() {
-        const allPlayedSongs = Object.values(Object.values(await getPlayers()).reduce((cum,u) => ({...cum, ...u.scores}), {}));
+        const allPlayedSongs = Object.values(Object.values(await getPlayers()).reduce((cum, u) => ({...cum, ...u.scores}), {}));
         const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.id}));
         const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
@@ -1303,6 +1317,81 @@
         </div>
     {:then calc}
         {#if songsPage.songs.length}
+            {#if viewType.id === 'cards'}
+            <div class="columns card-view is-multiline">
+                {#each songsPage.songs as song (song.leaderboardId)}
+                    <div class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")}>
+                        <Card leaderboardId={song.leaderboardId} hash={song.id} padding="1em" iconSize="0.875em"
+                              songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
+                              diffInfo={song.diff}
+                              stars={selectedSongCols.find(c=>c.key==='stars') ? song.stars : (song.stars ? 0 : null)}
+                              maxPp={selectedSongCols.find(c=>c.key==='maxPp') ? song.maxPp : null}
+                              duration={selectedSongCols.find(c=>c.key==='length') ? song.length : null}
+                              bpm={selectedSongCols.find(c=>c.key==='bpm') ? song.bpm : null}
+                              njs={selectedSongCols.find(c=>c.key==='njs') ? song.njs : null}
+                              nps={selectedSongCols.find(c=>c.key==='nps') ? song.nps : null}
+                              twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null}
+                              showIcons={selectedAdditionalCols.length > 0}
+                        >
+                            <div slot="before-header" class="check">
+                                {#if showCheckboxes}
+                                    <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
+                                {/if}
+                            </div>
+
+                            <div class="scores columns is-multiline is-mobile" class:bigger={songsPage.series.length === 1} slot="main">
+                                {#each songsPage.series as series, sIdx (series.id)}
+                                <div class="column">
+                                    <div class="score" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                                        {#if songsPage.series.length > 1}
+                                            <div class="player-name">
+                                            {#if sIdx > 0}
+                                                <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)}></Select>
+                                                <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onPlayerRemove(sIdx)}></i>
+                                            {:else}
+                                                <strong>{series.name}</strong>
+                                            {/if}
+                                            </div>
+                                        {/if}
+                                        {#if getScoreValueByKey(series, song, 'score')}
+                                            {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                                {#if col.key === 'timeset'}
+                                                    <strong class={'compact-' + col.key + '-val'}>
+                                                        <FormattedDate date={getScoreValueByKey(series, song, col.key)}
+                                                                       {...col.valueProps}/>
+                                                    </strong>
+                                                {:else}
+                                                    {#if getScoreValueByKey(series, song, col.key)}
+                                                        <div>
+                                                            {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
+                                                            {/if}
+                                                            <strong class={'compact-' + col.key + '-val'}>
+                                                                <Value value={getScoreValueByKey(series, song, col.key)}
+                                                                       prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                                       prevLabel={series.prevLabel} inline={true}
+                                                                       {...col.valueProps}
+                                                                />
+                                                            </strong>
+                                                        </div>
+                                                    {/if}
+                                                    {#if col.key === 'pp' && allFilters.songType.id !== 'sniper_mode'}
+                                                        <WhatIfPp leaderboardId={song.leaderboardId}
+                                                                  pp={getScoreValueByKey(series, song, col.key)}/>{/if}
+                                                {/if}
+                                            {/if}{/each}
+                                        {:else}
+                                            <span class="dec">{$_.songBrowser.noScore}</span>
+                                        {/if}
+                                    </div>
+                                </div>
+                                {/each}
+                            </div>
+                        </Card>
+                    </div>
+                {/each}
+            </div>
+            {:else}
+
             <table class="ranking sspl">
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
@@ -1539,6 +1628,7 @@
                     </tfoot>
                 {/if}
             </table>
+            {/if}
         {:else}
             <div class="info">
                 <h3>{$_.songBrowser.noData.title}</h3>
@@ -1570,8 +1660,69 @@
 {/if}
 
 <style>
-    .columns {
+    .filters .columns {
         max-width: 15rem;
+    }
+
+    .card-view {
+        font-size: .8rem;
+    }
+
+    .card-view.columns {
+        margin-left: .5rem;
+        margin-right: .5rem;
+        margin-top: .5rem;
+    }
+
+    .card-view > .column {
+        padding: .5rem;
+    }
+
+    .card-view .column > .song-card {
+        display: flex;
+        position: relative;
+        min-height: 100%;
+        width: 100%;
+    }
+
+    .card-view .column > .song-card :global(.box) {
+        width: 100%;
+    }
+
+    .card-view .check {
+        position: absolute;
+        top: .5em;
+        right: .5em;
+    }
+
+    .card-view .scores.bigger {
+        font-size: .875rem;
+    }
+
+    .card-view .scores .column:nth-child(2n) {
+        padding: .75rem .75rem .75rem .5rem;
+    }
+
+    .card-view .scores .column:nth-child(2n+1) {
+        padding: .75rem .5rem .75rem .75rem;
+    }
+
+    .card-view .score {
+        position: relative;
+        min-width: 6.75rem;
+    }
+
+    .card-view .score :global(.dropdown-trigger button) {
+        background: transparent;
+        font-weight: bold;
+    }
+
+    .card-view .score.best .player-name strong, .card-view .score.best :global(.dropdown-trigger button) {
+        color: var(--increase)!important;
+    }
+
+    .card-view .score :global(.what-if) {
+        top: 2em;
     }
 
     .columns > div {
@@ -1612,7 +1763,7 @@
         width: 100%;
     }
 
-    thead th.player-sel .player-remove {
+    thead th.player-sel .player-remove, .card-view .score .player-remove {
         display: none;
         position: absolute;
         top: .125rem;
@@ -1621,8 +1772,11 @@
         cursor: pointer;
     }
 
-    thead th.player-sel:hover .player-remove {
+    thead th.player-sel:hover .player-remove, .card-view .score:hover .player-remove {
         display: inline;
+    }
+    .card-view .score:hover .player-remove {
+        top: 0;
     }
 
     thead th.song, thead th.stars {

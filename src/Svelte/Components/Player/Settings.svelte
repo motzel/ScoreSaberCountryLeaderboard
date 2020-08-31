@@ -57,7 +57,8 @@
 
         viewTypes: [
             {id: 'compact', _key: 'songBrowser.viewTypes.compact'},
-            {id: 'tabular', _key: 'songBrowser.viewTypes.tabular'}
+            {id: 'tabular', _key: 'songBrowser.viewTypes.tabular'},
+            {id: 'cards', _key: 'songBrowser.viewTypes.cards'},
         ],
 
         sortTypes: [
@@ -236,7 +237,7 @@
     let columns = strings.columns.filter(c => c.displayed);
     let configShowColumns = columns.filter(c => c.selected);
 
-    const allItemsPerPage = [5, 10, 15, 20, 25, 50];
+    const allItemsPerPage = [5, 8, 10, 12, 15, 20, 24, 25, 48, 50];
     let itemsPerPage = allItemsPerPage.map(i => ({label: i, val: i}));
     let configItemsPerPage = itemsPerPage[1];
 

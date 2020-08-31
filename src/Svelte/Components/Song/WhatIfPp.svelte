@@ -40,7 +40,7 @@
     }
 </script>
 
-{#if mainPlayerId && mainPlayerScores && (!userPp || round(pp) > round(userPp))}
+{#if pp && mainPlayerId && mainPlayerScores && (!userPp || round(pp) > round(userPp))}
     <button bind:this={buttonEl} use:hoverable on:hover={onHover} on:unhover={onUnhover} class="what-if">?
     </button>
     <div bind:this={tooltip} class="tooltip">

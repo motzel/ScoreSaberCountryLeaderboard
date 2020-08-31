@@ -25,7 +25,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
 
         return cacheSongInfo(songInfo);
     } catch (err) {
-        log.error('Error fetching Beat Saver song by hash');
+        log.warn(`Error fetching Beat Saver song by hash "${hash}"`);
         return null;
     }
 };
@@ -49,7 +49,7 @@ export const getSongByKey = async (key, forceUpdate = false) => {
 
         return cacheSongInfo(songInfo);
     } catch (err) {
-        log.error('Error fetching Beat Saver song by hash');
+        log.warn(`Error fetching Beat Saver song by key "${key}"`);
         return null;
     }
 };

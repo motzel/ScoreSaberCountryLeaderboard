@@ -9,6 +9,7 @@
     import Button from "../Common/Button.svelte";
 
     export let hash;
+    export let twitchUrl;
 
     let songKey;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
@@ -45,6 +46,12 @@
         {#if shownIcons.includes('preview')}
             <a href="https://skystudioapps.com/bs-viewer/?id={songKey}" target="_blank">
                 <Button iconFa="fa fa-play-circle" title={$_.songBrowser.icons.preview}/>
+            </a>
+        {/if}
+
+        {#if shownIcons.includes('twitch') && twitchUrl && twitchUrl.length}
+            <a class="video" href="{twitchUrl}" target="_blank">
+                <Button iconFa="fab fa-twitch" type="twitch" title={$_.songBrowser.icons.twitchTooltip}/>
             </a>
         {/if}
     {/if}
