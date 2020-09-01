@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.5.1
+- [!] some minor bug fix regarding fragment part in url
+
 0.9.5
 - [+] add cards view to Song Browser
 - [+] add i18n support

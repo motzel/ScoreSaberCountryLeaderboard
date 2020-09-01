@@ -35,7 +35,7 @@ import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
-const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&).*)?$/, window.location.href.toLowerCase());
+const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
 const isCountryRankingPage = () =>
     [

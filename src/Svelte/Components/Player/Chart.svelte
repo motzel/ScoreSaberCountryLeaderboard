@@ -28,6 +28,8 @@
         if (!rankeds) return;
 
         const playerScores = await getPlayerScores(profileId);
+        if (!playerScores) return;
+
         chartData = Object.values(playerScores)
                 .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && !!rankeds[s.leaderboardId])
                 .map(s => {
