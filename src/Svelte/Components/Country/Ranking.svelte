@@ -11,15 +11,16 @@
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
     import {getCountryRanking} from "../../../scoresaber/players";
     import config from "../../../temp";
+    import {_, trans} from "../../stores/i18n";
 
     export let country = config.COUNTRY;
     export let itemsPerPage = 25;
     export let diff = 6;
 
     const diffOptions = [
-        {value: 0, text: 'Dzień'},
-        {value: 6, text: 'Tydzień'},
-        {value: 29, text: 'Miesiąc'}
+        {value: 0, text: trans('dashboard.ranking.changeOptions.day')},
+        {value: 6, text: trans('dashboard.ranking.changeOptions.week')},
+        {value: 29, text: trans('dashboard.ranking.changeOptions.month')}
     ];
 
     let users = [];
@@ -33,9 +34,9 @@
     const header = [
         {label: '', key: 'picture', className: 'picture'},
         {label: '#', key: 'rank', className: 'rank'},
-        {label: 'Gracz', key: 'player', className: 'player'},
-        {label: 'PPs', key: 'pp', className: 'pp'},
-        {label: 'Tydzien', key: 'weeklyDiff', className: 'diff'}
+        {label: trans('dashboard.ranking.header.player'), key: 'player', className: 'player'},
+        {label: trans('dashboard.ranking.header.pp'), key: 'pp', className: 'pp'},
+        {label: trans('dashboard.ranking.header.change'), key: 'weeklyDiff', className: 'diff'}
     ]
     let rows = [];
 

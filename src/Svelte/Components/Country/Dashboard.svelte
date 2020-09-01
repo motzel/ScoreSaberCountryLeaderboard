@@ -1,5 +1,6 @@
 <script>
     import config from "../../../temp";
+    import {_, trans} from "../../stores/i18n";
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
     import Button from "../Common/Button.svelte";
@@ -9,13 +10,30 @@
 
     export let country = config.COUNTRY;
 
-    const lastSongsPeriods = [
-        {label: 'Ostatnie 3 dni', value: 3},
-        {label: 'Ostatni tydzień', value: 7},
-        {label: 'Ostatnie 2 tygodnie', value: 14},
-        {label: 'Ostatni miesiąc', value: 30},
-    ]
-    let selectedSongPeriod = lastSongsPeriods.find(p => p.value === 14);
+    let strings = {
+        lastSongsPeriods: [
+            {_key: 'dashboard.periods.last3Days', value: 3},
+            {_key: 'dashboard.periods.lastWeek', value: 7},
+            {_key: 'dashboard.periods.last2Weeks', value: 14},
+            {_key: 'dashboard.periods.lastMonth', value: 30},
+        ]
+    }
+
+    let values = {
+        selectedSongPeriod: strings.lastSongsPeriods.find(p => p.value === 14)
+    }
+
+    function translateAllStrings() {
+        Object.keys(strings).forEach(key => {
+            strings[key].forEach(item => {
+                if (item._key) item.label = trans(item._key);
+            })
+        })
+
+        strings = {...strings};
+        values = {...values};
+    }
+
     let minPp = 300;
 
     function onTypeChange() {
@@ -26,15 +44,19 @@
         newCont.style.display = 'none';
         cont.style.display = 'block';
     }
+
+    $: {
+        translateAllStrings($_);
+    }
 </script>
 
 <div class="columns is-multiline">
     <div class="leaderboard content column is-full-tablet is-half-widescreen is-two-fifths-fullhd">
         <div class="ranking box has-shadow">
             <header>
-                <h2 class="title is-5">Ranking</h2>
+                <h2 class="title is-5">{$_.dashboard.rankingHeader}</h2>
                 <nav>
-                    <Button iconFa="fas fa-exchange-alt" label="Pokaż oryginał" type="primary" on:click={onTypeChange} />
+                    <Button iconFa="fas fa-exchange-alt" label={$_.dashboard.showOriginal} type="primary" on:click={onTypeChange} />
                 </nav>
             </header>
 
@@ -46,23 +68,23 @@
         <div class="box has-shadow">
             <header>
                 <h2>
-                    <div class="title is-5">Ostatnie wyniki</div>
+                    <div class="title is-5">{$_.dashboard.lastScores}</div>
                     <div class="refresh">
                         <Refresh />
                     </div>
                 </h2>
                 <nav>
-                    <Select bind:value={selectedSongPeriod} items={lastSongsPeriods} right={true}/>
+                    <Select bind:value={values.selectedSongPeriod} items={strings.lastSongsPeriods} right={true}/>
                 </nav>
             </header>
             <Songs {country} sortBy="timeset"
-                   min={new Date(Date.now()-selectedSongPeriod.value*1000*60*60*24)}
+                   min={new Date(Date.now()-values.selectedSongPeriod.value*1000*60*60*24)}
                    itemsPerPage={5} pagesDisplayMax={7} noRank={true}/>
         </div>
 
         <div class="box has-shadow">
             <header>
-                <h2 class="title is-5">Najlepsze wyniki</h2>
+                <h2 class="title is-5">{$_.dashboard.bestScores}</h2>
                 <nav>
                     <Range bind:value={minPp} min={0} max={700} step={1} suffix="pp" inline={true}/>
                 </nav>

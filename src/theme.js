@@ -1,6 +1,7 @@
 export const themes = {
     darkss: {
         name: 'Jedyny słuszny',
+        _key: 'themes.dark',
         def: [
             ['background', '#222'],
             ['foreground', '#252525'],
@@ -18,6 +19,7 @@ export const themes = {
 
     lightss: {
         name: 'Wypalający oczy',
+        _key: 'themes.light',
         def: [
             ['background', '#fcfcfc'],
             ['foreground', 'white'],
@@ -38,6 +40,7 @@ export const themes = {
 
     drakonno: {
         name: 'Drakonno',
+        _key: 'themes.drakonno',
         def: [
             ['background', '#002b36'],
             ['foreground', '#073642'],
@@ -55,6 +58,7 @@ export const themes = {
 
     sombra: {
         name: 'Sombra',
+        _key: 'themes.sombra',
         def: [
             ['background', '#1f0001'],
             ['foreground', '#2f0042'],

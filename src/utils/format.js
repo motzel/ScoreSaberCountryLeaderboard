@@ -1,5 +1,6 @@
-import config from '../temp';
 import {dateFromString} from "./date";
+import {getCurrentLang, getCurrentLocale} from '../Svelte/stores/i18n';
+import {NumberParser} from "./number-parser";
 
 export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false) {
     return (num ? formatNumber(num, digits, addSign) : '-') + (num && suffix ? suffix : '');
@@ -8,15 +9,39 @@ export function formatNumberWithSuffix(num, suffix, digits = 2, addSign = false)
 export function formatNumber(num, digits = 2, addSign = false) {
     return (
         (addSign && num > 0 ? '+' : '') +
-        num.toLocaleString(config.COUNTRY, {
+        num.toLocaleString(getCurrentLocale(), {
             minimumFractionDigits: digits,
             maximumFractionDigits: digits
         })
     );
 }
 
+export function parseFormattedNumber(value) {
+    return new NumberParser(getCurrentLocale()).parse(value);
+}
+
 export function formatDate(val) {
-    const rtf = new Intl.RelativeTimeFormat(config.COUNTRY, {
+    const rtf = new Intl.DateTimeFormat(getCurrentLocale(), {
+        localeMatcher: 'best fit',
+        dateStyle: 'short',
+        timeStyle: 'medium',
+    });
+
+    return rtf.format(val);
+}
+
+export function formatDateRelativeInUnits(val, unit = 'day') {
+    const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
+        localeMatcher: 'best fit',
+        numeric: 'auto',
+        style: 'long'
+    });
+
+    return rtf.format(val, 'day');
+}
+
+export function formatDateRelative(val) {
+    const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
         localeMatcher: 'best fit',
         numeric: 'auto',
         style: 'long'

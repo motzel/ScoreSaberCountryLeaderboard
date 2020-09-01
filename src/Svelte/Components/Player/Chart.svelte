@@ -2,8 +2,9 @@
     import {getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerScores} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
-    import {formatDate, formatNumber, round} from "../../../utils/format";
+    import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
+    import {_, trans} from '../../stores/i18n';
     import Button from "../Common/Button.svelte";
 
     export let profileId = null;
@@ -59,7 +60,7 @@
                     },
                     type: 'line',
                     data: {
-                        labels: Array(50).fill(0).map((v, i) => 0 === i ? 'teraz' : 1 === i ? 'wczoraj' : i + ' dni temu').reverse(),
+                        labels: Array(50).fill(0).map((v, i) => formatDateRelativeInUnits(-i, 'day')).reverse(),
                         datasets: [{
                             data: chartData,
                             label: '',
@@ -84,7 +85,7 @@
                                         tooltipItem.length
                                                 ? [
                                                     tooltipItem[0].xLabel,
-                                                    `Pozycja: ${formatNumber(tooltipItem[0].yLabel, 0)}`
+                                                    trans('chart.rankTooltip', {rank: formatNumber(tooltipItem[0].yLabel, 0)})
                                                 ]
                                                 : ''
                                 ,
@@ -100,13 +101,13 @@
                             xAxes: [{
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Czas',
+                                    labelString: trans('chart.timeLabel'),
                                 },
                             }],
                             yAxes: [{
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Pozycja',
+                                    labelString: trans('chart.rankLabel'),
                                 },
                                 ticks: {
                                     reverse: true,
@@ -166,7 +167,7 @@
                             callbacks: {
                                 title: function (tooltipItem, data) {
                                     return tooltipItem.length
-                                            ? `Celność: ${formatNumber(tooltipItem[0].yLabel)}% | Gwiazdki: ${formatNumber(tooltipItem[0].xLabel)}*`
+                                            ? trans('chart.accTooltip', {acc: formatNumber(tooltipItem[0].yLabel), stars: formatNumber(tooltipItem[0].xLabel)})
                                             : '';
                                 },
                                 label: function (tooltipItem, data) {
@@ -176,7 +177,7 @@
 
                                     const song = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
                                     if (song) {
-                                        ret.push(formatDate(song.timeset));
+                                        ret.push(formatDateRelative(song.timeset));
                                         ret.push(song.name);
                                         ret.push(`${song.songAuthor} / ${song.levelAuthor}`);
                                     }
@@ -203,7 +204,7 @@
                                 type: 'linear',
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Gwiazdki',
+                                    labelString: trans('chart.starsLabel'),
                                 },
                                 ticks: {
                                     min: 0,
@@ -217,7 +218,7 @@
                                 type: 'linear',
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Celność',
+                                    labelString: trans('chart.accuracyLabel'),
                                 },
                                 ticks: {
                                     max: 100,
@@ -264,9 +265,9 @@
 
     {#if chartData && chartData.length}
         <aside>
-            <Button iconFa="fa fa-chart-line" type={type === 'rank' ? 'primary' : 'default'} label="Ranking"
+            <Button iconFa="fa fa-chart-line" type={type === 'rank' ? 'primary' : 'default'} label={$_.chart.rankingButton}
                     on:click={() => type = 'rank'} disabled={type === 'rank'} />
-            <Button iconFa="fa fa-crosshairs" type={type === 'acc' ? 'primary' : 'default'} label="Celność"
+            <Button iconFa="fa fa-crosshairs" type={type === 'acc' ? 'primary' : 'default'} label={$_.chart.accuracyButton}
                     on:click={() => type = 'acc'} disabled={type === 'acc'} />
         </aside>
     {/if}

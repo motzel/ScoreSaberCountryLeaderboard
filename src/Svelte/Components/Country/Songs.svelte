@@ -6,6 +6,7 @@
     import {getAllActivePlayers} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
     import {extractDiffAndType, getSongDiffInfo} from "../../../song";
+    import {trans} from "../../stores/i18n";
 
     import Table from '../Common/Table.svelte';
     import Avatar from "../Common/Avatar.svelte";
@@ -33,11 +34,11 @@
     const header = [
         {label: '', key: 'picture', className: 'picture'},
         {label: '#', key: 'rank', className: 'rank'},
-        {label: 'Gracz', key: 'player', className: 'player'},
-        {label: 'Nuta', key: 'song', className: 'song'},
-        {label: 'Czas', key: 'timeset', className: 'timeset'},
-        {label: '%', key: 'acc', className: 'acc'},
-        {label: 'PP', key: 'pp', className: 'pp'}
+        {label: trans('dashboard.ranking.header.player'), key: 'player', className: 'player'},
+        {label: trans('dashboard.ranking.header.song'), key: 'song', className: 'song'},
+        {label: trans('dashboard.ranking.header.timeset'), key: 'timeset', className: 'timeset'},
+        {label: trans('dashboard.ranking.header.acc'), key: 'acc', className: 'acc'},
+        {label: trans('dashboard.ranking.header.pp'), key: 'pp', className: 'pp'}
     ].filter(h => !noRank || h.key !== 'rank');
 
     let scores = [];

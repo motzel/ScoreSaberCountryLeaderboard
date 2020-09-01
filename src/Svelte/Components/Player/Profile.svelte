@@ -9,6 +9,7 @@
     import {UNRANKED} from '../../../scoresaber/rankeds';
     import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
+    import {_} from '../../stores/i18n';
 
     export let profile;
 
@@ -76,9 +77,9 @@
 </script>
 
 {#if profile && stats}
-    <ProfileLine label="Ranked play count" value={stats.playCount} precision={0}/>
-    <ProfileLine label="Total ranked score" value={stats.totalScore} precision={0}/>
-    <ProfileLine label="Average ranked accuracy" value={stats.avgAcc} suffix="%"/>
+    <ProfileLine label={$_.profile.stats.rankedPlayCount} value={stats.playCount} precision={0}/>
+    <ProfileLine label={$_.profile.stats.totalRankedScore} value={stats.totalScore} precision={0}/>
+    <ProfileLine label={$_.profile.stats.avgRankedAccuracy} value={stats.avgAcc} suffix="%"/>
 {/if}
 
 {#if showCalc && scores && scores.length}

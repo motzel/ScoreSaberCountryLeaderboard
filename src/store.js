@@ -70,7 +70,10 @@ export async function getCacheAndConvertIfNeeded(force = false) {
     if (!cache.config.others) cache.config.others = {theme: 'darkss'}
 
     if (cache.config.others.bgDownload === undefined) cache.config.others.bgDownload = true;
-    if (!cache.config.others.viewsUpdate === undefined) cache.config.others.viewsUpdate = 'keep-view';
+    if (cache.config.others.viewsUpdate === undefined) cache.config.others.viewsUpdate = 'keep-view';
+
+    if (cache.config.others.language === undefined) cache.config.others.language = cache.lastUpdated ? 'pl' : 'en';
+    if (cache.config.others.locale === undefined) cache.config.others.locale = cache.lastUpdated ? 'pl-PL' : 'en-US';
 
     Globals.data = cache;
 
