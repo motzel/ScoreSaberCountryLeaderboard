@@ -66,6 +66,7 @@
     }
 </script>
 
+{#if ranking && ranking.length}
 <Table {header} rows={ranking} {itemsPerPage} pagesDisplayMax={7} className="ranking global sspl">
     <span slot="head-col" let:col>{col.label}</span>
 
@@ -83,6 +84,7 @@
         {/if}
     </span>
 </Table>
+{/if}
 
 <style>
     :global(.sspl .picture) {

@@ -27,13 +27,13 @@
     export let bgLeft = "0rem";
     export let bgTop = "0rem";
     export let highlight = [];
+    export let showBgCover = true;
 
     const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 3000;
 
     let leaderboard = null;
 
     let showWhatIfPp = false;
-    let showBgCover = true;
 
     async function refreshLeaderboard() {
         leaderboard = await getLeaderboard(leaderboardId);
@@ -46,7 +46,7 @@
         const config = await getConfig('songLeaderboard');
         showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
-        showBgCover = config.showBgCover !== false;
+        showBgCover = showBgCover && config.showBgCover !== false;
 
         await refreshLeaderboard();
 

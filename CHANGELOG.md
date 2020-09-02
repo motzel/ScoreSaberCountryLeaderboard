@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.5.2
+- [+] add in-place leaderboard in Song Browser when Cards view is selected
+- [*] optimize theme initialization
+
 0.9.5.1
 - [!] some minor bug fix regarding fragment part in url
 

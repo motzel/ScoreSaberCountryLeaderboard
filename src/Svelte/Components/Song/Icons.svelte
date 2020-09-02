@@ -56,9 +56,3 @@
         {/if}
     {/if}
 </div>
-
-<style>
-    div {
-        margin-top: 1rem;
-    }
-</style>

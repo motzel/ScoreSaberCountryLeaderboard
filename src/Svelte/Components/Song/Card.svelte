@@ -29,8 +29,7 @@
     export let bgTop = "0rem";
     export let padding = "1.25em";
     export let iconSize = "1em";
-
-    let showBgCover = true;
+    export let showBgCover = true;
 
     let songInfo;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
@@ -38,7 +37,7 @@
     onMount(async () => {
         const config = await getConfig();
         shownIcons = config && config.songBrowser && config.songBrowser.showIcons ? config.songBrowser.showIcons : shownIcons;
-        showBgCover = config && config.songLeaderboard && config.songLeaderboard.showBgCover !== false;
+        showBgCover = showBgCover && config && config.songLeaderboard && config.songLeaderboard.showBgCover !== false;
     });
 </script>
 
@@ -55,8 +54,11 @@
                         </a>
                     </h1>
                     <h2 class="title is-5">
-                        {songAuthorName}
-                        <small>{levelAuthorName}</small></h2>
+                        <a href="{ SCORESABER_URL + '/leaderboard/' + encodeURIComponent(leaderboardId)}">
+                            {songAuthorName}
+                            <small>{levelAuthorName}</small>
+                        </a>
+                    </h2>
                     <h3 class="title is-6">
                         {#if diffInfo}<span class="diff block"><Difficulty diff={diffInfo} reverseColors={true}/></span>{/if}
 
@@ -92,7 +94,9 @@
                 </main>
 
                 <footer>
-                    {#if showIcons}<Icons {hash} {twitchUrl} />{/if}
+                    <slot name="footer">
+                        {#if showIcons}<Icons {hash} {twitchUrl} />{/if}
+                    </slot>
                 </footer>
             </div>
         </div>

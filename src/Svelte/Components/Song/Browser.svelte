@@ -48,6 +48,7 @@
     import Checkbox from "../Common/Checkbox.svelte";
     import {_, trans} from "../../stores/i18n";
     import Card from "./Card.svelte";
+    import Icons from "./Icons.svelte";
 
     export let playerId;
     export let snipedIds = [];
@@ -114,147 +115,147 @@
 
         columns: [
             {
-                _key: 'songBrowser.fields.stars',
-                _keyName: 'songBrowser.fields.starsShort',
-                name: '*',
-                key: 'stars',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.stars',
+                _keyName  : 'songBrowser.fields.starsShort',
+                name      : '*',
+                key       : 'stars',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "*"}
             },
             {
-                _key: 'songBrowser.fields.maxPp',
-                _keyName: 'songBrowser.fields.maxPpShort',
-                name: 'Max PP',
-                key: 'maxPp',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.maxPp',
+                _keyName  : 'songBrowser.fields.maxPpShort',
+                name      : 'Max PP',
+                key       : 'maxPp',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "pp"}
             },
             {
-                _key: 'songBrowser.fields.bpm',
-                _keyName: 'songBrowser.fields.bpmShort',
-                name: 'BPM',
-                key: 'bpm',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.bpm',
+                _keyName  : 'songBrowser.fields.bpmShort',
+                name      : 'BPM',
+                key       : 'bpm',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "", digits: 0}
             },
             {
-                _key: 'songBrowser.fields.njs',
-                _keyName: 'songBrowser.fields.njsShort',
-                name: 'NJS',
-                key: 'njs',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.njs',
+                _keyName  : 'songBrowser.fields.njsShort',
+                name      : 'NJS',
+                key       : 'njs',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "", digits: 0}
             },
             {
-                _key: 'songBrowser.fields.nps',
-                _keyName: 'songBrowser.fields.npsShort',
-                name: 'NPS',
-                key: 'nps',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.nps',
+                _keyName  : 'songBrowser.fields.npsShort',
+                name      : 'NPS',
+                key       : 'nps',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: ""}
             },
             {
-                _key: 'songBrowser.fields.duration',
-                _keyName: 'songBrowser.fields.durationShort',
-                name: 'Czas',
-                key: 'length',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.duration',
+                _keyName  : 'songBrowser.fields.durationShort',
+                name      : 'Czas',
+                key       : 'length',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-"}
             },
             {
-                _key: 'songBrowser.fields.timeset',
-                _keyName: 'songBrowser.fields.timesetShort',
+                _key        : 'songBrowser.fields.timeset',
+                _keyName    : 'songBrowser.fields.timesetShort',
                 compactLabel: null,
-                name: 'Data',
-                key: 'timeset',
-                selected: true,
-                type: 'series',
-                displayed: true,
-                valueProps: {prevValue: null}
+                name        : 'Data',
+                key         : 'timeset',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {prevValue: null}
             },
             {
-                _key: 'songBrowser.fields.diffPp',
-                _keyName: 'songBrowser.fields.diffPpShort',
+                _key        : 'songBrowser.fields.diffPp',
+                _keyName    : 'songBrowser.fields.diffPpShort',
                 compactLabel: null,
-                name: '+PP',
-                key: 'diffPp',
-                selected: false,
-                type: 'series',
-                displayed: false,
-                valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
+                name        : '+PP',
+                key         : 'diffPp',
+                selected    : false,
+                type        : 'series',
+                displayed   : false,
+                valueProps  : {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
             },
             {
-                _key: 'songBrowser.fields.pp',
-                _keyName: 'songBrowser.fields.ppShort',
-                name: 'PP',
-                key: 'pp',
-                selected: true,
-                type: 'series',
+                _key      : 'songBrowser.fields.pp',
+                _keyName  : 'songBrowser.fields.ppShort',
+                name      : 'PP',
+                key       : 'pp',
+                selected  : true,
+                type      : 'series',
                 valueProps: {zero: "-", suffix: "pp"},
-                displayed: true
+                displayed : true
             },
             {
-                _key: 'songBrowser.fields.weightedPp',
-                _keyName: 'songBrowser.fields.weightedPpShort',
+                _key            : 'songBrowser.fields.weightedPp',
+                _keyName        : 'songBrowser.fields.weightedPpShort',
                 _keyCompactLabel: 'songBrowser.fields.weighted',
-                compactLabel: 'Waż.',
-                name: 'wPP',
-                key: 'weightedPp',
-                selected: false,
-                type: 'series',
-                displayed: true,
-                valueProps: {zero: "-", suffix: "pp"}
+                compactLabel    : 'Waż.',
+                name            : 'wPP',
+                key             : 'weightedPp',
+                selected        : false,
+                type            : 'series',
+                displayed       : true,
+                valueProps      : {zero: "-", suffix: "pp"}
             },
             {
-                _key: 'songBrowser.fields.acc',
-                _keyName: 'songBrowser.fields.accShort',
+                _key        : 'songBrowser.fields.acc',
+                _keyName    : 'songBrowser.fields.accShort',
                 compactLabel: null,
-                name: 'Acc',
-                key: 'acc',
-                selected: true,
-                type: 'series',
-                displayed: true,
-                valueProps: {zero: "-", suffix: "%"}
+                name        : 'Acc',
+                key         : 'acc',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-", suffix: "%"}
             },
             {
-                _key: 'songBrowser.fields.score',
-                _keyName: 'songBrowser.fields.scoreShort',
+                _key        : 'songBrowser.fields.score',
+                _keyName    : 'songBrowser.fields.scoreShort',
                 compactLabel: null,
-                name: 'Wynik',
-                key: 'score',
-                selected: true,
-                type: 'series',
-                displayed: true,
-                valueProps: {digits: 0, zero: "-"}
+                name        : 'Wynik',
+                key         : 'score',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {digits: 0, zero: "-"}
             },
             {
-                _key: 'songBrowser.fields.diff',
-                _keyName: 'songBrowser.fields.diffShort',
-                name: 'Różnice',
-                key: 'diff',
-                selected: true,
-                type: 'other',
+                _key     : 'songBrowser.fields.diff',
+                _keyName : 'songBrowser.fields.diffShort',
+                name     : 'Różnice',
+                key      : 'diff',
+                selected : true,
+                type     : 'other',
                 displayed: true
             },
             {
-                _key: 'songBrowser.fields.icons',
-                name: '',
-                key: 'icons',
-                type: 'additional',
+                _key     : 'songBrowser.fields.icons',
+                name     : '',
+                key      : 'icons',
+                type     : 'additional',
                 displayed: true,
-                selected: true
+                selected : true
             },
         ],
 
@@ -272,20 +273,20 @@
     let sortTypes = [
         {
             ...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'),
-            type: 'series',
+            type   : 'series',
             subtype: 0,
-            field: 'timeset',
+            field  : 'timeset',
             enabled: true
         },
     ];
     let allFilters = {
-        songType: strings.songTypes[0],
+        songType      : strings.songTypes[0],
         songTypeOption: strings.songTypeOptions[0],
-        name: "",
-        starsFilter: {from: 0, to: maxStars},
-        minPpDiff: 1,
-        sortBy: sortTypes[0],
-        sortOrder: strings.sortOrders[0]
+        name          : "",
+        starsFilter   : {from: 0, to: maxStars},
+        minPpDiff     : 1,
+        sortBy        : sortTypes[0],
+        sortOrder     : strings.sortOrders[0]
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
 
@@ -331,18 +332,18 @@
         if (allFilters.songType.id === 'sniper_mode')
             types.push({
                 ...getObjectFromArrayByKey(strings.sortTypes, 'bestDiffPp', 'field'),
-                type: 'song',
+                type   : 'song',
                 subtype: null,
-                field: 'bestDiffPp',
+                field  : 'bestDiffPp',
                 enabled: true
             });
 
         if (allFilters.songType.id !== 'unrankeds')
             types.push({
                 ...getObjectFromArrayByKey(strings.sortTypes, 'stars', 'field'),
-                type: 'song',
+                type   : 'song',
                 subtype: null,
-                field: 'stars',
+                field  : 'stars',
                 enabled: true
             });
 
@@ -355,32 +356,32 @@
                     [
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'),
-                            field: "timeset",
+                            field  : "timeset",
                             enabled: pId !== playerId || allFilters.songType.id !== 'rankeds_unplayed'
                         },
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'diffPp', 'field'),
-                            field: "diffPp",
+                            field  : "diffPp",
                             enabled: 'sniper_mode' === allFilters.songType.id && idx !== 0
                         },
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'pp', 'field'),
-                            field: "pp",
+                            field  : "pp",
                             enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'acc', 'field'),
-                            field: "acc",
+                            field  : "acc",
                             enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
                         },
                     ].forEach(field => {
                         if (field.enabled)
                             newFields.push({
-                                _key: field._key,
-                                label: field.label,
-                                type: 'series',
+                                _key   : field._key,
+                                label  : field.label,
+                                type   : 'series',
                                 subtype: idx,
-                                field: field.field,
+                                field  : field.field,
                                 enabled: true
                             })
                     })
@@ -430,9 +431,9 @@
             switch (viewUpdates) {
                 case 'keep-view':
                     const newIdx = data.songs.findIndex(
-                        s => allFilters.sortOrder.order === 'asc'
-                            ? getSortValue(s, data.series, allFilters) >= rowId
-                            : getSortValue(s, data.series, allFilters) <= rowId
+                      s => allFilters.sortOrder.order === 'asc'
+                        ? getSortValue(s, data.series, allFilters) >= rowId
+                        : getSortValue(s, data.series, allFilters) <= rowId
                     );
                     const newPage = newIdx >= 0 ? Math.floor(newIdx / itemsPerPage) : 0;
                     if (newPage !== currentPage) currentPage = newPage;
@@ -456,8 +457,8 @@
     const getCachedAllScoresByType = memoize(getAllScoresByType);
     const getMinStars = async (playerId, boundary = minPpPerMap, maxAcc = 95) => {
         const playerPpScores = (await getCachedAllScoresByType(playerId, true))
-                .sort((a, b) => b.pp - a.pp)
-                .map(s => s.pp);
+          .sort((a, b) => b.pp - a.pp)
+          .map(s => s.pp);
 
         const onePpBoundary = findRawPp(playerPpScores, boundary);
 
@@ -505,15 +506,15 @@
 
         allRankeds = await getRankedSongs();
         maxStars = (await Promise.all(
-                Object.values(allRankeds)
-                        .map(async r => {
-                            allRankeds[r.leaderboardId].maxScoreEx = await getCachedMaxScoreExFromPlayersScores(r.leaderboardId);
+          Object.values(allRankeds)
+            .map(async r => {
+                allRankeds[r.leaderboardId].maxScoreEx = await getCachedMaxScoreExFromPlayersScores(r.leaderboardId);
 
-                            return r.stars
-                        })
+                return r.stars
+            })
         ))
 
-                .reduce((max, stars) => max = stars > max ? stars : max, 0);
+          .reduce((max, stars) => max = stars > max ? stars : max, 0);
 
         allFilters.starsFilter = Object.assign({}, allFilters.starsFilter, {to: maxStars});
 
@@ -542,16 +543,16 @@
         await generateSortTypes();
 
         users = (await getAllActivePlayers(country))
-                .reduce((cum, player) => {
-                    if (player && player.scores) {
-                        let {id, name, avatar} = player;
+          .reduce((cum, player) => {
+              if (player && player.scores) {
+                  let {id, name, avatar} = player;
 
-                        cum.push({id, label: name, avatar});
-                    }
-                    return cum;
-                }, [])
-                .sort((a, b) => a.label.toLowerCase().replace(/[^a-zAZ]/g, '').localeCompare(b.label.toLowerCase().replace(/[^a-zAZ]/g, '')))
-                .filter(u => u.id !== playerId)
+                  cum.push({id, label: name, avatar});
+              }
+              return cum;
+          }, [])
+          .sort((a, b) => a.label.toLowerCase().replace(/[^a-zAZ]/g, '').localeCompare(b.label.toLowerCase().replace(/[^a-zAZ]/g, '')))
+          .filter(u => u.id !== playerId)
         ;
 
         const forceRefresh = async (nodeId, player) => {
@@ -603,7 +604,7 @@
     async function getPlayerTotalPpWithBestScores(songs, key = 'bestRealPp') {
         const bestScores = convertArrayToObjectByKey(songs.filter(s => s[key]).map(s => ({
             leaderboardId: s.leaderboardId,
-            pp: s[key]
+            pp           : s[key]
         })), 'leaderboardId');
 
         return await getCachedTotalPlayerPp(playerId, bestScores);
@@ -680,11 +681,11 @@
             if (data && data.twitch && data.twitch.users && data.twitch.users[playerId] && data.twitch.users[playerId].videos) {
                 const songStarted = addToDate(timeset, -songLength * 1000)
                 const video = data.twitch.users[playerId].videos
-                        .map(v => Object.assign({}, v, {
-                            created_at: dateFromString(v.created_at),
-                            ended_at: addToDate(dateFromString(v.created_at), durationToMillis(v.duration))
-                        }))
-                        .find(v => v.created_at <= songStarted && songStarted < v.ended_at);
+                  .map(v => Object.assign({}, v, {
+                      created_at: dateFromString(v.created_at),
+                      ended_at  : addToDate(dateFromString(v.created_at), durationToMillis(v.duration))
+                  }))
+                  .find(v => v.created_at <= songStarted && songStarted < v.ended_at);
 
                 return video ? Object.assign({}, video, {url: video.url + '?t=' + millisToDuration(songStarted - video.created_at)}) : null;
             }
@@ -719,7 +720,8 @@
                             current
                         })
                     }
-                } catch (e) {
+                }
+                catch (e) {
                     // swallow error
                 }
             }
@@ -874,60 +876,60 @@
 
             const playerInfos = (await Promise.all(playerIds.map(async pId => getPlayerInfo(pId))))
             const playersSeries = await Promise.all(playerInfos
-                    .map(async pInfo => {
-                        const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
+              .map(async pInfo => {
+                  const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
-                        // set all players total pp to main player's total pp
-                        const shouldCalculateTotalPp = filters.songType.id === 'sniper_mode';
-                        playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
-                        playerInfo.totalPp = playerInfo.prevTotalPp;
+                  // set all players total pp to main player's total pp
+                  const shouldCalculateTotalPp = filters.songType.id === 'sniper_mode';
+                  playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
+                  playerInfo.totalPp = playerInfo.prevTotalPp;
 
-                        if (!sortedRankeds[pInfo.id]) sortedRankeds[pInfo.id] = Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp);
+                  if (!sortedRankeds[pInfo.id]) sortedRankeds[pInfo.id] = Object.values(scores).filter((s) => s.pp > 0).sort((a, b) => b.pp - a.pp);
 
-                        return Object.assign(
-                                {},
-                                playerInfo,
-                                {
-                                    lastUpdated: lastUpdated ? dateFromString(lastUpdated) : null,
-                                    scores: convertArrayToObjectByKey(
-                                            Object.values(scores)
-                                                    .map(s => {
-                                                        const {id, name, songSubName, songAuthorName, levelAuthorName, diff, stars, oldStars, maxScoreEx, playerId, ...score} = s;
-                                                        score.timeset = dateFromString(s.timeset);
+                  return Object.assign(
+                    {},
+                    playerInfo,
+                    {
+                        lastUpdated: lastUpdated ? dateFromString(lastUpdated) : null,
+                        scores     : convertArrayToObjectByKey(
+                          Object.values(scores)
+                            .map(s => {
+                                const {id, name, songSubName, songAuthorName, levelAuthorName, diff, stars, oldStars, maxScoreEx, playerId, ...score} = s;
+                                score.timeset = dateFromString(s.timeset);
 
-                                                        if (score.pp > 0 && !score.weightedPp) {
-                                                            score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);
-                                                            s.weightedPp = score.weightedPp; // in order to cache for next iteration
-                                                        }
-
-                                                        s.scoreMult = score.uScore ? score.score / score.uScore : 1;
-
-                                                        return score;
-                                                    }),
-                                            'leaderboardId'
-                                    )
+                                if (score.pp > 0 && !score.weightedPp) {
+                                    score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);
+                                    s.weightedPp = score.weightedPp; // in order to cache for next iteration
                                 }
-                        )
-                    }))
-            const allPlayedSongs =
-                    await Promise.all(
-                            Object.values(playerInfos.reduce((cum, player) => Object.assign({}, cum, player.scores), {}))
-                                    .map(async s => {
-                                        const maxScoreEx = s.maxScoreEx ? s.maxScoreEx : await getCachedMaxScoreExFromPlayersScores(s.leaderboardId);
 
-                                        return {
-                                            leaderboardId: s.leaderboardId,
-                                            id: s.id,
-                                            name: (s.name + ' ' + s.songSubName).trim(),
-                                            songAuthor: s.songAuthorName,
-                                            levelAuthor: s.levelAuthorName,
-                                            diff: extractDiffAndType(s.diff),
-                                            stars: s.stars ? s.stars : null,
-                                            oldStars: null,
-                                            maxScoreEx
-                                        }
-                                    })
-                    )
+                                s.scoreMult = score.uScore ? score.score / score.uScore : 1;
+
+                                return score;
+                            }),
+                          'leaderboardId'
+                        )
+                    }
+                  )
+              }))
+            const allPlayedSongs =
+              await Promise.all(
+                Object.values(playerInfos.reduce((cum, player) => Object.assign({}, cum, player.scores), {}))
+                  .map(async s => {
+                      const maxScoreEx = s.maxScoreEx ? s.maxScoreEx : await getCachedMaxScoreExFromPlayersScores(s.leaderboardId);
+
+                      return {
+                          leaderboardId: s.leaderboardId,
+                          id           : s.id,
+                          name         : (s.name + ' ' + s.songSubName).trim(),
+                          songAuthor   : s.songAuthorName,
+                          levelAuthor  : s.levelAuthorName,
+                          diff         : extractDiffAndType(s.diff),
+                          stars        : s.stars ? s.stars : null,
+                          oldStars     : null,
+                          maxScoreEx
+                      }
+                  })
+              )
 
             const allPlayedSongsObj = convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId')
             RANKED.forEach(id => {
@@ -938,144 +940,144 @@
             })
 
             const filteredSongs = (await Promise.all((
-                    filters.songType.id === 'sniper_mode'
-                            ? Object.values(Object.assign(
-                            convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
-                            allRankeds
-                            ))
-                            : (filters.songType.id === 'rankeds_unplayed'
-                                    ? Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId])
-                                    : allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
-                            )
+              filters.songType.id === 'sniper_mode'
+                ? Object.values(Object.assign(
+                convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
+                allRankeds
+                ))
+                : (filters.songType.id === 'rankeds_unplayed'
+                  ? Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId])
+                  : allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
+                )
             )
-                    .filter(s =>
-                            // filter by name
-                            (!filters.name.length || filterBySongName(s, filters.name)) &&
+              .filter(s =>
+                // filter by name
+                (!filters.name.length || filterBySongName(s, filters.name)) &&
 
-                            // filter by type & stars
-                            (
-                                    (songIsUnranked(s) && ['unrankeds', 'all'].includes(filters.songType.id)) ||
-                                    (filters.songType.id !== 'unrankeds' && mapHasStars(s, filters.starsFilter.from, filters.starsFilter.to))
-                            )
-                    )
+                // filter by type & stars
+                (
+                  (songIsUnranked(s) && ['unrankeds', 'all'].includes(filters.songType.id)) ||
+                  (filters.songType.id !== 'unrankeds' && mapHasStars(s, filters.starsFilter.from, filters.starsFilter.to))
+                )
+              )
 
-                    .map(async s => {
-                        s.bestIdx = null;
-                        s.bestRealIdx = null;
-                        s.bestAcc = 0;
-                        s.bestRealAcc = 0;
-                        s.bestScore = 0;
-                        s.bestRealScore = 0;
-                        s.bestPp = 0;
-                        s.bestRealPp = 0;
-                        s.bestDiffPp = 0;
-                        s.bestRealDiffPp = 0;
+              .map(async s => {
+                  s.bestIdx = null;
+                  s.bestRealIdx = null;
+                  s.bestAcc = 0;
+                  s.bestRealAcc = 0;
+                  s.bestScore = 0;
+                  s.bestRealScore = 0;
+                  s.bestPp = 0;
+                  s.bestRealPp = 0;
+                  s.bestDiffPp = 0;
+                  s.bestRealDiffPp = 0;
 
-                        playersSeries.forEach((series, idx) => {
-                            if (series.scores[s.leaderboardId]) {
-                                const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
-                                const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
+                  playersSeries.forEach((series, idx) => {
+                      if (series.scores[s.leaderboardId]) {
+                          const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
+                          const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
 
-                                const scoreMult = series.scores[s.leaderboardId].scoreMult ? series.scores[s.leaderboardId].scoreMult : 1
-                                series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx / scoreMult * 100 : null;
+                          const scoreMult = series.scores[s.leaderboardId].scoreMult ? series.scores[s.leaderboardId].scoreMult : 1
+                          series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx / scoreMult * 100 : null;
 
-                                series.scores[s.leaderboardId].diffPp = null;
+                          series.scores[s.leaderboardId].diffPp = null;
 
-                                // get previous player scores
-                                if (idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
-                                    series.prevLabel = "Poprzednio";
+                          // get previous player scores
+                          if (idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
+                              series.prevLabel = "Poprzednio";
 
-                                    ["pp", "score", "uScore"].forEach(key => {
-                                        series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
-                                    })
-                                    series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
+                              ["pp", "score", "uScore"].forEach(key => {
+                                  series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
+                              })
+                              series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
 
-                                    series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
-                                    series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
-                                }
+                              series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
+                              series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
+                          }
 
-                                if (idx > 0) {
-                                    // get player score to compare
-                                    series.prevLabel = playersSeries[0].name;
+                          if (idx > 0) {
+                              // get player score to compare
+                              series.prevLabel = playersSeries[0].name;
 
-                                    const playerScoreToCompare = playersSeries[0].scores[s.leaderboardId];
-                                    ["acc", "pp", "score", "timeset", "uScore"].forEach(key => {
-                                        series.scores[s.leaderboardId]['prev' + capitalize(key)] = playerScoreToCompare ? playerScoreToCompare[key] : null;
-                                    })
-                                }
-                            }
-                        })
+                              const playerScoreToCompare = playersSeries[0].scores[s.leaderboardId];
+                              ["acc", "pp", "score", "timeset", "uScore"].forEach(key => {
+                                  series.scores[s.leaderboardId]['prev' + capitalize(key)] = playerScoreToCompare ? playerScoreToCompare[key] : null;
+                              })
+                          }
+                      }
+                  })
 
-                        const {bestIdx, playedByCnt} = findBestInSeries(playersSeries, s.leaderboardId, 'score');
-                        s.playedByCnt = playedByCnt;
+                  const {bestIdx, playedByCnt} = findBestInSeries(playersSeries, s.leaderboardId, 'score');
+                  s.playedByCnt = playedByCnt;
 
-                        if (null !== bestIdx) {
-                            const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
+                  if (null !== bestIdx) {
+                      const bestSeries = playersSeries[bestIdx].scores[s.leaderboardId];
 
-                            if (bestSeries) {
-                                bestSeries.best = true;
-                                bestSeries.playedByCnt = playedByCnt;
+                      if (bestSeries) {
+                          bestSeries.best = true;
+                          bestSeries.playedByCnt = playedByCnt;
 
-                                s.bestIdx = bestIdx;
-                                s.bestAcc = bestSeries.acc;
-                                s.bestScore = bestSeries.score;
-                                s.bestPp = bestSeries.pp;
-                                s.bestDiffPp = bestSeries.diffPp;
+                          s.bestIdx = bestIdx;
+                          s.bestAcc = bestSeries.acc;
+                          s.bestScore = bestSeries.score;
+                          s.bestPp = bestSeries.pp;
+                          s.bestDiffPp = bestSeries.diffPp;
 
-                                s.bestRealIdx = bestIdx;
-                                s.bestRealAcc = bestSeries.acc;
-                                s.bestRealScore = bestSeries.score;
-                                s.bestRealPp = bestSeries.pp;
-                                s.bestRealDiffPp = bestSeries.diffPp;
-                            }
-                        }
+                          s.bestRealIdx = bestIdx;
+                          s.bestRealAcc = bestSeries.acc;
+                          s.bestRealScore = bestSeries.score;
+                          s.bestRealPp = bestSeries.pp;
+                          s.bestRealDiffPp = bestSeries.diffPp;
+                      }
+                  }
 
-                        if (filters.songType.id === 'sniper_mode') {
-                            for (const idx in playersSeries) {
-                                // skip calculating if player is the best - will be filtered belowe
-                                if (playersSeries[0].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
+                  if (filters.songType.id === 'sniper_mode') {
+                      for (const idx in playersSeries) {
+                          // skip calculating if player is the best - will be filtered belowe
+                          if (playersSeries[0].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
 
-                                const series = playersSeries[idx];
+                          const series = playersSeries[idx];
 
-                                if (series.scores[s.leaderboardId]) {
-                                    series.scores[s.leaderboardId].diffPp = series.scores[s.leaderboardId].pp > 0 && idx !== compareToIdx
-                                            ? await getCachedScoreWithNewPp(playersSeries[compareToIdx].id, {[s.leaderboardId]: {pp: series.scores[s.leaderboardId].pp}})
-                                            : null;
-                                }
-                            }
+                          if (series.scores[s.leaderboardId]) {
+                              series.scores[s.leaderboardId].diffPp = series.scores[s.leaderboardId].pp > 0 && idx !== compareToIdx
+                                ? await getCachedScoreWithNewPp(playersSeries[compareToIdx].id, {[s.leaderboardId]: {pp: series.scores[s.leaderboardId].pp}})
+                                : null;
+                          }
+                      }
 
-                            if (s.bestIdx) s.bestDiffPp = playersSeries[s.bestIdx].scores[s.leaderboardId].diffPp;
-                            if (s.bestRealIdx) s.bestRealDiffPp = playersSeries[s.bestRealIdx].scores[s.leaderboardId].diffPp;
-                        }
+                      if (s.bestIdx) s.bestDiffPp = playersSeries[s.bestIdx].scores[s.leaderboardId].diffPp;
+                      if (s.bestRealIdx) s.bestRealDiffPp = playersSeries[s.bestRealIdx].scores[s.leaderboardId].diffPp;
+                  }
 
-                        return s;
-                    })))
+                  return s;
+              })))
 
-                    // filter when sniper mode, player is the best and diff > minPpDiff
-                    .filter(s =>
-                            (
-                                    filters.songType.id === 'sniper_mode' &&
-                                    (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
-                            ) ||
+              // filter when sniper mode, player is the best and diff > minPpDiff
+              .filter(s =>
+                (
+                  filters.songType.id === 'sniper_mode' &&
+                  (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                ) ||
 
-                            (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
+                (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
 
-                            (
-                                    'sniper_mode' !== allFilters.songType.id &&
-                                    (
-                                            allFilters.songTypeOption.id === 'all' ||
-                                            (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
-                                            (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
-                                    )
-                            )
-                    )
+                (
+                  'sniper_mode' !== allFilters.songType.id &&
+                  (
+                    allFilters.songTypeOption.id === 'all' ||
+                    (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
+                    (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
+                  )
+                )
+              )
 
-                    .sort((songA, songB) => {
-                        const a = getSortValue(songA, playersSeries, filters);
-                        const b = getSortValue(songB, playersSeries, filters);
+              .sort((songA, songB) => {
+                  const a = getSortValue(songA, playersSeries, filters);
+                  const b = getSortValue(songB, playersSeries, filters);
 
-                        return filters.sortOrder.order === 'asc' ? a - b : b - a;
-                    })
+                  return filters.sortOrder.order === 'asc' ? a - b : b - a;
+              })
 
             let bestTotalRealPp = playersSeries[compareToIdx].totalPp
             let bestTotalPp = playersSeries[compareToIdx].totalPp;
@@ -1084,14 +1086,13 @@
                 const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
                 for (const p of playersSeries) {
                     const betterScores = convertArrayToObjectByKey(
-                            Object.values(p.scores)
-                                    .filter(s => filteredSongsIds.includes(s.leaderboardId) && (!playersSeries[compareToIdx].scores[s.leaderboardId] || s.pp > playersSeries[compareToIdx].scores[s.leaderboardId].pp))
-                                    .map(s => ({leaderboardId: s.leaderboardId, pp: s.pp})),
-                            'leaderboardId'
+                      Object.values(p.scores)
+                        .filter(s => filteredSongsIds.includes(s.leaderboardId) && (!playersSeries[compareToIdx].scores[s.leaderboardId] || s.pp > playersSeries[compareToIdx].scores[s.leaderboardId].pp))
+                        .map(s => ({leaderboardId: s.leaderboardId, pp: s.pp})),
+                      'leaderboardId'
                     );
                     p.totalPp = await getCachedTotalPlayerPp(playerId, betterScores);
                 }
-
 
                 if (snipedIds.length >= 1) {
                     bestTotalRealPp = snipedIds.length === 1 ? playersSeries[1].totalPp : await getPlayerTotalPpWithBestScores(filteredSongs, 'bestRealPp');
@@ -1102,7 +1103,8 @@
             calculating = false;
 
             return {songs: filteredSongs, series: playersSeries, bestTotalRealPp, bestTotalPp}
-        } catch (err) {
+        }
+        catch (err) {
             log.error(err)
         }
     }
@@ -1125,31 +1127,32 @@
         ]
         const data = await calcPromised;
         const transformedData = await Promise.all(
-                data.songs.map(async s => {
-                    const diffInfo = getHumanDiffInfo(s.diff);
+          data.songs.map(async s => {
+              const diffInfo = getHumanDiffInfo(s.diff);
 
-                    let maxScore = s.maxScoreEx;
-                    if (!maxScore) {
-                        try {
-                            // try to get max score from cache
-                            maxScore = await getSongMaxScoreWithDiffAndType(s.id, s.diff, true);
-                        } catch (e) {
-                            // swallow error
-                        }
-                    }
+              let maxScore = s.maxScoreEx;
+              if (!maxScore) {
+                  try {
+                      // try to get max score from cache
+                      maxScore = await getSongMaxScoreWithDiffAndType(s.id, s.diff, true);
+                  }
+                  catch (e) {
+                      // swallow error
+                  }
+              }
 
-                    return Object.assign({}, s, {
-                        difficulty: diffInfo ? diffInfo.name : '',
-                        maxScore: maxScore ? maxScore : '',
-                        timeset: getScoreValueByKey(data.series[0], s, 'timeset'),
-                        score: getScoreValueByKey(data.series[0], s, 'score'),
-                        mods: getScoreValueByKey(data.series[0], s, 'mods'),
-                        uScore: getScoreValueByKey(data.series[0], s, 'uScore'),
-                        pp: getScoreValueByKey(data.series[0], s, 'pp'),
-                        weightedPp: getScoreValueByKey(data.series[0], s, 'weightedPp'),
-                    })
-                })
-                )
+              return Object.assign({}, s, {
+                  difficulty: diffInfo ? diffInfo.name : '',
+                  maxScore  : maxScore ? maxScore : '',
+                  timeset   : getScoreValueByKey(data.series[0], s, 'timeset'),
+                  score     : getScoreValueByKey(data.series[0], s, 'score'),
+                  mods      : getScoreValueByKey(data.series[0], s, 'mods'),
+                  uScore    : getScoreValueByKey(data.series[0], s, 'uScore'),
+                  pp        : getScoreValueByKey(data.series[0], s, 'pp'),
+                  weightedPp: getScoreValueByKey(data.series[0], s, 'weightedPp'),
+              })
+          })
+          )
         ;
         const csv = generateCsv(transformedData, headers);
 
@@ -1161,10 +1164,10 @@
         const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.id}));
         const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
-            playlistTitle: "SSPL playlist",
-            playlistAuthor: "https://github.com/motzel/ScoreSaberCountryLeaderboard",
+            playlistTitle      : "SSPL playlist",
+            playlistAuthor     : "https://github.com/motzel/ScoreSaberCountryLeaderboard",
             playlistDescription: "",
-            image: bloodTrailImg,
+            image              : bloodTrailImg,
             songs
         }
         downloadJson("playlist-" + (new Date()).toISOString().replace(/:/g, '_') + '.json', JSON.stringify(playlist));
@@ -1320,7 +1323,7 @@
             {#if viewType.id === 'cards'}
             <div class="columns card-view is-multiline">
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <div class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")}>
+                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")}>
                         <Card leaderboardId={song.leaderboardId} hash={song.id} padding="1em" iconSize="0.875em"
                               songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
                               diffInfo={song.diff}
@@ -1330,8 +1333,6 @@
                               bpm={selectedSongCols.find(c=>c.key==='bpm') ? song.bpm : null}
                               njs={selectedSongCols.find(c=>c.key==='njs') ? song.njs : null}
                               nps={selectedSongCols.find(c=>c.key==='nps') ? song.nps : null}
-                              twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null}
-                              showIcons={selectedAdditionalCols.length > 0}
                         >
                             <div slot="before-header" class="check">
                                 {#if showCheckboxes}
@@ -1339,52 +1340,68 @@
                                 {/if}
                             </div>
 
-                            <div class="scores columns is-multiline is-mobile" class:bigger={songsPage.series.length === 1} slot="main">
-                                {#each songsPage.series as series, sIdx (series.id)}
-                                <div class="column">
-                                    <div class="score" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
-                                        {#if songsPage.series.length > 1}
-                                            <div class="player-name">
-                                            {#if sIdx > 0}
-                                                <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)}></Select>
-                                                <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onPlayerRemove(sIdx)}></i>
-                                            {:else}
-                                                <strong>{series.name}</strong>
-                                            {/if}
-                                            </div>
-                                        {/if}
-                                        {#if getScoreValueByKey(series, song, 'score')}
-                                            {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
-                                                {#if col.key === 'timeset'}
-                                                    <strong class={'compact-' + col.key + '-val'}>
-                                                        <FormattedDate date={getScoreValueByKey(series, song, col.key)}
-                                                                       {...col.valueProps}/>
-                                                    </strong>
+                            <div class="scores" class:bigger={songsPage.series.length === 1} slot="main">
+                                <div class="columns is-multiline is-mobile">
+                                    {#each songsPage.series as series, sIdx (series.id)}
+                                    <div class="column">
+                                        <div class="score" class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
+                                            {#if songsPage.series.length > 1}
+                                                <div class="player-name">
+                                                {#if sIdx > 0}
+                                                    <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)}></Select>
+                                                    <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onPlayerRemove(sIdx)}></i>
                                                 {:else}
-                                                    {#if getScoreValueByKey(series, song, col.key)}
-                                                        <div>
-                                                            {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
-                                                            {/if}
-                                                            <strong class={'compact-' + col.key + '-val'}>
-                                                                <Value value={getScoreValueByKey(series, song, col.key)}
-                                                                       prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
-                                                                       prevLabel={series.prevLabel} inline={true}
-                                                                       {...col.valueProps}
-                                                                />
-                                                            </strong>
-                                                        </div>
-                                                    {/if}
-                                                    {#if col.key === 'pp' && allFilters.songType.id !== 'sniper_mode'}
-                                                        <WhatIfPp leaderboardId={song.leaderboardId}
-                                                                  pp={getScoreValueByKey(series, song, col.key)}/>{/if}
+                                                    <strong>{series.name}</strong>
                                                 {/if}
-                                            {/if}{/each}
-                                        {:else}
-                                            <span class="dec">{$_.songBrowser.noScore}</span>
-                                        {/if}
+                                                </div>
+                                            {/if}
+                                            {#if getScoreValueByKey(series, song, 'score')}
+                                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                                    {#if col.key === 'timeset'}
+                                                        <strong class={'compact-' + col.key + '-val'}>
+                                                            <FormattedDate date={getScoreValueByKey(series, song, col.key)}
+                                                                           {...col.valueProps}/>
+                                                        </strong>
+                                                    {:else}
+                                                        {#if getScoreValueByKey(series, song, col.key)}
+                                                            <div>
+                                                                {#if col.compactLabel}{col.compactLabel}{'acc' === col.key && getScoreValueByKey(series, song, 'mods') ? ' ('+getScoreValueByKey(series, song, 'mods')+')' : ''}
+                                                                {/if}
+                                                                <strong class={'compact-' + col.key + '-val'}>
+                                                                    <Value value={getScoreValueByKey(series, song, col.key)}
+                                                                           prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
+                                                                           prevLabel={series.prevLabel} inline={true}
+                                                                           {...col.valueProps}
+                                                                    />
+                                                                </strong>
+                                                            </div>
+                                                        {/if}
+                                                        {#if col.key === 'pp' && allFilters.songType.id !== 'sniper_mode'}
+                                                            <WhatIfPp leaderboardId={song.leaderboardId}
+                                                                      pp={getScoreValueByKey(series, song, col.key)}/>{/if}
+                                                    {/if}
+                                                {/if}{/each}
+                                            {:else}
+                                                <span class="dec">{$_.songBrowser.noScore}</span>
+                                            {/if}
+                                        </div>
                                     </div>
+                                    {/each}
                                 </div>
-                                {/each}
+
+                                {#if !!song.leaderboardOpened}
+                                    <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
+                                {/if}
+                            </div>
+
+                            <div slot="footer">
+                                <div class="card-icons">
+                                    <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
+
+                                    {#if selectedAdditionalCols.length > 0}
+                                    <Icons hash={song.id} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
+                                    {/if}
+                                </div>
                             </div>
                         </Card>
                     </div>
@@ -1682,6 +1699,17 @@
         display: flex;
         position: relative;
         min-height: 100%;
+        width: 100%;
+    }
+
+    .card-view > .song-card .card-icons {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-view > .song-card.full-width {
         width: 100%;
     }
 
