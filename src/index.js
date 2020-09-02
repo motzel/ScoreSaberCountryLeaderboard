@@ -31,11 +31,7 @@ const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
-const isCountryRankingPage = () =>
-    [
-        'https://scoresaber.com/global?country=' + config.COUNTRY,
-        'https://scoresaber.com/global/1&country=' + config.COUNTRY
-    ].indexOf(window.location.href) >= 0;
+const isCountryRankingPage = () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + config.COUNTRY));
 
 function assert(el) {
     if (null === el) throw new Error('Assertion failed');
