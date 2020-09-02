@@ -1,6 +1,6 @@
 <script>
     import {_} from '../../stores/i18n';
-    import config from '../../../temp';
+    import {getActiveCountry} from "../../../scoresaber/players";
     import ProfileLine from './ProfileLine.svelte';
 
     export let stats = null;
@@ -15,26 +15,26 @@
                         <strong>{$_.profile.stats.ranking}:</strong>
                         <a href="/global/{Math.floor((stat.value-1) / 50) + 1}">#{stat.value}</a>
 
-                        {#if stat.originalCountry === config.COUNTRY}
+                        {#if stat.originalCountry === getActiveCountry()}
                             (
                             {#if stat.ssplCountryRank}
-                                <a href="/global?country={config.COUNTRY}"><img
-                                        src="/imports/images/flags/{config.COUNTRY}.png"/>
+                                <a href="/global?country={getActiveCountry()}"><img
+                                        src="/imports/images/flags/{getActiveCountry()}.png"/>
                                     <strong>#{stat.ssplCountryRank}</strong>
                                     {#if stat.originalRank !== stat.ssplCountryRank}
                                         / <small>#{stat.originalRank}</small> {/if}
                                 </a>
                             {:else}
-                                <a href="/global?country={config.COUNTRY}"><img
-                                        src="/imports/images/flags/{config.COUNTRY}.png"/>
+                                <a href="/global?country={getActiveCountry()}"><img
+                                        src="/imports/images/flags/{getActiveCountry()}.png"/>
                                     <strong>#{stat.originalRank}</strong></a>
                             {/if}
                             )
                         {:else}
                             (
                             {#if stat.ssplCountryRank}
-                                <a href="/global?country={config.COUNTRY}"><img
-                                        src="/imports/images/flags/{config.COUNTRY}.png"/>
+                                <a href="/global?country={getActiveCountry()}"><img
+                                        src="/imports/images/flags/{getActiveCountry()}.png"/>
                                     <strong>#{stat.ssplCountryRank}</strong></a>
                                 {#if stat.originalRank !== stat.ssplCountryRank}
                                     / <small><a href="/global?country={stat.originalCountry}"><img

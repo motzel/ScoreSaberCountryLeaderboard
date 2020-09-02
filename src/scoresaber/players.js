@@ -1,13 +1,14 @@
 import {getAdditionalPlayers} from "../network/scoresaber/players";
-import {default as config} from '../temp';
+import tempConfig from '../temp';
 import {getCacheAndConvertIfNeeded} from "../store";
 import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
-import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, SCORESABER_URL} from "../network/scoresaber/consts";
+import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, SCORESABER_URL, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
 import {isEmpty} from "../utils/js";
 
-export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
+// TODO: make it async
+export const getActiveCountry = () => 'pl';
 
 export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
@@ -24,7 +25,7 @@ export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, pl
 
 export const getCountryRanking = async (country) => {
     const players = await getActiveCountryPlayers(country);
-    return players ? players.sort((a,b) => b.pp - a.pp).slice(0, config.COUNTRY_PLAYERS_QTY) : null;
+    return players ? players.sort((a,b) => b.pp - a.pp).slice(0, tempConfig.COUNTRY_PLAYERS_QTY) : null;
 }
 
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
@@ -66,7 +67,6 @@ export const getManuallyAddedPlayersIds = async (country) => {
 
     return Object.keys(groups)
         .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
-        // TODO: the recognition of manually added players should be done differently than all those who are not from a given country, because there may be more than one player in the database
         .filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null, country))
         ;
 }

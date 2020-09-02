@@ -14,7 +14,7 @@ import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 import Chart from './Svelte/Components/Player/Chart.svelte';
 
 import log from './utils/logger';
-import config from './temp';
+import tempConfig from './temp';
 import {getCacheAndConvertIfNeeded, getThemeFromFastCache, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getSongMaxScore} from "./song";
@@ -26,12 +26,14 @@ import {getSsDefaultTheme, setSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
+import {getActiveCountry} from "./scoresaber/players";
+import {updateActivePlayers} from "./network/scoresaber/players";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
-const isCountryRankingPage = () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + config.COUNTRY));
+const isCountryRankingPage = () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + getActiveCountry()));
 
 function assert(el) {
     if (null === el) throw new Error('Assertion failed');
@@ -55,7 +57,7 @@ async function setupPlTable() {
 
     new SongLeaderboard({
         target: tblContainer,
-        props: {leaderboardId}
+        props: {leaderboardId, country: await getActiveCountry()}
     });
 }
 
@@ -347,7 +349,7 @@ async function setupProfile() {
     if (mainColumn) {
         if (data.users?.[profileId]?.stats) {
             let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
-            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[config.COUNTRY] ? ssplCountryRank[config.COUNTRY] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
+            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[await getActiveCountry()] ? ssplCountryRank[await getActiveCountry()] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
             const rankLi = mainColumn.querySelector('ul li:first-of-type');
             if (rankLi) {
                 const globalRankA = rankLi.querySelector('a:first-of-type');
@@ -421,7 +423,7 @@ async function setupProfile() {
                     type: 'primary'
                 }
             })
-            const transformSongs = () => {
+            const transformSongs = async () => {
                 const content = mainColumn.closest('.content');
                 const songBox = content.querySelector('.box:nth-child(2)');
                 if (songBox) {
@@ -432,7 +434,7 @@ async function setupProfile() {
 
                     new SongBrowser({
                         target: box,
-                        props: {playerId: profileId}
+                        props: {playerId: profileId, country: await getActiveCountry()}
                     })
 
                     songBox.remove();
@@ -442,7 +444,7 @@ async function setupProfile() {
                 }
             }
             const songBrowserConfig = await getConfig('songBrowser');
-            if (songBrowserConfig && songBrowserConfig.autoTransform) transformSongs()
+            if (songBrowserConfig && songBrowserConfig.autoTransform) await transformSongs();
             else transformBtn.$on('click', transformSongs)
         }
 
@@ -483,7 +485,7 @@ async function setupCountryRanking(diffOffset = 6) {
     newCont.style.paddingTop = '3rem';
     cont.parentNode.appendChild(newCont);
 
-    new CountryDashboard({target: newCont});
+    new CountryDashboard({target: newCont, props: {country: await getActiveCountry()}});
 
     log.info("Setup country ranking / Done")
 }
@@ -567,7 +569,7 @@ async function setupDelayed() {
     initialized = true;
 
     // wait for SSE or given timeout
-    await waitForSSEInit(config.SSE_CHECK_DELAY);
+    await waitForSSEInit(tempConfig.SSE_CHECK_DELAY);
 
     if (isLeaderboardPage()) {
         await setupLeaderboard();

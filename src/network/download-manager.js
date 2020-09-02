@@ -2,7 +2,7 @@ import eventBus from "../utils/broadcast-channel-pubsub";
 import nodeSync from './multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
-import {getAllActivePlayersIds, getPlayerInfo, getPlayerLastUpdated} from "../scoresaber/players";
+import {getActiveCountry, getAllActivePlayersIds, getPlayerInfo, getPlayerLastUpdated} from "../scoresaber/players";
 import {dateFromString} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
@@ -107,7 +107,7 @@ const enqueueActivePlayers = async (queue, force = false, then = null) => {
         logger.debug(`Active players enqueued`, 'DlManager')
 
         const metadata = {type: TYPES.ACTIVE_PLAYERS, nodeId: nodeSync.getId()};
-        queue.add(async () => await updateActivePlayers(config.COUNTRY), QUEUE_LABEL, ACTIVE_PLAYERS_PRIORITY, then, metadata);
+        queue.add(async () => await updateActivePlayers(true), QUEUE_LABEL, ACTIVE_PLAYERS_PRIORITY, then, metadata);
     }
 }
 
@@ -115,7 +115,7 @@ const enqueueActivePlayersScores = async (queue, force = false, then = null) => 
     logger.debug(`Starting enqueuing active players scores`, 'DlManager');
 
     const mainPlayerId = await getMainPlayerId();
-    const activePlayers = (await getAllActivePlayersIds(config.COUNTRY)).filter(playerId => playerId !== mainPlayerId);
+    const activePlayers = (await getAllActivePlayersIds(await getActiveCountry())).filter(playerId => playerId !== mainPlayerId);
 
     logger.trace(`Active players: ${JSON.stringify(activePlayers)}`, 'DlManager')
 

@@ -9,7 +9,7 @@
     import {getConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
     import {
-        addPlayerToGroup,
+        addPlayerToGroup, getActiveCountry,
         getAllActivePlayersIds, getManuallyAddedPlayersIds,
         getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
@@ -22,7 +22,6 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
-    import config from "../../../temp";
 
     export let profileId;
 
@@ -264,8 +263,8 @@
     }
 
     async function refreshPlayerStatus() {
-        isActivePlayer = (await getAllActivePlayersIds(config.COUNTRY)).includes(profileId);
-        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(config.COUNTRY)).includes(profileId);
+        isActivePlayer = (await getAllActivePlayersIds(await getActiveCountry())).includes(profileId);
+        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(await getActiveCountry())).includes(profileId);
     }
 
     onMount(async () => {

@@ -12,6 +12,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {
+        getActiveCountry,
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
@@ -53,13 +54,12 @@
     export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
+    export let country = getActiveCountry();
 
     let viewUpdates = 'keep-view';
     let currentFirstRowIdentifier = null;
 
     let refreshTag = 0;
-
-    const country = config.COUNTRY;
 
     let selectedColumns = [];
 
@@ -1390,7 +1390,7 @@
                                 </div>
 
                                 {#if !!song.leaderboardOpened}
-                                    <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
+                                    <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
                                 {/if}
                             </div>
 
@@ -1592,7 +1592,7 @@
                     </tr>
                     {#if !!song.leaderboardOpened}
                     <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)}>
-                        <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
+                        <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
                     </td></tr>
                     {/if}
                 {/each}

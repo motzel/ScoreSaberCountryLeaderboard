@@ -29,6 +29,7 @@
     export let bgTop = "0rem";
     export let highlight = [];
     export let showBgCover = true;
+    export let country;
 
     const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 3000;
 
@@ -37,7 +38,7 @@
     let showWhatIfPp = false;
 
     async function refreshLeaderboard() {
-        leaderboard = await getLeaderboard(leaderboardId, config.COUNTRY);
+        leaderboard = await getLeaderboard(leaderboardId, country);
     }
 
     onMount(async () => {

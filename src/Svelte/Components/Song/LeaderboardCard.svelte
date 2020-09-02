@@ -9,7 +9,7 @@
     import Duration from "../Common/Duration.svelte";
 
     import {createEventDispatcher} from 'svelte';
-    import {getAllActivePlayers} from "../../../scoresaber/players";
+    import {getActiveCountry, getAllActivePlayers} from "../../../scoresaber/players";
     import {_} from '../../stores/i18n';
 
     const dispatch = createEventDispatcher();
@@ -39,7 +39,7 @@
 
         diffInfo = {diff: difficulty, type: 'Standard'};
         if (leaderboardId) {
-            const diff = (await getAllActivePlayers(config.COUNTRY))
+            const diff = (await getAllActivePlayers(await getActiveCountry()))
                     .map(player => player && player.scores && player.scores[leaderboardId] ? player.scores[leaderboardId].diff : null)
                     .filter(diff => diff)
                     .slice(0, 1)

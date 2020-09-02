@@ -10,10 +10,9 @@
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
     import {getCountryRanking} from "../../../scoresaber/players";
-    import config from "../../../temp";
     import {_, trans} from "../../stores/i18n";
 
-    export let country = config.COUNTRY;
+    export let country;
     export let itemsPerPage = 25;
     export let diff = 6;
 

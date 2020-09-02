@@ -1,15 +1,15 @@
 import {substituteVars} from "../../utils/format";
 import {fetchApiPage, fetchHtmlPage} from "../fetch";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
-import {PLAYER_INFO_URL,  USERS_URL} from "./consts";
+import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import config from '../../temp';
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
+    getActiveCountry,
     getManuallyAddedPlayersIds,
     getPlayerInfo,
-    getPlayerRankedsScorePagesToUpdate,
-    USER_PROFILE_URL
+    getPlayerRankedsScorePagesToUpdate
 } from "../../scoresaber/players";
 import {dateFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchScores} from "./scores";
@@ -77,8 +77,11 @@ const updatePlayerInfo = async (info, players) => {
 
     return Object.assign({}, players[info.playerInfo.playerId] ?? {}, info.playerInfo, info.scoreStats);
 }
-export const updateActivePlayers = async (persist = true, country) => {
+export const updateActivePlayers = async (persist = true) => {
     const data = await getCacheAndConvertIfNeeded();
+
+    const country = await getActiveCountry();
+    console.warn("updateActivePlayers", country);
 
     // set all cached country players as inactive
     if (data.users)

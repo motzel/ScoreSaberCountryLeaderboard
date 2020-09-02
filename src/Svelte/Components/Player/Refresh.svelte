@@ -18,7 +18,7 @@
     import {dateFromString} from "../../../utils/date";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import {getPlayerLastUpdated} from "../../../scoresaber/players";
+    import {getActiveCountry, getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
     import nodeSync from '../../../network/multinode-sync';
 
@@ -125,8 +125,8 @@
         updateState({started: true, progress: 0, subLabel: $_.refresh.rankedsDownload});
         await updateRankeds();
 
-        updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: config.COUNTRY.toUpperCase()})});
-        const activePlayers = await updateActivePlayers(false, config.COUNTRY);
+        updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: (await getActiveCountry()).toUpperCase()})});
+        const activePlayers = await updateActivePlayers(false);
 
         updateState({label: '', subLabel: ''});
 
