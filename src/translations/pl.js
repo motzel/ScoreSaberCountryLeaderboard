@@ -57,7 +57,7 @@ export default {
             pp: 'Punkty',
             playCount: 'Liczba gier',
             totalScore: 'Wynik razem',
-            replays: 'Obejrzane powtórki',
+            replays: 'Powtórki obejrzane przez innych',
             role: 'Rola',
             rankedPlayCount: 'Liczba zagranych rankedów',
             totalRankedScore: 'Wynik rankedów razem',
