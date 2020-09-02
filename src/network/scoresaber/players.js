@@ -81,7 +81,6 @@ export const updateActivePlayers = async (persist = true) => {
     const data = await getCacheAndConvertIfNeeded();
 
     const country = await getActiveCountry();
-    console.warn("updateActivePlayers", country);
 
     // set all cached country players as inactive
     if (data.users)
@@ -96,7 +95,7 @@ export const updateActivePlayers = async (persist = true) => {
 
     const countryPlayers =
         (await Promise.all(
-            [...(await fetchHtmlPage(queue.SCORESABER, USERS_URL, page)).querySelectorAll('.ranking.global .player a')]
+            [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country: await getActiveCountry()}), page)).querySelectorAll('.ranking.global .player a')]
                 .map(a => {
                         const tr = a.closest("tr");
 

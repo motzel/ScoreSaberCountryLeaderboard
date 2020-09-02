@@ -7,8 +7,7 @@ import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
 import {isEmpty} from "../utils/js";
 
-// TODO: make it async
-export const getActiveCountry = () => 'pl';
+export const getActiveCountry = async () => 'pl';
 
 export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 

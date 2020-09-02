@@ -33,7 +33,7 @@ const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
-const isCountryRankingPage = () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + getActiveCountry()));
+const isCountryRankingPage = async () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + (await getActiveCountry())));
 
 function assert(el) {
     if (null === el) throw new Error('Assertion failed');
@@ -623,16 +623,14 @@ async function init() {
     // reload page when data was imported
     eventBus.on('data-imported', () => window.location.reload());
 
-    await Promise.allSettled([
-        refinedThemeSetup(),
-        setLangFromConfig(),
-        setupPlayerAvatar(),
-        setupTwitch()
-    ])
-
-    if (isCountryRankingPage()) {
-        setupCountryRanking();
-    }
+    await Promise.allSettled(
+      [
+          refinedThemeSetup(),
+          setLangFromConfig(),
+          setupPlayerAvatar(),
+          setupTwitch()
+      ].concat(await isCountryRankingPage() ? [setupCountryRanking()] : [])
+    )
 
     await setupDelayed();
 
