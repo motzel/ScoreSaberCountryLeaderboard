@@ -14,7 +14,7 @@
         getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
-    import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
+    import {getCacheAndConvertIfNeeded, setCache, setThemeInFastCache} from "../../../store";
     import {dateFromString} from "../../../utils/date";
     import importJsonData from "../../../utils/import";
     import exportJsonData from "../../../utils/export";
@@ -445,6 +445,8 @@
         config.others.viewsUpdate = values.viewTypeUpdates.id;
         config.others.language = values.lang.id;
         config.others.locale = values.locale.id;
+
+        setThemeInFastCache(values.theme.id);
 
         const data = await getCacheAndConvertIfNeeded();
         await setCache(data);

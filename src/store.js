@@ -4,6 +4,7 @@ import config, {getSseMainUserId} from "./temp";
 import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from "./network/scoresaber/players";
 
 const CACHE_KEY = 'sspl_users';
+const THEME_KEY = 'sspl_theme';
 
 export const Globals = {data: null};
 
@@ -75,6 +76,8 @@ export async function getCacheAndConvertIfNeeded(force = false) {
     if (cache.config.others.language === undefined) cache.config.others.language = cache.lastUpdated ? 'pl' : 'en';
     if (cache.config.others.locale === undefined) cache.config.others.locale = cache.lastUpdated ? 'pl-PL' : 'en-US';
 
+    setThemeInFastCache(cache.config.others.theme);
+
     Globals.data = cache;
 
     return cache;
@@ -84,4 +87,12 @@ export async function setCache(value) {
     Globals.data = value;
 
     return window.localforage.setItem(CACHE_KEY, value);
+}
+
+export function getThemeFromFastCache() {
+    return window.localStorage.getItem(THEME_KEY);
+}
+
+export function setThemeInFastCache(theme) {
+    return window.localStorage.setItem(THEME_KEY, theme);
 }

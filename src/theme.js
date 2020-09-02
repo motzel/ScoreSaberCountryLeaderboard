@@ -83,4 +83,5 @@ const sseVars = [
 ];
 
 export const setTheme = name => (themes[name] ? themes[name] : 'darkss').def.concat(sseVars).map(s => document.documentElement.style.setProperty('--' + s[0], s[1]))
-export const setSsDefaultTheme = () => setTheme(getComputedStyle(document.documentElement).getPropertyValue('--foreground').length ? 'darkss' : 'lightss')
+export const getSsDefaultTheme = () => getComputedStyle(document.documentElement).getPropertyValue('--foreground').length ? 'darkss' : 'lightss';
+export const setSsDefaultTheme = () => setTheme(getSsDefaultTheme())

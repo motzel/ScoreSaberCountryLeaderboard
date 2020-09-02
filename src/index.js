@@ -15,22 +15,16 @@ import Chart from './Svelte/Components/Player/Chart.svelte';
 
 import log from './utils/logger';
 import config from './temp';
-import {getCacheAndConvertIfNeeded, setCache} from "./store";
+import {getCacheAndConvertIfNeeded, getThemeFromFastCache, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
 import {getConfig, getMainPlayerId} from "./plugin-config";
-import {setSsDefaultTheme, setTheme} from "./theme";
+import {getSsDefaultTheme, setSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
-import logger from "./utils/logger";
-import {getPlayerScores, removePlayerFromGroup} from "./scoresaber/players";
-import {getPlayerWithUpdatedScores, updateActivePlayers} from "./network/scoresaber/players";
-import {getRankedSongs} from "./scoresaber/rankeds";
-import {formatDateRelative, formatNumber, round, roundToPrecision} from "./utils/format";
-import {dateFromString} from "./utils/date";
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
@@ -524,7 +518,7 @@ function generate_tab(css_id, has_offset) {
     return li;
 }
 
-async function setupStyles() {
+function setupStyles() {
     log.info("Setup styles");
 
     const addStyles = GM_addStyle ? GM_addStyle : () => {};
@@ -533,8 +527,18 @@ async function setupStyles() {
 
     document.querySelector('head').innerHTML += '<link rel="stylesheet" href="https://scoresaber.com/imports/css/darkmode.css?v=1.0.3" type="text/css"/>';
 
+    let theme = getThemeFromFastCache();
+    if(!theme) theme = getSsDefaultTheme();
+
+    setTheme(theme);
+
+    return theme;
+}
+
+async function refinedThemeSetup(currentTheme) {
     const configOthers = await getConfig('others');
-    if(configOthers && configOthers.theme) setTheme(configOthers.theme); else setSsDefaultTheme();
+    if(configOthers && configOthers.theme && configOthers.theme !== currentTheme)
+        setTheme(configOthers.theme);
 }
 
 async function setupPlayerAvatar() {
@@ -622,8 +626,8 @@ async function init() {
     eventBus.on('data-imported', () => window.location.reload());
 
     await Promise.allSettled([
+        refinedThemeSetup(),
         setLangFromConfig(),
-        setupStyles(),
         setupPlayerAvatar(),
         setupTwitch()
     ])
@@ -637,4 +641,7 @@ async function init() {
     log.info("Setup complete");
 }
 
-init();
+// setup styles as fast as possible
+setupStyles();
+
+document.addEventListener('DOMContentLoaded', init);
