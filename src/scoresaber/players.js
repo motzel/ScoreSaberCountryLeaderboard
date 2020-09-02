@@ -9,20 +9,20 @@ import {isEmpty} from "../utils/js";
 
 export const USER_PROFILE_URL = SCORESABER_URL + '/u/${userId}';
 
-export const isActiveCountryPlayer = (u, country = config.COUNTRY) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers().includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
+export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
-export const getActiveCountryPlayers = async (country = config.COUNTRY) => {
+export const getActiveCountryPlayers = async (country) => {
     const players = (await getPlayers()) ?? {};
     return Object.values(players).filter(p => isActiveCountryPlayer(p, country))
 }
-export const getActiveCountryPlayersIds = async (country = config.COUNTRY) => (await getActiveCountryPlayers(country)).map(p => p.id);
+export const getActiveCountryPlayersIds = async (country) => (await getActiveCountryPlayers(country)).map(p => p.id);
 
 export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
     cum[playerId] = players[playerId] ?? {};
     return cum;
 }, {})
 
-export const getCountryRanking = async (country = config.COUNTRY) => {
+export const getCountryRanking = async (country) => {
     const players = await getActiveCountryPlayers(country);
     return players ? players.sort((a,b) => b.pp - a.pp).slice(0, config.COUNTRY_PLAYERS_QTY) : null;
 }
@@ -58,7 +58,7 @@ export const removePlayerFromGroup = async (playerId, groupId = 'default') => {
 
 export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[groupId] ?? null;
 
-export const getManuallyAddedPlayersIds = async () => {
+export const getManuallyAddedPlayersIds = async (country) => {
     const groups = await getPlayerGroups();
     if (!groups) return [];
 
@@ -66,13 +66,14 @@ export const getManuallyAddedPlayersIds = async () => {
 
     return Object.keys(groups)
         .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
-        .filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null))
+        // TODO: the recognition of manually added players should be done differently than all those who are not from a given country, because there may be more than one player in the database
+        .filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null, country))
         ;
 }
 
-export const getAllActivePlayersIds = async (country = config.COUNTRY) => [...new Set((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds()))];
+export const getAllActivePlayersIds = async (country) => [...new Set((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds(country)))];
 
-export const getAllActivePlayers = async (country = config.COUNTRY) => Object.values(mapPlayersToObj(await getAllActivePlayersIds(country), await getPlayers()));
+export const getAllActivePlayers = async (country) => Object.values(mapPlayersToObj(await getAllActivePlayersIds(country), await getPlayers()));
 
 export const getPlayerProfileUrl = playerId => substituteVars(USER_PROFILE_URL, {userId: playerId})
 

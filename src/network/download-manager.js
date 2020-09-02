@@ -9,6 +9,7 @@ import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
 import {getCacheAndConvertIfNeeded} from "../store";
 import logger from "../utils/logger";
+import config from "../temp";
 
 let bgDownload = false;
 
@@ -106,7 +107,7 @@ const enqueueActivePlayers = async (queue, force = false, then = null) => {
         logger.debug(`Active players enqueued`, 'DlManager')
 
         const metadata = {type: TYPES.ACTIVE_PLAYERS, nodeId: nodeSync.getId()};
-        queue.add(async () => await updateActivePlayers(), QUEUE_LABEL, ACTIVE_PLAYERS_PRIORITY, then, metadata);
+        queue.add(async () => await updateActivePlayers(config.COUNTRY), QUEUE_LABEL, ACTIVE_PLAYERS_PRIORITY, then, metadata);
     }
 }
 
@@ -114,7 +115,7 @@ const enqueueActivePlayersScores = async (queue, force = false, then = null) => 
     logger.debug(`Starting enqueuing active players scores`, 'DlManager');
 
     const mainPlayerId = await getMainPlayerId();
-    const activePlayers = (await getAllActivePlayersIds()).filter(playerId => playerId !== mainPlayerId);
+    const activePlayers = (await getAllActivePlayersIds(config.COUNTRY)).filter(playerId => playerId !== mainPlayerId);
 
     logger.trace(`Active players: ${JSON.stringify(activePlayers)}`, 'DlManager')
 

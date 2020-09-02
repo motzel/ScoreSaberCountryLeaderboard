@@ -20,6 +20,7 @@
     import nodeSync from '../../../network/multinode-sync';
     import {getCacheAndConvertIfNeeded} from "../../../store";
     import {_} from '../../stores/i18n';
+    import config from "../../../temp";
 
     export let leaderboardId;
     export let tableOnly = false;
@@ -36,7 +37,7 @@
     let showWhatIfPp = false;
 
     async function refreshLeaderboard() {
-        leaderboard = await getLeaderboard(leaderboardId);
+        leaderboard = await getLeaderboard(leaderboardId, config.COUNTRY);
     }
 
     onMount(async () => {

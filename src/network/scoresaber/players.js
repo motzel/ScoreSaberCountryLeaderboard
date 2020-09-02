@@ -19,7 +19,7 @@ import nodeSync from '../../network/multinode-sync';
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
 export const getActivePlayersLastUpdate = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.activePlayersLastUpdate ?? null;
-export const getAdditionalPlayers = (country = config.COUNTRY) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
+export const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 export const convertPlayerInfo = info => {
     const {
         playerName,
@@ -77,7 +77,7 @@ const updatePlayerInfo = async (info, players) => {
 
     return Object.assign({}, players[info.playerInfo.playerId] ?? {}, info.playerInfo, info.scoreStats);
 }
-export const updateActivePlayers = async (persist = true) => {
+export const updateActivePlayers = async (persist = true, country) => {
     const data = await getCacheAndConvertIfNeeded();
 
     // set all cached country players as inactive
@@ -115,7 +115,7 @@ export const updateActivePlayers = async (persist = true) => {
                         }
                     }
                 )
-                .concat(getAdditionalPlayers(config.COUNTRY).map(playerId => ({
+                .concat(getAdditionalPlayers(country).map(playerId => ({
                     playerInfo: {
                         playerId,
                         inactive: false
@@ -124,11 +124,11 @@ export const updateActivePlayers = async (persist = true) => {
                 .map(async info => updatePlayerInfo(info, data?.users))
         ))
             .sort((a, b) => b.pp - a.pp)
-            .map((u, idx) => ({...u, ssplCountryRank: {[config.COUNTRY]: idx + 1}}))
+            .map((u, idx) => ({...u, ssplCountryRank: {[country]: idx + 1}}))
             .slice(0, 50);
 
     const manuallyAddedPlayers = await Promise.all(
-        (await getManuallyAddedPlayersIds())
+        (await getManuallyAddedPlayersIds(country))
             .map(playerId => updatePlayerInfo({
                 playerInfo: {
                     playerId,

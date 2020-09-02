@@ -76,10 +76,10 @@ export function findDiffInfo(characteristics, ssDiff) {
     return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
 }
 
-export async function getLeaderboard(leaderboardId) {
+export async function getLeaderboard(leaderboardId, country) {
     const data = await getCacheAndConvertIfNeeded();
 
-    const scores = (await getAllActivePlayers(config.COUNTRY))
+    const scores = (await getAllActivePlayers(country))
         .map(player => player?.scores?.[leaderboardId] ? {playerId: player.id, songHash: player?.scores[leaderboardId].id} : null)
         .filter(s => s)
     ;

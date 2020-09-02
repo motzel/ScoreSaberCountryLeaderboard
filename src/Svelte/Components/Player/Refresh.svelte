@@ -126,7 +126,7 @@
         await updateRankeds();
 
         updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: config.COUNTRY.toUpperCase()})});
-        const activePlayers = await updateActivePlayers(false);
+        const activePlayers = await updateActivePlayers(false, config.COUNTRY);
 
         updateState({label: '', subLabel: ''});
 

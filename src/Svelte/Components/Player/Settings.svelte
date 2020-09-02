@@ -22,6 +22,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
+    import config from "../../../temp";
 
     export let profileId;
 
@@ -263,8 +264,8 @@
     }
 
     async function refreshPlayerStatus() {
-        isActivePlayer = (await getAllActivePlayersIds()).includes(profileId);
-        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds()).includes(profileId);
+        isActivePlayer = (await getAllActivePlayersIds(config.COUNTRY)).includes(profileId);
+        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(config.COUNTRY)).includes(profileId);
     }
 
     onMount(async () => {
