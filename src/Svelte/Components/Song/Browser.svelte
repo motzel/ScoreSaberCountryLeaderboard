@@ -985,7 +985,7 @@
 
                           // get previous player scores
                           if (idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
-                              series.prevLabel = "Poprzednio";
+                              series.prevLabel = trans('songBrowser.former');
 
                               ["pp", "score", "uScore"].forEach(key => {
                                   series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];

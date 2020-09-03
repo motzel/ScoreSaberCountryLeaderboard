@@ -157,6 +157,7 @@ export default {
             info: 'It seems that no song meets all the selected requirements. Change something maybe?',
         },
         noScore: 'No score',
+        former: 'Former',
     },
     songLeaderboard: {
         player: 'Player',

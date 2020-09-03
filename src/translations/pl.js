@@ -158,6 +158,7 @@ export default {
             info: 'Wygląda na to, że żadna nutka nie spełnia wszystkich wybranych wymagań. Zmień coś może?',
         },
         noScore: 'Brak wyniku',
+        former: 'Poprzednio',
     },
     songLeaderboard: {
         player: 'Gracz',
