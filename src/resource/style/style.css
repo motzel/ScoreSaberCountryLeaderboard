@@ -94,6 +94,15 @@ body .navbar-item.sspl-avatar figure {
 body .navbar-item.sspl-avatar img {
   max-height: none;
 }
+body .navbar-item.sspl-avatar figure.flag {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+body .navbar-item.sspl-avatar figure.flag img {
+  width: auto;
+  height: .875rem;
+}
 
 body .select select {
   background-color: var(--background) !important;

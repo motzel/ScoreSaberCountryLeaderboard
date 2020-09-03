@@ -10,6 +10,7 @@ import Refresh from './Svelte/Components/Player/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
+import Flag from './Svelte/Components/Common/Flag.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 import Chart from './Svelte/Components/Player/Chart.svelte';
 
@@ -33,7 +34,7 @@ const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
-const isCountryRankingPage = async () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + (await getActiveCountry())));
+const isCountryRankingPage = async () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1(\\&|\\?))country=' + (await getActiveCountry())));
 
 function assert(el) {
     if (null === el) throw new Error('Assertion failed');
@@ -557,7 +558,8 @@ async function setupPlayerAvatar() {
     const profileId = getProfileId();
     const url = usersConfig.main === profileId ? document.querySelector('.column.avatar img')?.src : null;
 
-    new Avatar({target: cont, props: {playerId: usersConfig.main, url}})
+    new Avatar({target: cont, props: {playerId: usersConfig.main, url}});
+    new Flag({target: cont, props: {country: await getActiveCountry()}});
 }
 
 async function setupTwitch() {
