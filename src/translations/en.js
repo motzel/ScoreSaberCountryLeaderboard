@@ -167,6 +167,11 @@ export default {
         ranked: 'Ranked',
         unranked: 'Unranked',
         maxPpSuffix: 'pp max',
+        types: {
+            all: 'All',
+            country: 'Country only',
+            manually_added: 'Manually added players',
+        },
     },
     songCard: {
         scores: 'Scores',

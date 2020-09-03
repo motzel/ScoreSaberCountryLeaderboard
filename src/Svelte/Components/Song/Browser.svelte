@@ -30,7 +30,6 @@
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
-    import config from "../../../temp";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
 
     import Song from "./Song.svelte";
@@ -1751,6 +1750,10 @@
 
     .card-view .score :global(.what-if) {
         top: 2em;
+    }
+
+    .card-view .scores :global(.leaderboard-container) {
+        font-size: 1rem;
     }
 
     .columns > div {

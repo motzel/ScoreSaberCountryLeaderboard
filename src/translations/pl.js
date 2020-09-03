@@ -168,6 +168,11 @@ export default {
         ranked: 'Rankingowa',
         unranked: 'Nierankingowa',
         maxPpSuffix: 'pp maks.',
+        types: {
+            all: 'Wszyscy',
+            country: 'Tylko kraj',
+            manually_added: 'Ręcznie dodani gracze',
+        },
     },
     songCard: {
         scores: 'Wyniki',

@@ -6,16 +6,18 @@ import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, SCORESABER_URL, USER_PROFILE_URL} fr
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
 import {isEmpty} from "../utils/js";
+import {getMainPlayerId} from "../plugin-config";
 
 export const getActiveCountry = async () => 'pl';
 
 export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
-export const getActiveCountryPlayers = async (country) => {
+export const getActiveCountryPlayers = async (country, withMain = false) => {
     const players = (await getPlayers()) ?? {};
-    return Object.values(players).filter(p => isActiveCountryPlayer(p, country))
+    const mainPlayerId = withMain ? await getMainPlayerId() : null;
+    return Object.values(players).filter(p => (mainPlayerId && p.id === mainPlayerId) || isActiveCountryPlayer(p, country))
 }
-export const getActiveCountryPlayersIds = async (country) => (await getActiveCountryPlayers(country)).map(p => p.id);
+export const getActiveCountryPlayersIds = async (country, withMain = false) => (await getActiveCountryPlayers(country, withMain)).map(p => p.id);
 
 export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
     cum[playerId] = players[playerId] ?? {};
@@ -58,17 +60,22 @@ export const removePlayerFromGroup = async (playerId, groupId = 'default') => {
 
 export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[groupId] ?? null;
 
-export const getManuallyAddedPlayersIds = async (country) => {
+export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
     const groups = await getPlayerGroups();
     if (!groups) return [];
 
     const players = await getPlayers();
 
-    return Object.keys(groups)
+    return [...new Set(
+      Object.keys(groups)
         .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
         .filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null, country))
-        ;
+        .concat(withMain ? [await getMainPlayerId()] : [])
+        .filter(playerId => playerId)
+    )];
 }
+
+export const getManuallyAddedPlayers = async (country, withMain = false) => Object.values(mapPlayersToObj(await getManuallyAddedPlayersIds(country, withMain), await getPlayers()));
 
 export const getAllActivePlayersIds = async (country) => [...new Set((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds(country)))];
 

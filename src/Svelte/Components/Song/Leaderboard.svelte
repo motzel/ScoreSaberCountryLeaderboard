@@ -9,6 +9,7 @@
     import FormattedDate from "../Common/FormattedDate.svelte";
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
+    import Select from '../Common/Select.svelte';
     import WhatIfPp from './WhatIfPp.svelte';
 
     import Refresh from '../Player/Refresh.svelte';
@@ -19,8 +20,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {getCacheAndConvertIfNeeded} from "../../../store";
-    import {_} from '../../stores/i18n';
-    import config from "../../../temp";
+    import {_, trans} from '../../stores/i18n';
 
     export let leaderboardId;
     export let tableOnly = false;
@@ -37,8 +37,30 @@
 
     let showWhatIfPp = false;
 
+    let strings = {
+        leaderboardTypes: [
+            {id: 'all', _key: 'songLeaderboard.types.all'},
+            {id: 'country', _key: 'songLeaderboard.types.country'},
+            {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
+        ],
+    }
+    let values = {
+        leaderboardType: strings.leaderboardTypes.find(p => p.id === 'country')
+    }
+
+    function translateAllStrings() {
+        Object.keys(strings).forEach(key => {
+            strings[key].forEach(item => {
+                if (item._key) item.label = trans(item._key);
+            })
+        })
+
+        strings = {...strings};
+        values = {...values};
+    }
+
     async function refreshLeaderboard() {
-        leaderboard = await getLeaderboard(leaderboardId, country);
+        leaderboard = await getLeaderboard(leaderboardId, country, values.leaderboardType.id);
     }
 
     onMount(async () => {
@@ -97,12 +119,27 @@
         if (tableOnly || !leaderboard) return;
         tooltip.style.display = 'none';
     }
+
+    $: {
+        translateAllStrings($_);
+    }
+    $: {
+        refreshLeaderboard(values.leaderboardType.id);
+    }
 </script>
 
 <div bind:this={leaderboardContainer} class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
 
 {#if !tableOnly}
-    <div class="refresh"><Refresh /></div>
+    <div class="refresh">
+        <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes} />
+
+        <Refresh />
+    </div>
+{:else}
+    <div class="refresh">
+        <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes} />
+    </div>
 {/if}
 
 {#if leaderboard}
@@ -240,10 +277,16 @@
     }
 
     .refresh {
-        text-align: right;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 1rem;
         padding-top: .5rem;
         margin-right: .5rem;
+    }
+
+    .refresh :global(.dropdown-trigger .button) {
+        background-color: transparent;
     }
 
     .first-fetch {
