@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.6
+- [+] add support for countries other than Poland
+- [+] add song leaderboard filtering by player type
+
 0.9.5.2
 - [+] add in-place leaderboard in Song Browser when Cards view is selected
 - [*] optimize theme initialization

@@ -72,6 +72,10 @@
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
         showBgCover = showBgCover && config.showBgCover !== false;
 
+        if (config.defaultType) {
+            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === config.defaultType);
+        }
+
         await refreshLeaderboard();
 
         const refresh = async nodeId => {

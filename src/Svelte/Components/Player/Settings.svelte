@@ -213,6 +213,12 @@
             {_key: 'songBrowser.icons.twitch', id: 'twitch'}
         ],
 
+        leaderboardTypes: [
+            {id: 'all', _key: 'songLeaderboard.types.all'},
+            {id: 'country', _key: 'songLeaderboard.types.country'},
+            {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
+        ],
+
         themes: Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def, _key: e[1]._key})),
     }
 
@@ -223,6 +229,7 @@
         shownIcons: strings.icons.map(i => i),
         lang: availableLangs[0],
         locale: availableLocales[1],
+        leaderboardType: strings.leaderboardTypes.find(t => t.id === 'country'),
         theme: strings.themes[0],
     }
 
@@ -315,6 +322,9 @@
         }
 
         if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
+
+        const defaultLeaderboardType = strings.leaderboardTypes.find(t => t.id === config.songLeaderboard.defaultType);
+        if (defaultLeaderboardType) values.leaderboardType = defaultLeaderboardType;
 
         const defaultViewUpdate = strings.viewTypeUpdates.find(i => i.id === config.others.viewsUpdate);
         if (defaultViewUpdate) values.viewTypeUpdates = defaultViewUpdate;
@@ -441,6 +451,7 @@
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = values.shownIcons.map(i => i.id);
         config.songBrowser.itemsPerPage = configItemsPerPage.val;
+        config.songLeaderboard.defaultType = values.leaderboardType.id;
         config.others.theme = values.theme.id;
         config.others.viewsUpdate = values.viewTypeUpdates.id;
         config.others.language = values.lang.id;
@@ -616,6 +627,11 @@
                             <input type="checkbox" bind:checked={config.songLeaderboard.showBgCover}>
                             {$_.profile.settings.songLeaderboard.showBgCover}
                         </label>
+                    </div>
+
+                    <div class="column is-one-third">
+                        <label class="menu-label">{$_.profile.settings.songLeaderboard.defaultType}</label>
+                        <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes}/>
                     </div>
                 </section>
 

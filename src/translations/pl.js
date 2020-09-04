@@ -28,6 +28,7 @@ export default {
                 showDiff: 'Pokazuj różnice',
                 showWhatIfPp: 'Pokazuj przycisk "jeśli tak zagrasz"',
                 showBgCover: 'Pokazuj okładkę w tle',
+                defaultType: 'Domyślny typ',
             },
 
             defaultSongList: {

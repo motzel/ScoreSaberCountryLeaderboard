@@ -28,6 +28,7 @@ export default {
                 showDiff: 'Show the differences',
                 showWhatIfPp: 'Show the "What if you play it like that" button',
                 showBgCover: 'Show background cover',
+                defaultType: 'Default type',
             },
 
             defaultSongList: {

@@ -76,6 +76,8 @@ export async function getCacheAndConvertIfNeeded(force = false) {
     if (cache.config.others.language === undefined) cache.config.others.language = cache.lastUpdated ? 'pl' : 'en';
     if (cache.config.others.locale === undefined) cache.config.others.locale = cache.lastUpdated ? 'pl-PL' : 'en-US';
 
+    if (!cache.config.songLeaderboard.defaultType) cache.config.songLeaderboard.defaultType = 'country';
+
     setThemeInFastCache(cache.config.others.theme);
 
     Globals.data = cache;
