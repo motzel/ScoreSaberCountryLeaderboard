@@ -76,6 +76,10 @@
             values.leaderboardType = strings.leaderboardTypes.find(t => t.id === config.defaultType);
         }
 
+        if (!country) {
+            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === 'all');
+        }
+
         await refreshLeaderboard();
 
         const refresh = async nodeId => {

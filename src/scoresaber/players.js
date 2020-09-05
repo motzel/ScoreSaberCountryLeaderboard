@@ -2,22 +2,20 @@ import {getAdditionalPlayers} from "../network/scoresaber/players";
 import tempConfig from '../temp';
 import {getCacheAndConvertIfNeeded} from "../store";
 import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
-import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, SCORESABER_URL, USER_PROFILE_URL} from "../network/scoresaber/consts";
+import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
 import {isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
 
-export const getActiveCountry = async () => 'pl';
-
 export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
-export const getActiveCountryPlayers = async (country, withMain = false) => {
+export const getActiveCountryPlayers = async (country, withMain = true) => {
     const players = (await getPlayers()) ?? {};
     const mainPlayerId = withMain ? await getMainPlayerId() : null;
     return Object.values(players).filter(p => (mainPlayerId && p.id === mainPlayerId) || isActiveCountryPlayer(p, country))
 }
-export const getActiveCountryPlayersIds = async (country, withMain = false) => (await getActiveCountryPlayers(country, withMain)).map(p => p.id);
+export const getActiveCountryPlayersIds = async (country, withMain = true) => (await getActiveCountryPlayers(country, withMain)).map(p => p.id);
 
 export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
     cum[playerId] = players[playerId] ?? {};
@@ -61,8 +59,7 @@ export const removePlayerFromGroup = async (playerId, groupId = 'default') => {
 export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[groupId] ?? null;
 
 export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
-    const groups = await getPlayerGroups();
-    if (!groups) return [];
+    const groups = (await getPlayerGroups()) ?? {};
 
     const players = await getPlayers();
 

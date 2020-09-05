@@ -1,8 +1,8 @@
 <script>
 	import {onMount} from "svelte";
-	import {getActiveCountry} from "../../../scoresaber/players";
 	import {substituteVars} from "../../../utils/format";
 	import {USERS_URL} from "../../../network/scoresaber/consts";
+	import {getActiveCountry} from "../../../scoresaber/country";
 
 	export let country;
 	export let url;

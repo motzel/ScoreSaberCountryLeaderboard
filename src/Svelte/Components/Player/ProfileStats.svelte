@@ -1,8 +1,8 @@
 <script>
     import {_} from '../../stores/i18n';
-    import {getActiveCountry} from "../../../scoresaber/players";
     import ProfileLine from './ProfileLine.svelte';
     import {onMount} from "svelte";
+    import {getActiveCountry} from "../../../scoresaber/country";
 
     export let stats = null;
 
@@ -38,7 +38,7 @@
                             )
                         {:else}
                             (
-                            {#if stat.ssplCountryRank}
+                            {#if stat.ssplCountryRank && activeCountry}
                                 <a href="/global?country={activeCountry}"><img
                                         src="/imports/images/flags/{activeCountry}.png"/>
                                     <strong>#{stat.ssplCountryRank}</strong></a>

@@ -2,16 +2,17 @@ import eventBus from "../utils/broadcast-channel-pubsub";
 import nodeSync from './multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
-import {getActiveCountry, getAllActivePlayersIds, getPlayerInfo, getPlayerLastUpdated} from "../scoresaber/players";
+import {getAllActivePlayersIds, getPlayerInfo, getPlayerLastUpdated} from "../scoresaber/players";
 import {dateFromString} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
 import {getCacheAndConvertIfNeeded} from "../store";
 import logger from "../utils/logger";
-import config from "../temp";
+import {getActiveCountry} from "../scoresaber/country";
 
 let bgDownload = false;
+let isPaused = false;
 
 const INTERVAL_TICK = 1000 * 60; // 1 min
 
@@ -68,7 +69,12 @@ const enqueueMainPlayer = async (queue, force = false, then = null) => {
     const mainPlayerId = await getMainPlayerId();
     if (!mainPlayerId) return;
 
-    await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true});
+    const playerInfo = await getPlayerInfo(mainPlayerId);
+    if (!playerInfo)
+        await enqueueActivePlayers(queue, true, async () => {
+            await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true})
+        }, MAIN_PLAYER_PRIORITY + 1);
+    else await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true});
 }
 
 const enqueueRankeds = async (queue, force = false, then = null) => {
@@ -91,7 +97,7 @@ const enqueueRankeds = async (queue, force = false, then = null) => {
     }
 }
 
-const enqueueActivePlayers = async (queue, force = false, then = null) => {
+const enqueueActivePlayers = async (queue, force = false, then = null, priority = ACTIVE_PLAYERS_PRIORITY) => {
     logger.debug(`Starting enqueuing  active players`, 'DlManager');
 
     const QUEUE_LABEL = TYPES.ACTIVE_PLAYERS;
@@ -107,7 +113,7 @@ const enqueueActivePlayers = async (queue, force = false, then = null) => {
         logger.debug(`Active players enqueued`, 'DlManager')
 
         const metadata = {type: TYPES.ACTIVE_PLAYERS, nodeId: nodeSync.getId()};
-        queue.add(async () => await updateActivePlayers(true), QUEUE_LABEL, ACTIVE_PLAYERS_PRIORITY, then, metadata);
+        queue.add(async () => await updateActivePlayers(true), QUEUE_LABEL, priority, then, metadata);
     }
 }
 
@@ -126,7 +132,7 @@ const enqueueActivePlayersScores = async (queue, force = false, then = null) => 
 
 let queueIsProcessed = false;
 const processQueue = async (queue) => {
-    logger.debug(`Try to process queue. BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
+    logger.debug(`Try to process queue. isPaused: ${isPaused ? 'ON' : 'OFF'}, BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
 
     if(queueIsProcessed) {
         logger.debug(`Queue processing in progress. SKIPPED`);
@@ -134,7 +140,7 @@ const processQueue = async (queue) => {
         return;
     }
 
-    if (!bgDownload || !nodeSync.isMaster()) {
+    if (!bgDownload || isPaused || !nodeSync.isMaster()) {
         queue.clear();
 
         return;
@@ -291,6 +297,19 @@ export default async () => {
             async () => await enqueue(queue, TYPES.PLAYER_SCORES, true, {playerId})
         );
         await processQueue(queue);
+    });
+
+    eventBus.on('dl-manager-pause-cmd', () => {
+        logger.debug('Pause Dl Manager', 'DlManager');
+       isPaused = true;
+       queue.clear();
+    });
+
+    eventBus.on('dl-manager-unpause-cmd', () => {
+        logger.debug('Unpause Dl Manager', 'DlManager');
+
+        isPaused = false;
+        queue.clear();
     });
 
     await startSyncing(queue);

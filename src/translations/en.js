@@ -63,6 +63,12 @@ export default {
             totalRankedScore: 'Total ranked score',
             avgRankedAccuracy: 'Average ranked accuracy',
         },
+        twitch: {
+            link: 'Link',
+            linked: 'Linked',
+            renew: 'Renew',
+            daysLeft: 'Days left: ${days}',
+        },
     },
     songBrowser: {
         types: {
@@ -216,6 +222,11 @@ export default {
             last2Weeks: 'Last 2 weeks',
             lastMonth: 'Last month',
         },
+        setCurrentCountry: 'Set as the current country',
+        areYouSureSetCurrentCountry: 'Are you sure you want to set ${country} as the current country?',
+        areYouSureChangeCurrentCountry: 'Are you sure you want to change the country from ${currentCountry} to ${country}?',
+        onboardingLine1: 'We have to download all the scores of players from the selected country.',
+        onboardingLine2: 'Sit down comfortably, click Start and wait, because it will take a while...',
     },
     chart: {
         timeLabel: 'Time',
@@ -237,10 +248,12 @@ export default {
         transformButton: 'Transform',
     },
     common: {
+        ok: 'OK',
         save: 'Save',
         cancel: 'Cancel',
         options: 'Options',
         nothingSelected: 'Nothing selected',
         to: 'to',
+        noData: 'No data',
     }
 }

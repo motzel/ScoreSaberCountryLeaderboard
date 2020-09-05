@@ -6,7 +6,7 @@
     import FormattedDate from '../Common/FormattedDate.svelte';
 
     import {getCacheAndConvertIfNeeded, setCache, lastUpdated as getAnyLastUpdated} from '../../../store';
-    import config from '../../../temp';
+    import queue from "../../../network/queue";
     import {escapeHtml} from '../../../utils/js';
     import log from '../../../utils/logger';
 
@@ -18,15 +18,20 @@
     import {dateFromString} from "../../../utils/date";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import {getActiveCountry, getPlayerLastUpdated} from "../../../scoresaber/players";
+    import {getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
     import nodeSync from '../../../network/multinode-sync';
 
     import logger from "../../../utils/logger";
     import {_, trans} from '../../stores/i18n';
     import {formatNumber} from "../../../utils/format";
+    import {getActiveCountry} from "../../../scoresaber/country";
 
     export let profileId;
+    export let forceShowProgress = false;
+    export let showLastDownloaded = true;
+    export let refreshLabel = "";
+    export let persistEachDl = false;
 
     let stateObj = {
         started: false,
@@ -43,8 +48,11 @@
     let bgDownload = true;
     let isBackgroundDownloadInProgress = false;
     let hasBackgroundDownloadError = false;
+    let stopRefreshingFlag = false;
 
     onMount(async () => {
+        updateState({errorMsg: ''});
+
         bgDownload = await isBackgroundDownloadEnabled();
 
         const unsubscriberConfig = eventBus.on('config-changed', async () => {
@@ -121,22 +129,46 @@
         updateState({progress: info.percent, label: escapeHtml(info.name), subLabel: info.page.toString() + (info.wait ? ' ' + trans('refresh.waiting', {seconds: formatNumber(Math.floor(info.wait/1000),0)}) : '')});
     }
 
+    export function stopRefreshing() {
+        stopRefreshingFlag = true;
+        eventBus.publish('stop-fetching-scores-cmd');
+    }
+
     async function refresh() {
+        stopRefreshingFlag = false;
+
+        eventBus.publish('start-data-refreshing', {nodeId: nodeSync.getId()});
+
         updateState({started: true, progress: 0, subLabel: $_.refresh.rankedsDownload});
         await updateRankeds();
+
+        if (stopRefreshingFlag) {
+            updateState({label: '', subLabel: '', started: false});
+            return;
+        }
 
         updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: (await getActiveCountry()).toUpperCase()})});
         const activePlayers = await updateActivePlayers(false);
 
         updateState({label: '', subLabel: ''});
 
+        if (stopRefreshingFlag) {
+            updateState({label: '', subLabel: '', started: false});
+            return;
+        }
+
         for(let idx = 0; idx < activePlayers.length; idx++) {
             await updatePlayerScores(
                 activePlayers[idx].id,
-                false,
+                persistEachDl,
                 false,
                 info => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / activePlayers.length) * 100)}))
             );
+
+            if (stopRefreshingFlag) {
+                updateState({label: '', subLabel: '', started: false});
+                return;
+            }
         }
 
         await setCache(await getCacheAndConvertIfNeeded());
@@ -163,11 +195,13 @@
     {#if $state.started}
         <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}
-        {#if !bgDownload}
-            <span class="btn-cont"><Button iconFa="fas fa-sync-alt" on:click={onRefresh} disabled={$state.started} /></span>
+        {#if !bgDownload || forceShowProgress}
+            <span class="btn-cont"><Button iconFa="fas fa-sync-alt" label={refreshLabel} on:click={onRefresh} disabled={$state.started} /></span>
         {/if}
         {#if !$state.errorMsg || !$state.errorMsg.length}
-            <strong>{$_.refresh.lastDownload}</strong> <span><FormattedDate date={$lastUpdatedState} noDate="-" /></span>
+            {#if showLastDownloaded}
+                <strong>{$_.refresh.lastDownload}</strong> <span><FormattedDate date={$lastUpdatedState} noDate="-" /></span>
+            {/if}
         {:else}
             <span class="error">{$state.errorMsg}</span>
         {/if}
@@ -176,10 +210,14 @@
 
 <style>
     .refresh-widget {
+        display: inline-flex;
+        align-items: center;
+
         color: var(--faded, #666);
     }
     .refresh-widget strong {
         color: inherit !important;
+        margin-right: .25em;
     }
     .refresh-widget.pulse {
         animation: pulse 1.5s infinite;
@@ -200,7 +238,12 @@
     }
 
     .btn-cont {
-        font-size: .5rem;
+        font-size: .5em;
+        margin-right: .5em;
+    }
+
+    .btn-cont :global(.button) {
+        margin-bottom: 0;
     }
 
     .error {

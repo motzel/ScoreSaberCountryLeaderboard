@@ -12,7 +12,6 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {
-        getActiveCountry,
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
@@ -49,6 +48,7 @@
     import {_, trans} from "../../stores/i18n";
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
+    import {getActiveCountry} from "../../../scoresaber/country";
 
     export let playerId;
     export let snipedIds = [];
@@ -495,7 +495,7 @@
         if (!snipedIds || !snipedIds.length) {
             countryRanking = await getCountryRanking(country);
             const player = countryRanking.find(p => p.id === playerId)
-            if (player) {
+            if (player && player.ssplCountryRank && player.ssplCountryRank[country]) {
                 if (player.ssplCountryRank[country] > 1) sniperModeIds.push(countryRanking[player.ssplCountryRank[country] - 1 - 1].id);
                 if (player.ssplCountryRank[country] < countryRanking.length) sniperModeIds.push(countryRanking[player.ssplCountryRank[country] + 1 - 1].id);
             }

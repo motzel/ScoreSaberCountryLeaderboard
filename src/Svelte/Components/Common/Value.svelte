@@ -3,7 +3,7 @@
 
     export let value = 0;
     export let prevValue = null;
-    export let zero = "0,00";
+    export let zero = formatNumber(0);
     export let digits = 2;
     export let withSign = false;
     export let suffix = "";

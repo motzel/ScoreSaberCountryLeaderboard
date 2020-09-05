@@ -3,10 +3,8 @@ import {fetchApiPage, fetchHtmlPage} from "../fetch";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
-import config from '../../temp';
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
-    getActiveCountry,
     getManuallyAddedPlayersIds,
     getPlayerInfo,
     getPlayerRankedsScorePagesToUpdate
@@ -15,6 +13,8 @@ import {dateFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
+import {getActiveCountry} from "../../scoresaber/country";
+import {getMainPlayerId} from "../../plugin-config";
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
@@ -93,9 +93,14 @@ export const updateActivePlayers = async (persist = true) => {
 
     const page = 1;
 
+    const mainPlayerId = await getMainPlayerId();
+
     const countryPlayers =
         (await Promise.all(
-            [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country: await getActiveCountry()}), page)).querySelectorAll('.ranking.global .player a')]
+          (country
+              ? [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+              : []
+          )
                 .map(a => {
                         const tr = a.closest("tr");
 
@@ -117,7 +122,7 @@ export const updateActivePlayers = async (persist = true) => {
                         }
                     }
                 )
-                .concat(getAdditionalPlayers(country).map(playerId => ({
+                .concat(getAdditionalPlayers(country).concat(mainPlayerId ? [mainPlayerId] : []).map(playerId => ({
                     playerInfo: {
                         playerId,
                         inactive: false

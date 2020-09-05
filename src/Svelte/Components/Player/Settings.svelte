@@ -9,8 +9,7 @@
     import {getConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
     import {
-        addPlayerToGroup, getActiveCountry,
-        getAllActivePlayersIds, getManuallyAddedPlayersIds,
+        addPlayerToGroup, getAllActivePlayersIds, getManuallyAddedPlayersIds,
         getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
@@ -22,6 +21,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
+    import {getActiveCountry} from "../../../scoresaber/country";
 
     export let profileId;
 
@@ -339,8 +339,8 @@
 
             showTwitchBtn = config && config.profile && config.profile.showTwitchIcon || tokenExpireSoon;
 
-            twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? 'Połączono' : 'Odnów') : 'Połącz';
-            twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null;
+            twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? trans('profile.twitch.linked') : trans('profile.twitch.renew')) : trans('profile.twitch.link');
+            twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? trans('profile.twitch.daysLeft', {days: tokenExpireInDays}) : null;
             twitchBtnDisabled = !tokenExpireSoon;
 
             if (!twitchProfile.id) {
@@ -503,7 +503,7 @@
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
-    {:else if (!isActivePlayer)}
+    {:else if !isActivePlayer && (mainPlayerId && mainPlayerId !== profileId)}
         <Button iconFa="fas fa-user-plus" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
     {:else if playerInfo}
         {#if showTwitchBtn}
@@ -511,11 +511,13 @@
                     type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
         {/if}
 
-        {#if profileId !== mainPlayerId}
-            <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
-        {:else}
+        {#if profileId === mainPlayerId}
             <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
         {/if}
+    {/if}
+
+    {#if !mainPlayerId || mainPlayerId !== profileId}
+        <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
     {/if}
 
     {#if isManuallyAddedPlayer}

@@ -43,7 +43,7 @@ export async function getCacheAndConvertIfNeeded(force = false) {
 
     if (!cache.config) {
         if (!cache.config) cache.config = {};
-        if (!cache.config.users) cache.config.users = {main: getSseMainUserId(), country: null, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
+        if (!cache.config.users) cache.config.users = {main: null, country: null, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
         if (!cache.config.songBrowser) cache.config.songBrowser = {};
         if (!cache.config.songLeaderboard) cache.config.songLeaderboard = {};
         if (!cache.config.profile) cache.config.profile = {};

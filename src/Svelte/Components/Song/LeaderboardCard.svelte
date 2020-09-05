@@ -9,8 +9,9 @@
     import Duration from "../Common/Duration.svelte";
 
     import {createEventDispatcher} from 'svelte';
-    import {getActiveCountry, getAllActivePlayers} from "../../../scoresaber/players";
+    import {getAllActivePlayers} from "../../../scoresaber/players";
     import {_} from '../../stores/i18n';
+    import {getActiveCountry} from "../../../scoresaber/country";
 
     const dispatch = createEventDispatcher();
 
