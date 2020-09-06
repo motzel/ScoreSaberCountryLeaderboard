@@ -96,40 +96,43 @@ export const updateActivePlayers = async (persist = true) => {
     const mainPlayerId = await getMainPlayerId();
 
     const countryPlayers =
+      Object.values(convertArrayToObjectByKey(
         (await Promise.all(
           (country
               ? [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
               : []
           )
-                .map(a => {
-                        const tr = a.closest("tr");
+            .map(a => {
+                  const tr = a.closest("tr");
 
-                        return {
-                            playerInfo: {
-                                id: getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                                name: a.querySelector('.songTop.pp').innerText,
-                                playerId: getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                                playerName: a.querySelector('.songTop.pp').innerText,
-                                avatar: tr.querySelector('td.picture img').src,
-                                countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
-                                pp: parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
-                                country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
-                                inactive: false,
-                                weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
-                                profileLastUpdated: new Date()
-                            },
-                            scoreStats: {}
-                        }
-                    }
-                )
-                .concat(getAdditionalPlayers(country).concat(mainPlayerId ? [mainPlayerId] : []).map(playerId => ({
-                    playerInfo: {
-                        playerId,
-                        inactive: false
-                    }
-                })))
-                .map(async info => updatePlayerInfo(info, data?.users))
-        ))
+                  return {
+                      playerInfo: {
+                          id                : getFirstRegexpMatch(/\/(\d+)$/, a.href),
+                          name              : a.querySelector('.songTop.pp').innerText,
+                          playerId          : getFirstRegexpMatch(/\/(\d+)$/, a.href),
+                          playerName        : a.querySelector('.songTop.pp').innerText,
+                          avatar            : tr.querySelector('td.picture img').src,
+                          countryRank       : parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+                          pp                : parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
+                          country           : getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
+                          inactive          : false,
+                          weeklyDiff        : parseInt(tr.querySelector('td.diff').innerText, 10),
+                          profileLastUpdated: new Date()
+                      },
+                      scoreStats: {}
+                  }
+              }
+            )
+            .concat(getAdditionalPlayers(country).concat(mainPlayerId ? [mainPlayerId] : []).map(playerId => ({
+                playerInfo: {
+                    playerId,
+                    inactive: false
+                }
+            })))
+            .map(async info => updatePlayerInfo(info, data?.users))
+        )),
+        'id'
+      ))
             .sort((a, b) => b.pp - a.pp)
             .map((u, idx) => ({...u, ssplCountryRank: {[country]: idx + 1}}))
             .slice(0, 50);
