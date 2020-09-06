@@ -145,7 +145,7 @@
     const getRowIdentifier = row => !!row[sortBy] ? row[sortBy] : null;
 
     $: rows = scores
-            .filter(s => (!min || (s[sortBy] && s[sortBy] >= min)))
+            .filter(s => (min === undefined || min === null || (s[sortBy] && s[sortBy] >= min)))
             .sort((a, b) => b[sortBy] - a[sortBy])
             .map((s, idx) => ({...s, rank: idx + 1}));
 </script>
