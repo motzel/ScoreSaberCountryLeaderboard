@@ -13,7 +13,8 @@ export const themes = {
             ['highlight', '#484848'],
             ['decrease', '#f94022'],
             ['increase', '#42b129'],
-            ['faded', '#3e3e3e'],
+            ['dimmed', '#3e3e3e'],
+            ['faded', '#666'],
         ]
     },
 
@@ -34,7 +35,8 @@ export const themes = {
             ['navBg', '#252525'],
             ['navText', '#eee'],
             ['navHover', '#111'],
-            ['faded', '#dedede'],
+            ['dimmed', '#dedede'],
+            ['faded', '#aaa'],
         ]
     },
 
@@ -52,7 +54,8 @@ export const themes = {
             ['highlight', '#162c31'],
             ['decrease', '#f94022'],
             ['increase', '#42b129'],
-            ['faded', '#0a4c5d'],
+            ['dimmed', '#0a4c5d'],
+            ['faded', '#0d6f88'],
         ]
     },
 
@@ -70,7 +73,8 @@ export const themes = {
             ['highlight', '#0f008f'],
             ['decrease', '#f94022'],
             ['increase', '#42b129'],
-            ['faded', '#680092'],
+            ['dimmed', '#680092'],
+            ['faded', '#8100b5'],
         ]
     },
 }

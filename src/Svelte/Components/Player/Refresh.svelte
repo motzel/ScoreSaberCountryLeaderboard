@@ -213,7 +213,7 @@
         display: inline-flex;
         align-items: center;
 
-        color: var(--faded, #666);
+        color: var(--dimmed, #666);
     }
     .refresh-widget strong {
         color: inherit !important;
@@ -225,7 +225,7 @@
 
     @keyframes pulse {
         0% {
-            color: var(--faded);
+            color: var(--dimmed);
         }
 
         50% {
@@ -233,7 +233,7 @@
         }
 
         100% {
-            color: var(--faded);
+            color: var(--dimmed);
         }
     }
 

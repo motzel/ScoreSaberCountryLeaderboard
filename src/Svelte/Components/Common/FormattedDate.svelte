@@ -12,7 +12,11 @@
     $: prevFormatted = prevDate ? formatDateRelative(prevDateObj.toISOString()) : "";
 </script>
 
-<style>
-    small {display: block}
-</style>
 <span title={dateObj ? formatDate(dateObj) : ''}>{formatted}</span>{#if prevDateObj }<small title={formatDate(prevDateObj)}>{prevFormatted}</small>{/if}
+
+<style>
+    small {
+        display: block;
+        color: var(--faded);
+    }
+</style>
