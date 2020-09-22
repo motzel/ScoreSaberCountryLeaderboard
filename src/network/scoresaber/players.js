@@ -137,8 +137,11 @@ export const updateActivePlayers = async (persist = true) => {
             .map((u, idx) => ({...u, ssplCountryRank: {[country]: idx + 1}}))
             .slice(0, 50);
 
+    const countryPlayersIds = countryPlayers.map(player => player.id);
+
     const manuallyAddedPlayers = await Promise.all(
         (await getManuallyAddedPlayersIds(country))
+            .filter(playerId => !countryPlayersIds.includes(playerId))
             .map(playerId => updatePlayerInfo({
                 playerInfo: {
                     playerId,

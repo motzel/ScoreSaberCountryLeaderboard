@@ -4,7 +4,7 @@ import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
   getActiveCountryPlayers,
-  getAllActivePlayers,
+  getAllActivePlayers, getFriends,
   getManuallyAddedPlayers
 } from "./scoresaber/players";
 
@@ -89,7 +89,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
         break;
 
       case 'manually_added':
-        scores = await getManuallyAddedPlayers(country, true);
+        scores = await getFriends(country, true);
         break;
 
       case 'country':

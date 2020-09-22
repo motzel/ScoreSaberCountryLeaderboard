@@ -48,6 +48,8 @@ export default {
         },
         addPlayer: 'Add player',
         setAsDefault: 'Set as your profile',
+        addToFriends: 'Add to Friends',
+        removeFromFriends: 'Remove from Friends',
         removePlayer: 'Remove player',
         rawNewPlay: 'raw pp new play',
         onePpParseError: 'Type in a number, ok? ${num1} is a number, ${num2} is, and even ${num3} is. But "${expectedStr}"?',
@@ -177,7 +179,7 @@ export default {
         types: {
             all: 'All',
             country: 'Country only',
-            manually_added: 'Manually added players',
+            manually_added: 'Friends',
         },
     },
     songCard: {

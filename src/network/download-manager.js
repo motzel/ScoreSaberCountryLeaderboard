@@ -299,6 +299,18 @@ export default async () => {
         await processQueue(queue);
     });
 
+    const refreshData = async ({nodeId}) => {
+        if (nodeId !== nodeSync.getId()) {
+            await getCacheAndConvertIfNeeded(true);
+        }
+    };
+
+    eventBus.on('player-added-to-friends', refreshData);
+
+    eventBus.on('player-removed', refreshData);
+
+    eventBus.on('player-removed-from-friends', refreshData);
+
     eventBus.on('dl-manager-pause-cmd', () => {
         logger.debug('Pause Dl Manager', 'DlManager');
        isPaused = true;

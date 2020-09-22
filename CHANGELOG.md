@@ -7,6 +7,7 @@
 
 0.9.6
 - [+] add support for countries other than Poland
+- [+] add friends mode
 - [+] add song leaderboard filtering by player type
 
 0.9.5.2

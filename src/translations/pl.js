@@ -49,6 +49,8 @@ export default {
         },
         addPlayer: 'Dodaj gracza',
         setAsDefault: 'Ustaw jako Twój profil',
+        addToFriends: 'Dodaj do Przyjaciół',
+        removeFromFriends: 'Usuń z Przyjaciół',
         removePlayer: 'Usuń gracza',
         rawNewPlay: 'pp w nowej grze',
         onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, ${num2} jest, a nawet ${num3}. Ale "${expectedStr}"?',
@@ -178,7 +180,7 @@ export default {
         types: {
             all: 'Wszyscy',
             country: 'Tylko kraj',
-            manually_added: 'Ręcznie dodani gracze',
+            manually_added: 'Przyjaciele',
         },
     },
     songCard: {

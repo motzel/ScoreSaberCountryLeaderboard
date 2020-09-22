@@ -9,7 +9,7 @@
     import {getConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
     import {
-        addPlayerToGroup, getAllActivePlayersIds, getManuallyAddedPlayersIds,
+        addPlayerToGroup, getActiveCountryPlayers, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
         getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
@@ -22,6 +22,7 @@
     import nodeSync from '../../../network/multinode-sync';
     import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
     import {getActiveCountry} from "../../../scoresaber/country";
+    import {updateActivePlayers} from "../../../network/scoresaber/players";
 
     export let profileId;
 
@@ -29,6 +30,7 @@
     let playerInfo;
     let isActivePlayer = false;
     let isManuallyAddedPlayer = false;
+    let isFriend = false;
     let dataAvailable = false;
 
     let showTwitchBtn = true;
@@ -272,6 +274,7 @@
     async function refreshPlayerStatus() {
         isActivePlayer = (await getAllActivePlayersIds(await getActiveCountry())).includes(profileId);
         isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(await getActiveCountry())).includes(profileId);
+        isFriend = (await getFriendsIds()).includes(profileId);
     }
 
     onMount(async () => {
@@ -472,18 +475,29 @@
         await refreshPlayerStatus();
     }
 
-    async function manuallyAddPlayer() {
+    async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
         await storePlayerStatusChanges();
 
-        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()})
+        eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
-    async function manuallyRemovePlayer() {
-        await removePlayerFromGroup(profileId);
+    async function removePlayerFromFriends() {
+        await removePlayerFromGroup(profileId, isManuallyAddedPlayer);
         await storePlayerStatusChanges();
 
+        if (isManuallyAddedPlayer)
+            eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
+        else
+            eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync.getId()});
+
         window.location.reload();
+    }
+
+    async function manuallyAddPlayer() {
+        await addPlayerToFriends();
+
+        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
     function onLangChange() {
@@ -504,7 +518,7 @@
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
     {:else if !isActivePlayer && (mainPlayerId && mainPlayerId !== profileId)}
-        <Button iconFa="fas fa-user-plus" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
+        <Button iconFa="far fa-star" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
     {:else if playerInfo}
         {#if showTwitchBtn}
             <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
@@ -514,14 +528,17 @@
         {#if profileId === mainPlayerId}
             <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
         {/if}
+
+        {#if isManuallyAddedPlayer || isFriend}
+            <Button iconFa="fas fa-star" type={isManuallyAddedPlayer ? "danger" : "default"} title={isManuallyAddedPlayer ? $_.profile.removePlayer : $_.profile.removeFromFriends} on:click={removePlayerFromFriends}/>
+        {/if}
+        {#if !isManuallyAddedPlayer && !isFriend && (!mainPlayerId || mainPlayerId !== profileId)}
+            <Button iconFa="far fa-star" type="default" title={$_.profile.addToFriends} on:click={addPlayerToFriends}/>
+        {/if}
     {/if}
 
     {#if !mainPlayerId || mainPlayerId !== profileId}
         <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
-    {/if}
-
-    {#if isManuallyAddedPlayer}
-        <Button iconFa="fas fa-user-minus" type="danger" title={$_.profile.removePlayer} on:click={manuallyRemovePlayer}/>
     {/if}
 
     {#if showSettingsModal}

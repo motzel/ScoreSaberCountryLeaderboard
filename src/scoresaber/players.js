@@ -48,28 +48,36 @@ export const addPlayerToGroup = async (playerId, groupId = 'default', groupName 
     groups[groupId].players = [...new Set(groups[groupId].players.concat([playerId]))];
 }
 
-export const removePlayerFromGroup = async (playerId, groupId = 'default') => {
+export const removePlayerFromGroup = async (playerId, removeData = true, groupId = 'default') => {
     const data = await getCacheAndConvertIfNeeded();
     if (!data?.groups?.[groupId]?.players) return;
 
     data.groups[groupId].players = data.groups[groupId].players.filter(pId => pId !== playerId);
-    if (data?.users?.[playerId]) delete data.users[playerId];
+
+    if (!!data?.users?.[playerId] && removeData) delete data.users[playerId];
 }
 
 export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[groupId] ?? null;
 
-export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
+export const getFriendsIds = async (withMain = false) => {
     const groups = (await getPlayerGroups()) ?? {};
-
-    const players = await getPlayers();
 
     return [...new Set(
       Object.keys(groups)
         .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
-        .filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null, country))
         .concat(withMain ? [await getMainPlayerId()] : [])
         .filter(playerId => playerId)
     )];
+}
+
+export const getFriends = async (country, withMain = false) => Object.values(mapPlayersToObj(await getFriendsIds(country, withMain), await getPlayers()));
+
+export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
+    const friendsIds = await getFriendsIds(withMain);
+
+    const players = await getPlayers();
+
+    return friendsIds.filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null, country));
 }
 
 export const getManuallyAddedPlayers = async (country, withMain = false) => Object.values(mapPlayersToObj(await getManuallyAddedPlayersIds(country, withMain), await getPlayers()));
