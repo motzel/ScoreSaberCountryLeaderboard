@@ -20,7 +20,88 @@ Then, depending on the selected mode:
 
 # Feature list
 
-TODO :-)
+### Song country leaderboard
+- A country leaderboard for the song
+- Filtering by country or friends
+- Song cover in the background
+- Song statistics downloaded from Beat Saver 
+- Copy !bsr to the clipboard
+- View song on the Beat Saver
+- OneClick&trade; Install
+- Map preview via [BS Viewer](https://skystudioapps.com/bs-viewer/)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/01_song_leaderboard.png)
+
+### If you play like this widget
+- Shows how many PPs you get if you play like another player
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/02_if_you_play.png)
+
+### Your avatar and country in the navbar
+- Quick access to your profile and country ranking
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/03_avatar_in_navbar.png)
+
+
+### Enhanced player profile
+- Enlarged avatar
+- Additional player stats
+- 1pp boundary calculator - that is how many PPs you have to play a new song for to get +1pp to the global ranking
+- Ranked songs badges
+- Enlarged, more readable chart
+- New accuracy chart
+ 
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/04_enhanced_profile.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/05_accuracy_chart.png) 
+
+### Song browser
+- Immediate, advanced filtering by the name of the song, song author and map author, type (ranked/unranked/unplayed rankeds) and number of stars.
+- Quickly browse the next page without loading
+- Customizable number of displayed songs per page
+- Tabular, compact and card view
+- Customizable song statistics, with on-demand on/off capability - number of stars, maximum PP, duration, BPM, NPM, NJS, NPS
+- Display accuracy even for unranked songs (if not removed from Beat Saver)
+- Numerous list of available options for each song - copy !bsr, view on Beat Saber, OneClick&trade; Install, Map preview and Twitch preview (for a limited, fixed number of accounts at this point. Wait for the new version.)
+- Display improvement of PPs, score and accuracy over time
+- Comparing scores with other players
+- Sorting by number of stars, play date, accuracy and PP; ascending and descending
+- Displaying song leaderboard in place
+- Sniper mode - automatic comparison of results to other players (default one above you and one below you), which can increase your global PPs by at least 1pp. Displaying a summary of your global PPs if you get results like other players in comparison.
+- Generating playlists from filtered songs
+- Data export to CSV (Excel)
+
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/06_adv_filtering_1.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/06_adv_filtering_2.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/06_adv_filtering_3.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/07_sorting.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/08_metrics.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/09_types.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/10_in_place_leaderboard.png)
+
+### Redesigned country ranking
+- Weekly PPs growths
+- Recent scores of all players with in-place song leaderboard
+- Best scores of all players with in-place song leaderboard
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/11_country_ranking.png)
+
+### Settings
+- Translation and localization
+- Color themes
+- Customizable default values
+- Enable/disable individual enhancements
+- Data export/import
+- Refreshing data in the background or on demand
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/12_settings.png)
 
 # Changelog
 You can find change log [here](CHANGELOG.md).
