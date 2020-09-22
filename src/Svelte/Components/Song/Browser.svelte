@@ -1604,7 +1604,7 @@
 
                         <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                             colspan={2 + selectedSongCols.length}>
-                            Razem dla {songsPage.series[0].name}</th>
+                            {trans('songBrowser.totalPp', {name: songsPage.series[0].name})}</th>
                         {#each songsPage.series as series, idx (series.id)}
                             {#if viewType.id === 'tabular'}
                                 {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}

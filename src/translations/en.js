@@ -167,6 +167,7 @@ export default {
         },
         noScore: 'No score',
         former: 'Former',
+        totalPp: 'Total PP for ${name}'
     },
     songLeaderboard: {
         player: 'Player',

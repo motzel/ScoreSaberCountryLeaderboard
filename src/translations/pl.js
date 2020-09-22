@@ -168,6 +168,7 @@ export default {
         },
         noScore: 'Brak wyniku',
         former: 'Poprzednio',
+        totalPp: 'Razem dla ${name}'
     },
     songLeaderboard: {
         player: 'Gracz',
