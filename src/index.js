@@ -17,7 +17,7 @@ import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 
 import log from './utils/logger';
 import tempConfig from './temp';
-import {getCacheAndConvertIfNeeded, getThemeFromFastCache, setCache} from "./store";
+import {getCacheAndConvertIfNeeded, getThemeFromFastCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getSongMaxScore} from "./song";
 import {shouldBeHidden} from "./eastereggs";
@@ -29,6 +29,7 @@ import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
+import {isDataAvailable} from "./scoresaber/players";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -461,6 +462,9 @@ async function setupProfile() {
             div.style.fontSize = "0.75rem";
             div.classList.add('buttons')
             div.classList.add('flex-center');
+            if (!(await isDataAvailable())) {
+                div.style.flexDirection = 'column';
+            }
             avatarColumn.appendChild(div);
 
             new PlayerSettings({

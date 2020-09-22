@@ -2,7 +2,7 @@ import eventBus from "../utils/broadcast-channel-pubsub";
 import nodeSync from './multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
-import {getAllActivePlayersIds, getPlayerInfo, getPlayerLastUpdated} from "../scoresaber/players";
+import {getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
 import {dateFromString} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
@@ -286,10 +286,14 @@ export default async () => {
         currentMasterId = masterNodeId;
     });
 
-    eventBus.on('player-added', async ({playerId, nodeId}) => {
+    const refreshData = async ({nodeId}) => {
         if (nodeId !== nodeSync.getId()) {
             await getCacheAndConvertIfNeeded(true);
         }
+    };
+
+    eventBus.on('player-added', async ({playerId, nodeId}) => {
+        await refreshData({nodeId});
 
         await enqueue(
             queue, TYPES.ACTIVE_PLAYERS, true,
@@ -299,13 +303,16 @@ export default async () => {
         await processQueue(queue);
     });
 
-    const refreshData = async ({nodeId}) => {
-        if (nodeId !== nodeSync.getId()) {
-            await getCacheAndConvertIfNeeded(true);
-        }
-    };
+    eventBus.on('player-added-to-friends', async ({playerId, nodeId}) => {
+        await refreshData({nodeId});
 
-    eventBus.on('player-added-to-friends', refreshData);
+        await enqueue(
+          queue, TYPES.ACTIVE_PLAYERS, true,
+          null,
+          async () => await enqueue(queue, TYPES.PLAYER_SCORES, true, {playerId})
+        );
+        await processQueue(queue);
+    });
 
     eventBus.on('player-removed', refreshData);
 

@@ -9,7 +9,7 @@
     import {getConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
     import {
-        addPlayerToGroup, getActiveCountryPlayers, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
+        addPlayerToGroup, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
         getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
@@ -22,7 +22,6 @@
     import nodeSync from '../../../network/multinode-sync';
     import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
     import {getActiveCountry} from "../../../scoresaber/country";
-    import {updateActivePlayers} from "../../../network/scoresaber/players";
 
     export let profileId;
 
@@ -538,7 +537,7 @@
     {/if}
 
     {#if !mainPlayerId || mainPlayerId !== profileId}
-        <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
+        <Button iconFa="fas fa-user-check" type="primary" label={!dataAvailable ? $_.profile.setAsDefault : ''} title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
     {/if}
 
     {#if showSettingsModal}
