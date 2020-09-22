@@ -9,8 +9,10 @@ import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
 import {getCacheAndConvertIfNeeded} from "../store";
 import logger from "../utils/logger";
+import {getActiveCountry} from "../scoresaber/country";
 
 let bgDownload = false;
+let isPaused = false;
 
 const INTERVAL_TICK = 1000 * 60; // 1 min
 
@@ -67,7 +69,12 @@ const enqueueMainPlayer = async (queue, force = false, then = null) => {
     const mainPlayerId = await getMainPlayerId();
     if (!mainPlayerId) return;
 
-    await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true});
+    const playerInfo = await getPlayerInfo(mainPlayerId);
+    if (!playerInfo)
+        await enqueueActivePlayers(queue, true, async () => {
+            await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true})
+        }, MAIN_PLAYER_PRIORITY + 1);
+    else await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true});
 }
 
 const enqueueRankeds = async (queue, force = false, then = null) => {
@@ -90,7 +97,7 @@ const enqueueRankeds = async (queue, force = false, then = null) => {
     }
 }
 
-const enqueueActivePlayers = async (queue, force = false, then = null) => {
+const enqueueActivePlayers = async (queue, force = false, then = null, priority = ACTIVE_PLAYERS_PRIORITY) => {
     logger.debug(`Starting enqueuing  active players`, 'DlManager');
 
     const QUEUE_LABEL = TYPES.ACTIVE_PLAYERS;
@@ -106,7 +113,7 @@ const enqueueActivePlayers = async (queue, force = false, then = null) => {
         logger.debug(`Active players enqueued`, 'DlManager')
 
         const metadata = {type: TYPES.ACTIVE_PLAYERS, nodeId: nodeSync.getId()};
-        queue.add(async () => await updateActivePlayers(), QUEUE_LABEL, ACTIVE_PLAYERS_PRIORITY, then, metadata);
+        queue.add(async () => await updateActivePlayers(true), QUEUE_LABEL, priority, then, metadata);
     }
 }
 
@@ -114,7 +121,7 @@ const enqueueActivePlayersScores = async (queue, force = false, then = null) => 
     logger.debug(`Starting enqueuing active players scores`, 'DlManager');
 
     const mainPlayerId = await getMainPlayerId();
-    const activePlayers = (await getAllActivePlayersIds()).filter(playerId => playerId !== mainPlayerId);
+    const activePlayers = (await getAllActivePlayersIds(await getActiveCountry())).filter(playerId => playerId !== mainPlayerId);
 
     logger.trace(`Active players: ${JSON.stringify(activePlayers)}`, 'DlManager')
 
@@ -125,7 +132,7 @@ const enqueueActivePlayersScores = async (queue, force = false, then = null) => 
 
 let queueIsProcessed = false;
 const processQueue = async (queue) => {
-    logger.debug(`Try to process queue. BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
+    logger.debug(`Try to process queue. isPaused: ${isPaused ? 'ON' : 'OFF'}, BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
 
     if(queueIsProcessed) {
         logger.debug(`Queue processing in progress. SKIPPED`);
@@ -133,7 +140,7 @@ const processQueue = async (queue) => {
         return;
     }
 
-    if (!bgDownload || !nodeSync.isMaster()) {
+    if (!bgDownload || isPaused || !nodeSync.isMaster()) {
         queue.clear();
 
         return;
@@ -290,6 +297,31 @@ export default async () => {
             async () => await enqueue(queue, TYPES.PLAYER_SCORES, true, {playerId})
         );
         await processQueue(queue);
+    });
+
+    const refreshData = async ({nodeId}) => {
+        if (nodeId !== nodeSync.getId()) {
+            await getCacheAndConvertIfNeeded(true);
+        }
+    };
+
+    eventBus.on('player-added-to-friends', refreshData);
+
+    eventBus.on('player-removed', refreshData);
+
+    eventBus.on('player-removed-from-friends', refreshData);
+
+    eventBus.on('dl-manager-pause-cmd', () => {
+        logger.debug('Pause Dl Manager', 'DlManager');
+       isPaused = true;
+       queue.clear();
+    });
+
+    eventBus.on('dl-manager-unpause-cmd', () => {
+        logger.debug('Unpause Dl Manager', 'DlManager');
+
+        isPaused = false;
+        queue.clear();
     });
 
     await startSyncing(queue);

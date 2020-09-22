@@ -29,7 +29,6 @@
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
-    import config from "../../../temp";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
 
     import Song from "./Song.svelte";
@@ -49,17 +48,17 @@
     import {_, trans} from "../../stores/i18n";
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
+    import {getActiveCountry} from "../../../scoresaber/country";
 
     export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
+    export let country = getActiveCountry();
 
     let viewUpdates = 'keep-view';
     let currentFirstRowIdentifier = null;
 
     let refreshTag = 0;
-
-    const country = config.COUNTRY;
 
     let selectedColumns = [];
 
@@ -496,7 +495,7 @@
         if (!snipedIds || !snipedIds.length) {
             countryRanking = await getCountryRanking(country);
             const player = countryRanking.find(p => p.id === playerId)
-            if (player) {
+            if (player && player.ssplCountryRank && player.ssplCountryRank[country]) {
                 if (player.ssplCountryRank[country] > 1) sniperModeIds.push(countryRanking[player.ssplCountryRank[country] - 1 - 1].id);
                 if (player.ssplCountryRank[country] < countryRanking.length) sniperModeIds.push(countryRanking[player.ssplCountryRank[country] + 1 - 1].id);
             }
@@ -1390,7 +1389,7 @@
                                 </div>
 
                                 {#if !!song.leaderboardOpened}
-                                    <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
+                                    <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
                                 {/if}
                             </div>
 
@@ -1592,7 +1591,7 @@
                     </tr>
                     {#if !!song.leaderboardOpened}
                     <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)}>
-                        <Leaderboard leaderboardId={song.leaderboardId} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
+                        <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
                     </td></tr>
                     {/if}
                 {/each}
@@ -1751,6 +1750,10 @@
 
     .card-view .score :global(.what-if) {
         top: 2em;
+    }
+
+    .card-view .scores :global(.leaderboard-container) {
+        font-size: 1rem;
     }
 
     .columns > div {

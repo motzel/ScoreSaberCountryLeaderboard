@@ -1,25 +1,25 @@
 import {substituteVars} from "../../utils/format";
 import {fetchApiPage, fetchHtmlPage} from "../fetch";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
-import {PLAYER_INFO_URL,  USERS_URL} from "./consts";
+import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
-import config from '../../temp';
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
     getManuallyAddedPlayersIds,
     getPlayerInfo,
-    getPlayerRankedsScorePagesToUpdate,
-    USER_PROFILE_URL
+    getPlayerRankedsScorePagesToUpdate
 } from "../../scoresaber/players";
 import {dateFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
+import {getActiveCountry} from "../../scoresaber/country";
+import {getMainPlayerId} from "../../plugin-config";
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
 export const getActivePlayersLastUpdate = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.activePlayersLastUpdate ?? null;
-export const getAdditionalPlayers = (country = config.COUNTRY) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
+export const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 export const convertPlayerInfo = info => {
     const {
         playerName,
@@ -80,6 +80,8 @@ const updatePlayerInfo = async (info, players) => {
 export const updateActivePlayers = async (persist = true) => {
     const data = await getCacheAndConvertIfNeeded();
 
+    const country = await getActiveCountry();
+
     // set all cached country players as inactive
     if (data.users)
         Object.keys(data.users).map(userId => {
@@ -91,44 +93,55 @@ export const updateActivePlayers = async (persist = true) => {
 
     const page = 1;
 
-    const countryPlayers =
-        (await Promise.all(
-            [...(await fetchHtmlPage(queue.SCORESABER, USERS_URL, page)).querySelectorAll('.ranking.global .player a')]
-                .map(a => {
-                        const tr = a.closest("tr");
+    const mainPlayerId = await getMainPlayerId();
 
-                        return {
-                            playerInfo: {
-                                id: getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                                name: a.querySelector('.songTop.pp').innerText,
-                                playerId: getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                                playerName: a.querySelector('.songTop.pp').innerText,
-                                avatar: tr.querySelector('td.picture img').src,
-                                countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
-                                pp: parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
-                                country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
-                                inactive: false,
-                                weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
-                                profileLastUpdated: new Date()
-                            },
-                            scoreStats: {}
-                        }
-                    }
-                )
-                .concat(getAdditionalPlayers(config.COUNTRY).map(playerId => ({
-                    playerInfo: {
-                        playerId,
-                        inactive: false
-                    }
-                })))
-                .map(async info => updatePlayerInfo(info, data?.users))
-        ))
+    const countryPlayers =
+      Object.values(convertArrayToObjectByKey(
+        (await Promise.all(
+          (country
+              ? [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+              : []
+          )
+            .map(a => {
+                  const tr = a.closest("tr");
+
+                  return {
+                      playerInfo: {
+                          id                : getFirstRegexpMatch(/\/(\d+)$/, a.href),
+                          name              : a.querySelector('.songTop.pp').innerText,
+                          playerId          : getFirstRegexpMatch(/\/(\d+)$/, a.href),
+                          playerName        : a.querySelector('.songTop.pp').innerText,
+                          avatar            : tr.querySelector('td.picture img').src,
+                          countryRank       : parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+                          pp                : parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
+                          country           : getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
+                          inactive          : false,
+                          weeklyDiff        : parseInt(tr.querySelector('td.diff').innerText, 10),
+                          profileLastUpdated: new Date()
+                      },
+                      scoreStats: {}
+                  }
+              }
+            )
+            .concat(getAdditionalPlayers(country).concat(mainPlayerId ? [mainPlayerId] : []).map(playerId => ({
+                playerInfo: {
+                    playerId,
+                    inactive: false
+                }
+            })))
+            .map(async info => updatePlayerInfo(info, data?.users))
+        )),
+        'id'
+      ))
             .sort((a, b) => b.pp - a.pp)
-            .map((u, idx) => ({...u, ssplCountryRank: {[config.COUNTRY]: idx + 1}}))
+            .map((u, idx) => ({...u, ssplCountryRank: {[country]: idx + 1}}))
             .slice(0, 50);
 
+    const countryPlayersIds = countryPlayers.map(player => player.id);
+
     const manuallyAddedPlayers = await Promise.all(
-        (await getManuallyAddedPlayersIds())
+        (await getManuallyAddedPlayersIds(country))
+            .filter(playerId => !countryPlayersIds.includes(playerId))
             .map(playerId => updatePlayerInfo({
                 playerInfo: {
                     playerId,

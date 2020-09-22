@@ -1,9 +1,12 @@
-import config from "./temp";
 import {capitalize} from "./utils/js";
 import {getCacheAndConvertIfNeeded} from "./store";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
-import {getAllActivePlayers} from "./scoresaber/players";
+import {
+  getActiveCountryPlayers,
+  getAllActivePlayers, getFriends,
+  getManuallyAddedPlayers
+} from "./scoresaber/players";
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -76,20 +79,37 @@ export function findDiffInfo(characteristics, ssDiff) {
     return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
 }
 
-export async function getLeaderboard(leaderboardId) {
+export async function getLeaderboard(leaderboardId, country, type = 'country') {
     const data = await getCacheAndConvertIfNeeded();
 
-    const scores = (await getAllActivePlayers(config.COUNTRY))
+    let scores;
+    switch(type) {
+      case 'all':
+        scores = await getAllActivePlayers(country);
+        break;
+
+      case 'manually_added':
+        scores = await getFriends(country, true);
+        break;
+
+      case 'country':
+      default:
+        scores = await getActiveCountryPlayers(country, true);
+        break;
+    }
+    if (!scores || !scores.length) return [];
+
+    const filteredScores = scores
         .map(player => player?.scores?.[leaderboardId] ? {playerId: player.id, songHash: player?.scores[leaderboardId].id} : null)
         .filter(s => s)
     ;
-    if (!scores.length) return [];
+    if (!filteredScores.length) return [];
 
-    const songInfo = scores[0].songHash ? await getSongByHash(scores[0].songHash) : null;
+    const songInfo = filteredScores[0].songHash ? await getSongByHash(filteredScores[0].songHash) : null;
     const songCharacteristics = songInfo?.metadata?.characteristics;
     let diffInfo = null, maxSongScore = 0;
 
-    return scores.map(s => s.playerId)
+    return filteredScores.map(s => s.playerId)
         .reduce((cum, userId) => {
             if (!data.users[userId].scores[leaderboardId]) return cum;
 

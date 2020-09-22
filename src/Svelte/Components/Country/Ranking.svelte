@@ -10,10 +10,10 @@
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
     import {getCountryRanking} from "../../../scoresaber/players";
-    import config from "../../../temp";
     import {_, trans} from "../../stores/i18n";
+    import {formatNumber} from "../../../utils/format";
 
-    export let country = config.COUNTRY;
+    export let country;
     export let itemsPerPage = 25;
     export let diff = 6;
 
@@ -78,7 +78,7 @@
         {:else if key === 'player'}
             <Player user={row} />
         {:else if key === 'pp'}
-            <Pp pp="{row.pp}" zero="0,00" prevPp={row.prevPp} inline={true} />
+            <Pp pp="{row.pp}" zero={formatNumber(0)} prevPp={row.prevPp} inline={true} />
         {:else if key === 'weeklyDiff'}
             <Value value={row.change ? row.change : 0} zero="0" digits={0} withSign={true} />
         {/if}

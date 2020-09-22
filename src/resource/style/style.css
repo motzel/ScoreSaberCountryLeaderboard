@@ -1,15 +1,3 @@
-.navbar-brand .navbar-item b {
-  background: rgba(255,255,255,1);
-  background: -moz-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 55%, rgba(255,0,0,1) 55%, rgba(255,21,0,1) 100%);
-  background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(255,255,255,1)), color-stop(55%, rgba(255,255,255,1)), color-stop(55%, rgba(255,0,0,1)), color-stop(100%, rgba(255,21,0,1)));
-  background: -webkit-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 55%, rgba(255,0,0,1) 55%, rgba(255,21,0,1) 100%);
-  background: -o-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 55%, rgba(255,0,0,1) 55%, rgba(255,21,0,1) 100%);
-  background: -ms-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 55%, rgba(255,0,0,1) 55%, rgba(255,21,0,1) 100%);
-  background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 55%, rgba(255,0,0,1) 55%, rgba(255,21,0,1) 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ff1500', GradientType=0 );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
 .sspl .player-name {font-size: 1.1rem; font-weight: 700;}
 .sspl .inc, .sspl .diff.inc, .card-view .inc {color: var(--increase) !important;}
 .sspl .dec, .sspl .diff.dec, .card-view .dec {color: var(--decrease) !important;}
@@ -93,6 +81,15 @@ body .navbar-item.sspl-avatar figure {
 }
 body .navbar-item.sspl-avatar img {
   max-height: none;
+}
+body .navbar-item.sspl-avatar figure.flag {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+body .navbar-item.sspl-avatar figure.flag img {
+  width: auto;
+  height: .875rem;
 }
 
 body .select select {

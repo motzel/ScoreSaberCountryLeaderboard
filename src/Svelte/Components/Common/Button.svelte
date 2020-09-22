@@ -83,8 +83,8 @@
         border-radius: .2em;
         font-size: inherit;
         cursor: pointer;
-        color: var(--color, #363636);
-        background-color: var(--bg-color, #3273dc);
+        color: var(--color, #363636)!important;
+        background-color: var(--bg-color, #3273dc)!important;
         outline: none !important;
         box-shadow: none !important;
     }

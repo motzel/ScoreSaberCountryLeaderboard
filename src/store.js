@@ -43,7 +43,7 @@ export async function getCacheAndConvertIfNeeded(force = false) {
 
     if (!cache.config) {
         if (!cache.config) cache.config = {};
-        if (!cache.config.users) cache.config.users = {main: getSseMainUserId(), country: config.COUNTRY, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
+        if (!cache.config.users) cache.config.users = {main: null, country: null, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
         if (!cache.config.songBrowser) cache.config.songBrowser = {};
         if (!cache.config.songLeaderboard) cache.config.songLeaderboard = {};
         if (!cache.config.profile) cache.config.profile = {};
@@ -75,6 +75,8 @@ export async function getCacheAndConvertIfNeeded(force = false) {
 
     if (cache.config.others.language === undefined) cache.config.others.language = cache.lastUpdated ? 'pl' : 'en';
     if (cache.config.others.locale === undefined) cache.config.others.locale = cache.lastUpdated ? 'pl-PL' : 'en-US';
+
+    if (!cache.config.songLeaderboard.defaultType) cache.config.songLeaderboard.defaultType = 'country';
 
     setThemeInFastCache(cache.config.others.theme);
 

@@ -1,5 +1,4 @@
 <script>
-    import config from "../../../temp";
     import {_, trans} from "../../stores/i18n";
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
@@ -8,7 +7,7 @@
     import Select from "../Common/Select.svelte";
     import Refresh from "../Player/Refresh.svelte";
 
-    export let country = config.COUNTRY;
+    export let country;
 
     let strings = {
         lastSongsPeriods: [
@@ -50,6 +49,7 @@
     }
 </script>
 
+{#if country}
 <div class="columns is-multiline">
     <div class="leaderboard content column is-full-tablet is-half-widescreen is-two-fifths-fullhd">
         <div class="ranking box has-shadow">
@@ -94,6 +94,7 @@
         </div>
     </div>
 </div>
+{/if}
 
 <style>
     .box {

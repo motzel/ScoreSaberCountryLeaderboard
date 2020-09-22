@@ -7,6 +7,8 @@
 
     export let showCloseButton = true;
     export let closeable = true;
+    export let width = "calc(100vw - 4em)";
+    export let height = "auto";
 
     let modal;
 
@@ -45,7 +47,7 @@
 
 <div class="ss-modal-background" on:click={() => {closeable ? close() : null}}></div>
 
-<div class="ss-modal" role="dialog" aria-modal="true" bind:this={modal}>
+<div class="ss-modal" role="dialog" aria-modal="true" bind:this={modal} style="--width: {width}; --height: {height};">
     <div class="inner">
         <slot></slot>
     </div>
@@ -70,8 +72,8 @@
         position: fixed;
         left: 50%;
         top: 50%;
-        width: calc(100vw - 4em);
-        height: 35rem;
+        width: var(--width);
+        height: var(--height);
         max-width: 60em;
         max-height: calc(100vh - 4em);
         overflow: auto;

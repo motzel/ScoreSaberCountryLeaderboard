@@ -28,6 +28,7 @@ export default {
                 showDiff: 'Show the differences',
                 showWhatIfPp: 'Show the "What if you play it like that" button',
                 showBgCover: 'Show background cover',
+                defaultType: 'Default type',
             },
 
             defaultSongList: {
@@ -47,6 +48,8 @@ export default {
         },
         addPlayer: 'Add player',
         setAsDefault: 'Set as your profile',
+        addToFriends: 'Add to Friends',
+        removeFromFriends: 'Remove from Friends',
         removePlayer: 'Remove player',
         rawNewPlay: 'raw pp new play',
         onePpParseError: 'Type in a number, ok? ${num1} is a number, ${num2} is, and even ${num3} is. But "${expectedStr}"?',
@@ -61,6 +64,12 @@ export default {
             rankedPlayCount: 'Ranked play count',
             totalRankedScore: 'Total ranked score',
             avgRankedAccuracy: 'Average ranked accuracy',
+        },
+        twitch: {
+            link: 'Link',
+            linked: 'Linked',
+            renew: 'Renew',
+            daysLeft: 'Days left: ${days}',
         },
     },
     songBrowser: {
@@ -167,6 +176,11 @@ export default {
         ranked: 'Ranked',
         unranked: 'Unranked',
         maxPpSuffix: 'pp max',
+        types: {
+            all: 'All',
+            country: 'Country only',
+            manually_added: 'Friends',
+        },
     },
     songCard: {
         scores: 'Scores',
@@ -210,6 +224,11 @@ export default {
             last2Weeks: 'Last 2 weeks',
             lastMonth: 'Last month',
         },
+        setCurrentCountry: 'Set as the current country',
+        areYouSureSetCurrentCountry: 'Are you sure you want to set ${country} as the current country?',
+        areYouSureChangeCurrentCountry: 'Are you sure you want to change the country from ${currentCountry} to ${country}?',
+        onboardingLine1: 'We have to download all the scores of players from the selected country.',
+        onboardingLine2: 'Sit down comfortably, click Start and wait, because it will take a while...',
     },
     chart: {
         timeLabel: 'Time',
@@ -231,10 +250,12 @@ export default {
         transformButton: 'Transform',
     },
     common: {
+        ok: 'OK',
         save: 'Save',
         cancel: 'Cancel',
         options: 'Options',
         nothingSelected: 'Nothing selected',
         to: 'to',
+        noData: 'No data',
     }
 }

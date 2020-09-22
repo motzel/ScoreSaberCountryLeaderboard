@@ -2,7 +2,8 @@ import {fetchApiPage, NotFoundError} from "../fetch";
 import {substituteVars} from "../../utils/format";
 import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
-import {default as queue} from "../queue";
+import queue from "../queue";
+import eventBus from "../../utils/broadcast-channel-pubsub";
 
 export const fetchScores = async (userId, page = 1, rateLimitCallback = null, ...leaderboards) =>
     fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page, rateLimitCallback).then((s) =>
@@ -36,6 +37,9 @@ export const fetchScores = async (userId, page = 1, rateLimitCallback = null, ..
             : null
     );
 
+let stopFetchingScores = false;
+eventBus.on('stop-fetching-scores-cmd', () => {stopFetchingScores = true;});
+
 export async function fetchAllNewScores(
     user,
     lastUpdated = null,
@@ -49,6 +53,12 @@ export async function fetchAllNewScores(
     let page = 0;
     let recentPlay = null;
     while (++page) {
+        if (stopFetchingScores) {
+            stopFetchingScores = false;
+            queue.SCORESABER_API.clear();
+            throw 'Fetching scores aborted';
+        }
+
         const progressInfo = {
             id: user.id,
             name: user.name,

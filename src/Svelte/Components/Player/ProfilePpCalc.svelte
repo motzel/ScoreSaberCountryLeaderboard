@@ -10,7 +10,7 @@
     export let playerId;
     export let mode = 'pp-stars';
 
-    let expectedStr = "1,00";
+    let expectedStr = formatNumber(1);
     let rawPp = null;
     let rawPpFormatted = "???";
     let error = '';

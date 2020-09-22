@@ -10,11 +10,13 @@ import Refresh from './Svelte/Components/Player/Refresh.svelte';
 import SongBrowser from './Svelte/Components/Song/Browser.svelte';
 import Button from './Svelte/Components/Common/Button.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
+import Flag from './Svelte/Components/Common/Flag.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 import Chart from './Svelte/Components/Player/Chart.svelte';
+import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 
 import log from './utils/logger';
-import config from './temp';
+import tempConfig from './temp';
 import {getCacheAndConvertIfNeeded, getThemeFromFastCache, setCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
 import {getSongMaxScore} from "./song";
@@ -22,16 +24,21 @@ import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
 import {getConfig, getMainPlayerId} from "./plugin-config";
-import {getSsDefaultTheme, setSsDefaultTheme, setTheme} from "./theme";
+import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
+import {getActiveCountry} from "./scoresaber/country";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
-const isCountryRankingPage = () => window.location.href.match(new RegExp('^https://scoresaber.com/global(\\?|/1\&)country=' + config.COUNTRY));
+const getRankingCountry = () => {
+    const match = window.location.href.match(new RegExp('^https://scoresaber.com/global(?:\\?|/1[&?])country=(.{1,3})'));
+    return match && match.length > 1 ? match[1] : null;
+}
+const isCurrentCountryRankingPage = async () => getRankingCountry() === (await getActiveCountry());
 
 function assert(el) {
     if (null === el) throw new Error('Assertion failed');
@@ -55,7 +62,7 @@ async function setupPlTable() {
 
     new SongLeaderboard({
         target: tblContainer,
-        props: {leaderboardId}
+        props: {leaderboardId, country: await getActiveCountry()}
     });
 }
 
@@ -347,7 +354,8 @@ async function setupProfile() {
     if (mainColumn) {
         if (data.users?.[profileId]?.stats) {
             let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
-            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[config.COUNTRY] ? ssplCountryRank[config.COUNTRY] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
+            const country = await getActiveCountry();
+            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
             const rankLi = mainColumn.querySelector('ul li:first-of-type');
             if (rankLi) {
                 const globalRankA = rankLi.querySelector('a:first-of-type');
@@ -421,7 +429,7 @@ async function setupProfile() {
                     type: 'primary'
                 }
             })
-            const transformSongs = () => {
+            const transformSongs = async () => {
                 const content = mainColumn.closest('.content');
                 const songBox = content.querySelector('.box:nth-child(2)');
                 if (songBox) {
@@ -432,7 +440,7 @@ async function setupProfile() {
 
                     new SongBrowser({
                         target: box,
-                        props: {playerId: profileId}
+                        props: {playerId: profileId, country}
                     })
 
                     songBox.remove();
@@ -442,7 +450,7 @@ async function setupProfile() {
                 }
             }
             const songBrowserConfig = await getConfig('songBrowser');
-            if (songBrowserConfig && songBrowserConfig.autoTransform) transformSongs()
+            if (songBrowserConfig && songBrowserConfig.autoTransform) await transformSongs();
             else transformBtn.$on('click', transformSongs)
         }
 
@@ -468,6 +476,25 @@ async function setupProfile() {
 async function setupCountryRanking(diffOffset = 6) {
     log.info("Setup country ranking");
 
+    const country = getRankingCountry();
+    if (!country) return; // not a country leaderboard page
+
+    if(!(await isCurrentCountryRankingPage())) {
+        const rankingTable = document.querySelector('table.ranking.global');
+        if (!rankingTable) return;
+
+        const pagination = rankingTable.parentNode.parentNode.querySelector('.pagination');
+        if (!pagination) return;
+
+        const setCountryDiv = document.createElement('div');
+        setCountryDiv.style.fontSize = '.875rem';
+        pagination.insertBefore(setCountryDiv, pagination.querySelector('br'));
+
+        new SetCountry({target: setCountryDiv, props: {country}});
+
+        return;
+    }
+
     const cont = document.querySelector('body > .section > .container');
     if(!cont) {
         log.error("Setup country ranking / container not found")
@@ -483,7 +510,7 @@ async function setupCountryRanking(diffOffset = 6) {
     newCont.style.paddingTop = '3rem';
     cont.parentNode.appendChild(newCont);
 
-    new CountryDashboard({target: newCont});
+    new CountryDashboard({target: newCont, props: {country: await getActiveCountry()}});
 
     log.info("Setup country ranking / Done")
 }
@@ -555,7 +582,8 @@ async function setupPlayerAvatar() {
     const profileId = getProfileId();
     const url = usersConfig.main === profileId ? document.querySelector('.column.avatar img')?.src : null;
 
-    new Avatar({target: cont, props: {playerId: usersConfig.main, url}})
+    new Avatar({target: cont, props: {playerId: usersConfig.main, url}});
+    new Flag({target: cont, props: {country: await getActiveCountry()}});
 }
 
 async function setupTwitch() {
@@ -567,7 +595,7 @@ async function setupDelayed() {
     initialized = true;
 
     // wait for SSE or given timeout
-    await waitForSSEInit(config.SSE_CHECK_DELAY);
+    await waitForSSEInit(tempConfig.SSE_CHECK_DELAY);
 
     if (isLeaderboardPage()) {
         await setupLeaderboard();
@@ -621,16 +649,15 @@ async function init() {
     // reload page when data was imported
     eventBus.on('data-imported', () => window.location.reload());
 
-    await Promise.allSettled([
-        refinedThemeSetup(),
-        setLangFromConfig(),
-        setupPlayerAvatar(),
-        setupTwitch()
-    ])
-
-    if (isCountryRankingPage()) {
-        setupCountryRanking();
-    }
+    await Promise.allSettled(
+      [
+          setupCountryRanking(),
+          refinedThemeSetup(),
+          setLangFromConfig(),
+          setupPlayerAvatar(),
+          setupTwitch(),
+      ]
+    )
 
     await setupDelayed();
 

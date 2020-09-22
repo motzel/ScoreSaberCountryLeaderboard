@@ -6,6 +6,7 @@
     import Pager from "./Pager.svelte";
     import Button from "../Common/Button.svelte";
     import {getConfig} from "../../../plugin-config";
+    import {_} from "../../stores/i18n";
 
     export let header = [];
     export let rows = [];
@@ -132,6 +133,7 @@
 
     $: currentPageDataPromise = getDataPage(rows, page, itemsPerPage);
     $: totalItems = rows.length;
+    $: noDataText = $_.common.noData;
     $: {
         restorePage(rows)
     }
@@ -207,7 +209,7 @@
             </tfoot>
         </table>
     {:else}
-    <slot name="empty">Brak danych</slot>
+    <slot name="empty">{noDataText}</slot>
     {/if}
 {/await}
 

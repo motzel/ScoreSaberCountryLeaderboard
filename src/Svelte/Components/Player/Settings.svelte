@@ -9,8 +9,7 @@
     import {getConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
     import {
-        addPlayerToGroup,
-        getAllActivePlayersIds, getManuallyAddedPlayersIds,
+        addPlayerToGroup, getActiveCountryPlayers, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
         getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
@@ -22,6 +21,8 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
+    import {getActiveCountry} from "../../../scoresaber/country";
+    import {updateActivePlayers} from "../../../network/scoresaber/players";
 
     export let profileId;
 
@@ -29,6 +30,7 @@
     let playerInfo;
     let isActivePlayer = false;
     let isManuallyAddedPlayer = false;
+    let isFriend = false;
     let dataAvailable = false;
 
     let showTwitchBtn = true;
@@ -213,6 +215,12 @@
             {_key: 'songBrowser.icons.twitch', id: 'twitch'}
         ],
 
+        leaderboardTypes: [
+            {id: 'all', _key: 'songLeaderboard.types.all'},
+            {id: 'country', _key: 'songLeaderboard.types.country'},
+            {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
+        ],
+
         themes: Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def, _key: e[1]._key})),
     }
 
@@ -223,6 +231,7 @@
         shownIcons: strings.icons.map(i => i),
         lang: availableLangs[0],
         locale: availableLocales[1],
+        leaderboardType: strings.leaderboardTypes.find(t => t.id === 'country'),
         theme: strings.themes[0],
     }
 
@@ -263,8 +272,9 @@
     }
 
     async function refreshPlayerStatus() {
-        isActivePlayer = (await getAllActivePlayersIds()).includes(profileId);
-        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds()).includes(profileId);
+        isActivePlayer = (await getAllActivePlayersIds(await getActiveCountry())).includes(profileId);
+        isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(await getActiveCountry())).includes(profileId);
+        isFriend = (await getFriendsIds()).includes(profileId);
     }
 
     onMount(async () => {
@@ -316,6 +326,9 @@
 
         if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
 
+        const defaultLeaderboardType = strings.leaderboardTypes.find(t => t.id === config.songLeaderboard.defaultType);
+        if (defaultLeaderboardType) values.leaderboardType = defaultLeaderboardType;
+
         const defaultViewUpdate = strings.viewTypeUpdates.find(i => i.id === config.others.viewsUpdate);
         if (defaultViewUpdate) values.viewTypeUpdates = defaultViewUpdate;
 
@@ -329,8 +342,8 @@
 
             showTwitchBtn = config && config.profile && config.profile.showTwitchIcon || tokenExpireSoon;
 
-            twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? 'Połączono' : 'Odnów') : 'Połącz';
-            twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? `Pozostało dni: ${tokenExpireInDays}` : null;
+            twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? trans('profile.twitch.linked') : trans('profile.twitch.renew')) : trans('profile.twitch.link');
+            twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? trans('profile.twitch.daysLeft', {days: tokenExpireInDays}) : null;
             twitchBtnDisabled = !tokenExpireSoon;
 
             if (!twitchProfile.id) {
@@ -441,6 +454,7 @@
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = values.shownIcons.map(i => i.id);
         config.songBrowser.itemsPerPage = configItemsPerPage.val;
+        config.songLeaderboard.defaultType = values.leaderboardType.id;
         config.others.theme = values.theme.id;
         config.others.viewsUpdate = values.viewTypeUpdates.id;
         config.others.language = values.lang.id;
@@ -461,18 +475,29 @@
         await refreshPlayerStatus();
     }
 
-    async function manuallyAddPlayer() {
+    async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
         await storePlayerStatusChanges();
 
-        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()})
+        eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
-    async function manuallyRemovePlayer() {
-        await removePlayerFromGroup(profileId);
+    async function removePlayerFromFriends() {
+        await removePlayerFromGroup(profileId, isManuallyAddedPlayer);
         await storePlayerStatusChanges();
 
+        if (isManuallyAddedPlayer)
+            eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
+        else
+            eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync.getId()});
+
         window.location.reload();
+    }
+
+    async function manuallyAddPlayer() {
+        await addPlayerToFriends();
+
+        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
     function onLangChange() {
@@ -492,23 +517,28 @@
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
-    {:else if (!isActivePlayer)}
-        <Button iconFa="fas fa-user-plus" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
+    {:else if !isActivePlayer && (mainPlayerId && mainPlayerId !== profileId)}
+        <Button iconFa="far fa-star" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
     {:else if playerInfo}
         {#if showTwitchBtn}
             <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
                     type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
         {/if}
 
-        {#if profileId !== mainPlayerId}
-            <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
-        {:else}
+        {#if profileId === mainPlayerId}
             <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
+        {/if}
+
+        {#if isManuallyAddedPlayer || isFriend}
+            <Button iconFa="fas fa-star" type={isManuallyAddedPlayer ? "danger" : "default"} title={isManuallyAddedPlayer ? $_.profile.removePlayer : $_.profile.removeFromFriends} on:click={removePlayerFromFriends}/>
+        {/if}
+        {#if !isManuallyAddedPlayer && !isFriend && (!mainPlayerId || mainPlayerId !== profileId)}
+            <Button iconFa="far fa-star" type="default" title={$_.profile.addToFriends} on:click={addPlayerToFriends}/>
         {/if}
     {/if}
 
-    {#if isManuallyAddedPlayer}
-        <Button iconFa="fas fa-user-minus" type="danger" title={$_.profile.removePlayer} on:click={manuallyRemovePlayer}/>
+    {#if !mainPlayerId || mainPlayerId !== profileId}
+        <Button iconFa="fas fa-user-check" type="primary" title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
     {/if}
 
     {#if showSettingsModal}
@@ -616,6 +646,11 @@
                             <input type="checkbox" bind:checked={config.songLeaderboard.showBgCover}>
                             {$_.profile.settings.songLeaderboard.showBgCover}
                         </label>
+                    </div>
+
+                    <div class="column is-one-third">
+                        <label class="menu-label">{$_.profile.settings.songLeaderboard.defaultType}</label>
+                        <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes}/>
                     </div>
                 </section>
 
