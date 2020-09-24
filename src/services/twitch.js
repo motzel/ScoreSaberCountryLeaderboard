@@ -80,7 +80,7 @@ const getStreams = async userId => {
     return apiGetStreams(token.accessToken, userId)
 }
 
-const createTwitchUsersCache = async () => {
+const updateTwitchUser = async (profileId, twitchLogin) => {
     const data = await getCacheAndConvertIfNeeded();
     if (!data) return;
 
@@ -88,8 +88,12 @@ const createTwitchUsersCache = async () => {
 
     if (!data.twitch.users) data.twitch.users = {};
 
+    data.twitch.users[profileId] = {login: twitchLogin, lastUpdated: null};
+}
+
+const createTwitchUsersCache = async () => {
     Object.entries(users).forEach(entry => {
-        if (!data.twitch.users[entry[0]]) data.twitch.users[entry[0]] = {login: entry[1], lastUpdated: null};
+        updateTwitchUser(entry[0], entry[1]);
     })
 }
 
@@ -136,6 +140,7 @@ export default {
             if (twitchToken.url) window.location.href = twitchToken.url;
         }
     },
+    updateTwitchUser,
     createTwitchUsersCache,
     getProfileName,
     isProfileTwitchConnected

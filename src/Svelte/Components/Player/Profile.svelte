@@ -32,7 +32,14 @@
         if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
 
         // TODO: reload profile page for now, try to do it to be more dynamic
-        return eventBus.on('data-refreshed', ({nodeId}) => window.location.reload());
+        const dataRefreshed = eventBus.on('data-refreshed', ({nodeId}) => window.location.reload());
+
+        const playerTwitchLinked = eventBus.on('player-twitch-linked', async () => window.location.reload());
+
+        return () => {
+            dataRefreshed();
+            playerTwitchLinked();
+        }
     })
 
     function getPlayerStats(scores) {

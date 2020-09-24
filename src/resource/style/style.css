@@ -32,6 +32,9 @@ table.ranking.songs {max-width: none!important;}
   justify-content: center;
   align-items: center;
 }
+.flex-align-start {
+  align-items: flex-start;
+}
 .flex-justify-between {
   justify-content: space-between;
 }

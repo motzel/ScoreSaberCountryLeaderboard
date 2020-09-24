@@ -20,8 +20,16 @@
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
-    import {_, trans, getSupportedLangs, setCurrentLang, getSupportedLocales, setCurrentLocale} from "../../stores/i18n";
+    import {
+        _,
+        trans,
+        getSupportedLangs,
+        setCurrentLang,
+        getSupportedLocales,
+        setCurrentLocale
+    } from "../../stores/i18n";
     import {getActiveCountry} from "../../../scoresaber/country";
+    import TwitchProfileLink from "./TwitchProfileLink.svelte";
 
     export let profileId;
 
@@ -32,10 +40,13 @@
     let isFriend = false;
     let dataAvailable = false;
 
-    let showTwitchBtn = true;
+    let showTwitchLinkBtn = true;
+    let showTwitchUserBtn = true;
     let twitchBtnLabel = '';
     let twitchBtnTitle = '';
     let twitchBtnDisabled = false;
+    let twitchToken = null;
+    let twitchProfile = null;
 
     let showSettingsModal = false;
 
@@ -63,141 +74,149 @@
         ],
 
         sortTypes: [
-            {_key: 'songBrowser.fields.timeset', field: 'timeset', onlyTypes: ['all', 'rankeds', 'unrankeds', 'sniper_mode']},
-            {_key: 'songBrowser.fields.stars', field: 'stars', onlyTypes: ['all', 'rankeds', 'rankeds_unplayed', 'sniper_mode']},
+            {
+                _key     : 'songBrowser.fields.timeset',
+                field    : 'timeset',
+                onlyTypes: ['all', 'rankeds', 'unrankeds', 'sniper_mode']
+            },
+            {
+                _key     : 'songBrowser.fields.stars',
+                field    : 'stars',
+                onlyTypes: ['all', 'rankeds', 'rankeds_unplayed', 'sniper_mode']
+            },
             {_key: 'songBrowser.fields.pp', field: 'pp', onlyTypes: ['rankeds', 'sniper_mode']},
             {_key: 'songBrowser.fields.acc', field: 'acc', onlyTypes: ['rankeds', 'sniper_mode']}
         ],
-        
+
         columns: [
             {
-                _key: 'songBrowser.fields.stars',
-                name: '*',
-                key: 'stars',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.stars',
+                name      : '*',
+                key       : 'stars',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "*"}
             },
             {
-                _key: 'songBrowser.fields.maxPp',
-                name: 'Max PP',
-                key: 'maxPp',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.maxPp',
+                name      : 'Max PP',
+                key       : 'maxPp',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "pp"}
             },
             {
-                _key: 'songBrowser.fields.bpm',
-                name: 'BPM',
-                key: 'bpm',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.bpm',
+                name      : 'BPM',
+                key       : 'bpm',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "", digits: 0}
             },
             {
-                _key: 'songBrowser.fields.njs',
-                name: 'NJS',
-                key: 'njs',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.njs',
+                name      : 'NJS',
+                key       : 'njs',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: "", digits: 0}
             },
             {
-                _key: 'songBrowser.fields.nps',
-                name: 'NPS',
-                key: 'nps',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.nps',
+                name      : 'NPS',
+                key       : 'nps',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-", suffix: ""}
             },
             {
-                _key: 'songBrowser.fields.duration',
-                name: 'Czas',
-                key: 'length',
-                selected: false,
-                type: 'song',
-                displayed: true,
+                _key      : 'songBrowser.fields.duration',
+                name      : 'Czas',
+                key       : 'length',
+                selected  : false,
+                type      : 'song',
+                displayed : true,
                 valueProps: {zero: "-"}
             },
             {
-                _key: 'songBrowser.fields.timeset',
+                _key        : 'songBrowser.fields.timeset',
                 compactLabel: null,
-                name: 'Data',
-                key: 'timeset',
-                selected: true,
-                type: 'series',
-                displayed: true,
-                valueProps: {prevValue: null}
+                name        : 'Data',
+                key         : 'timeset',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {prevValue: null}
             },
             {
-                _key: 'songBrowser.fields.diffPp',
+                _key        : 'songBrowser.fields.diffPp',
                 compactLabel: null,
-                name: '+PP',
-                key: 'diffPp',
-                selected: false,
-                type: 'series',
-                displayed: false,
-                valueProps: {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
+                name        : '+PP',
+                key         : 'diffPp',
+                selected    : false,
+                type        : 'series',
+                displayed   : false,
+                valueProps  : {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
             },
             {
-                _key: 'songBrowser.fields.pp',
-                name: 'PP',
-                key: 'pp',
-                selected: true,
-                type: 'series',
+                _key      : 'songBrowser.fields.pp',
+                name      : 'PP',
+                key       : 'pp',
+                selected  : true,
+                type      : 'series',
                 valueProps: {zero: "-", suffix: "pp"},
-                displayed: true
+                displayed : true
             },
             {
-                _key: 'songBrowser.fields.weightedPp',
+                _key        : 'songBrowser.fields.weightedPp',
                 compactLabel: 'Ważone',
-                name: 'wPP',
-                key: 'weightedPp',
-                selected: false,
-                type: 'series',
-                displayed: true,
-                valueProps: {zero: "-", suffix: "pp"}
+                name        : 'wPP',
+                key         : 'weightedPp',
+                selected    : false,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-", suffix: "pp"}
             },
             {
-                _key: 'songBrowser.fields.acc',
+                _key        : 'songBrowser.fields.acc',
                 compactLabel: null,
-                name: 'Acc',
-                key: 'acc',
-                selected: true,
-                type: 'series',
-                displayed: true,
-                valueProps: {zero: "-", suffix: "%"}
+                name        : 'Acc',
+                key         : 'acc',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-", suffix: "%"}
             },
             {
-                _key: 'songBrowser.fields.score',
+                _key        : 'songBrowser.fields.score',
                 compactLabel: null,
-                name: 'Wynik',
-                key: 'score',
-                selected: true,
-                type: 'series',
-                displayed: true,
-                valueProps: {digits: 0, zero: "-"}
+                name        : 'Wynik',
+                key         : 'score',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {digits: 0, zero: "-"}
             },
             {
-                _key: 'songBrowser.fields.diff',
-                name: 'Różnice',
-                key: 'diff',
-                selected: true,
-                type: 'other',
+                _key     : 'songBrowser.fields.diff',
+                name     : 'Różnice',
+                key      : 'diff',
+                selected : true,
+                type     : 'other',
                 displayed: true
             },
             {
-                _key: 'songBrowser.fields.icons',
-                name: '',
-                key: 'icons',
-                type: 'additional',
+                _key     : 'songBrowser.fields.icons',
+                name     : '',
+                key      : 'icons',
+                type     : 'additional',
                 displayed: true,
-                selected: true
+                selected : true
             },
         ],
 
@@ -224,14 +243,14 @@
     }
 
     let values = {
-        songTypes: strings.songTypes[0],
-        viewTypes: strings.viewTypes[0],
+        songTypes      : strings.songTypes[0],
+        viewTypes      : strings.viewTypes[0],
         viewTypeUpdates: strings.viewTypeUpdates[1],
-        shownIcons: strings.icons.map(i => i),
-        lang: availableLangs[0],
-        locale: availableLocales[1],
+        shownIcons     : strings.icons.map(i => i),
+        lang           : availableLangs[0],
+        locale         : availableLocales[1],
         leaderboardType: strings.leaderboardTypes.find(t => t.id === 'country'),
-        theme: strings.themes[0],
+        theme          : strings.themes[0],
     }
 
     let origTheme = values.theme;
@@ -323,7 +342,7 @@
             origLocale = defaultLocale;
         }
 
-        if(config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
+        if (config.songLeaderboard && undefined === config.songLeaderboard.showBgCover) config.songLeaderboard.showBgCover = true;
 
         const defaultLeaderboardType = strings.leaderboardTypes.find(t => t.id === config.songLeaderboard.defaultType);
         if (defaultLeaderboardType) values.leaderboardType = defaultLeaderboardType;
@@ -333,18 +352,21 @@
 
         filterSortTypes();
 
-        let twitchProfile = await twitch.getProfileName(profileId);
-        if (profileId && twitchProfile) {
-            const twitchToken = await twitch.getCurrentToken();
-            const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
-            const tokenExpireSoon = tokenExpireInDays <= 3;
+        twitchProfile = await twitch.getProfileName(profileId);
+        twitchToken = await twitch.getCurrentToken();
+        const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
+        const tokenExpireSoon = tokenExpireInDays <= 3;
 
-            showTwitchBtn = config && config.profile && config.profile.showTwitchIcon || tokenExpireSoon;
+        const showTwitchBtnEnabledInConfig = !!(config && config.profile && config.profile.showTwitchIcon);
 
-            twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? trans('profile.twitch.linked') : trans('profile.twitch.renew')) : trans('profile.twitch.link');
-            twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? trans('profile.twitch.daysLeft', {days: tokenExpireInDays}) : null;
-            twitchBtnDisabled = !tokenExpireSoon;
+        showTwitchLinkBtn = (showTwitchBtnEnabledInConfig && !twitchToken) || (twitchToken && tokenExpireSoon);
+        showTwitchUserBtn = showTwitchBtnEnabledInConfig && twitchToken && playerInfo && !playerInfo.inactive;
 
+        twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? trans('profile.twitch.linked') : trans('profile.twitch.renew')) : trans('profile.twitch.link');
+        twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? trans('profile.twitch.daysLeft', {days: tokenExpireInDays}) : null;
+        twitchBtnDisabled = !tokenExpireSoon;
+
+        if (twitchProfile) {
             if (!twitchProfile.id) {
                 const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
                 if (fetchedProfile) {
@@ -367,8 +389,6 @@
                     }
                 }
             }
-        } else {
-            showTwitchBtn = false;
         }
 
         const profileExists = !!profileId && !!data.users[profileId] && !!data.users[profileId].scores;
@@ -403,19 +423,19 @@
         if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
 
         importJsonData(
-                e,
-                msg => {
-                    alert(msg)
-                    importBtn.$set({disabled: false});
-                },
-                async json => {
-                    await setCache(json);
+          e,
+          msg => {
+              alert(msg)
+              importBtn.$set({disabled: false});
+          },
+          async json => {
+              await setCache(json);
 
-                    if (importBtn) importBtn.$set({disabled: false});
-                    if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
+              if (importBtn) importBtn.$set({disabled: false});
+              if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
 
-                    eventBus.publish('data-imported', {});
-                }
+              eventBus.publish('data-imported', {});
+          }
         )
     }
 
@@ -513,17 +533,13 @@
 </script>
 
 {#if profileId}
+    <div class="buttons flex-center" class:flex-column={!dataAvailable}>
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
     {:else if !isActivePlayer && (mainPlayerId && mainPlayerId !== profileId)}
         <Button iconFa="far fa-star" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
     {:else if playerInfo}
-        {#if showTwitchBtn}
-            <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
-                    type="twitch" on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
-        {/if}
-
         {#if profileId === mainPlayerId}
             <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
         {/if}
@@ -539,6 +555,25 @@
     {#if !mainPlayerId || mainPlayerId !== profileId}
         <Button iconFa="fas fa-user-check" type="primary" label={!dataAvailable ? $_.profile.setAsDefault : ''} title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
     {/if}
+
+    {#if showTwitchUserBtn && twitchProfile}
+        <TwitchProfileLink {profileId} twitchLogin={twitchProfile ? twitchProfile.login : null} noLabel={!!twitchProfile} />
+    {/if}
+    </div>
+
+    <div class="buttons flex-center flex-column">
+    {#if playerInfo}
+        {#if showTwitchLinkBtn}
+            <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
+                    type="twitch"
+                    on:click={() => window.location.href = twitch.getAuthUrl(profileId ? profileId : '')}/>
+        {/if}
+
+        {#if showTwitchUserBtn && !twitchProfile}
+            <TwitchProfileLink {profileId} twitchLogin={twitchProfile ? twitchProfile.login : null} noLabel={!!twitchProfile} />
+        {/if}
+    {/if}
+    </div>
 
     {#if showSettingsModal}
         <Modal closeable={false} on:close={() => showSettingsModal = false}>
@@ -624,6 +659,11 @@
                         <label class="checkbox">
                             <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
                             {$_.profile.settings.profile.showOnePpCalc}
+                        </label>
+
+                        <label class="checkbox">
+                            <input type="checkbox" bind:checked={config.profile.showTwitchIcon}>
+                            {$_.profile.settings.profile.showTwitchIcon}
                         </label>
                     </div>
                 </section>
@@ -737,6 +777,10 @@
         text-align: center;
         padding-bottom: 0;
         max-width: 20rem;
+    }
+
+    .flex-column {
+        flex-direction: column;
     }
 
     @media screen and (max-width: 768px) {

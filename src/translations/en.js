@@ -20,7 +20,8 @@ export default {
                 header: 'Profile',
                 enlargeAvatar: 'Enlarge avatar',
                 showChart: 'Show the chart',
-                showOnePpCalc: 'Show +1PP calculator'
+                showOnePpCalc: 'Show +1PP calculator',
+                showTwitchIcon: 'Show Twitch button',
             },
 
             songLeaderboard: {
@@ -70,6 +71,8 @@ export default {
             linked: 'Linked',
             renew: 'Renew',
             daysLeft: 'Days left: ${days}',
+            setupPlayerProfile: 'Set up a Twitch profile',
+            userNotFound: 'Twitch user not found',
         },
     },
     songBrowser: {
@@ -256,6 +259,7 @@ export default {
         save: 'Save',
         cancel: 'Cancel',
         options: 'Options',
+        search: 'Search',
         nothingSelected: 'Nothing selected',
         to: 'to',
         noData: 'No data',

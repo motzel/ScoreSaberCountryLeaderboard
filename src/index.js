@@ -29,7 +29,7 @@ import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
-import {isDataAvailable} from "./scoresaber/players";
+import nodeSync from "./network/multinode-sync";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -460,11 +460,6 @@ async function setupProfile() {
             const div = document.createElement('div')
             div.style.marginTop = "1rem";
             div.style.fontSize = "0.75rem";
-            div.classList.add('buttons')
-            div.classList.add('flex-center');
-            if (!(await isDataAvailable())) {
-                div.style.flexDirection = 'column';
-            }
             avatarColumn.appendChild(div);
 
             new PlayerSettings({
@@ -593,6 +588,12 @@ async function setupPlayerAvatar() {
 async function setupTwitch() {
     await twitch.processTokenIfAvailable();
     await twitch.createTwitchUsersCache();
+
+    eventBus.on('player-twitch-linked', async ({nodeId, playerId, twitchLogin}) => {
+        if (nodeId !== nodeSync.getId()) {
+            await twitch.updateTwitchUser(playerId, twitchLogin);
+        }
+    })
 }
 
 async function setupDelayed() {

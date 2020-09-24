@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.6.3
+- [+] Twitch profile connection functionality for all players
+
 0.9.6.2
 - [+] possibility to manually refresh data even if background downloading is enabled, thx Rocker
 

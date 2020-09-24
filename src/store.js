@@ -23,7 +23,7 @@ export async function getCacheAndConvertIfNeeded(force = false) {
 
     log.info("Data fetch from cache");
 
-    const CURRENT_CACHE_VERSION = 1.2;
+    const CURRENT_CACHE_VERSION = 1.3;
 
     const prepareFreshCache = () => ({
         version: CURRENT_CACHE_VERSION,
@@ -79,6 +79,11 @@ export async function getCacheAndConvertIfNeeded(force = false) {
     if (!cache.config.songLeaderboard.defaultType) cache.config.songLeaderboard.defaultType = 'country';
 
     setThemeInFastCache(cache.config.others.theme);
+
+    if(cache.version === 1.2) {
+        cache.config.profile.showTwitchIcon = true
+        cache.version = 1.3;
+    }
 
     Globals.data = cache;
 
