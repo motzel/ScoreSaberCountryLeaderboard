@@ -196,6 +196,7 @@ export default {
         countryPlayersDownload: 'Pobieranie listy top 50 ${country}...',
         waiting: '[Czekam ${seconds}s]',
         error: 'Błąd pobierania danych. Spróbuj ponownie.',
+        btnDisabledBgDlInProgress: 'Odświeżanie wyłączone. Trwa pobieranie w tle...',
     },
     whatif: {
         label: 'Jeśli tak zagrasz:',

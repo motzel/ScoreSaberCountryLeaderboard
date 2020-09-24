@@ -138,12 +138,14 @@
         stopRefreshingFlag = false;
 
         eventBus.publish('start-data-refreshing', {nodeId: nodeSync.getId()});
+        eventBus.publish('dl-manager-pause-cmd');
 
         updateState({started: true, progress: 0, subLabel: $_.refresh.rankedsDownload});
         await updateRankeds();
 
         if (stopRefreshingFlag) {
             updateState({label: '', subLabel: '', started: false});
+            eventBus.publish('dl-manager-unpause-cmd');
             return;
         }
 
@@ -154,6 +156,7 @@
 
         if (stopRefreshingFlag) {
             updateState({label: '', subLabel: '', started: false});
+            eventBus.publish('dl-manager-unpause-cmd');
             return;
         }
 
@@ -167,6 +170,7 @@
 
             if (stopRefreshingFlag) {
                 updateState({label: '', subLabel: '', started: false});
+                eventBus.publish('dl-manager-unpause-cmd');
                 return;
             }
         }
@@ -178,12 +182,15 @@
         await setLastRefreshDate();
 
         eventBus.publish('data-refreshed', {nodeId: nodeSync.getId()});
+        eventBus.publish('dl-manager-unpause-cmd');
     }
 
     async function onRefresh() {
         refresh()
                 .catch(e => {
                     updateState({started: false, errorMsg: $_.refresh.error});
+                    eventBus.publish('dl-manager-unpause-cmd');
+
                     log.error("Can not refresh users")
                     console.error(e);
                 })
@@ -195,9 +202,8 @@
     {#if $state.started}
         <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}
-        {#if !bgDownload || forceShowProgress}
-            <span class="btn-cont"><Button iconFa="fas fa-sync-alt" label={refreshLabel} on:click={onRefresh} disabled={$state.started} /></span>
-        {/if}
+        <span class="btn-cont"><Button iconFa="fas fa-sync-alt" title={isBackgroundDownloadInProgress ? $_.refresh.btnDisabledBgDlInProgress : ''} label={refreshLabel} on:click={onRefresh} disabled={$state.started || isBackgroundDownloadInProgress} /></span>
+
         {#if !$state.errorMsg || !$state.errorMsg.length}
             {#if showLastDownloaded}
                 <strong>{$_.refresh.lastDownload}</strong> <span><FormattedDate date={$lastUpdatedState} noDate="-" /></span>

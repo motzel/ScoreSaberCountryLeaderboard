@@ -118,7 +118,7 @@
 
     .box h2 .refresh {
         margin-left: 1rem;
-        margin-top: .25em;
+        margin-top: -.25em;
         font-size: 1rem;
     }
 

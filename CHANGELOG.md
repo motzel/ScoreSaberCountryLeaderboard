@@ -5,21 +5,27 @@
 [!] bug fix
 [*] other changes
 
+0.9.6.2
+- [+] possibility to manually refresh data even if background downloading is enabled, thx Rocker
+
+0.9.6.1
+- [+] date of the previous result is now faded, thx Rocker
+
 0.9.6
-- [+] add support for countries other than Poland
-- [+] add friends mode
-- [+] add song leaderboard filtering by player type
+- [+] support for countries other than Poland
+- [+] friends mode
+- [+] song leaderboard filtering by player type
 
 0.9.5.2
-- [+] add in-place leaderboard in Song Browser when Cards view is selected
+- [+] in-place leaderboard in Song Browser when Cards view is selected
 - [*] optimize theme initialization
 
 0.9.5.1
 - [!] some minor bug fix regarding fragment part in url
 
 0.9.5
-- [+] add cards view to Song Browser
-- [+] add i18n support
+- [+] cards view in Song Browser
+- [+] i18n support
 
 0.9.4.2
 - [+] items in the accuracy chart are now clickable, thx Drakonno
@@ -28,7 +34,7 @@
 - [!] some minor bug fixes
 
 0.9.4
-- [+] Add the accuracy chart, thx Modren
+- [+] accuracy chart, thx Modren
 
 0.9.3.2
 - [!] fixed visual bug with playlist editing in sniper mode
@@ -43,7 +49,7 @@
  - [!] SS API rate limit handling fix
  
 0.9.2
- - [+] the possibility to manually add players to the plugin
+ - [+] possibility to manually add players to the plugin
  
 0.9.1.10
  - [!] playlist bugfix, thx Drakonno
@@ -82,13 +88,13 @@
  - [!] some minor UI fixes
  
 0.9.0.6
- - [+] refresh button to country dashboard
+ - [+] refresh button on the country dashboard
  
 0.9.0.5
  - [!] fixed bug with current page in song browser when filtering narrowing down total count
  
 0.9.0.4
- - [+] song leaderboard preview to top/last song on the country dashboard
+ - [+] song leaderboard preview on top/last songs on the country dashboard
  
 0.9.0.3
  - [+] background cover to song leaderboard
@@ -97,7 +103,7 @@
  - [*] SSE workaround
  
 0.9.0.1
- - [+] difficulty info to songs on country dashboard, thx Sombra
+ - [+] show difficulty info in songs on country dashboard, thx Sombra
  
 0.9
  - [+] new country ranking dashboard
@@ -109,7 +115,7 @@
  - [!] fix !bsr copy to clipboard in Firefox, thx Drakonno 
  
 0.8.9.6
- - [+] a rank to player profile that includes additional country players
+ - [+] rank in player profile now supports additional country players
  
 0.8.9.5
  - [+] song leaderboard preview to song browser

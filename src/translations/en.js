@@ -195,6 +195,7 @@ export default {
         countryPlayersDownload: 'Downloading the top 50 ${country}...',
         waiting: '[Waiting ${seconds}s]',
         error: 'Download error. Try again.',
+        btnDisabledBgDlInProgress: 'Refreshing disabled. Background downloading in progress...',
     },
     whatif: {
         label: 'If you play like this:',
