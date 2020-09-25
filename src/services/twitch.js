@@ -88,7 +88,8 @@ const updateTwitchUser = async (profileId, twitchLogin) => {
 
     if (!data.twitch.users) data.twitch.users = {};
 
-    data.twitch.users[profileId] = {login: twitchLogin, lastUpdated: null};
+    const existingTwitchProfile = data?.twitch?.users?.[profileId];
+    data.twitch.users[profileId] = Object.assign({}, existingTwitchProfile ?? {}, {login: twitchLogin, lastUpdated: null});
 }
 
 const createTwitchUsersCache = async () => {
