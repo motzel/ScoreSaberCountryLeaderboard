@@ -66,6 +66,8 @@ export default {
             rankedPlayCount: 'Liczba zagranych rankedów',
             totalRankedScore: 'Wynik rankedów razem',
             avgRankedAccuracy: 'Średnia celność rankedów',
+            medianRankedAccuracy: 'Mediana celności rankedów',
+            stdDeviationRankedAccuracy: 'Odchylenie stand. celności rankedów',
         },
         twitch: {
             link: 'Połącz',

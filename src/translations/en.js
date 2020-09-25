@@ -65,6 +65,8 @@ export default {
             rankedPlayCount: 'Ranked play count',
             totalRankedScore: 'Total ranked score',
             avgRankedAccuracy: 'Average ranked accuracy',
+            medianRankedAccuracy: 'Median ranked accuracy',
+            stdDeviationRankedAccuracy: 'Std deviation ranked accuracy',
         },
         twitch: {
             link: 'Link',

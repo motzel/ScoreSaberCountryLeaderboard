@@ -49,13 +49,13 @@
             if (!s.maxScoreEx) return cum;
 
             const scoreMult = s.uScore ? s.score / s.uScore : 1
-            const acc = s.score / s.maxScoreEx / scoreMult * 100;
+            s.acc = s.score / s.maxScoreEx / scoreMult * 100;
 
             cum.totalScore += s.uScore ? s.uScore : s.score;
-            cum.totalAcc += acc;
+            cum.totalAcc += s.acc;
 
             cum.badges.forEach(badge => {
-                if ((!badge.min || badge.min <= acc) && (!badge.max || badge.max > acc)) badge.value++;
+                if ((!badge.min || badge.min <= s.acc) && (!badge.max || badge.max > s.acc)) badge.value++;
 
                 badge.title = !badge.min ? '< ' + badge.max + '%' : (!badge.max ? '> ' + badge.min + '%' : badge.min + '% - ' + badge.max + '%')
             })
@@ -63,7 +63,10 @@
             return cum;
         }, {badges: badgesDef, totalAcc: 0, totalScore: 0, avgAcc: 0, playCount: scores.length})
 
+        stats.medianAcc = (scores.sort((a,b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc;
         stats.avgAcc = stats.totalAcc / scores.length;
+        stats.stdDeviation = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(stats.avgAcc - s.acc, 2), 0) / scores.length);
+
         delete stats.totalAcc;
 
         return stats;
@@ -74,12 +77,6 @@
                     .filter(s => s.pp > 0 && !UNRANKED.includes(s.leaderboardId))
             : null;
 
-    $: scores = allRankedScores
-            ? allRankedScores
-                    .map(s => s.pp)
-                    .sort((a, b) => b - a)
-            : null;
-
     $: stats = getPlayerStats(allRankedScores);
 </script>
 
@@ -87,12 +84,14 @@
     <ProfileLine label={$_.profile.stats.rankedPlayCount} value={stats.playCount} precision={0}/>
     <ProfileLine label={$_.profile.stats.totalRankedScore} value={stats.totalScore} precision={0}/>
     <ProfileLine label={$_.profile.stats.avgRankedAccuracy} value={stats.avgAcc} suffix="%"/>
+    <ProfileLine label={$_.profile.stats.stdDeviationRankedAccuracy} value={stats.stdDeviation} suffix="%"/>
+    <ProfileLine label={$_.profile.stats.medianRankedAccuracy} value={stats.medianAcc} suffix="%"/>
 {/if}
 
-{#if showCalc && scores && scores.length}
+{#if showCalc && allRankedScores && allRankedScores.length}
     <li class="calc">
         <div>
-            <ProfilePpCalc scores={scores} playerId={profile.id} mode={mode}/>
+            <ProfilePpCalc scores={allRankedScores} playerId={profile.id} mode={mode}/>
         </div>
         <Button iconFa="fas fa-arrows-alt-v" on:click={() => mode = mode === 'pp-stars' ? 'stars-pp' : 'pp-stars'}/>
     </li>

@@ -40,7 +40,7 @@
     }
 
     $: if (mode === 'pp-stars') {
-        rawPp = findRawPp(scores, parseFormattedNumber(expectedStr.trim()));
+        rawPp = findRawPp(scores.map(s => s.pp).sort((a, b) => b - a), parseFormattedNumber(expectedStr.trim()));
         if (!isNaN(rawPp)) {
             rawPpFormatted = formatNumber(rawPp)
             error = "";
