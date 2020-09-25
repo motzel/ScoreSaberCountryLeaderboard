@@ -30,13 +30,14 @@
     import memoize from '../../../utils/memoize';
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
+    import {getActiveCountry} from "../../../scoresaber/country";
+    import {_, trans} from "../../stores/i18n";
 
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
     import Range from "../Common/Range.svelte";
     import FormattedDate from "../Common/FormattedDate.svelte";
     import MultiRange from "../Common/MultiRange.svelte";
-
     import WhatIfPp from "./WhatIfPp.svelte";
     import Duration from "../Common/Duration.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
@@ -45,10 +46,9 @@
     import Select from "../Common/Select.svelte";
     import Leaderboard from "./Leaderboard.svelte";
     import Checkbox from "../Common/Checkbox.svelte";
-    import {_, trans} from "../../stores/i18n";
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
-    import {getActiveCountry} from "../../../scoresaber/country";
+    import ScoreRank from "../Common/ScoreRank.svelte";
 
     export let playerId;
     export let snipedIds = [];
@@ -183,6 +183,16 @@
                 type        : 'series',
                 displayed   : true,
                 valueProps  : {prevValue: null}
+            },
+            {
+                _key        : 'songBrowser.fields.rank',
+                _keyName    : 'songBrowser.fields.rankShort',
+                compactLabel: null,
+                name        : 'Rank',
+                key         : 'rank',
+                selected    : true,
+                type        : 'series',
+                displayed   : true
             },
             {
                 _key        : 'songBrowser.fields.diffPp',
@@ -1361,6 +1371,13 @@
                                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)}
                                                                            {...col.valueProps}/>
                                                         </strong>
+                                                    {:else if col.key === 'rank'}
+                                                        <div class={'compact-' + col.key + '-val'}>
+                                                            <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                                       timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                                   {...col.valueProps}
+                                                            />
+                                                        </div>
                                                     {:else}
                                                         {#if getScoreValueByKey(series, song, col.key)}
                                                             <div>

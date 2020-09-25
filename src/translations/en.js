@@ -98,6 +98,8 @@ export default {
         fields: {
             timeset: 'Date of play',
             timesetShort: 'Date',
+            rank: 'Rank',
+            rankShort: '#',
             stars: 'Stars',
             starsShort: '*',
             pp: 'PP',

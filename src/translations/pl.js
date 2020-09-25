@@ -99,6 +99,8 @@ export default {
         fields: {
             timeset: 'Data zagrania',
             timesetShort: 'Data',
+            rank: 'Rank',
+            rankShort: '#',
             stars: 'Gwiazdki',
             starsShort: '*',
             pp: 'PP',

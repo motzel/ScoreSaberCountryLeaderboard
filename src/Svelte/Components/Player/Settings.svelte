@@ -154,6 +154,15 @@
                 valueProps  : {prevValue: null}
             },
             {
+                _key        : 'songBrowser.fields.rank',
+                compactLabel: null,
+                name        : 'Rank',
+                key         : 'rank',
+                selected    : true,
+                type        : 'series',
+                displayed   : true
+            },
+            {
                 _key        : 'songBrowser.fields.diffPp',
                 compactLabel: null,
                 name        : '+PP',
