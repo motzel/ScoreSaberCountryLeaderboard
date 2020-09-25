@@ -252,7 +252,7 @@ export default {
         accuracyButton: 'Accuracy',
     },
     themes: {
-        dark: 'One and the only',
+        dark: 'The one and the only',
         light: 'Eyes burning',
         drakonno: "Drakonno's",
         sombra: "Sombra's"
