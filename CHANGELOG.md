@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.6.5
+- [+] player stats filtering by date of play, thx Solace
+- [+] median and std deviation in player profile
+
 0.9.6.4
 - [!] fix twitch video preview
 - [+] exclude Twitch token from exported data
