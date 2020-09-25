@@ -7,4 +7,13 @@
     export let suffix = "";
 </script>
 
-<li><strong>{label}: </strong> {formatNumber(value, precision)}{suffix}</li>
+<li>
+    <strong>{label}: </strong> {formatNumber(value, precision)}{suffix}
+    <slot></slot>
+</li>
+
+<style>
+    li {
+        position: relative;
+    }
+</style>
