@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.6.4
+- [!] fix twitch video preview
+- [+] exclude Twitch token from exported data
+
 0.9.6.3
 - [+] Twitch profile connection functionality for all players
 
