@@ -1,6 +1,5 @@
 <script>
-    import {substituteVars} from '../../../utils/format';
-    import {USER_PROFILE_URL} from "../../../network/scoresaber/consts";
+    import {getPlayerProfileUrl} from "../../../scoresaber/players";
 
     export let user;
 
@@ -9,7 +8,7 @@
     $: userName = user && user.name ? user.name : '???'
 </script>
 {#if user}
-    <a href="{substituteVars(USER_PROFILE_URL, { userId })}">
+    <a href="{getPlayerProfileUrl(userId, true)}">
         {#if userCountry}<img src="/imports/images/flags/{userCountry}.png"/>{/if}
         <span class="player-name">{userName}</span>
     </a>

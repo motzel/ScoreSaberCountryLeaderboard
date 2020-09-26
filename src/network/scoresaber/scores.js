@@ -32,7 +32,8 @@ export const fetchScores = async (userId, page = 1, rateLimitCallback = null, ..
                     diff: s.difficultyRaw,
                     difficulty: s.difficulty,
                     maxScoreEx: s.maxScore,
-                    rank: s.rank
+                    rank: s.rank,
+                    lastUpdated: new Date(),
                 }))
             : null
     );

@@ -7,7 +7,7 @@
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
-    import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
+    import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
@@ -54,6 +54,7 @@
     export let snipedIds = [];
     export let minPpPerMap = 1;
     export let country = getActiveCountry();
+    export let recentPlay = null;
 
     let viewUpdates = 'keep-view';
     let currentFirstRowIdentifier = null;
@@ -1227,7 +1228,7 @@
     }
 
     function addToPlaylist(leaderboardIds) {
-        checkedSongs = [...new Set(checkedSongs.concat(leaderboardIds))];
+        checkedSongs = arrayUnique(checkedSongs.concat(leaderboardIds));
     }
 
     function toggleChecked(leaderboardId) {
@@ -1374,7 +1375,11 @@
                                                     {:else if col.key === 'rank'}
                                                         <div class={'compact-' + col.key + '-val'}>
                                                             <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                                       leaderboardId={song.leaderboardId}
+                                                                       playerId={series.id}
+                                                                       lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
                                                                        timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                                       recentPlay={series.id === playerId ? new Date(Math.max(series.recentPlay, recentPlay)) : series.recentPlay}
                                                                    {...col.valueProps}
                                                             />
                                                         </div>
@@ -1531,6 +1536,17 @@
                                                     <FormattedDate date={getScoreValueByKey(series, song, col.key)}
                                                           {...col.valueProps}/>
                                                 </strong>
+                                            {:else if col.key === 'rank'}
+                                                <div class={'compact-' + col.key + '-val'}>
+                                                    <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                               leaderboardId={song.leaderboardId}
+                                                               playerId={series.id}
+                                                               lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
+                                                               timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                               recentPlay={series.id === playerId ? new Date(Math.max(series.recentPlay, recentPlay)) : series.recentPlay}
+                                                               {...col.valueProps}
+                                                    />
+                                                </div>
                                             {:else}
                                                 {#if getScoreValueByKey(series, song, col.key)}
                                                     <div>
@@ -1560,6 +1576,15 @@
                                         class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                         {#if col.key === 'timeset'}
                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                        {:else if col.key === 'rank'}
+                                            <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                       leaderboardId={song.leaderboardId}
+                                                       playerId={series.id}
+                                                       lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
+                                                       timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                       recentPlay={series.id === playerId ? new Date(Math.max(series.recentPlay, recentPlay)) : series.recentPlay}
+                                                       {...col.valueProps}
+                                            />
                                         {:else}
                                             <Value value={getScoreValueByKey(series, song, col.key)}
                                                    prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
@@ -1858,6 +1883,10 @@
         width: 3rem;
     }
 
+    thead th.rank {
+        width: 4rem;
+    }
+
     thead th.acc, thead th.pp, thead th.diffPp, thead th.score, thead th.weightedPp {
         width: 3rem;
     }
@@ -1870,7 +1899,7 @@
         width: 4.9rem;
     }
 
-    tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset {
+    tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset, tbody td.rank {
         text-align: center;
     }
 
