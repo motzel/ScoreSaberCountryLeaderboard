@@ -18,6 +18,8 @@ Then, depending on the selected mode:
 
 - **Mixed mode**: You can also set your country and then add profiles of other players to add them to the mixed leaderboard.
 
+**Warning: Do not clean your browser cache or add scoresaber.com to exceptions! The data is only stored on your computer, so if you do this you will have to download everything again.**
+
 # Feature list
 
 ### Song country leaderboard
