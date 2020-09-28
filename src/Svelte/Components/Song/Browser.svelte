@@ -49,6 +49,7 @@
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
     import ScoreRank from "../Common/ScoreRank.svelte";
+    import {refreshPlayerScores} from "../../../network/scoresaber/players";
 
     export let playerId;
     export let snipedIds = [];
@@ -771,6 +772,33 @@
                     completeFetchingNewPage(songPage)
                 }
             });
+
+        try {
+            const leaderboardIdsToRefresh = songPage.series && songPage.series.length
+              ? songPage.songs.reduce((cum, s) => {
+                  if (songPage.series[0].scores && songPage.series[0].scores[s.leaderboardId]) {
+                      const lastUpdated = songPage.series[0].scores[s.leaderboardId].lastUpdated;
+                      const timeset = songPage.series[0].scores[s.leaderboardId].timeset;
+                      const refreshDate = dateFromString(lastUpdated ? lastUpdated : timeset);
+
+                      // refresh ranks if song was played in last 7 days and was refreshed more than one hour ago
+                      const timesetDiffInMinutes = (new Date() - dateFromString(timeset)) / (1000 * 60);
+                      const refreshDiffInMinutes = (new Date() - dateFromString(refreshDate)) / (1000 * 60);
+                      if (refreshDiffInMinutes > 60 && timesetDiffInMinutes < 60 * 24 * 7) cum.push(s.leaderboardId);
+                  }
+
+                  return cum;
+              }, [])
+              : [];
+
+            if (leaderboardIdsToRefresh.length) {
+                const playerRecentPlay = new Date(Math.max(songPage.series[0].recentPlay, recentPlay))
+                refreshPlayerScores(songPage.series[0].id, leaderboardIdsToRefresh, playerRecentPlay).then(_ => {});
+            }
+        }
+        catch (e) {
+            // swallow refresh errors
+        }
 
         completeFetchingNewPage(songPage);
 

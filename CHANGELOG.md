@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7
+- [+] add an automatically (for the latest scores) or manually (for older results) refreshed rank to the Song Browser
+
 0.9.6.5
 - [+] player stats filtering by date of play, thx Solace
 - [+] median and std deviation in player profile

@@ -1,5 +1,5 @@
 import {substituteVars} from "../../utils/format";
-import {fetchApiPage, fetchHtmlPage} from "../fetch";
+import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
 import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
@@ -10,7 +10,7 @@ import {
     getPlayerRankedsScorePagesToUpdate, getPlayerScorePagesToUpdate, getPlayerScores
 } from "../../scoresaber/players";
 import {dateFromString, toUTCDate} from "../../utils/date";
-import {fetchAllNewScores, fetchScores} from "./scores";
+import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
@@ -232,7 +232,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
             if (progressCallback) progressCallback(progressInfo);
 
             const scores = convertArrayToObjectByKey(
-                await fetchScores(
+                await fetchRecentScores(
                     player.id,
                     page,
                     (time) => progressCallback ? progressCallback(Object.assign({}, progressInfo, {wait: time})) : null,
@@ -319,6 +319,18 @@ eventBus.on('player-scores-page-updated', ({playerId, page}) => {
     playersPagesInProgress[playerId] = playersPagesInProgress[playerId].filter(p => p !== page);
 })
 
+export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
+    try {
+        return await Promise.race([
+            fetchSsRecentScores(playerId, page),
+            delay(ssTimeout, null, true)
+        ]);
+    }
+    catch(e) {
+        return await fetchRecentScores(playerId, page);
+    }
+}
+
 export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
     let pages = [];
     let playerScoresPages = null;
@@ -359,10 +371,14 @@ export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTim
                     refreshedPlayerScores = {
                         ...refreshedPlayerScores,
                         ...convertArrayToObjectByKey(
-                          await fetchScores(
-                            playerId,
-                            page,
-                          ),
+                            (await fetchScores(
+                                playerId,
+                                page,
+                            )).map(s => ({
+                                leaderboardId: s.leaderboardId,
+                                rank: s.rank,
+                                timeset: dateFromString(s.timeset)
+                            })),
                           'leaderboardId'
                         )
                     };
