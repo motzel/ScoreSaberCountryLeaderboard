@@ -7,7 +7,7 @@
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
-    import {capitalize, convertArrayToObjectByKey} from "../../../utils/js";
+    import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
@@ -30,13 +30,14 @@
     import memoize from '../../../utils/memoize';
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
+    import {getActiveCountry} from "../../../scoresaber/country";
+    import {_, trans} from "../../stores/i18n";
 
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
     import Range from "../Common/Range.svelte";
     import FormattedDate from "../Common/FormattedDate.svelte";
     import MultiRange from "../Common/MultiRange.svelte";
-
     import WhatIfPp from "./WhatIfPp.svelte";
     import Duration from "../Common/Duration.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
@@ -45,15 +46,16 @@
     import Select from "../Common/Select.svelte";
     import Leaderboard from "./Leaderboard.svelte";
     import Checkbox from "../Common/Checkbox.svelte";
-    import {_, trans} from "../../stores/i18n";
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
-    import {getActiveCountry} from "../../../scoresaber/country";
+    import ScoreRank from "../Common/ScoreRank.svelte";
+    import {refreshPlayerScores} from "../../../network/scoresaber/players";
 
     export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
     export let country = getActiveCountry();
+    export let recentPlay = null;
 
     let viewUpdates = 'keep-view';
     let currentFirstRowIdentifier = null;
@@ -183,6 +185,16 @@
                 type        : 'series',
                 displayed   : true,
                 valueProps  : {prevValue: null}
+            },
+            {
+                _key        : 'songBrowser.fields.rank',
+                _keyName    : 'songBrowser.fields.rankShort',
+                compactLabel: null,
+                name        : 'Rank',
+                key         : 'rank',
+                selected    : true,
+                type        : 'series',
+                displayed   : true
             },
             {
                 _key        : 'songBrowser.fields.diffPp',
@@ -761,6 +773,33 @@
                 }
             });
 
+        try {
+            const leaderboardIdsToRefresh = songPage.series && songPage.series.length
+              ? songPage.songs.reduce((cum, s) => {
+                  if (songPage.series[0].scores && songPage.series[0].scores[s.leaderboardId]) {
+                      const lastUpdated = songPage.series[0].scores[s.leaderboardId].lastUpdated;
+                      const timeset = songPage.series[0].scores[s.leaderboardId].timeset;
+                      const refreshDate = dateFromString(lastUpdated ? lastUpdated : timeset);
+
+                      // refresh ranks if song was played in last 7 days and was refreshed more than one hour ago
+                      const timesetDiffInMinutes = (new Date() - dateFromString(timeset)) / (1000 * 60);
+                      const refreshDiffInMinutes = (new Date() - dateFromString(refreshDate)) / (1000 * 60);
+                      if (refreshDiffInMinutes > 60 && timesetDiffInMinutes < 60 * 24 * 7) cum.push(s.leaderboardId);
+                  }
+
+                  return cum;
+              }, [])
+              : [];
+
+            if (leaderboardIdsToRefresh.length) {
+                const playerRecentPlay = new Date(Math.max(songPage.series[0].recentPlay, recentPlay))
+                refreshPlayerScores(songPage.series[0].id, leaderboardIdsToRefresh, playerRecentPlay).then(_ => {});
+            }
+        }
+        catch (e) {
+            // swallow refresh errors
+        }
+
         completeFetchingNewPage(songPage);
 
         return songPage;
@@ -1217,7 +1256,7 @@
     }
 
     function addToPlaylist(leaderboardIds) {
-        checkedSongs = [...new Set(checkedSongs.concat(leaderboardIds))];
+        checkedSongs = arrayUnique(checkedSongs.concat(leaderboardIds));
     }
 
     function toggleChecked(leaderboardId) {
@@ -1361,6 +1400,17 @@
                                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)}
                                                                            {...col.valueProps}/>
                                                         </strong>
+                                                    {:else if col.key === 'rank'}
+                                                        <div class={'compact-' + col.key + '-val'}>
+                                                            <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                                       leaderboardId={song.leaderboardId}
+                                                                       playerId={series.id}
+                                                                       lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
+                                                                       timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                                       recentPlay={series.id === playerId ? new Date(Math.max(series.recentPlay, recentPlay)) : series.recentPlay}
+                                                                   {...col.valueProps}
+                                                            />
+                                                        </div>
                                                     {:else}
                                                         {#if getScoreValueByKey(series, song, col.key)}
                                                             <div>
@@ -1514,6 +1564,17 @@
                                                     <FormattedDate date={getScoreValueByKey(series, song, col.key)}
                                                           {...col.valueProps}/>
                                                 </strong>
+                                            {:else if col.key === 'rank'}
+                                                <div class={'compact-' + col.key + '-val'}>
+                                                    <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                               leaderboardId={song.leaderboardId}
+                                                               playerId={series.id}
+                                                               lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
+                                                               timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                               recentPlay={series.id === playerId ? new Date(Math.max(series.recentPlay, recentPlay)) : series.recentPlay}
+                                                               {...col.valueProps}
+                                                    />
+                                                </div>
                                             {:else}
                                                 {#if getScoreValueByKey(series, song, col.key)}
                                                     <div>
@@ -1543,6 +1604,15 @@
                                         class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                         {#if col.key === 'timeset'}
                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                        {:else if col.key === 'rank'}
+                                            <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                       leaderboardId={song.leaderboardId}
+                                                       playerId={series.id}
+                                                       lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
+                                                       timeset={getScoreValueByKey(series, song, 'timeset')}
+                                                       recentPlay={series.id === playerId ? new Date(Math.max(series.recentPlay, recentPlay)) : series.recentPlay}
+                                                       {...col.valueProps}
+                                            />
                                         {:else}
                                             <Value value={getScoreValueByKey(series, song, col.key)}
                                                    prevValue={!!getObjectFromArrayByKey(selectedColumns, 'diff') && (allFilters.songType.id !== 'sniper_mode' || series.id !== playerId) ? getScoreValueByKey(series, song, 'prev' + capitalize(col.key)) : null}
@@ -1841,6 +1911,10 @@
         width: 3rem;
     }
 
+    thead th.rank {
+        width: 4rem;
+    }
+
     thead th.acc, thead th.pp, thead th.diffPp, thead th.score, thead th.weightedPp {
         width: 3rem;
     }
@@ -1853,7 +1927,7 @@
         width: 4.9rem;
     }
 
-    tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset {
+    tbody td.acc, tbody td.pp, tbody td.diffPp, tbody td.score, tbody td.weightedPp, tbody td.timeset, tbody td.rank {
         text-align: center;
     }
 

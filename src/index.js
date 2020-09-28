@@ -30,6 +30,11 @@ import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import nodeSync from "./network/multinode-sync";
+import {getPlayerProfileUrl, getPlayerScores} from "./scoresaber/players";
+import {dateFromString} from "./utils/date";
+import {setRefreshedPlayerScores} from "./network/scoresaber/players";
+import {parseSsUserScores} from "./network/scoresaber/scores";
+import {parseSsInt} from "./scoresaber/other";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -200,6 +205,29 @@ async function setupChart() {
 async function setupProfile() {
     log.info("Setup profile page");
 
+    const profileId = getProfileId();
+    if (!profileId) return;
+
+    // redirect to recent plays if auto-transform is enabled or transforming was requested
+    const url = new URL(window.location.href);
+    const urlParams = new URLSearchParams(url.search);
+
+    const songBrowserConfig = await getConfig('songBrowser');
+    const urlHasTransformParam = urlParams.has('transform');
+    const autoTransformEnabled = (songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam;
+    const isRecentPlaysPage = urlParams.get('sort') === '2';
+
+    if (autoTransformEnabled && !isRecentPlaysPage) {
+        window.location.href = getPlayerProfileUrl(profileId, true);
+    }
+
+    if (urlHasTransformParam) {
+        urlParams.delete('transform');
+        url.search = urlParams.toString();
+        history.replaceState(null, '', url.toString());
+    }
+
+    // setup chart when ready
     if (document.readyState == 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             setupChart()
@@ -208,9 +236,6 @@ async function setupProfile() {
         // DOM is ready
         setupChart();
     }
-
-    const profileId = getProfileId();
-    if (!profileId) return;
 
     const data = await getCacheAndConvertIfNeeded();
 
@@ -229,103 +254,53 @@ async function setupProfile() {
     const ssConfig = await getConfig('ss');
     const showDiff = !!ssConfig.song.showDiff;
     const showWhatIfPp = !!ssConfig.song.showWhatIfPp;
-    if (ssConfig && ssConfig.song && !!ssConfig.song.enhance)
-        (await Promise.all([...document.querySelectorAll('table.ranking tbody tr')].map(async tr => {
-            let ret = {tr};
 
-            const rank = tr.querySelector('th.rank');
-            if(rank) {
-                const rankMatch = getFirstRegexpMatch(/#(\d+)/, rank.innerText);
-                ret.rank = rankMatch ? parseInt(rankMatch, 10) : null;
-            } else {
-                ret.rank = null;
-            }
+    const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
 
-            const song = tr.querySelector('th.song a');
-            if(song) {
-                const leaderboardMatch = getFirstRegexpMatch(/leaderboard\/(\d+)/, song.href);
-                ret.leaderboardId = leaderboardMatch ? parseInt(leaderboardMatch, 10): null;
-            } else {
-                ret.leaderboardId = null;
-            }
+    const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
+        const leaderboard = data.users?.[profileId]?.scores?.[s.leaderboardId];
+        if (leaderboard && songEnhanceEnabled) {
+            try {
+                const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
 
-            const img = tr.querySelector('th.song img');
-            ret.songImg = img ? img.src : null;
-
-            const songPp = tr.querySelector('th.song a .songTop.pp');
-            const songMatch = songPp ? songPp.innerHTML.match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
-            if(songMatch) {
-                ret.songName = songMatch[1];
-                ret.songDiff = songMatch[2];
-            } else {
-                ret = Object.assign(ret, {songName: null, songDiff: null});
-            }
-
-            const songMapper = tr.querySelector('th.song a .songTop.mapper');
-            ret.songMapper = songMapper ? songMapper.innerText : null;
-
-            const songDate = tr.querySelector('th.song span.songBottom.time');
-            ret.timeset = songDate ? songDate.title : null;
-
-            const pp = tr.querySelector('th.score .scoreTop.ppValue');
-            if(pp) ret.pp = parseFloat(pp.innerText);
-
-            const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
-            const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
-            ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
-
-            const scoreInfo = tr.querySelector('th.score .scoreBottom');
-            const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
-            if(scoreInfoMatch) {
-                switch(scoreInfoMatch[1]) {
-                    case "score":
-                        ret.percent = null;
-                        ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-                        ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
-                        break;
-
-                    case "accuracy":
-                        ret.score = null;
-                        ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-                        ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
-                        break;
-                }
-            }
-
-            const leaderboard = data.users?.[profileId]?.scores?.[ret.leaderboardId];
-            if (leaderboard) {
-                try {
-                    const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
-
-                    if (!ret.percent && ret.score) {
-                        ret.percent = maxSongScore
-                            ? ret.score / maxSongScore
-                            : (leaderboard.maxScoreEx
-                                ? ret.score / leaderboard.maxScoreEx
-                                : null);
-                    }
-
-                    if(!ret.score && ret.percent) {
-                        ret.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(ret.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
-                    }
-
-                    ret.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
-
-                    const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
-                    ret.prevRank = showDiff && history ? history.rank : null;
-                    ret.prevPp = showDiff && history ? history.pp : null;
-                    ret.prevScore = showDiff && history ? history.score : null;
-                    ret.prevTimeset = showDiff && history ? new Date(Date.parse(history.rank)) : null;
-                    ret.prevPercent = showDiff && history && ret.prevScore ? (maxSongScore
-                        ? ret.prevScore / maxSongScore
+                if (!s.percent && s.score) {
+                    s.percent = maxSongScore
+                        ? s.score / maxSongScore
                         : (leaderboard.maxScoreEx
-                            ? ret.prevScore / leaderboard.maxScoreEx
-                            : null)) : null;
-                } catch (e) {} // swallow error
-            }
+                            ? s.score / leaderboard.maxScoreEx
+                            : null);
+                }
 
-            return ret;
-        })))
+                if(!s.score && s.percent) {
+                    s.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(s.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
+                }
+
+                s.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+
+                const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
+                s.prevRank = showDiff && history ? history.rank : null;
+                s.prevPp = showDiff && history ? history.pp : null;
+                s.prevScore = showDiff && history ? history.score : null;
+                s.prevTimeset = showDiff && history ? new Date(Date.parse(history.rank)) : null;
+                s.prevPercent = showDiff && history && s.prevScore ? (maxSongScore
+                    ? s.prevScore / maxSongScore
+                    : (leaderboard.maxScoreEx
+                        ? s.prevScore / leaderboard.maxScoreEx
+                        : null)) : null;
+            } catch (e) {} // swallow error
+        }
+
+        return s;
+    }));
+
+    await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
+        leaderboardId: s.leaderboardId,
+        rank         : s.rank,
+        timeset      : dateFromString(s.timeset)
+    })));
+
+    if (songEnhanceEnabled)
+        parsedScores
             .filter(s => null !== s.tr)
             .forEach(s => {
                 const score = s.tr.querySelector('.score');
@@ -362,8 +337,8 @@ async function setupProfile() {
                 const globalRankA = rankLi.querySelector('a:first-of-type');
                 const rankA = rankLi.querySelector('a[href^="/global?country="]');
                 if(globalRankA && rankA) {
-                    const originalGlobalRank = parseInt(globalRankA.innerText.replace(/[^\d]/g,''), 10);
-                    const originalRank = parseInt(getFirstRegexpMatch(/([0-9,]+)$/, rankA.innerText).replace(/[^\d]/g, ''), 10);
+                    const originalGlobalRank = parseSsInt(globalRankA.innerText);
+                    const originalRank = parseSsInt(rankA.innerText);
                     const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
                     if (originalGlobalRank && originalRank && originalCountry) {
                         const pageStats =
@@ -431,6 +406,11 @@ async function setupProfile() {
                 }
             })
             const transformSongs = async () => {
+                if (!isRecentPlaysPage) {
+                    window.location.href = getPlayerProfileUrl(profileId, true) + '&transform=true';
+                    return;
+                }
+
                 const content = mainColumn.closest('.content');
                 const songBox = content.querySelector('.box:nth-child(2)');
                 if (songBox) {
@@ -441,7 +421,11 @@ async function setupProfile() {
 
                     new SongBrowser({
                         target: box,
-                        props: {playerId: profileId, country}
+                        props: {
+                            playerId: profileId,
+                            country,
+                            recentPlay: parsedScores && parsedScores.length ? dateFromString(parsedScores[0].timeset) : null
+                        }
                     })
 
                     songBox.remove();
@@ -450,8 +434,7 @@ async function setupProfile() {
                     document.querySelector('.el-group.flex-center').remove();
                 }
             }
-            const songBrowserConfig = await getConfig('songBrowser');
-            if (songBrowserConfig && songBrowserConfig.autoTransform) await transformSongs();
+            if (autoTransformEnabled) await transformSongs();
             else transformBtn.$on('click', transformSongs)
         }
 
@@ -596,6 +579,18 @@ async function setupTwitch() {
     })
 }
 
+async function setupGlobalEventsListeners() {
+    // update scores done on other node
+    eventBus.on('player-score-updated', async ({nodeId, playerId, leaderboardId, ...data}) => {
+        if (nodeId === nodeSync.getId() || !playerId || !leaderboardId) return;
+
+        const playerScores = await getPlayerScores(playerId);
+        if (!playerScores || !playerScores[leaderboardId]) return;
+
+        playerScores[leaderboardId] = {...playerScores[leaderboardId], ...data};
+    })
+}
+
 async function setupDelayed() {
     initialized = true;
 
@@ -656,9 +651,10 @@ async function init() {
 
     await Promise.allSettled(
       [
-          setupCountryRanking(),
           refinedThemeSetup(),
           setLangFromConfig(),
+          setupGlobalEventsListeners(),
+          setupCountryRanking(),
           setupPlayerAvatar(),
           setupTwitch(),
       ]

@@ -99,6 +99,8 @@ export default {
         fields: {
             timeset: 'Data zagrania',
             timesetShort: 'Data',
+            rank: 'Rank',
+            rankShort: '#',
             stars: 'Gwiazdki',
             starsShort: '*',
             pp: 'PP',
@@ -173,7 +175,8 @@ export default {
         },
         noScore: 'Brak wyniku',
         former: 'Poprzednio',
-        totalPp: 'Razem dla ${name}'
+        totalPp: 'Razem dla ${name}',
+        rankOfDate: 'Rank of ${date}, click to refresh',
     },
     songLeaderboard: {
         player: 'Gracz',

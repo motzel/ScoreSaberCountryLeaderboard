@@ -5,7 +5,7 @@ import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
-import {isEmpty} from "../utils/js";
+import {arrayUnique, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
 
 export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
@@ -45,7 +45,7 @@ export const addPlayerToGroup = async (playerId, groupId = 'default', groupName 
     const groups = data.groups;
     if(!groups[groupId]) groups[groupId] = {name: groupName, players: []};
 
-    groups[groupId].players = [...new Set(groups[groupId].players.concat([playerId]))];
+    groups[groupId].players = arrayUnique(groups[groupId].players.concat([playerId]));
 }
 
 export const removePlayerFromGroup = async (playerId, removeData = true, groupId = 'default') => {
@@ -62,12 +62,12 @@ export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[
 export const getFriendsIds = async (withMain = false) => {
     const groups = (await getPlayerGroups()) ?? {};
 
-    return [...new Set(
+    return arrayUnique(
       Object.keys(groups)
         .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
         .concat(withMain ? [await getMainPlayerId()] : [])
         .filter(playerId => playerId)
-    )];
+    );
 }
 
 export const getFriends = async (country, withMain = false) => Object.values(mapPlayersToObj(await getFriendsIds(country, withMain), await getPlayers()));
@@ -82,11 +82,11 @@ export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
 
 export const getManuallyAddedPlayers = async (country, withMain = false) => Object.values(mapPlayersToObj(await getManuallyAddedPlayersIds(country, withMain), await getPlayers()));
 
-export const getAllActivePlayersIds = async (country) => [...new Set((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds(country)))];
+export const getAllActivePlayersIds = async (country) => arrayUnique((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds(country)));
 
 export const getAllActivePlayers = async (country) => Object.values(mapPlayersToObj(await getAllActivePlayersIds(country), await getPlayers()));
 
-export const getPlayerProfileUrl = playerId => substituteVars(USER_PROFILE_URL, {userId: playerId})
+export const getPlayerProfileUrl = (playerId, recentPlaysPage = false) => substituteVars(USER_PROFILE_URL + (recentPlaysPage ? '?sort=2' : ''), {userId: playerId})
 
 export const getPlayerAvatarUrl = async playerId => {
     if (!playerId) return null;
@@ -136,23 +136,42 @@ const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
     }, [])
 }
 
+export const getPlayerScorePagesToUpdate = (allScores, leaderboardIdsToUpdate, includeAllLeaderboardIdsOnPage = false) => {
+    const sortedScores = Object.values(allScores)
+      .map((s) => ({
+          leaderboardId: s.leaderboardId,
+          timeset      : dateFromString(s.timeset)
+      }))
+      .sort((a, b) => b.timeset.getTime() - a.timeset.getTime());
+
+    return sortedScores
+      .reduce((cum, s, idx) => {
+          if (leaderboardIdsToUpdate.includes(s.leaderboardId)) {
+              const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
+
+              if (includeAllLeaderboardIdsOnPage) {
+                  if (!cum[page]) cum[page] = {searched: [], all: []};
+
+                  cum[page].searched = cum[page].searched.concat([s.leaderboardId]);
+
+                  cum[page].all = arrayUnique(
+                    cum[page].all.concat(
+                      sortedScores
+                        .slice((page - 1) * PLAYS_PER_PAGE, page * PLAYS_PER_PAGE)
+                        .map(s => s.leaderboardId)
+                    )
+                  );
+              } else {
+                  cum[page] = (cum[page] ?? []).concat([s.leaderboardId]);
+              }
+          }
+          return cum;
+      }, {});
+}
+
 export const getPlayerRankedsScorePagesToUpdate = async (scores, previousLastUpdated) => {
     const songsToUpdate = await getPlayerRankedsToUpdate(scores, previousLastUpdated);
     if (!songsToUpdate.length) return {};
 
-    return Object.values(scores)
-        .map((s) => ({
-            leaderboardId: s.leaderboardId,
-            timeset: dateFromString(s.timeset)
-        }))
-        .sort((a, b) => b.timeset.getTime() - a.timeset.getTime())
-        .reduce((cum, s, idx) => {
-            if (songsToUpdate.includes(s.leaderboardId)) {
-                const page = Math.floor(idx / PLAYS_PER_PAGE) + 1;
-                cum[page] = (cum && cum[page] ? cum[page] : []).concat([
-                    s.leaderboardId
-                ]);
-            }
-            return cum;
-        }, {});
+    return getPlayerScorePagesToUpdate(scores, songsToUpdate);
 }

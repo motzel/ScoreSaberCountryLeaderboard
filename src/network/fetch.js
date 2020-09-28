@@ -1,6 +1,6 @@
 import {substituteVars} from "../utils/format";
 
-export const delay = async (time, val) => new Promise((resolve) => setTimeout(_ => resolve(val), time));
+export const delay = async (time, val, shouldReject = false) => new Promise((resolve, reject) => setTimeout(_ => shouldReject ? reject(val) : resolve(val), time));
 
 export class SsplError extends Error {
     constructor(message) {

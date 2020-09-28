@@ -1,16 +1,16 @@
 import {substituteVars} from "../../utils/format";
-import {fetchApiPage, fetchHtmlPage} from "../fetch";
-import {convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
+import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
+import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
 import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
     getManuallyAddedPlayersIds,
     getPlayerInfo,
-    getPlayerRankedsScorePagesToUpdate
+    getPlayerRankedsScorePagesToUpdate, getPlayerScorePagesToUpdate, getPlayerScores
 } from "../../scoresaber/players";
 import {dateFromString, toUTCDate} from "../../utils/date";
-import {fetchAllNewScores, fetchScores} from "./scores";
+import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
@@ -232,7 +232,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
             if (progressCallback) progressCallback(progressInfo);
 
             const scores = convertArrayToObjectByKey(
-                await fetchScores(
+                await fetchRecentScores(
                     player.id,
                     page,
                     (time) => progressCallback ? progressCallback(Object.assign({}, progressInfo, {wait: time})) : null,
@@ -263,5 +263,161 @@ export const updatePlayerScores = async (playerId, persist = true, emitEvents = 
 
     if (emitEvents && data.users[playerId]) {
         eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), player: data.users[playerId]});
+    }
+}
+
+const emitEventForScoreUpdate = (eventName, playerId, data = {}) => {
+    eventBus.publish(eventName, {
+        ...data,
+        nodeId: nodeSync.getId(),
+        playerId,
+    });
+}
+
+const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
+    leaderboardIds.forEach(leaderboardId => emitEventForScoreUpdate(eventName, playerId, {leaderboardId}));
+}
+
+export const setRefreshedPlayerScores = async (playerId, scores) => {
+    const data = await getCacheAndConvertIfNeeded();
+
+    const playerScores = await getPlayerScores(playerId);
+    if (!playerScores) {
+        emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
+
+        return false;
+    }
+
+    scores.forEach(s => {
+        if (!s.leaderboardId) return;
+
+        if (!playerScores[s.leaderboardId]) {
+            emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
+
+            return;
+        }
+
+        playerScores[s.leaderboardId] = {...playerScores[s.leaderboardId], ...s, lastUpdated: new Date()};
+
+        emitEventForScoreUpdate('player-score-updated', playerId, playerScores[s.leaderboardId]);
+    })
+
+    await setCache(data);
+
+    return true;
+}
+
+let playersPagesInProgress = {};
+eventBus.on('player-scores-page-update-start', ({playerId, page}) => {
+    if (!playersPagesInProgress[playerId]) playersPagesInProgress[playerId] = [];
+
+    playersPagesInProgress[playerId] = arrayUnique(playersPagesInProgress[playerId].concat(page));
+})
+eventBus.on('player-scores-page-updated', ({playerId, page}) => {
+    if (!playersPagesInProgress[playerId]) return;
+
+    playersPagesInProgress[playerId] = playersPagesInProgress[playerId].filter(p => p !== page);
+})
+
+export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
+    try {
+        return await Promise.race([
+            fetchSsRecentScores(playerId, page),
+            delay(ssTimeout, null, true)
+        ]);
+    }
+    catch(e) {
+        return await fetchRecentScores(playerId, page);
+    }
+}
+
+export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
+    let pages = [];
+    let playerScoresPages = null;
+
+    try {
+        emitEventForScoresUpdate('player-score-update-start', playerId, leaderboardIds);
+
+        const playerInfo = await getPlayerInfo(playerId);
+        if (!playerInfo || !playerInfo.scores) throw 'Player not found';
+
+        const cachedRecentPlay = dateFromString(playerInfo.recentPlay);
+        if (!lastScoreTimeset || !cachedRecentPlay || cachedRecentPlay < lastScoreTimeset) {
+            await updatePlayerScores(playerId);
+        }
+
+        const pagesInProgress = playersPagesInProgress[playerId] ?? [];
+
+        playerScoresPages = getPlayerScorePagesToUpdate(playerInfo.scores, leaderboardIds, true);
+
+        pages = Object.keys(playerScoresPages).filter(p => !pagesInProgress.includes(p));
+
+        pages.forEach(page => {
+            emitEventForScoreUpdate('player-scores-page-update-start', playerId, {page});
+
+            if (playerScoresPages[page])
+                playerScoresPages[page].all.forEach(leaderboardId => emitEventForScoreUpdate('player-score-update-start', playerId, {leaderboardId}));
+        });
+
+        let refreshedPlayerScores = {};
+        let tryNum = 0;
+        let pagesDownloaded = [];
+        let dlPages = [...pages];
+        while(dlPages.length && tryNum < 3) {
+            for (const page of dlPages) {
+                if (pagesDownloaded.includes(page)) continue;
+
+                try {
+                    refreshedPlayerScores = {
+                        ...refreshedPlayerScores,
+                        ...convertArrayToObjectByKey(
+                            (await fetchScores(
+                                playerId,
+                                page,
+                            )).map(s => ({
+                                leaderboardId: s.leaderboardId,
+                                rank: s.rank,
+                                timeset: dateFromString(s.timeset)
+                            })),
+                          'leaderboardId'
+                        )
+                    };
+                }
+                catch(e) {
+                    // swallow error in order to dl in next try
+                }
+
+                pagesDownloaded.push(page);
+            }
+
+            tryNum++;
+
+            const pagesWithNotFoundScores = arrayUnique(pages.reduce((cum, page) => {
+                // check if all searched scores has been found on calculated scores page
+                if (!playerScoresPages[page]) return cum;
+
+                const notFoundLeaderboardIds = playerScoresPages[page].searched.filter(leaderboardId => !refreshedPlayerScores[leaderboardId])
+
+                return notFoundLeaderboardIds.length ? cum.concat([page - tryNum]) : cum;
+            }, []));
+
+            dlPages = pagesWithNotFoundScores.filter(page => page > 0);
+        }
+
+        pages.forEach(page => emitEventForScoreUpdate('player-scores-page-updated', playerId, {page}));
+
+        return (await setRefreshedPlayerScores(playerId, Object.values(refreshedPlayerScores)));
+    }
+    catch (e) {
+        emitEventForScoresUpdate('player-score-update-failed', playerId, leaderboardIds);
+
+        pages.forEach(page => {
+            emitEventForScoreUpdate('player-scores-page-updated', playerId, {page});
+
+            if (playerScoresPages[page])
+                playerScoresPages[page].all.forEach(leaderboardId => emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId}));
+        });
+
+        return false;
     }
 }

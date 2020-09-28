@@ -15,7 +15,7 @@
     }
 </style>
 {#await promisedUrl then fullUrl}
-    <a href={getPlayerProfileUrl(playerId)}>
+    <a href={getPlayerProfileUrl(playerId, true)}>
         {#if fullUrl}
             <figure class={"image " + 'is-' + size + 'x' + size}><img src={fullUrl} style="border-radius: 50%"></figure>
         {:else}

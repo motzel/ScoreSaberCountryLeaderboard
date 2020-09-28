@@ -1,4 +1,5 @@
 import monkey from '../../monkey.config';
+import {arrayUnique} from "./js";
 
 const LEVELS = {
     NONE: 0,
@@ -43,6 +44,6 @@ export default {
     setLevel: level => {
         currentLevel = Object.values(LEVELS).find(l => l === level) ? level : currentLevel
     },
-    logOnly: types => enabledTypes = [...new Set(enabledTypes.concat(Array.isArray(types) ? types : [types]))],
+    logOnly: types => enabledTypes = arrayUnique(enabledTypes.concat(Array.isArray(types) ? types : [types])),
     logAll: () => enabledTypes = []
 };
