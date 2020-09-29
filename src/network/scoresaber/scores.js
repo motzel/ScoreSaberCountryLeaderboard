@@ -62,7 +62,7 @@ export const parseSsUserScores = doc => [...doc.querySelectorAll('table.ranking 
     const img = tr.querySelector('th.song img');
     ret.songImg = img ? img.src : null;
 
-    const imgMatch = img.src.match(/([^\/]+)\.(jpg|jpeg|png)$/);
+    const imgMatch = img ? img.src.match(/([^\/]+)\.(jpg|jpeg|png)$/) : null;
     ret.id = imgMatch ? imgMatch[1] : null;
 
     const songPp = tr.querySelector('th.song a .songTop.pp');
@@ -104,6 +104,48 @@ export const parseSsUserScores = doc => [...doc.querySelectorAll('table.ranking 
                 break;
         }
     }
+
+    return ret;
+});
+
+export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.ranking tbody tr')].map(tr => {
+    let ret = {tr};
+
+    const picture = tr.querySelector('td.picture img');
+    ret.picture = picture ? picture.src : null;
+
+    const rank = tr.querySelector('td.rank');
+    ret.rank = rank ? parseSsInt(rank.innerText) : null;
+
+    const player = tr.querySelector('td.player a');
+    if (player) {
+        ret.playerId = getFirstRegexpMatch(/(\d+)$/, player.href);
+
+        const img = player.querySelector('img');
+        ret.country = img ? getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, img.src) : null;
+
+        const name = player.querySelector('.songTop.pp');
+        ret.playerName = name ? name.innerText.trim() : null;
+    } else {
+        ret.playerId = null;
+        ret.playerName = null;
+        ret.country = null;
+    }
+
+    const score = tr.querySelector('td.score');
+    ret.score = score ? parseSsInt(score.innerText) : null;
+
+    const timeset = tr.querySelector('td.timeset');
+    ret.timesetAgo = timeset ? timeset.innerText.trim() : null;
+
+    const mods = tr.querySelector('td.mods center');
+    ret.mods = mods ? mods.innerText.trim() : null;
+
+    const percent = tr.querySelector('td.percentage center');
+    ret.percent = percent && percent.innerText.trim() !== '-' ? parseFloat(percent.innerText.replace(/[^0-9.]/g, '')) / 100 : null;
+
+    const pp = tr.querySelector('td.pp .scoreTop.ppValue');
+    ret.pp = pp ? parseFloat(pp.innerText) : null;
 
     return ret;
 })

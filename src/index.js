@@ -19,7 +19,7 @@ import log from './utils/logger';
 import tempConfig from './temp';
 import {getCacheAndConvertIfNeeded, getThemeFromFastCache} from "./store";
 import {getFirstRegexpMatch} from "./utils/js";
-import {getSongMaxScore} from "./song";
+import {extractDiffAndType, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
@@ -30,11 +30,12 @@ import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import nodeSync from "./network/multinode-sync";
-import {getPlayerProfileUrl, getPlayerScores} from "./scoresaber/players";
+import {getAllActivePlayers, getPlayerProfileUrl, getPlayerScores} from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
 import {setRefreshedPlayerScores} from "./network/scoresaber/players";
-import {parseSsUserScores} from "./network/scoresaber/scores";
+import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
+import {formatNumber} from "./utils/format";
 
 const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -169,6 +170,45 @@ async function setupLeaderboard() {
             }
         });
 
+        const ssConfig = await getConfig('ss');
+        const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
+
+        if (songEnhanceEnabled) {
+            const scores = parseSsLeaderboardScores(document);
+            if (scores) {
+                let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
+                if (leaderboardId) {
+                    const diff = (await getAllActivePlayers(await getActiveCountry()))
+                        .map(player => player && player.scores && player.scores[leaderboardId] ? player.scores[leaderboardId].diff : null)
+                        .filter(diff => diff)
+                        .slice(0, 1)
+                    ;
+                    if(diff && diff.length) diffInfo = extractDiffAndType(diff[0]);
+                }
+
+                const maxScore = await getSongMaxScoreWithDiffAndType(songInfoData.hash, diffInfo);
+                scores.forEach(s => {
+                    if (s.score) {
+                        const score = s.tr.querySelector('td.score');
+                        if (score) {
+                            score.innerHTML = formatNumber(s.score, 0);
+                        }
+                    }
+
+                    const percentage = s.tr.querySelector('td.percentage center');
+                    if (percentage && s.score && maxScore && maxScore > 0) {
+                        percentage.innerHTML = formatNumber(s.score * 100 / maxScore) + '%';
+                    }
+
+                    if (s.pp !== null) {
+                        const pp = s.tr.querySelector('td.pp .scoreTop.ppValue');
+                        if (pp) {
+                            pp.innerHTML = formatNumber(s.pp);
+                        }
+                    }
+                });
+            }
+        }
     }
 
     log.info("Setup leaderboard page / Done")

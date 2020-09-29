@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.1
+- [+] add accuracy to the song leaderboard, thx Rocker 
+
 0.9.7
 - [+] add an automatically (for the latest scores) or manually (for older results) refreshed rank to the Song Browser
 
