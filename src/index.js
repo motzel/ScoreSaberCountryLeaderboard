@@ -248,13 +248,18 @@ async function setupProfile() {
     const profileId = getProfileId();
     if (!profileId) return;
 
+    const data = await getCacheAndConvertIfNeeded();
+
+    const playerScores = await getPlayerScores(profileId);
+    const isPlayerDataAvailable = playerScores && Object.keys(playerScores).length;
+
     // redirect to recent plays if auto-transform is enabled or transforming was requested
     const url = new URL(window.location.href);
     const urlParams = new URLSearchParams(url.search);
 
     const songBrowserConfig = await getConfig('songBrowser');
     const urlHasTransformParam = urlParams.has('transform');
-    const autoTransformEnabled = (songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam;
+    const autoTransformEnabled = isPlayerDataAvailable && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
     const isRecentPlaysPage = urlParams.get('sort') === '2';
 
     if (autoTransformEnabled && !isRecentPlaysPage) {
@@ -276,8 +281,6 @@ async function setupProfile() {
         // DOM is ready
         setupChart();
     }
-
-    const data = await getCacheAndConvertIfNeeded();
 
     const profileConfig = await getConfig('profile');
     if (profileConfig && profileConfig.enlargeAvatar) {
@@ -368,7 +371,7 @@ async function setupProfile() {
     const mainUl = document.querySelector('.content .column ul');
     const mainColumn = mainUl.closest('.column');
     if (mainColumn) {
-        if (data.users?.[profileId]?.stats) {
+        if (isPlayerDataAvailable) {
             let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
             const country = await getActiveCountry();
             ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)

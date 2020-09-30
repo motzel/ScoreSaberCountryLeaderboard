@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.3
+- [!] Bug fix with inability to view profiles of players not added to the plugin, thx Drakonno & Rocker for bug report
+
 0.9.7.2
 - [+] add pp chart
 - [+] add the dashboard filtering by country & friends
