@@ -1,5 +1,4 @@
 <script>
-    import {onMount} from 'svelte';
     import {_, trans} from "../../stores/i18n";
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
@@ -7,13 +6,14 @@
     import Range from "../Common/Range.svelte";
     import Select from "../Common/Select.svelte";
     import Refresh from "../Player/Refresh.svelte";
-    import {getConfig} from "../../../plugin-config";
     import {getActiveCountryPlayers, getAllActivePlayers, getFriends} from "../../../scoresaber/players";
+    import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
 
     export let country;
 
     let playersFilter = [];
     let refreshTag = null;
+    let leaderboardType;
 
     let strings = {
         lastSongsPeriods: [
@@ -22,17 +22,10 @@
             {_key: 'dashboard.periods.last2Weeks', value: 14},
             {_key: 'dashboard.periods.lastMonth', value: 30},
         ],
-
-        leaderboardTypes: [
-            {id: 'all', _key: 'songLeaderboard.types.all'},
-            {id: 'country', _key: 'songLeaderboard.types.country'},
-            {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
-        ],
     }
 
     let values = {
         selectedSongPeriod: strings.lastSongsPeriods.find(p => p.value === 14),
-        leaderboardType: strings.leaderboardTypes.find(p => p.id === 'country')
     }
 
     function translateAllStrings() {
@@ -49,7 +42,7 @@
     async function filterPlayers(type) {
         let players;
 
-        switch(type) {
+        switch (type) {
             case 'all':
                 players = await getAllActivePlayers(country);
                 break;
@@ -66,20 +59,8 @@
 
         playersFilter = players ? players.map(player => player.id).filter(s => s) : [];
 
-        refreshTag = values.leaderboardType.id;
+        refreshTag = leaderboardType;
     }
-
-    onMount(async () => {
-        const config = await getConfig('songLeaderboard');
-
-        if (config.defaultType) {
-            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === config.defaultType);
-        }
-
-        if (!country) {
-            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === 'all');
-        }
-    });
 
     let minPp = 300;
 
@@ -105,13 +86,13 @@
     }
 
     $: {
-        filterPlayers(values.leaderboardType.id);
+        filterPlayers(leaderboardType);
     }
 </script>
 
 {#if country}
 <div class="filters">
-    <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes}/>
+    <TypeFilterSelect bind:value={leaderboardType} {country} />
 </div>
 
 <div class="columns is-multiline">

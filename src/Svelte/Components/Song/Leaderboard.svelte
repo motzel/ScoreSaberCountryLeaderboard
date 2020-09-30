@@ -8,7 +8,7 @@
     import FormattedDate from "../Common/FormattedDate.svelte";
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
-    import Select from '../Common/Select.svelte';
+    import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
     import WhatIfPp from './WhatIfPp.svelte';
 
     import Refresh from '../Player/Refresh.svelte';
@@ -19,7 +19,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import {getCacheAndConvertIfNeeded} from "../../../store";
-    import {_, trans} from '../../stores/i18n';
+    import {_} from '../../stores/i18n';
 
     export let leaderboardId;
     export let tableOnly = false;
@@ -36,30 +36,12 @@
 
     let showWhatIfPp = false;
 
-    let strings = {
-        leaderboardTypes: [
-            {id: 'all', _key: 'songLeaderboard.types.all'},
-            {id: 'country', _key: 'songLeaderboard.types.country'},
-            {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
-        ],
-    }
-    let values = {
-        leaderboardType: strings.leaderboardTypes.find(p => p.id === 'country')
-    }
-
-    function translateAllStrings() {
-        Object.keys(strings).forEach(key => {
-            strings[key].forEach(item => {
-                if (item._key) item.label = trans(item._key);
-            })
-        })
-
-        strings = {...strings};
-        values = {...values};
-    }
+    let leaderboardType;
 
     async function refreshLeaderboard() {
-        leaderboard = await getLeaderboard(leaderboardId, country, values.leaderboardType.id);
+        if (!leaderboardType) return;
+
+        leaderboard = await getLeaderboard(leaderboardId, country, leaderboardType);
     }
 
     onMount(async () => {
@@ -70,16 +52,6 @@
         showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
         showBgCover = showBgCover && config.showBgCover !== false;
-
-        if (config.defaultType) {
-            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === config.defaultType);
-        }
-
-        if (!country) {
-            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === 'all');
-        }
-
-        await refreshLeaderboard();
 
         const refresh = async nodeId => {
             if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
@@ -99,10 +71,7 @@
     })
 
     $: {
-        translateAllStrings($_);
-    }
-    $: {
-        refreshLeaderboard(values.leaderboardType.id);
+        refreshLeaderboard(leaderboardType);
     }
 </script>
 
@@ -110,13 +79,13 @@
 
 {#if !tableOnly}
     <div class="refresh">
-        <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes} />
+        <TypeFilterSelect bind:value={leaderboardType} {country} />
 
         <Refresh />
     </div>
 {:else}
     <div class="refresh">
-        <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes} />
+        <TypeFilterSelect bind:value={leaderboardType} {country} />
     </div>
 {/if}
 
