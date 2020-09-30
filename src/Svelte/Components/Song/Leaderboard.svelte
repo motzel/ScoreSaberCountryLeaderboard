@@ -1,7 +1,6 @@
 <script>
     import {onMount} from 'svelte';
     import debounce from '../../../utils/debounce';
-    import {hoverable} from '../../Actions/hoverable';
 
     import Avatar from '../Common/Avatar.svelte';
     import Rank from '../Common/Rank.svelte';
@@ -99,35 +98,6 @@
         }
     })
 
-    let tooltip;
-    let tooltipHistory = [];
-    let leaderboardContainer;
-
-    function onHover(event) {
-        if (tableOnly || !leaderboard) return;
-        const tr = event.detail.target.closest("tr"), trBound = tr.getBoundingClientRect(),
-                lbBound = leaderboardContainer.getBoundingClientRect(),
-                tooltipTop = trBound.top - lbBound.top;
-
-        tooltipHistory = [];
-
-        const userId = tr.dataset.id;
-        if(!userId) return;
-
-        const score = leaderboard.find(u => u.id === userId);
-        if(!score || !score.playHistory || !score.playHistory.length) return;
-
-        tooltipHistory = score.playHistory.slice(0,3);
-
-        tooltip.style.display = 'inline-block';
-        tooltip.style.top = (tooltipTop + trBound.height) + 'px';
-    }
-
-    function onUnhover(event) {
-        if (tableOnly || !leaderboard) return;
-        tooltip.style.display = 'none';
-    }
-
     $: {
         translateAllStrings($_);
     }
@@ -136,7 +106,7 @@
     }
 </script>
 
-<div bind:this={leaderboardContainer} class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
+<div class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
 
 {#if !tableOnly}
     <div class="refresh">
@@ -166,7 +136,7 @@
             </tr>
             </thead>
 
-            <tbody use:hoverable on:hover={onHover} on:unhover={onUnhover}>
+            <tbody>
             {#each leaderboard as item, idx (item.id)}
                 <tr class={(item.hidden ? 'hidden' : '') + (highlight.includes(item.id) ? ' main' : '')}
                     data-id={item.id}>
@@ -207,31 +177,6 @@
             {/each}
             </tbody>
         </table>
-
-        {#if !tableOnly}
-            <div bind:this={tooltip} class="tooltip">
-                <table class="history">
-                    <tbody>
-                    {#each tooltipHistory as item (item.timestamp)}
-                        <tr>
-                            <td>
-                                <FormattedDate date={item.timeset}/>
-                            </td>
-                            <td>
-                                <Value value={item.score} digits={0} zero="-"/>
-                            </td>
-                            <td>
-                                <Value value={item.percent*100} zero="-" suffix="%"/>
-                            </td>
-                            <td>
-                                <Pp pp="{item.pp}"/>
-                            </td>
-                        </tr>
-                    {/each}
-                    </tbody>
-                </table>
-            </div>
-        {/if}
     {:else}
         <div class="first-fetch">
             <p>{$_.songLeaderboard.nobodyPlayed}</p>
@@ -300,24 +245,6 @@
     .first-fetch {
         text-align: center
     }
-
-    .tooltip {
-        display: none;
-        position: absolute;
-        top: 0;
-        right: 1rem;
-        z-index: 10;
-        width: 25rem;
-        padding: .25rem;
-        font-size: .875rem;
-        font-weight: normal;
-        text-align: center;
-        color: var(--textColor);
-        background-color: var(--background);
-        border: 1px solid var(--textColor);
-    }
-
-    .tooltip table td {padding: 3px;}
 
     .leaderboard-container {position: relative;}
 </style>
