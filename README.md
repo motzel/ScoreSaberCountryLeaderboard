@@ -51,6 +51,7 @@ Then, depending on the selected mode:
 - 1pp boundary calculator - that is how much PP you have to get from a new play to get +1pp to the global ranking
 - Ranked songs badges
 - Enlarged, more readable chart
+- New PP chart
 - New accuracy chart
  
 ![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/04_enhanced_profile.png)

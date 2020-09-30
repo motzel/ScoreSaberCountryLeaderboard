@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.2
+- [+] add pp chart
+
 0.9.7.1
 - [+] add accuracy to the song leaderboard, thx Rocker 
 

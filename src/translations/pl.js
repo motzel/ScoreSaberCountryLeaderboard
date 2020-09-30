@@ -248,7 +248,9 @@ export default {
     chart: {
         timeLabel: 'Czas',
         rankLabel: 'Pozycja',
-        rankTooltip: 'Pozycja ${rank}',
+        ppLabel: 'PP',
+        rankTooltip: '#${value}',
+        ppTooltip: '${value}pp',
         starsLabel: 'Gwiazdki',
         accuracyLabel: 'Celność',
         accTooltip: 'Celność: ${acc}% | Gwiazdki: ${stars}*',

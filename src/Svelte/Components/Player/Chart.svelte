@@ -1,7 +1,7 @@
 <script>
     import {getRankedSongs} from "../../../scoresaber/rankeds";
-    import {getPlayerScores} from "../../../scoresaber/players";
-    import {dateFromString} from "../../../utils/date";
+    import {getPlayerInfo, getPlayerScores} from "../../../scoresaber/players";
+    import {dateFromString, toUTCDate} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
@@ -49,8 +49,90 @@
         ;
     }
 
-    function setupRankChart(canvas, chartData) {
+    async function setupRankChart(canvas, chartData) {
         if (!canvas || !chartData || !chartData.length) return;
+
+        const daysAgo = Array(50).fill(0).map((v, i) => i).reverse();
+
+        let ppData = [];
+        const playerInfo = await getPlayerInfo(profileId);
+        const userHistory = playerInfo && playerInfo.userHistory && Object.keys(playerInfo.userHistory).length
+                ? playerInfo.userHistory
+                : null;
+        if (userHistory) {
+            const historyData = Object.entries(userHistory).reduce((cum, {0: timestamp, 1: history}) => {
+                const historyDate = toUTCDate(new Date(parseInt(timestamp, 10)));
+                const diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
+
+                cum[diffInDays] = history;
+
+                return cum;
+            }, {})
+
+            if (Object.keys(historyData).length) {
+                ppData = daysAgo.map(d => historyData[d] ? historyData[d].pp : null)
+            }
+        }
+
+        const datasets = [
+            {
+                yAxisID: 'rank-axis',
+                data: chartData,
+                label: trans('chart.rankLabel'),
+                borderColor: "#3e95cd",
+                fill: false,
+                tooltipStr: 'rankTooltip',
+                round: 0,
+            },
+        ];
+
+        const yAxes = [
+            {
+                id: 'rank-axis',
+                scaleLabel: {
+                    display: true,
+                    labelString: trans('chart.rankLabel'),
+                },
+                ticks: {
+                    reverse: true,
+                    userCallback: function (label, index, labels) {
+                        if (Math.floor(label) === label) {
+                            return label;
+                        }
+                    },
+                }
+            },
+        ];
+
+        if (ppData.length) {
+            datasets.push({
+                yAxisID: 'pp-axis',
+                data: ppData,
+                spanGaps: true,
+                label: trans('chart.ppLabel'),
+                borderColor: "#007100",
+                fill: false,
+                tooltipStr: 'ppTooltip',
+                round: 2,
+            });
+
+            yAxes.push({
+                id: 'pp-axis',
+                position: 'right',
+                scaleLabel: {
+                    display: true,
+                    labelString: trans('chart.ppLabel'),
+                },
+                ticks: {
+                    reverse: false,
+                    userCallback: function (label, index, labels) {
+                        if (Math.floor(label) === label) {
+                            return label;
+                        }
+                    },
+                }
+            });
+        }
 
         chart = new Chart(
                 document.getElementById("rankChart"),
@@ -62,17 +144,12 @@
                     },
                     type: 'line',
                     data: {
-                        labels: Array(50).fill(0).map((v, i) => formatDateRelativeInUnits(-i, 'day')).reverse(),
-                        datasets: [{
-                            data: chartData,
-                            label: '',
-                            borderColor: "#3e95cd",
-                            fill: false
-                        },]
+                        labels: daysAgo.map(d => formatDateRelativeInUnits(-d, 'day')),
+                        datasets
                     },
                     options: {
                         legend: {
-                            display: false,
+                            display: true,
                         },
                         maintainAspectRatio: false,
                         title: {
@@ -83,14 +160,16 @@
                             intersect: false,
                             displayColors: false,
                             callbacks: {
-                                title: (tooltipItem, data) =>
-                                        tooltipItem.length
-                                                ? [
-                                                    tooltipItem[0].xLabel,
-                                                    trans('chart.rankTooltip', {rank: formatNumber(tooltipItem[0].yLabel, 0)})
-                                                ]
-                                                : ''
-                                ,
+                                title: (tooltipItem, data) => {
+                                    if (!tooltipItem.length) return '';
+
+                                    const tooltip = [tooltipItem[0].xLabel];
+                                    tooltipItem.forEach(t => {
+                                        tooltip.push(trans('chart.' + data.datasets[t.datasetIndex].tooltipStr, {value: formatNumber(t.yLabel, data.datasets[t.datasetIndex].round)}));
+                                    })
+
+                                    return tooltip;
+                                },
                                 label: () => ''
                             }
 
@@ -102,24 +181,12 @@
                         scales: {
                             xAxes: [{
                                 scaleLabel: {
-                                    display: true,
+                                    display: false,
                                     labelString: trans('chart.timeLabel'),
                                 },
                             }],
-                            yAxes: [{
-                                scaleLabel: {
-                                    display: true,
-                                    labelString: trans('chart.rankLabel'),
-                                },
-                                ticks: {
-                                    reverse: true,
-                                    userCallback: function (label, index, labels) {
-                                        if (Math.floor(label) === label) {
-                                            return label;
-                                        }
-                                    },
-                                }
-                            }],
+
+                            yAxes,
                         }
                     }
                 }
@@ -205,7 +272,7 @@
                             xAxes: [{
                                 type: 'linear',
                                 scaleLabel: {
-                                    display: true,
+                                    display: false,
                                     labelString: trans('chart.starsLabel'),
                                 },
                                 ticks: {

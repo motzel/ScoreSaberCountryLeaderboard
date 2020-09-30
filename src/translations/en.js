@@ -247,7 +247,9 @@ export default {
     chart: {
         timeLabel: 'Time',
         rankLabel: 'Rank',
-        rankTooltip: 'Rank ${rank}',
+        ppLabel: 'PP',
+        rankTooltip: '#${value}',
+        ppTooltip: '${value}pp',
         starsLabel: 'Stars',
         accuracyLabel: 'Accuracy',
         accTooltip: 'Accuracy: ${acc}% | Stars: ${stars}*',

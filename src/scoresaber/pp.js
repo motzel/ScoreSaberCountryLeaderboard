@@ -1,6 +1,4 @@
 import {getCacheAndConvertIfNeeded} from '../store';
-import {dateFromString} from "../utils/date";
-import {getRankedSongs} from "./rankeds";
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
@@ -41,12 +39,17 @@ export function findRawPp(scores, expected) {
     return calcRawPpAtIdx(scores, 0, expected);
 }
 
+export function getTotalPpFromSortedPps(pps) {
+    return pps.reduce((cum, pp, idx) => cum + Math.pow(0.965, idx) * pp, 0);
+}
+
 export function getTotalPp(scores) {
-    return Object.values(scores)
-        .filter((s) => s.pp > 0)
-        .map((s) => s.pp)
-        .sort((a, b) => b - a)
-        .reduce((cum, pp, idx) => cum + Math.pow(0.965, idx) * pp, 0);
+    return getTotalPpFromSortedPps(
+        Object.values(scores)
+            .filter((s) => s.pp > 0)
+            .map((s) => s.pp)
+            .sort((a, b) => b - a)
+    );
 }
 
 export async function getTotalUserPp(userId, modifiedScores = {}) {
