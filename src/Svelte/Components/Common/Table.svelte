@@ -25,6 +25,8 @@
 
     export let rowIdentifierFunc = null;
 
+    export let refreshTag = null;
+
     let viewUpdates = 'keep-view';
     let currentFirstRowIdentifier = null;
 
@@ -131,7 +133,7 @@
         return eventBus.on('config-changed', updateViewUpdatesConfig);
     });
 
-    $: currentPageDataPromise = getDataPage(rows, page, itemsPerPage);
+    $: currentPageDataPromise = getDataPage(rows, page, itemsPerPage, refreshTag);
     $: totalItems = rows.length;
     $: noDataText = $_.common.noData;
     $: {

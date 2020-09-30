@@ -26,6 +26,8 @@
     export let noRank = false;
     export let itemsPerPage = 10;
     export let pagesDisplayMax = 10;
+    export let filterFunc = null;
+    export let refreshTag = null;
 
     const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 2000;
 
@@ -80,8 +82,6 @@
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
         const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
-
-        await refreshScores();
 
         return () => {
             dataRefreshedUnsubscriber();
@@ -145,12 +145,16 @@
     const getRowIdentifier = row => !!row[sortBy] ? row[sortBy] : null;
 
     $: rows = scores
-            .filter(s => (min === undefined || min === null || (s[sortBy] && s[sortBy] >= min)))
+            .filter(s => (min === undefined || min === null || (s[sortBy] && s[sortBy] >= min)) && (!filterFunc || filterFunc(s)))
             .sort((a, b) => b[sortBy] - a[sortBy])
             .map((s, idx) => ({...s, rank: idx + 1}));
+
+    $: {
+        refreshScores(refreshTag);
+    }
 </script>
 
-<Table {header} {rows} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} bind:page={currentPage} rowIdentifierFunc={getRowIdentifier} className="ranking global sspl">
+<Table {header} {rows} {refreshTag} {itemsPerPage} {pagesDisplayMax} onDataPage={onDataPage} withDetails={true} bind:page={currentPage} rowIdentifierFunc={getRowIdentifier} className="ranking global sspl">
     <span slot="head-col" let:col>{col.label}</span>
 
     <span slot="body-col" let:key let:row>

@@ -529,7 +529,7 @@ async function setupCountryRanking(diffOffset = 6) {
 
     const newCont = document.createElement('main');
     newCont.classList.add('container-fluid');
-    newCont.style.paddingTop = '3rem';
+    newCont.style.paddingTop = '1.75rem';
     cont.parentNode.appendChild(newCont);
 
     new CountryDashboard({target: newCont, props: {country: await getActiveCountry()}});

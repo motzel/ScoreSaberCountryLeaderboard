@@ -9,13 +9,15 @@
 
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
     import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
-    import {getCountryRanking} from "../../../scoresaber/players";
+    import {getAllPlayersRanking} from "../../../scoresaber/players";
     import {_, trans} from "../../stores/i18n";
     import {formatNumber} from "../../../utils/format";
 
     export let country;
     export let itemsPerPage = 25;
     export let diff = 6;
+    export let filterFunc = null;
+    export let refreshTag = null;
 
     const diffOptions = [
         {value: 0, text: trans('dashboard.ranking.changeOptions.day')},
@@ -25,7 +27,7 @@
 
     let users = [];
     onMount(async () => {
-        users = await getCountryRanking(country);
+        users = await getAllPlayersRanking(country);
     });
 
     let selectedDiff = diffOptions.find(i => i.value === diff);
@@ -40,8 +42,9 @@
     ]
     let rows = [];
 
-    $: if (selectedDiff) {
+    $: if (selectedDiff || refreshTag) {
         ranking = users
+                .filter(p => !filterFunc || filterFunc(p))
                 .reduce((cum, user) => {
                     const {id, name, country, pp, rank, userHistory, weeklyDiff} = user;
 

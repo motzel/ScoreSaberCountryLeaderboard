@@ -7,6 +7,7 @@
 
 0.9.7.2
 - [+] add pp chart
+- [+] add the dashboard filtering by country & friends
 
 0.9.7.1
 - [+] add accuracy to the song leaderboard, thx Rocker 

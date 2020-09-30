@@ -22,6 +22,11 @@ export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, pl
     return cum;
 }, {})
 
+export const getAllPlayersRanking = async country => {
+    const players = await getAllActivePlayers(country);
+    return players ? Object.values(players).sort((a,b) => b.pp - a.pp) : null;
+}
+
 export const getCountryRanking = async (country) => {
     const players = await getActiveCountryPlayers(country);
     return players ? players.sort((a,b) => b.pp - a.pp).slice(0, tempConfig.COUNTRY_PLAYERS_QTY) : null;

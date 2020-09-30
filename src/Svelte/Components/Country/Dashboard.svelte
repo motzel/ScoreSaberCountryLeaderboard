@@ -1,4 +1,5 @@
 <script>
+    import {onMount} from 'svelte';
     import {_, trans} from "../../stores/i18n";
     import Ranking from "./Ranking.svelte";
     import Songs from "./Songs.svelte";
@@ -6,8 +7,13 @@
     import Range from "../Common/Range.svelte";
     import Select from "../Common/Select.svelte";
     import Refresh from "../Player/Refresh.svelte";
+    import {getConfig} from "../../../plugin-config";
+    import {getActiveCountryPlayers, getAllActivePlayers, getFriends} from "../../../scoresaber/players";
 
     export let country;
+
+    let playersFilter = [];
+    let refreshTag = null;
 
     let strings = {
         lastSongsPeriods: [
@@ -15,11 +21,18 @@
             {_key: 'dashboard.periods.lastWeek', value: 7},
             {_key: 'dashboard.periods.last2Weeks', value: 14},
             {_key: 'dashboard.periods.lastMonth', value: 30},
-        ]
+        ],
+
+        leaderboardTypes: [
+            {id: 'all', _key: 'songLeaderboard.types.all'},
+            {id: 'country', _key: 'songLeaderboard.types.country'},
+            {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
+        ],
     }
 
     let values = {
-        selectedSongPeriod: strings.lastSongsPeriods.find(p => p.value === 14)
+        selectedSongPeriod: strings.lastSongsPeriods.find(p => p.value === 14),
+        leaderboardType: strings.leaderboardTypes.find(p => p.id === 'country')
     }
 
     function translateAllStrings() {
@@ -33,6 +46,41 @@
         values = {...values};
     }
 
+    async function filterPlayers(type) {
+        let players;
+
+        switch(type) {
+            case 'all':
+                players = await getAllActivePlayers(country);
+                break;
+
+            case 'manually_added':
+                players = await getFriends(country, true);
+                break;
+
+            case 'country':
+            default:
+                players = await getActiveCountryPlayers(country, true);
+                break;
+        }
+
+        playersFilter = players ? players.map(player => player.id).filter(s => s) : [];
+
+        refreshTag = values.leaderboardType.id;
+    }
+
+    onMount(async () => {
+        const config = await getConfig('songLeaderboard');
+
+        if (config.defaultType) {
+            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === config.defaultType);
+        }
+
+        if (!country) {
+            values.leaderboardType = strings.leaderboardTypes.find(t => t.id === 'all');
+        }
+    });
+
     let minPp = 300;
 
     function onTypeChange() {
@@ -44,12 +92,28 @@
         cont.style.display = 'block';
     }
 
+    function songScoresFilter(song) {
+        return playersFilter && playersFilter.includes(song.playerId);
+    }
+
+    function rankingFilter(player) {
+        return playersFilter && playersFilter.includes(player.id);
+    }
+
     $: {
         translateAllStrings($_);
+    }
+
+    $: {
+        filterPlayers(values.leaderboardType.id);
     }
 </script>
 
 {#if country}
+<div class="filters">
+    <Select bind:value={values.leaderboardType} items={strings.leaderboardTypes}/>
+</div>
+
 <div class="columns is-multiline">
     <div class="leaderboard content column is-full-tablet is-half-widescreen is-two-fifths-fullhd">
         <div class="ranking box has-shadow">
@@ -60,7 +124,7 @@
                 </nav>
             </header>
 
-            <Ranking {country} itemsPerPage={20}/>
+            <Ranking {country} itemsPerPage={20} filterFunc={rankingFilter} {refreshTag}/>
         </div>
     </div>
 
@@ -77,7 +141,7 @@
                     <Select bind:value={values.selectedSongPeriod} items={strings.lastSongsPeriods} right={true}/>
                 </nav>
             </header>
-            <Songs {country} sortBy="timeset"
+            <Songs {country} sortBy="timeset" filterFunc={songScoresFilter} {refreshTag}
                    min={new Date(Date.now()-values.selectedSongPeriod.value*1000*60*60*24)}
                    itemsPerPage={5} pagesDisplayMax={7} noRank={true}/>
         </div>
@@ -90,13 +154,19 @@
                 </nav>
             </header>
 
-            <Songs {country} sortBy="pp" min={minPp} itemsPerPage={5} pagesDisplayMax={7}/>
+            <Songs {country} sortBy="pp" filterFunc={songScoresFilter} min={minPp} itemsPerPage={5} pagesDisplayMax={7}  {refreshTag} />
         </div>
     </div>
 </div>
 {/if}
 
 <style>
+    .filters {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: .5rem;
+    }
+
     .box {
         min-height: 12rem;
         overflow-x: hidden;
