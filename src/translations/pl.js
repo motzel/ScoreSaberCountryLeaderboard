@@ -176,7 +176,7 @@ export default {
         noScore: 'Brak wyniku',
         former: 'Poprzednio',
         totalPp: 'Razem dla ${name}',
-        rankOfDate: 'Rank of ${date}, click to refresh',
+        rankOfDate: 'Pozycja z dnia ${date}, kliknij aby odświeżyć',
     },
     songLeaderboard: {
         player: 'Gracz',
