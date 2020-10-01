@@ -23,4 +23,4 @@ export const getFilteredRankedChanges = async filterTimestampFunc => {
 
 // errors in API
 export const UNRANKED = [97223, 20506];
-export const RANKED = [102179, 102180]
+export const RANKED = [];
