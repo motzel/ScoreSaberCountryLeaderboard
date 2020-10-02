@@ -1,4 +1,5 @@
 import {getCacheAndConvertIfNeeded} from '../store';
+import {RANKED, UNRANKED} from "./rankeds";
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
@@ -46,7 +47,7 @@ export function getTotalPpFromSortedPps(pps) {
 export function getTotalPp(scores) {
     return getTotalPpFromSortedPps(
         Object.values(scores)
-            .filter((s) => s.pp > 0)
+            .filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
             .map((s) => s.pp)
             .sort((a, b) => b - a)
     );

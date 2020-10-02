@@ -7,7 +7,7 @@
     import Select from "../Common/Select.svelte";
 
     import {getConfig} from '../../../plugin-config';
-    import {UNRANKED} from '../../../scoresaber/rankeds';
+    import {RANKED, UNRANKED} from '../../../scoresaber/rankeds';
     import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
@@ -110,7 +110,7 @@
 
     $: allRankedScores = profile.scores
       ? Object.values(profile.scores)
-        .filter(s => s.pp > 0 && !UNRANKED.includes(s.leaderboardId))
+        .filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
       : null;
 
     $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - dateFromString(s.timeset).getTime() <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
