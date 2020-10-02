@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.4
+- [!] fix strange bug with date processing, thx Gasertall
+- [*] update list of rankeds exceptions, thx Astrais
+
 0.9.7.3
 - [!] Bug fix with inability to view profiles of players not added to the plugin, thx Drakonno & Rocker for bug report
 

@@ -2,6 +2,8 @@ import {padNumber} from "./format";
 
 export const DAY = 24 * 60 * 60 * 1000;
 
+export const isValidDate = d =>d instanceof Date && !isNaN(d);
+
 export function toUTCDate(date) {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth();
@@ -31,7 +33,11 @@ export const getFirstNotNewerThan = (timestamp, arr) =>
         .reduce((val, t) => null === val && t <= timestamp ? t: val, null);
 
 
-export const dateFromString = (str) => (str ? new Date(Date.parse(str)) : null);
+export const dateFromString = (str) => {
+    const date = str ? new Date(Date.parse(str)) : null;
+
+    return isValidDate(date) ? date : null;
+}
 
 export const durationToMillis = duration => {
     const match = duration.match(/^\s*(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)\s*$/);

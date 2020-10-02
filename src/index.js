@@ -680,32 +680,37 @@ async function waitForSSEInit(timeout) {
 let initialized = false;
 
 async function init() {
-    log.info("init");
+    try {
+        log.info("init");
 
-    if (initialized) {
-        return;
+        if (initialized) {
+            return;
+        }
+
+        // fetch cache
+        const data = await getCacheAndConvertIfNeeded();
+
+        // reload page when data was imported
+        eventBus.on('data-imported', () => window.location.reload());
+
+        await Promise.allSettled(
+            [
+                refinedThemeSetup(),
+                setLangFromConfig(),
+                setupGlobalEventsListeners(),
+                setupCountryRanking(),
+                setupPlayerAvatar(),
+                setupTwitch(),
+            ]
+        )
+
+        await setupDelayed();
+
+        log.info("Setup complete");
     }
-
-    // fetch cache
-    const data = await getCacheAndConvertIfNeeded();
-
-    // reload page when data was imported
-    eventBus.on('data-imported', () => window.location.reload());
-
-    await Promise.allSettled(
-      [
-          refinedThemeSetup(),
-          setLangFromConfig(),
-          setupGlobalEventsListeners(),
-          setupCountryRanking(),
-          setupPlayerAvatar(),
-          setupTwitch(),
-      ]
-    )
-
-    await setupDelayed();
-
-    log.info("Setup complete");
+    catch (e) {
+        console.error(e);
+    }
 }
 
 // setup styles as fast as possible
