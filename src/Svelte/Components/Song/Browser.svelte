@@ -105,6 +105,7 @@
             {_key: 'songBrowser.fields.stars', field: 'stars'},
             {_key: 'songBrowser.fields.pp', field: 'pp'},
             {_key: 'songBrowser.fields.acc', field: 'acc'},
+            {_key: 'songBrowser.fields.rank', field: 'rank'},
             {_key: 'songBrowser.fields.diffPp', field: 'diffPp'},
             {_key: 'songBrowser.fields.diffPp', field: 'bestDiffPp'},
         ],
@@ -378,12 +379,17 @@
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'pp', 'field'),
                             field  : "pp",
-                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
+                            enabled: !['rankeds_unplayed', 'unrankeds'].includes(allFilters.songType.id),
                         },
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'acc', 'field'),
                             field  : "acc",
-                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id) || (pId !== playerId && allFilters.songType.id === 'rankeds_unplayed')
+                            enabled: ['rankeds', 'sniper_mode'].includes(allFilters.songType.id)
+                        },
+                        {
+                            ...getObjectFromArrayByKey(strings.sortTypes, 'rank', 'field'),
+                            field  : "rank",
+                            enabled: allFilters.songType.id !== 'rankeds_unplayed'
                         },
                     ].forEach(field => {
                         if (field.enabled)

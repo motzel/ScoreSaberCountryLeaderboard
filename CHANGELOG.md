@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.5
+- [+] new sorting options
+
 0.9.7.4
 - [!] fix strange bug with date processing, thx Gasertall
 - [*] update list of rankeds exceptions, thx Astrais
