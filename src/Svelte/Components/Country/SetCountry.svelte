@@ -35,11 +35,6 @@
 	async function setCountry() {
 		const data = await getCacheAndConvertIfNeeded();
 
-		// TODO: set country
-		// data.config.users.country = country;
-
-		// TODO: pause DL MANAGER BEFORE SETTING
-
 		await setCache(data);
 
 		showConfirmationModal = false;
@@ -76,9 +71,9 @@
 			<main>
 				{#if !onboarding}
 					{#if currentCountry}
-						{trans('dashboard.areYouSureChangeCurrentCountry', {country: country.toUpperCase(), currentCountry: currentCountry.toUpperCase()})}
+						{trans('dashboard.areYouSureChangeCurrentCountry', {country: country ? country.toUpperCase() : null, currentCountry: currentCountry.toUpperCase()})}
 					{:else}
-						{trans('dashboard.areYouSureSetCurrentCountry', {country: country.toUpperCase()})}
+						{trans('dashboard.areYouSureSetCurrentCountry', {country: country ? country.toUpperCase() : null})}
 					{/if}
 				{:else}
 					<p>{$_.dashboard.onboardingLine1}</p>

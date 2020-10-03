@@ -149,7 +149,8 @@
             return;
         }
 
-        updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: (await getActiveCountry()).toUpperCase()})});
+        const country = await getActiveCountry();
+        updateState({errorMsg: '', label: '', subLabel: trans('refresh.countryPlayersDownload', {country: country ? country.toUpperCase() : null})});
         const activePlayers = await updateActivePlayers(false);
 
         updateState({label: '', subLabel: ''});
