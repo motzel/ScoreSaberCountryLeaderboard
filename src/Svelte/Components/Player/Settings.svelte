@@ -11,7 +11,7 @@
     import twitch from '../../../services/twitch';
     import {
         addPlayerToGroup, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
-        getPlayerInfo,
+        getPlayerInfo, getPlayerInfoFromData, getPlayerScores,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
     import {getCacheAndConvertIfNeeded, setCache, setThemeInFastCache} from "../../../store";
@@ -396,7 +396,7 @@
             }
         }
 
-        const profileExists = !!profileId && !!data.users[profileId] && !!data.users[profileId].scores;
+        const profileExists = !!getPlayerScores(getPlayerInfoFromData(data, profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
             if (!profileExists && player && player.id === profileId) {
                 // TODO: reload profile page for now, try to do it to be more dynamic

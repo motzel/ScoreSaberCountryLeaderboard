@@ -1,5 +1,6 @@
 import {getCacheAndConvertIfNeeded} from '../store';
 import {RANKED, UNRANKED} from "./rankeds";
+import {getScoresByPlayerId} from "./players";
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
@@ -53,11 +54,11 @@ export function getTotalPp(scores) {
     );
 }
 
-export async function getTotalUserPp(userId, modifiedScores = {}) {
+export async function getTotalPlayerPp(playerId, modifiedScores = {}) {
     return getTotalPp(
         Object.assign(
             {},
-            (await getCacheAndConvertIfNeeded()).users?.[userId]?.scores,
+            await getScoresByPlayerId(playerId),
             modifiedScores
         )
     );
@@ -76,8 +77,8 @@ export function getWeightedPp(scores, leaderboardId, alreadySortedArray = false)
 }
 
 export async function getWhatIfScore(userId, leaderboardId, pp) {
-    const currentTotalPp = await getTotalUserPp(userId);
-    const newTotalPp = await getTotalUserPp(userId, {
+    const currentTotalPp = await getTotalPlayerPp(userId);
+    const newTotalPp = await getTotalPlayerPp(userId, {
         [leaderboardId]: { pp }
     });
     return {
@@ -85,15 +86,6 @@ export async function getWhatIfScore(userId, leaderboardId, pp) {
         newTotalPp,
         diff: newTotalPp - currentTotalPp
     };
-}
-
-export async function getUserScores(userId) {
-    return (await getCacheAndConvertIfNeeded()).users?.[userId]?.scores;
-}
-
-export async function getUserSongScore(userId, leaderboardId)
-{
-    return (await getUserScores(userId))?.[leaderboardId];
 }
 
 // written by BaliBalo: https://github.com/BaliBalo/ScoreSaber/blob/master/pages/peepee.js

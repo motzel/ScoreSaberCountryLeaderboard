@@ -6,8 +6,8 @@ import queue from "../queue";
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
     getManuallyAddedPlayersIds,
-    getPlayerInfo,
-    getPlayerRankedsScorePagesToUpdate, getPlayerScorePagesToUpdate, getPlayerScores
+    getPlayerInfo, getPlayerInfoFromPlayers,
+    getPlayerRankedsScorePagesToUpdate, getPlayerScorePagesToUpdate, getPlayerScores, getScoresByPlayerId
 } from "../../scoresaber/players";
 import {dateFromString, timestampFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
@@ -59,11 +59,11 @@ export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API
 })
 
 const updatePlayerInfo = async (info, players) => {
-    const {recentPlay, scores, userHistory} = players?.[info.playerInfo.playerId]
-        ? players?.[info.playerInfo.playerId]
-        : {recentPlay: null, userHistory: {}, scores: {}};
+    const player = getPlayerInfoFromPlayers(players, info.playerInfo.playerId);
 
-    if (!info.scoreStats || !players?.[info.playerInfo.playerId]) {
+    const {recentPlay, scores, userHistory} = player ? player : {recentPlay: null, userHistory: {}, scores: {}};
+
+    if (!info.scoreStats || !player) {
         const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
         if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
 
@@ -75,7 +75,7 @@ const updatePlayerInfo = async (info, players) => {
         });
     }
 
-    return Object.assign({}, players[info.playerInfo.playerId] ?? {}, info.playerInfo, info.scoreStats);
+    return Object.assign({}, player ?? {}, info.playerInfo, info.scoreStats);
 }
 export const updateActivePlayers = async (persist = true) => {
     const data = await getCacheAndConvertIfNeeded();
@@ -224,7 +224,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
         for (const page in playerScorePagesToUpdate) {
             const progressInfo = {
                 id: player.id,
-                name: `Aktualizacja: ${player.name}`,
+                name: `${player.name}`,
                 page: idxProgress + 1,
                 total: null
             };
@@ -281,7 +281,7 @@ const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
 export const setRefreshedPlayerScores = async (playerId, scores) => {
     const data = await getCacheAndConvertIfNeeded();
 
-    const playerScores = await getPlayerScores(playerId);
+    const playerScores = await getScoresByPlayerId(playerId);
     if (!playerScores) {
         emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
 

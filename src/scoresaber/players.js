@@ -35,8 +35,11 @@ export const getCountryRanking = async (country) => {
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
 
 export const getPlayers = async () => (await getCacheAndConvertIfNeeded())?.users;
+export const getPlayersFromData = data => data?.users ? data.users : null;
 
 export const getPlayerInfo = async playerId => (await getPlayers())?.[playerId] ?? null;
+export const getPlayerInfoFromData = (data, playerId) => getPlayersFromData(data)?.[playerId] ? getPlayersFromData(data)[playerId] : null;
+export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerId] ? players[playerId] : null;
 
 export const getPlayerLastUpdated = async playerId => (await getPlayerInfo(playerId))?.lastUpdated ?? null;
 export const getPlayerProfileLastUpdated = async playerId => (await getPlayerInfo(playerId))?.profileLastUpdated ?? null;
@@ -100,13 +103,12 @@ export const getPlayerAvatarUrl = async playerId => {
     return playerInfo && playerInfo.avatar ? (playerInfo.avatar.startsWith('http') ? playerInfo.avatar : NEW_SCORESABER_URL + playerInfo.avatar) : null;
 }
 
-export const getPlayerScores = async playerId => {
-    const playerInfo = await getPlayerInfo(playerId);
-    return playerInfo && playerInfo.scores ? playerInfo.scores : null;
-}
+export const getPlayerScores = player => player?.scores ? player.scores : null;
 
-export const getPlayerRankedScores = async playerId => {
-    const scores = await getPlayerScores(playerId);
+export const getScoresByPlayerId = async playerId => getPlayerScores(await getPlayerInfo(playerId))
+
+export const getRankedScoresByPlayerId = async playerId => {
+    const scores = await getScoresByPlayerId(playerId);
     const rankedMaps = await getRankedSongs();
     return scores
         ? Object.values(scores)
@@ -115,8 +117,16 @@ export const getPlayerRankedScores = async playerId => {
         : [];
 }
 
-export const getPlayerSongScore = async (playerId, leaderboardId) => {
-    const score = (await getPlayerScores(playerId))?.[leaderboardId];
+export const getPlayerSongScore = (player, leaderboardId) => {
+    if (!player) return null;
+
+    const score = getPlayerScores(player)?.[leaderboardId];
+
+    return score ? score : null;
+}
+
+export const getSongScoreByPlayerId = async (playerId, leaderboardId) => {
+    const score = (await getScoresByPlayerId(playerId))?.[leaderboardId];
 
     return score ? score : null;
 }

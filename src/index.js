@@ -30,9 +30,15 @@ import initDownloadManager from './network/download-manager';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import nodeSync from "./network/multinode-sync";
-import {getAllActivePlayers, getPlayerProfileUrl, getPlayerScores} from "./scoresaber/players";
+import {
+    getAllActivePlayers,
+    getPlayerProfileUrl,
+    getPlayerSongScore,
+    getScoresByPlayerId,
+    getSongScoreByPlayerId
+} from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
-import {setRefreshedPlayerScores} from "./network/scoresaber/players";
+import {setRefreshedPlayerScores, updateActivePlayers} from "./network/scoresaber/players";
 import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
@@ -179,10 +185,9 @@ async function setupLeaderboard() {
                 let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
                 if (leaderboardId) {
                     const diff = (await getAllActivePlayers(await getActiveCountry()))
-                        .map(player => player && player.scores && player.scores[leaderboardId] ? player.scores[leaderboardId].diff : null)
+                        .map(player => getPlayerSongScore(player, leaderboardId)?.diff)
                         .filter(diff => diff)
-                        .slice(0, 1)
-                    ;
+                        .slice(0, 1);
                     if(diff && diff.length) diffInfo = extractDiffAndType(diff[0]);
                 }
 
@@ -250,7 +255,7 @@ async function setupProfile() {
 
     const data = await getCacheAndConvertIfNeeded();
 
-    const playerScores = await getPlayerScores(profileId);
+    const playerScores = await getScoresByPlayerId(profileId);
     const isPlayerDataAvailable = playerScores && Object.keys(playerScores).length;
 
     // redirect to recent plays if auto-transform is enabled or transforming was requested
@@ -301,7 +306,7 @@ async function setupProfile() {
     const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
 
     const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
-        const leaderboard = data.users?.[profileId]?.scores?.[s.leaderboardId];
+        const leaderboard = await getSongScoreByPlayerId(profileId, s.leaderboardId);
         if (leaderboard && songEnhanceEnabled) {
             try {
                 const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
@@ -627,7 +632,7 @@ async function setupGlobalEventsListeners() {
     eventBus.on('player-score-updated', async ({nodeId, playerId, leaderboardId, ...data}) => {
         if (nodeId === nodeSync.getId() || !playerId || !leaderboardId) return;
 
-        const playerScores = await getPlayerScores(playerId);
+        const playerScores = await getScoresByPlayerId(playerId);
         if (!playerScores || !playerScores[leaderboardId]) return;
 
         playerScores[leaderboardId] = {...playerScores[leaderboardId], ...data};

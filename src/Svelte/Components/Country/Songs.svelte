@@ -3,7 +3,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
     import debounce from '../../../utils/debounce';
-    import {getAllActivePlayers} from "../../../scoresaber/players";
+    import {getAllActivePlayers, getPlayerScores} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
     import {extractDiffAndType, getSongDiffInfo} from "../../../song";
     import {trans} from "../../stores/i18n";
@@ -51,9 +51,10 @@
                     if (player) {
                         const {id, country, name} = player;
 
-                        if (player.scores)
+                        const scores = getPlayerScores(player);
+                        if (scores)
                             cum = cum.concat(
-                                Object.values(player.scores)
+                                Object.values(scores)
                                     .map(s => {
                                         s.scoreMult = s.uScore ? s.score / s.uScore : 1;
                                         s.acc = s.maxScoreEx ? s.score / s.maxScoreEx / s.scoreMult * 100 : null;

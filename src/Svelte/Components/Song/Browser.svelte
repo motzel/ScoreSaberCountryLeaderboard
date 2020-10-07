@@ -2,7 +2,7 @@
     import {onMount} from 'svelte';
     import log from '../../../utils/logger';
     import {copyToClipboard} from '../../../utils/clipboard';
-    import {findRawPp, getTotalUserPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
+    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
     import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
@@ -21,8 +21,8 @@
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
-        getPlayerRankedScores, getPlayers,
-        getPlayerScores
+        getRankedScoresByPlayerId, getPlayers,
+        getScoresByPlayerId
     } from "../../../scoresaber/players";
     import {
         extractDiffAndType,
@@ -475,7 +475,7 @@
     let allRankeds = {};
 
     const getAllScoresByType = async (playerId, rankedOnly = true) => {
-        return rankedOnly ? await getPlayerRankedScores(playerId) : await getPlayerScores();
+        return rankedOnly ? await getRankedScoresByPlayerId(playerId) : await getScoresByPlayerId();
     }
     const getCachedAllScoresByType = memoize(getAllScoresByType);
     const getMinStars = async (playerId, boundary = minPpPerMap, maxAcc = 95) => {
@@ -598,7 +598,7 @@
         }
     });
 
-    const getCachedTotalPlayerPp = memoize(getTotalUserPp);
+    const getCachedTotalPlayerPp = memoize(getTotalPlayerPp);
     const getScoreWithNewPp = async (playerId, newSongPp) => {
         return await getCachedTotalPlayerPp(playerId, newSongPp) - await getCachedTotalPlayerPp(playerId);
     }

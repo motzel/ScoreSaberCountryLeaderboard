@@ -1,11 +1,11 @@
-import {capitalize} from "./utils/js";
+import {capitalize, convertArrayToObjectByKey} from "./utils/js";
 import {getCacheAndConvertIfNeeded} from "./store";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
-  getActiveCountryPlayers,
-  getAllActivePlayers, getFriends,
-  getManuallyAddedPlayers
+    getActiveCountryPlayers,
+    getAllActivePlayers, getFriends,
+    getPlayerInfoFromPlayers, getPlayerSongScore
 } from "./scoresaber/players";
 
 export const diffColors = {
@@ -80,27 +80,25 @@ export function findDiffInfo(characteristics, ssDiff) {
 }
 
 export async function getLeaderboard(leaderboardId, country, type = 'country') {
-    const data = await getCacheAndConvertIfNeeded();
-
-    let scores;
+    let players;
     switch(type) {
       case 'all':
-        scores = await getAllActivePlayers(country);
+        players = await getAllActivePlayers(country);
         break;
 
       case 'manually_added':
-        scores = await getFriends(country, true);
+        players = await getFriends(country, true);
         break;
 
       case 'country':
       default:
-        scores = await getActiveCountryPlayers(country, true);
+        players = await getActiveCountryPlayers(country, true);
         break;
     }
-    if (!scores || !scores.length) return [];
+    if (!players || !players.length) return [];
 
-    const filteredScores = scores
-        .map(player => player?.scores?.[leaderboardId] ? {playerId: player.id, songHash: player?.scores[leaderboardId].id} : null)
+    const filteredScores = players
+        .map(player => getPlayerSongScore(player, leaderboardId) ? {playerId: player.id, songHash: getPlayerSongScore(player, leaderboardId).id} : null)
         .filter(s => s)
     ;
     if (!filteredScores.length) return [];
@@ -109,14 +107,16 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
     const songCharacteristics = songInfo?.metadata?.characteristics;
     let diffInfo = null, maxSongScore = 0;
 
+    players = convertArrayToObjectByKey(players, 'id');
+
     return filteredScores.map(s => s.playerId)
-        .reduce((cum, userId) => {
-            if (!data.users[userId].scores[leaderboardId]) return cum;
+        .reduce((cum, playerId) => {
+            if (!getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId)) return cum;
 
             if (!maxSongScore && !cum.length) {
                 diffInfo = findDiffInfo(
                     songCharacteristics,
-                    data.users[userId].scores[leaderboardId].diff
+                    getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId).diff
                 );
                 maxSongScore =
                     diffInfo?.length && diffInfo?.notes
@@ -124,7 +124,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
                         : 0;
             }
 
-            const { scores, ...user } = data.users[userId];
+            const { scores, ...user } = getPlayerInfoFromPlayers(players, playerId);
             const {
                 id: songHash,
                 score,
@@ -137,7 +137,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
                 diff,
                 history,
                 ..._
-            } = data.users[userId].scores[leaderboardId];
+            } = getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId);
 
             const playHistory = (history ? history: [])
                 .sort((a, b) => b.timestamp - a.timestamp)

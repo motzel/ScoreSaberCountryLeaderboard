@@ -1,6 +1,6 @@
 <script>
     import {getRankedSongs} from "../../../scoresaber/rankeds";
-    import {getPlayerInfo, getPlayerScores} from "../../../scoresaber/players";
+    import {getPlayerInfo, getScoresByPlayerId} from "../../../scoresaber/players";
     import {dateFromString, toUTCDate} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
@@ -27,7 +27,7 @@
         rankeds = await rankeds;
         if (!rankeds) return;
 
-        const playerScores = await getPlayerScores(profileId);
+        const playerScores = await getScoresByPlayerId(profileId);
         if (!playerScores) return;
 
         chartData = Object.values(playerScores)

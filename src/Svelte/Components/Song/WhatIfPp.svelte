@@ -1,11 +1,11 @@
 <script>
     import {onMount} from 'svelte';
     import {hoverable} from '../../Actions/hoverable';
-    import {getWhatIfScore, getUserSongScore} from '../../../scoresaber/pp';
+    import {getWhatIfScore} from '../../../scoresaber/pp';
     import {formatNumber, round} from '../../../utils/format';
     import {getMainPlayerId} from "../../../plugin-config";
     import {_} from '../../stores/i18n';
-    import {getPlayerScores} from "../../../scoresaber/players";
+    import {getPlayerSongScore, getScoresByPlayerId, getSongScoreByPlayerId} from "../../../scoresaber/players";
 
     export let leaderboardId;
     export let pp = 0;
@@ -21,10 +21,10 @@
     onMount(async _ => {
         mainPlayerId = await getMainPlayerId();
         if (mainPlayerId) {
-            mainPlayerScores = await getPlayerScores(mainPlayerId);
+            mainPlayerScores = await getScoresByPlayerId(mainPlayerId);
 
-            const score = await getUserSongScore(mainPlayerId, leaderboardId);
-            userPp = undefined !== score ? score.pp : undefined;
+            const score = await getSongScoreByPlayerId(mainPlayerId, leaderboardId);
+            userPp = score ? score.pp : undefined;
         }
     });
 
