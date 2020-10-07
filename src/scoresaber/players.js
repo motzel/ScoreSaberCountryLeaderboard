@@ -4,7 +4,7 @@ import {getCacheAndConvertIfNeeded} from "../store";
 import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
-import {dateFromString} from "../utils/date";
+import {dateFromString, timestampFromString} from "../utils/date";
 import {arrayUnique, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
 
@@ -129,10 +129,10 @@ const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
         // skip if the player didn't play the song
         if (!scores[leaderboardId]) return cum;
 
-        const songLastPlayTimestamp = dateFromString(scores[leaderboardId].timeset).getTime();
+        const songLastPlayTimestamp = timestampFromString(scores[leaderboardId].timeset);
 
         // skip if song was played AFTER previous update (because all new scores were downloaded with current update, changed or not)
-        if (songLastPlayTimestamp > previousLastUpdated) return cum;
+        if (songLastPlayTimestamp && songLastPlayTimestamp > previousLastUpdated) return cum;
 
         // mark song to update
         cum.push(parseInt(leaderboardId, 10));
@@ -147,7 +147,7 @@ export const getPlayerScorePagesToUpdate = (allScores, leaderboardIdsToUpdate, i
           leaderboardId: s.leaderboardId,
           timeset      : dateFromString(s.timeset)
       }))
-      .sort((a, b) => b.timeset.getTime() - a.timeset.getTime());
+      .sort((a, b) => b.timeset - a.timeset);
 
     return sortedScores
       .reduce((cum, s, idx) => {

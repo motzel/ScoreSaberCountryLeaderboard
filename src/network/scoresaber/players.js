@@ -9,7 +9,7 @@ import {
     getPlayerInfo,
     getPlayerRankedsScorePagesToUpdate, getPlayerScorePagesToUpdate, getPlayerScores
 } from "../../scoresaber/players";
-import {dateFromString, toUTCDate} from "../../utils/date";
+import {dateFromString, timestampFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
@@ -197,7 +197,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
 
                 const {pp, rank, score, uScore, timeset} = prevScore;
                 newScores.scores[leaderboardId].history.push(
-                    {pp, rank, score, uScore, timestamp: dateFromString(timeset).getTime()}
+                    {pp, rank, score, uScore, timestamp: timestampFromString(timeset)}
                 )
             }
         })
@@ -296,6 +296,8 @@ export const setRefreshedPlayerScores = async (playerId, scores) => {
 
             return;
         }
+
+        if (!s.timeset) delete s.timeset;
 
         playerScores[s.leaderboardId] = {...playerScores[s.leaderboardId], ...s, lastUpdated: new Date()};
 

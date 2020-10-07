@@ -6,7 +6,13 @@
     import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
     import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
-    import {addToDate, dateFromString, durationToMillis, millisToDuration} from "../../../utils/date";
+    import {
+        addToDate,
+        dateFromString,
+        durationToMillis,
+        millisToDuration,
+        timestampFromString
+    } from "../../../utils/date";
     import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
@@ -331,7 +337,7 @@
 
         const playerIds = [playerId].concat(snipedIds);
 
-        const newRefreshTag = playerIds.reduce((tag, pId) => tag + pId + ':' + (data.users && data.users[pId] && data.users[pId].recentPlay ? dateFromString(data.users[pId].recentPlay).getTime() : 'null'), '')
+        const newRefreshTag = playerIds.reduce((tag, pId) => tag + pId + ':' + (data.users && data.users[pId] && data.users[pId].recentPlay ? timestampFromString(data.users[pId].recentPlay) : 'null'), '')
 
         if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
     }

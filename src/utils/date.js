@@ -33,10 +33,16 @@ export const getFirstNotNewerThan = (timestamp, arr) =>
         .reduce((val, t) => null === val && t <= timestamp ? t: val, null);
 
 
-export const dateFromString = (str) => {
+export const dateFromString = str => {
     const date = str ? new Date(Date.parse(str)) : null;
 
     return isValidDate(date) ? date : null;
+}
+
+export const timestampFromString = str => {
+    const date = dateFromString(str);
+
+    return date ? date.getTime() : null;
 }
 
 export const durationToMillis = duration => {

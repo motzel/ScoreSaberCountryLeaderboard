@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.6
+- [!] score timeset bug workaround, thx Ghilo
+
 0.9.7.5
 - [+] new sorting options
 

@@ -11,7 +11,7 @@
     import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
-    import {dateFromString} from "../../../utils/date";
+    import {dateFromString, timestampFromString} from "../../../utils/date";
 
     export let profile;
 
@@ -113,7 +113,7 @@
         .filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
       : null;
 
-    $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - dateFromString(s.timeset).getTime() <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
+    $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - timestampFromString(s.timeset) <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
 
     $: stats = getPlayerStats(filteredScores);
 
