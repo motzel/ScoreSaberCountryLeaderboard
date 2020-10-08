@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.7
+- [!] score timeset fix
+
 0.9.7.6
 - [!] score timeset bug workaround, thx Ghilo
 

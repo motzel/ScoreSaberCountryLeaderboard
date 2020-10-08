@@ -16,7 +16,7 @@
 
     $: minValue = Math.pow(10, -digits-1)
     $: formatted = (Math.abs(value) > minValue ? prefix + formatNumber(value, digits, withSign) + suffix : (withZeroPrefix ? prefix : "") + zero + (withZeroSuffix ? suffix : ""));
-    $: showPrevValue = prevValue !== value && prevValue && value !== null;
+    $: showPrevValue = prevValue && prevValue !== value && value !== null;
     $: prevFormatted = prevValue ? (prevLabel ? prevLabel + ': ' : '') + formatNumber(prevValue, digits, withSign) + suffix : ""
     $: prevDiffFormatted = prevValue ? formatNumber(value - prevValue, digits, true) + suffix : ""
     $: prevClass = (prevValue ? (value - prevValue > minValue ? "inc" : (value - prevValue < -minValue ? "dec" : "zero")): "") + (!inline ? " block" : " inline") + ' prev';

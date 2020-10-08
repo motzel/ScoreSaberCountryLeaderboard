@@ -8,14 +8,14 @@ import {dateFromString, timestampFromString} from "../utils/date";
 import {arrayUnique, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
 
-export const isActiveCountryPlayer = (u, country) => u && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
+export const isActiveCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
 export const getActiveCountryPlayers = async (country, withMain = true) => {
     const players = (await getPlayers()) ?? {};
     const mainPlayerId = withMain ? await getMainPlayerId() : null;
-    return Object.values(players).filter(p => (mainPlayerId && p.id === mainPlayerId) || isActiveCountryPlayer(p, country))
+    return Object.values(players).filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isActiveCountryPlayer(p, country))
 }
-export const getActiveCountryPlayersIds = async (country, withMain = true) => (await getActiveCountryPlayers(country, withMain)).map(p => p.id);
+export const getActiveCountryPlayersIds = async (country, withMain = true) => (await getActiveCountryPlayers(country, withMain)).filter(p => !!p.id).map(p => p.id);
 
 export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
     cum[playerId] = players[playerId] ?? {};

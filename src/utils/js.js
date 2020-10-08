@@ -22,3 +22,4 @@ export const escapeHtml = unsafe => unsafe
     .replace(/'/g, "&#039;");
 export const isDateObject = date => date && Object.prototype.toString.call(date) === "[object Date]" && !isNaN(date);
 export const isPromise = p => p && Object.prototype.toString.call(p) === "[object Promise]";
+export const isString = str => Object.prototype.toString.call(str) === "[object String]";

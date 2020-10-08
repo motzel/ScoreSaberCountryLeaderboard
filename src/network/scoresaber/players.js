@@ -193,12 +193,16 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
         Object.keys(newScores.scores).map(leaderboardId => {
             const prevScore = prevScores[leaderboardId] ? prevScores[leaderboardId] : null;
             if(prevScore) {
-                if (!newScores.scores[leaderboardId].history) newScores.scores[leaderboardId].history = [];
+                if (!newScores.scores[leaderboardId].history)
+                    newScores.scores[leaderboardId].history = prevScore?.history && prevScore.history.length ? prevScore.history.filter(h => h.timestamp) : [];
 
                 const {pp, rank, score, uScore, timeset} = prevScore;
-                newScores.scores[leaderboardId].history.push(
-                    {pp, rank, score, uScore, timestamp: timestampFromString(timeset)}
-                )
+                if (timeset && score && uScore && (newScores?.scores?.[leaderboardId]?.score && newScores?.scores?.[leaderboardId]?.score !== score))
+                    newScores.scores[leaderboardId].history.push(
+                        {pp, rank, score, uScore, timestamp: timestampFromString(timeset)}
+                    )
+
+                    newScores.scores[leaderboardId].history = newScores.scores[leaderboardId].history.slice(0,3);
             }
         })
 

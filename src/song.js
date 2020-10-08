@@ -1,5 +1,4 @@
 import {capitalize, convertArrayToObjectByKey} from "./utils/js";
-import {getCacheAndConvertIfNeeded} from "./store";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
@@ -140,6 +139,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
             } = getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId);
 
             const playHistory = (history ? history: [])
+                .filter(h => h.score && h.score !== score)
                 .sort((a, b) => b.timestamp - a.timestamp)
                 .map(h => Object.assign(
                     {},

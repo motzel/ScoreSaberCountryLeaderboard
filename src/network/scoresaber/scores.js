@@ -201,10 +201,8 @@ export async function fetchAllNewScores(
         }
 
         for (let i in scorePage) {
-            if (
-                lastUpdated &&
-                dateFromString(scorePage[i].timeset) <= lastUpdated
-            ) {
+            const scoreTimeset = dateFromString(scorePage[i].timeset);
+            if (lastUpdated && scoreTimeset <= lastUpdated) {
                 // remember most recent play time
                 if (recentPlay) allScores.lastUpdated = recentPlay;
 

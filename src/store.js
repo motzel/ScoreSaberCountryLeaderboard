@@ -1,7 +1,7 @@
 import log from './utils/logger';
 import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
-import config, {getSseMainUserId} from "./temp";
 import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from "./network/scoresaber/players";
+import {dateFromString} from "./utils/date";
 
 const CACHE_KEY = 'sspl_users';
 const THEME_KEY = 'sspl_theme';
@@ -23,7 +23,7 @@ export async function getCacheAndConvertIfNeeded(force = false) {
 
     log.info("Data fetch from cache");
 
-    const CURRENT_CACHE_VERSION = 1.3;
+    const CURRENT_CACHE_VERSION = 1.4;
 
     const prepareFreshCache = () => ({
         version: CURRENT_CACHE_VERSION,
@@ -58,7 +58,7 @@ export async function getCacheAndConvertIfNeeded(force = false) {
         cache.config.songBrowser.defaultView = 'compact';
         cache.config.songBrowser.defaultType = 'all';
         cache.config.songBrowser.defaultSort = 'timeset';
-        cache.config.songBrowser.showColumns = ['timeset', 'pp', 'acc', 'score', 'diff', 'icons']
+        cache.config.songBrowser.showColumns = ['timeset', 'rank', 'pp', 'acc', 'score', 'diff', 'icons']
         cache.config.songBrowser.showIcons = ['bsr', 'bs', 'preview', 'twitch'];
 
         cache.config.songLeaderboard.showDiff = true;
@@ -83,6 +83,47 @@ export async function getCacheAndConvertIfNeeded(force = false) {
     if(cache.version === 1.2) {
         cache.config.profile.showTwitchIcon = true
         cache.version = 1.3;
+    }
+
+    if (cache.version === 1.3) {
+        // fix timeset bug - force refetch all scores since fuckup day (commit 822ac040)
+        const fuckupDay = dateFromString("2020-09-28T21:09:00Z");
+
+        if (cache.rankedSongsChanges) {
+            const rankedSongsChangesTimestamps = Object.keys(cache.rankedSongsChanges).sort((a, b) => a - b).slice(0, 1);
+            if (rankedSongsChangesTimestamps.length) {
+                const firstTimestamp = parseInt(rankedSongsChangesTimestamps[0], 10);
+                if (new Date(firstTimestamp) > fuckupDay) {
+                    // replacement of the timestamp of the first rankeds download to just before the fuckup (in order not to update all rankeds)
+                    cache.rankedSongsChanges[fuckupDay.getTime() - 1000*60*60*24] = [...cache.rankedSongsChanges[firstTimestamp]];
+                    delete cache.rankedSongsChanges[firstTimestamp];
+                }
+            }
+        }
+
+        if (cache.users) {
+            const playersToUpdate = Object.values(cache.users)
+                .filter(p => p && p.scores)
+                .map(player => ({
+                    id: player.id,
+                    lastUpdated: player.lastUpdated,
+                    songsWithoutTimeset: Object.values(player.scores).filter(s => !dateFromString(s.timeset))
+                }))
+                .filter(p => p.songsWithoutTimeset.length || p.id === cache.config.users.main);
+
+            playersToUpdate.forEach(player => {
+                const lastUpdated = dateFromString(player.lastUpdated);
+                if (lastUpdated > fuckupDay) {
+                    cache.users[player.id].lastUpdated = new Date(fuckupDay.getTime());
+                }
+            })
+        }
+
+        if (!cache.config.songBrowser.showColumns.includes('rank'))
+            cache.config.songBrowser.showColumns.push('rank');
+
+        cache.version = 1.4;
+        await setCache(cache);
     }
 
     Globals.data = cache;

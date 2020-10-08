@@ -38,7 +38,7 @@ import {
     getSongScoreByPlayerId
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
-import {setRefreshedPlayerScores, updateActivePlayers} from "./network/scoresaber/players";
+import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
