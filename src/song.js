@@ -4,7 +4,7 @@ import {getSongByHash} from "./network/beatsaver";
 import {
     getActiveCountryPlayers,
     getAllActivePlayers, getFriends,
-    getPlayerInfoFromPlayers, getPlayerSongScore
+    getPlayerInfoFromPlayers, getPlayerSongScore, getPlayerSongScoreHistory
 } from "./scoresaber/players";
 
 export const diffColors = {
@@ -108,14 +108,17 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
 
     players = convertArrayToObjectByKey(players, 'id');
 
-    return filteredScores.map(s => s.playerId)
-        .reduce((cum, playerId) => {
-            if (!getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId)) return cum;
+    return (await filteredScores.map(s => s.playerId)
+        .reduce(async (cum, playerId) => {
+            cum = await cum;
+
+            const playerSongScore = getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId);
+            if (!playerSongScore) return cum;
 
             if (!maxSongScore && !cum.length) {
                 diffInfo = findDiffInfo(
                     songCharacteristics,
-                    getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId).diff
+                    playerSongScore.diff
                 );
                 maxSongScore =
                     diffInfo?.length && diffInfo?.notes
@@ -123,7 +126,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
                         : 0;
             }
 
-            const { scores, ...user } = getPlayerInfoFromPlayers(players, playerId);
+            const {scores, ...user} = getPlayerInfoFromPlayers(players, playerId);
             const {
                 id: songHash,
                 score,
@@ -133,26 +136,10 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
                 mods,
                 pp,
                 maxScoreEx,
-                diff,
-                history,
                 ..._
-            } = getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId);
+            } = playerSongScore;
 
-            const playHistory = (history ? history: [])
-                .filter(h => h.score && h.score !== score)
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .map(h => Object.assign(
-                    {},
-                    h,
-                    {
-                        timeset: new Date(h.timestamp),
-                        percent: maxSongScore
-                            ? h.score / maxSongScore / (h.uScore ? h.score / h.uScore : 1)
-                            : (maxScoreEx
-                                ? h.score / maxScoreEx / (h.uScore ? h.score / h.uScore : 1)
-                                : null)
-                    }
-                ));
+            const playHistory = await getPlayerSongScoreHistory(playerSongScore, maxSongScore);
 
             const scoreMult = uScore && score ? score / uScore : 1
             cum.push(
@@ -174,6 +161,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
 
             return cum;
         }, [])
+    )
         .map((u) => Object.assign({}, u, {hidden: shouldBeHidden(u)}))
         .sort((a, b) => b.score - a.score);
 }

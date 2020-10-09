@@ -33,7 +33,7 @@ import nodeSync from "./network/multinode-sync";
 import {
     getAllActivePlayers,
     getPlayerProfileUrl,
-    getPlayerSongScore,
+    getPlayerSongScore, getPlayerSongScoreHistory,
     getScoresByPlayerId,
     getSongScoreByPlayerId
 } from "./scoresaber/players";
@@ -325,16 +325,13 @@ async function setupProfile() {
 
                 s.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
 
-                const history = leaderboard.history && leaderboard.history.length ? leaderboard.history[0] : null;
+                const playHistory = await getPlayerSongScoreHistory(leaderboard);
+                const history = playHistory && playHistory.length ? playHistory[0] : null;
                 s.prevRank = showDiff && history ? history.rank : null;
                 s.prevPp = showDiff && history ? history.pp : null;
                 s.prevScore = showDiff && history ? history.score : null;
-                s.prevTimeset = showDiff && history ? new Date(Date.parse(history.rank)) : null;
-                s.prevPercent = showDiff && history && s.prevScore ? (maxSongScore
-                    ? s.prevScore / maxSongScore
-                    : (leaderboard.maxScoreEx
-                        ? s.prevScore / leaderboard.maxScoreEx
-                        : null)) : null;
+                s.prevTimeset = showDiff && history ? history.timeset : null;
+                s.prevPercent = showDiff && history ? history.percent : null;
             } catch (e) {} // swallow error
         }
 

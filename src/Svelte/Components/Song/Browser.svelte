@@ -22,7 +22,7 @@
         getCountryRanking,
         getPlayerInfo,
         getRankedScoresByPlayerId, getPlayers,
-        getScoresByPlayerId
+        getScoresByPlayerId, getPlayerSongScoreHistory
     } from "../../../scoresaber/players";
     import {
         extractDiffAndType,
@@ -1023,7 +1023,10 @@
                   s.bestDiffPp = 0;
                   s.bestRealDiffPp = 0;
 
-                  playersSeries.forEach((series, idx) => {
+                  // TODO: move it to songPage
+                  for(let idx = 0; idx < playersSeries.length; idx++) {
+                      const series = playersSeries[idx];
+
                       if (series.scores[s.leaderboardId]) {
                           const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
                           const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
@@ -1033,17 +1036,21 @@
 
                           series.scores[s.leaderboardId].diffPp = null;
 
-                          // get previous player scores
-                          if (idx === 0 && series.scores[s.leaderboardId].history && series.scores[s.leaderboardId].history.length) {
-                              series.prevLabel = trans('songBrowser.former');
+                          // get player previous scores
+                          if(idx === 0) {
+                              const playHistory = await getPlayerSongScoreHistory(series.scores[s.leaderboardId], maxScoreEx);
 
-                              ["pp", "score", "uScore"].forEach(key => {
-                                  series.scores[s.leaderboardId]['prev' + capitalize(key)] = series.scores[s.leaderboardId].history[0][key];
-                              })
-                              series.scores[s.leaderboardId].prevTimeset = new Date(series.scores[s.leaderboardId].history[0]['timestamp']);
+                              if (playHistory && playHistory.length) {
+                                  series.prevLabel = trans('songBrowser.former');
 
-                              series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
-                              series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
+                                  ["pp", "score", "uScore"].forEach(key => {
+                                      series.scores[s.leaderboardId]['prev' + capitalize(key)] = playHistory[0][key];
+                                  })
+                                  series.scores[s.leaderboardId].prevTimeset = new Date(playHistory[0]['timestamp']);
+
+                                  series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
+                                  series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
+                              }
                           }
 
                           if (idx > 0) {
@@ -1056,7 +1063,7 @@
                               })
                           }
                       }
-                  })
+                  }
 
                   const {bestIdx, playedByCnt} = findBestInSeries(playersSeries, s.leaderboardId, 'score');
                   s.playedByCnt = playedByCnt;

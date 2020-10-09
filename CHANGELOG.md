@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.8
+- [!] displaying previous score fix
+
 0.9.7.7
 - [!] score timeset fix
 

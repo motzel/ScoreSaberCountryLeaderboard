@@ -7,6 +7,8 @@ import {substituteVars} from "../utils/format";
 import {dateFromString, timestampFromString} from "../utils/date";
 import {arrayUnique, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
+import {findDiffInfo, getMaxScore} from "../song";
+import {getSongByHash} from "../network/beatsaver";
 
 export const isActiveCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
@@ -129,6 +131,40 @@ export const getSongScoreByPlayerId = async (playerId, leaderboardId) => {
     const score = (await getScoresByPlayerId(playerId))?.[leaderboardId];
 
     return score ? score : null;
+}
+
+export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null) => {
+    if (!playerScore || !playerScore.history) return null;
+
+    if (!maxSongScore) {
+        const songInfo = playerScore.id ? await getSongByHash(playerScore.id) : null;
+        const songCharacteristics = songInfo?.metadata?.characteristics;
+
+        const diffInfo = findDiffInfo(
+            songCharacteristics,
+            playerScore.diff
+        );
+        maxSongScore =
+            diffInfo?.length && diffInfo?.notes
+                ? getMaxScore(diffInfo.notes)
+                : 0;
+    }
+
+    return playerScore.history
+        .filter(h => h.score && h.score !== playerScore.score)
+        .sort((a, b) => b.score - a.score)
+        .map(h => Object.assign(
+            {},
+            h,
+            {
+                timeset: new Date(h.timestamp),
+                percent: maxSongScore
+                    ? h.score / maxSongScore / (h.uScore ? h.score / h.uScore : 1)
+                    : (playerScore.maxScoreEx
+                        ? h.score / playerScore.maxScoreEx / (h.uScore ? h.score / h.uScore : 1)
+                        : null)
+            }
+        ));
 }
 
 const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
