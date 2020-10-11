@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.7.9
+- [*] parsing PPs on the country leaderboard in addition to API data, thx Rocker
+
 0.9.7.8
 - [!] displaying previous score fix
 

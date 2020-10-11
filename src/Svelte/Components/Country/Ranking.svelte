@@ -14,6 +14,7 @@
     import {formatNumber} from "../../../utils/format";
 
     export let country;
+    export let overridePlayersPp = {};
     export let itemsPerPage = 25;
     export let diff = 6;
     export let filterFunc = null;
@@ -42,8 +43,15 @@
     ]
     let rows = [];
 
-    $: if (selectedDiff || refreshTag) {
+    $: if (users && (selectedDiff || refreshTag)) {
         ranking = users
+                .map(u => {
+                    if (overridePlayersPp[u.id] && overridePlayersPp[u.id].pp) {
+                        u.pp = overridePlayersPp[u.id].pp;
+                    }
+                    return u;
+                })
+                .sort((a,b) => b.pp - a.pp) // sort it again after override
                 .filter(p => !filterFunc || filterFunc(p))
                 .reduce((cum, user) => {
                     const {id, name, country, pp, rank, userHistory, weeklyDiff} = user;

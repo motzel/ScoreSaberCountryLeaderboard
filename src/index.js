@@ -18,7 +18,7 @@ import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import log from './utils/logger';
 import tempConfig from './temp';
 import {getCacheAndConvertIfNeeded, getThemeFromFastCache} from "./store";
-import {getFirstRegexpMatch} from "./utils/js";
+import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {extractDiffAndType, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
@@ -528,6 +528,8 @@ async function setupCountryRanking(diffOffset = 6) {
         return;
     }
 
+    const actualPlayersPp = convertArrayToObjectByKey(parseSsLeaderboardScores(document).map(s => ({playerId: s.playerId, pp: s.pp})), 'playerId');
+
     cont.classList.add('original');
     cont.style.display = 'none';
     cont.parentNode.style.position = 'relative';
@@ -537,7 +539,7 @@ async function setupCountryRanking(diffOffset = 6) {
     newCont.style.paddingTop = '1.75rem';
     cont.parentNode.appendChild(newCont);
 
-    new CountryDashboard({target: newCont, props: {country: await getActiveCountry()}});
+    new CountryDashboard({target: newCont, props: {country: await getActiveCountry(), overridePlayersPp: actualPlayersPp}});
 
     log.info("Setup country ranking / Done")
 }

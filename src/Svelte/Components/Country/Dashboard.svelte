@@ -10,6 +10,7 @@
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
 
     export let country;
+    export let overridePlayersPp = {};
 
     let playersFilter = [];
     let refreshTag = null;
@@ -105,7 +106,7 @@
                 </nav>
             </header>
 
-            <Ranking {country} itemsPerPage={20} filterFunc={rankingFilter} {refreshTag}/>
+            <Ranking {country} {overridePlayersPp} itemsPerPage={20} filterFunc={rankingFilter} {refreshTag}/>
         </div>
     </div>
 

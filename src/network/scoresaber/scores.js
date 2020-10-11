@@ -5,7 +5,7 @@ import {dateFromString} from "../../utils/date";
 import queue from "../queue";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import {getFirstRegexpMatch} from "../../utils/js";
-import {parseSsInt} from "../../scoresaber/other";
+import {parseSsFloat, parseSsInt} from "../../scoresaber/other";
 
 export const fetchRecentScores = async (userId, page = 1, rateLimitCallback = null, ...leaderboards) =>
     fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page, rateLimitCallback).then((s) =>
@@ -81,7 +81,7 @@ export const parseSsUserScores = doc => [...doc.querySelectorAll('table.ranking 
     ret.timeset = songDate ? songDate.title : null;
 
     const pp = tr.querySelector('th.score .scoreTop.ppValue');
-    if (pp) ret.pp = parseFloat(pp.innerText);
+    if (pp) ret.pp = parseFloat(pp.innerText.replace(/[^0-9.]/g, ''));
 
     const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
     const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
@@ -145,7 +145,7 @@ export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.r
     ret.percent = percent && percent.innerText.trim() !== '-' ? parseFloat(percent.innerText.replace(/[^0-9.]/g, '')) / 100 : null;
 
     const pp = tr.querySelector('td.pp .scoreTop.ppValue');
-    ret.pp = pp ? parseFloat(pp.innerText) : null;
+    ret.pp = pp ? parseSsFloat(pp.innerText) : null;
 
     return ret;
 })
