@@ -19,7 +19,11 @@ import log from './utils/logger';
 import tempConfig from './temp';
 import {getCacheAndConvertIfNeeded, getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
-import {extractDiffAndType, getSongMaxScore, getSongMaxScoreWithDiffAndType} from "./song";
+import {
+    extractDiffAndType,
+    getSongMaxScore,
+    getSongMaxScoreWithDiffAndType, refreshSongCountryRanksCache
+} from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';

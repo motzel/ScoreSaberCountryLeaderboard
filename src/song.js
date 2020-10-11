@@ -3,9 +3,18 @@ import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
     getActiveCountryPlayers,
-    getAllActivePlayers, getFriends,
-    getPlayerInfoFromPlayers, getPlayerSongScore, getPlayerSongScoreHistory
+    getActiveCountryPlayersIds,
+    getAllActivePlayers,
+    getFriends,
+    getPlayerInfoFromPlayers,
+    getPlayerScores,
+    getPlayerSongScore,
+    getPlayerSongScoreHistory,
+    getScoresByPlayerId,
+    getSongScoreByPlayerId
 } from "./scoresaber/players";
+import {getActiveCountry} from "./scoresaber/country";
+import {getCacheAndConvertIfNeeded, setCache} from "./store";
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -76,6 +85,37 @@ export function findDiffInfoWithDiffAndType(characteristics, diffAndType) {
 }
 export function findDiffInfo(characteristics, ssDiff) {
     return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
+}
+
+export async function refreshSongCountryRanksCache(leaderboardIds = []) {
+    const country = await getActiveCountry();
+    if (!country) return;
+
+    const players = (await getActiveCountryPlayers(country, false))
+    if (!leaderboardIds || !leaderboardIds.length)
+        leaderboardIds = [...new Set(players.reduce((cum, player) => cum.concat(Object.keys(player.scores)), []))];
+
+    const data = await getCacheAndConvertIfNeeded();
+
+    for (let leaderboardId of leaderboardIds.map(s => parseInt(s, 10))) {
+        const scores = players
+            .map(player => {
+                const score = getPlayerSongScore(player, leaderboardId);
+                return score && score.score ? {playerId: player.id, score: score.score} : null;
+            })
+            .filter(s => s)
+            .sort((a, b) => b.score - a.score);
+
+        scores.forEach((d, pos) => {
+            if (!data.users[d.playerId].scores[leaderboardId].ssplCountryRank)
+                data.users[d.playerId].scores[leaderboardId].ssplCountryRank = {[country]: null};
+
+            data.users[d.playerId].scores[leaderboardId].ssplCountryRank[country] = {
+                rank: pos + 1,
+                total: scores.length
+            };
+        });
+    }
 }
 
 export async function getLeaderboard(leaderboardId, country, type = 'country') {

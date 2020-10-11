@@ -2,6 +2,8 @@ import log from './utils/logger';
 import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
 import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from "./network/scoresaber/players";
 import {dateFromString} from "./utils/date";
+import {refreshSongCountryRanksCache} from "./song";
+import logger from "./utils/logger";
 
 const CACHE_KEY = 'sspl_users';
 const THEME_KEY = 'sspl_theme';
@@ -18,12 +20,12 @@ export const lastUpdated = async () => (await getCacheAndConvertIfNeeded()).last
 
 export const isAnyData = async () => {await getCacheAndConvertIfNeeded(); return Globals.data && Object.keys(Globals.data.users).length}
 
-export async function getCacheAndConvertIfNeeded(force = false) {
-    if (Globals.data && !force) return Globals.data;
+export async function getCacheAndConvertIfNeeded(forceDb = false, forceCache = false) {
+    if ((Globals.data && !forceDb) || forceCache) return Globals.data;
 
     log.info("Data fetch from cache");
 
-    const CURRENT_CACHE_VERSION = 1.4;
+    const CURRENT_CACHE_VERSION = 1.5;
 
     const prepareFreshCache = () => ({
         version: CURRENT_CACHE_VERSION,
@@ -86,7 +88,7 @@ export async function getCacheAndConvertIfNeeded(force = false) {
     }
 
     if (cache.version === 1.3) {
-        // fix timeset bug - force refetch all scores since fuckup day (commit 822ac040)
+        // fix timeset bug - forceDb refetch all scores since fuckup day (commit 822ac040)
         const fuckupDay = dateFromString("2020-09-28T21:09:00Z");
 
         if (cache.rankedSongsChanges) {
@@ -124,6 +126,18 @@ export async function getCacheAndConvertIfNeeded(force = false) {
 
         cache.version = 1.4;
         await setCache(cache);
+    }
+
+    if (cache.version === 1.4) {
+        Globals.data = cache;
+
+        logger.info('Cache country ranks for the first time');
+
+        await refreshSongCountryRanksCache();
+
+        logger.info('Cache country ranks for the first time / Done');
+
+        cache.version = 1.5;
     }
 
     Globals.data = cache;

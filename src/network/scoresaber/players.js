@@ -5,9 +5,10 @@ import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
+    getActiveCountryPlayers,
     getManuallyAddedPlayersIds,
     getPlayerInfo, getPlayerInfoFromPlayers,
-    getPlayerRankedsScorePagesToUpdate, getPlayerScorePagesToUpdate, getPlayerScores, getScoresByPlayerId
+    getPlayerRankedsScorePagesToUpdate, getPlayers, getPlayerScorePagesToUpdate, getPlayerScores, getScoresByPlayerId
 } from "../../scoresaber/players";
 import {dateFromString, timestampFromString, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
@@ -15,6 +16,7 @@ import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
 import {getMainPlayerId} from "../../plugin-config";
+import {refreshSongCountryRanksCache} from "../../song";
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
@@ -81,6 +83,8 @@ export const updateActivePlayers = async (persist = true) => {
     const data = await getCacheAndConvertIfNeeded();
 
     const country = await getActiveCountry();
+
+    const previousCountryPlayersIds = (await getActiveCountryPlayers(country)).map(p => p.id);
 
     // set all cached country players as inactive
     if (data.users)
@@ -162,6 +166,22 @@ export const updateActivePlayers = async (persist = true) => {
         ...allPlayers
     }
 
+    if (country) {
+        const removedPlayers = previousCountryPlayersIds.filter(playerId => !countryPlayersIds.includes(playerId));
+        const newPlayers = countryPlayersIds.filter(playerId => !previousCountryPlayersIds.includes(playerId));
+        const changedPlayers = newPlayers.concat(removedPlayers);
+
+        const players = await getPlayers();
+        const leaderboardIds = [...new Set(
+            Object.values(players ?? {})
+                .filter(player => changedPlayers.includes(player.id))
+                .map(player => Object.keys(player.scores))
+                .filter(s => s && s.length)
+                .reduce((cum, ids) => cum.concat(ids), [])
+        )];
+        await refreshSongCountryRanksCache(leaderboardIds);
+    }
+
     if (persist) {
         await setCache(data);
     }
@@ -187,6 +207,8 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
         playerLastUpdated,
         (info) => progressCallback ? progressCallback(info) : null
     );
+
+    let leaderboardIdsToRefresh = newScores && newScores.scores ? Object.keys(newScores.scores) : [];
 
     if(newScores && newScores.scores) {
         const prevScores = player.scores ?? {};
@@ -250,7 +272,11 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
         }
 
         player.scores = {...player.scores, ...updatedPlayerScores};
+
+        leaderboardIdsToRefresh = leaderboardIdsToRefresh.concat(Object.keys(updatedPlayerScores));
     }
+
+    await refreshSongCountryRanksCache(leaderboardIdsToRefresh);
 
     return player;
 }
