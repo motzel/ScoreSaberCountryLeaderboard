@@ -60,7 +60,7 @@
     export let playerId;
     export let snipedIds = [];
     export let minPpPerMap = 1;
-    export let country = getActiveCountry();
+    export let country;
     export let recentPlay = null;
 
     let viewUpdates = 'keep-view';
@@ -512,6 +512,8 @@
     // initialize async values
     onMount(async () => {
         if (!playerId) playerId = await getMainPlayerId()
+
+        if (!country) country = await getActiveCountry();
 
         const config = await getConfig('songBrowser');
 
@@ -1422,6 +1424,8 @@
                                                     {:else if col.key === 'rank'}
                                                         <div class={'compact-' + col.key + '-val'}>
                                                             <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                                       countryRank={getScoreValueByKey(series, song, 'ssplCountryRank')}
+                                                                       {country}
                                                                        leaderboardId={song.leaderboardId}
                                                                        playerId={series.id}
                                                                        lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
@@ -1586,6 +1590,8 @@
                                             {:else if col.key === 'rank'}
                                                 <div class={'compact-' + col.key + '-val'}>
                                                     <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                               countryRank={getScoreValueByKey(series, song, 'ssplCountryRank')}
+                                                               {country}
                                                                leaderboardId={song.leaderboardId}
                                                                playerId={series.id}
                                                                lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}
@@ -1625,6 +1631,8 @@
                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
                                         {:else if col.key === 'rank'}
                                             <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
+                                                       countryRank={getScoreValueByKey(series, song, 'ssplCountryRank')}
+                                                       {country}
                                                        leaderboardId={song.leaderboardId}
                                                        playerId={series.id}
                                                        lastUpdated={getScoreValueByKey(series, song, 'lastUpdated')}

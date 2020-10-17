@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8
+- [+] add country rank info for each song
+
 0.9.7.9
 - [*] parsing PPs on the country leaderboard in addition to API data, thx Rocker
 

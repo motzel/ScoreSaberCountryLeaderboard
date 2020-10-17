@@ -11,15 +11,21 @@
 	import {refreshPlayerScores} from "../../../network/scoresaber/players";
 
 	export let rank;
+	export let countryRank;
+	export let country;
 	export let lastUpdated;
 	export let leaderboardId;
 	export let playerId;
 	export let timeset;
 	export let recentPlay = null;
+	export let showCountryTotal = false;
 
 	let refreshing = false;
 	let faded = false;
 	let refreshDate = dateFromString(lastUpdated ? lastUpdated : timeset);
+
+	let userCountryRank;
+	let userCountryRankTotal;
 
 	const currentRank = tweened(rank, {
 		duration: 500,
@@ -27,6 +33,11 @@
 	});
 
 	onMount(() => {
+		if (country && countryRank && countryRank[country]) {
+			userCountryRank = countryRank[country].rank;
+			userCountryRankTotal = countryRank[country].total;
+		}
+
 		const scoreUpdatingSubscriber = eventBus.on('player-score-update-start', ({playerId: scorePlayerId, leaderboardId: scoreLeaderboardId}) => {
 			if(scorePlayerId === playerId && scoreLeaderboardId === leaderboardId) {
 				refreshing = true;
@@ -73,10 +84,24 @@
 	}
 </script>
 
-<a on:click={refreshRank} class:faded={faded} title={trans('songBrowser.rankOfDate', {date: formatDate(refreshDate)})}>
-	<i class="fas fa-globe-americas" class:fa-spin={refreshing}></i>
-	<span class="value"><Value value={$currentRank} prefix="#" zero="-" digits={0}/></span>
-</a>
+{#if !$currentRank || !(country && userCountryRank)}
+	<span>-</span>
+{/if}
+
+{#if $currentRank}
+	<a on:click={refreshRank} class:faded={faded}
+	   title={trans('songBrowser.rankOfDate', {date: formatDate(refreshDate)})}>
+		<i class="fas fa-globe-americas" class:fa-spin={refreshing}></i>
+		<span class="value"><Value value={$currentRank} prefix="#" zero="-" digits={0}/></span>
+	</a>
+{/if}
+
+{#if country && userCountryRank}
+	<span class="country-rank">
+		<img src="/imports/images/flags/{country}.png"/>
+		<span class="value"><Value value={userCountryRank} prefix="#" zero="-" digits={0}/>{#if showCountryTotal}<Value value={userCountryRankTotal} prefix="/" zero="-" digits={0}/>{/if}</span>
+	</span>
+{/if}
 
 <style>
 	a {
@@ -91,6 +116,10 @@
 
 	.fa-spin-x {
 		animation: fa-spin-x 2s infinite linear
+	}
+
+	.country-rank {
+		margin-left: .25rem;
 	}
 
 	@keyframes fa-spin-x {
