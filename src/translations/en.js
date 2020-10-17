@@ -145,6 +145,7 @@ export default {
         typeHeader: 'Type',
         songHeader: 'Song',
         songPlaceholder: 'Start typing...',
+        countryRankHeader: 'Country rank',
         viewHeader: 'View',
         showHeader: 'Show',
         sortingHeader: 'Sorting',

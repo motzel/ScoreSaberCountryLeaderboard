@@ -24,13 +24,13 @@ table.ranking.songs {max-width: none!important;}
 
 .flex-start {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
+  justify-content: flex-start !important;
+  align-items: center !important;
 }
 .flex-center {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center !important;
+  align-items: center !important;
 }
 .flex-align-start {
   align-items: flex-start;

@@ -84,7 +84,7 @@
 	}
 </script>
 
-{#if !$currentRank || !(country && userCountryRank)}
+{#if !$currentRank && !(country && userCountryRank)}
 	<span>-</span>
 {/if}
 
@@ -99,7 +99,7 @@
 {#if country && userCountryRank}
 	<span class="country-rank">
 		<img src="/imports/images/flags/{country}.png"/>
-		<span class="value"><Value value={userCountryRank} prefix="#" zero="-" digits={0}/>{#if showCountryTotal}<Value value={userCountryRankTotal} prefix="/" zero="-" digits={0}/>{/if}</span>
+		<span class="value" title={!showCountryTotal && country && userCountryRank && userCountryRankTotal ? '#' + userCountryRank + ' / ' + userCountryRankTotal : ''}><Value value={userCountryRank} prefix="#" zero="-" digits={0}/>{#if showCountryTotal}<Value value={userCountryRankTotal} prefix="/" zero="-" digits={0}/>{/if}</span>
 	</span>
 {/if}
 

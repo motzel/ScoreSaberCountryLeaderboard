@@ -146,6 +146,7 @@ export default {
         typeHeader: 'Rodzaj',
         songHeader: 'Nutka',
         songPlaceholder: 'Zacznij wpisywać...',
+        countryRankHeader: 'Pozycja w kraju',
         viewHeader: 'Widok',
         showHeader: 'Pokazuj',
         sortingHeader: 'Sortowanie',

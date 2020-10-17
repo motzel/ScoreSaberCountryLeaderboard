@@ -174,7 +174,7 @@ export const updateActivePlayers = async (persist = true) => {
         const players = await getPlayers();
         const leaderboardIds = [...new Set(
             Object.values(players ?? {})
-                .filter(player => changedPlayers.includes(player.id))
+                .filter(player => player && player.id && changedPlayers.includes(player.id))
                 .map(player => Object.keys(player.scores))
                 .filter(s => s && s.length)
                 .reduce((cum, ids) => cum.concat(ids), [])

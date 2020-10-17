@@ -94,6 +94,13 @@
             {id: 'sniper_mode', _key: 'songBrowser.types.sniper_mode'},
         ],
 
+        countryRankOps: [
+            {id: '>', label :'>'},
+            {id: '>=', label :'>='},
+            {id: '<=', label: '<='},
+            {id: '<', label: '<'},
+        ],
+
         songTypeOptions: [
             {id: 'all', _key: 'songBrowser.typesOptions.all'},
             {id: 'not_best', _key: 'songBrowser.typesOptions.not_best'},
@@ -304,7 +311,9 @@
         starsFilter   : {from: 0, to: maxStars},
         minPpDiff     : 1,
         sortBy        : sortTypes[0],
-        sortOrder     : strings.sortOrders[0]
+        sortOrder     : strings.sortOrders[0],
+        countryRankOp : strings.countryRankOps.filter(cro => cro.id === '>='),
+        countryRankVal: 1,
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
 
@@ -504,6 +513,8 @@
 
     let users = [];
 
+    let isPlayerFromCurrentCountry = false;
+
     async function updateViewUpdatesConfig() {
         const config = await getConfig('others');
         viewUpdates = config.viewUpdates ? config.viewUpdates : 'keep-view';
@@ -511,9 +522,14 @@
 
     // initialize async values
     onMount(async () => {
-        if (!playerId) playerId = await getMainPlayerId()
+        if (!playerId) playerId = await getMainPlayerId();
 
         if (!country) country = await getActiveCountry();
+
+        const playerInfo = await getPlayerInfo(playerId);
+        if (playerInfo) {
+            isPlayerFromCurrentCountry = country && playerInfo.country && country.toLowerCase() === playerInfo.country.toLowerCase();
+        }
 
         const config = await getConfig('songBrowser');
 
@@ -651,6 +667,27 @@
     const playerDoesNotPlaySongYet = (leaderboardId, series) => !getSeriesSong(leaderboardId, series)
     const playerIsTheBest = (leaderboardId, series) => getSeriesSong(leaderboardId, series) && !!getSeriesSong(leaderboardId, series).best
     const playerIsNotTheBest = (leaderboardId, series, playerHasScore = false) => (!getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best) && (!playerHasScore || !!getSeriesSong(leaderboardId, series))
+    const countryRankPassesCondition = (leaderboardId, series, rankToCompare, rankCondition = '>=') => {
+        const songScore = getSeriesSong(leaderboardId, series);
+        if (!songScore || !songScore.countryRank) return false;
+
+        const rank = songScore.countryRank;
+
+        switch(rankCondition) {
+            case '>' :
+                return rank > rankToCompare;
+
+            case '<':
+                return rank < rankToCompare;
+
+            case '<=':
+                return rank <= rankToCompare;
+
+            case '>=':
+            default:
+                return rank >= rankToCompare
+        }
+    }
     const nobodyPlayedItYet = song => song.bestIdx === null;
 
     function getSongValueByKey(song, key) {
@@ -895,6 +932,8 @@
 
     const onFilterNameChange = debounce(e => allFilters.name = e.target.value, DEBOUNCE_DELAY);
     const onFilterStarsChange = debounce(e => allFilters.starsFilter = Object.assign({}, allFilters.starsFilter), DEBOUNCE_DELAY);
+    const onFilterCountryRankChange = debounce(e => allFilters.countryRankVal = e.target.value, DEBOUNCE_DELAY);
+    const onCountryRankKeyDown = e => {if(!['ArrowUp', 'ArrowDown', 'Tab', 'F5'].includes(e.key)) e.preventDefault();}
     const onFilterMinPlusPpChanged = debounce(e => allFilters.minPpDiff = e.detail, DEBOUNCE_DELAY * 2);
 
     const getSortValue = (song, playersSeries, filters) => {
@@ -948,6 +987,10 @@
                             .map(s => {
                                 const {id, name, songSubName, songAuthorName, levelAuthorName, diff, stars, oldStars, maxScoreEx, playerId, ...score} = s;
                                 score.timeset = dateFromString(s.timeset);
+
+                                score.countryRank = country && score.ssplCountryRank && score.ssplCountryRank[country]
+                                        ? score.ssplCountryRank[country].rank
+                                        : null;
 
                                 if (score.pp > 0 && !score.weightedPp) {
                                     score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);
@@ -1115,19 +1158,26 @@
               // filter when sniper mode, player is the best and diff > minPpDiff
               .filter(s =>
                 (
-                  filters.songType.id === 'sniper_mode' &&
-                  (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
-                ) ||
+                    (
+                      filters.songType.id === 'sniper_mode' &&
+                      (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                    ) ||
 
-                (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
+                    (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
 
+                    (
+                      'sniper_mode' !== allFilters.songType.id &&
+                      (
+                        allFilters.songTypeOption.id === 'all' ||
+                        (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
+                        (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
+                      )
+                    )
+                ) &&
+
+                // filter by country rank
                 (
-                  'sniper_mode' !== allFilters.songType.id &&
-                  (
-                    allFilters.songTypeOption.id === 'all' ||
-                    (allFilters.songTypeOption.id === 'not_best' && playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx], true) && s.playedByCnt >= 2) ||
-                    (allFilters.songTypeOption.id === 'best' && playerIsTheBest(s.leaderboardId, playersSeries[compareToIdx]) && s.playedByCnt >= 2)
-                  )
+                  !isPlayerFromCurrentCountry || countryRankPassesCondition(s.leaderboardId, playersSeries[0], allFilters.countryRankVal, allFilters.countryRankOp.id)
                 )
               )
 
@@ -1345,6 +1395,16 @@
                         max={maxStars} step={0.1} suffix="*" digits={1} disableDirectEditing={true}
                         on:change={onFilterStarsChange}/>
         </div>
+
+        {#if isPlayerFromCurrentCountry}
+        <div class="filter-country-rank">
+            <header>{$_.songBrowser.countryRankHeader}</header>
+            <div class="values">
+                <Select bind:value={allFilters.countryRankOp} items={strings.countryRankOps} />
+                <input type="number" value="1" min="1" step="1" on:input={onFilterCountryRankChange} on:keydown={onCountryRankKeyDown} />
+            </div>
+        </div>
+        {/if}
 
         <div>
             <header>{$_.songBrowser.viewHeader}</header>
@@ -2125,6 +2185,15 @@
 
     .filters .filter-name input {
         width: 100%;
+    }
+
+    .filters .filter-country-rank .values {
+        display: flex;
+    }
+
+    .filters .filter-country-rank .values input[type=number] {
+        max-width: 3rem;
+        text-align: center;
     }
 
     :global(.filters .filter-diff-pp > div) {
