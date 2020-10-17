@@ -420,7 +420,7 @@ async function setupProfile() {
                         mainUl.innerHTML = '';
                         new ProfileStats({
                             target: mainColumn,
-                            props: {stats: pageStats}
+                            props: {profileId, stats: pageStats}
                         })
                     }
                 }

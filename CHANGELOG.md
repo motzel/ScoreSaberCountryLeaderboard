@@ -5,9 +5,12 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.1
+- [+] mini country ranking on the player's profile, thx Agent
+
 0.9.8
 - [+] show country rank info for each song
-- [+] add country rank filtering, thx Rocker
+- [+] country rank filtering, thx Rocker
 
 0.9.7.9
 - [*] parsing PPs on the country leaderboard in addition to API data, thx Rocker

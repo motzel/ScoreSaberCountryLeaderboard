@@ -1,4 +1,4 @@
-.sspl .player-name {font-size: 1.1rem; font-weight: 700;}
+.sspl .player-name {font-size: 1.1em; font-weight: 700;}
 .sspl .inc, .sspl .diff.inc, .card-view .inc {color: var(--increase) !important;}
 .sspl .dec, .sspl .diff.dec, .card-view .dec {color: var(--decrease) !important;}
 .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
