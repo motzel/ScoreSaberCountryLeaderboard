@@ -5,33 +5,46 @@
     import MiniRanking from "../Country/MiniRanking.svelte";
     import {onMount} from "svelte";
     import {getActiveCountry} from "../../../scoresaber/country";
-    import {getPlayerInfo} from "../../../scoresaber/players";
+    import {getPlayerInfo, isCountryPlayer} from "../../../scoresaber/players";
 
     export let profileId;
     export let stats = null;
 
-    let playerRankEl;
     let countryRankingEl;
 
     let activeCountry;
     let playerInfo;
     let isPlayerFromCurrentCountry = false;
     let playerPp = null;
+    let type = "country";
+    let globalRank = null;
+    let countryRank = null;
     onMount(async () => {
         activeCountry = await getActiveCountry();
 
         if (profileId) playerInfo = await getPlayerInfo(profileId);
 
-        if (playerInfo) {
-            isPlayerFromCurrentCountry = activeCountry && playerInfo.country && activeCountry.toLowerCase() === playerInfo.country.toLowerCase();
+        if (playerInfo && activeCountry) {
+            isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
         }
 
         const ppStat = stats ? stats.filter(s => s.key === 'Performance Points') : null;
         if (ppStat) playerPp = ppStat && ppStat.length ? ppStat[0].value : null;
+
+        const rankStat = stats ? stats.filter(s => s.type === 'rank') : null;
+        if (rankStat) {
+            globalRank = rankStat[0].value;
+            countryRank = rankStat[0].originalRank;
+        }
     });
 
     function onHover(event) {
         if (!isPlayerFromCurrentCountry) return;
+
+        const el = event.detail.target.closest('[data-type]');
+        if (el && ['country', 'global'].includes(el.dataset.type)) {
+            type = el.dataset.type;
+        }
 
         countryRankingEl.style.display = 'block';
     }
@@ -49,16 +62,17 @@
             {#if stat.type}
                 {#if stat.type === 'rank'}
 
-                    <li bind:this={playerRankEl} use:hoverable on:hover={onHover} on:unhover={onUnhover}>
+                    <li use:hoverable on:hover={onHover} on:unhover={onUnhover}>
                         {#if isPlayerFromCurrentCountry}
                         <div bind:this={countryRankingEl} class="country-ranking">
-                            <MiniRanking country={activeCountry} playerId={profileId} {playerPp} numOfItems={5} />
+                            <MiniRanking country={stat.originalCountry ? stat.originalCountry : activeCountry} {type} {globalRank} {countryRank} playerId={profileId} {playerPp} numOfItems={5} />
                         </div>
                         {/if}
 
                         <strong>{$_.profile.stats.ranking}:</strong>
-                        <a href="/global/{Math.floor((stat.value-1) / 50) + 1}">#{stat.value}</a>
+                        <a href="/global/{Math.floor((stat.value-1) / 50) + 1}" data-type="global">#{stat.value}</a>
 
+                        <span data-type="country">
                         {#if stat.originalCountry === activeCountry}
                             (
                             {#if stat.ssplCountryRank}
@@ -91,6 +105,7 @@
                             {/if}
                             )
                         {/if}
+                        </span>
                     </li>
                 {:else if stat.type === 'number'}
                     <ProfileLine {...stat}/>

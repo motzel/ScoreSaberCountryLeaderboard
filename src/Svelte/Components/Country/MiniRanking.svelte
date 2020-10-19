@@ -1,88 +1,196 @@
 <script>
     import {onMount} from 'svelte';
+    import {_} from '../../stores/i18n';
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
     import Pp from '../Common/Pp.svelte';
-    import {USERS_URL} from "../../../network/scoresaber/consts";
+    import {GLOBAL_URL, PLAYERS_PER_PAGE, USERS_URL} from "../../../network/scoresaber/consts";
     import {getActiveCountryPlayers,} from "../../../scoresaber/players";
     import {formatNumber, substituteVars} from "../../../utils/format";
     import {parseSsLeaderboardScores} from "../../../network/scoresaber/scores";
     import {convertArrayToObjectByKey} from "../../../utils/js";
-    import {fetchHtmlPage} from "../../../network/fetch";
+    import {delay, fetchHtmlPage} from "../../../network/fetch";
     import queue from "../../../network/queue";
+    import {getActiveCountry} from "../../../scoresaber/country";
 
+    export let type = "country";
     export let country;
+    export let globalRank;
+    export let countryRank;
     export let playerId;
     export let playerPp;
     export let numOfItems = 5;
 
     if (numOfItems < 2) numOfItems = 2;
 
-    let players = [];
+    let activeCountry;
+    let isPlayerFromActiveCountry = false;
+    let playersCache = {global: [], activeCountry: [], country: {}};
     let overridePlayersPp = {};
-    let ranking = [];
+    let players = null;
+    let loading = true;
+    let error = null;
     onMount(async () => {
-        if (country) {
-            players = await getActiveCountryPlayers(country);
+        activeCountry = await getActiveCountry();
 
-            await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}))
-                    .then(document => {
-                        overridePlayersPp = convertArrayToObjectByKey(
-                                parseSsLeaderboardScores(document)
-                                        .map(s => ({playerId: s.playerId, pp: s.pp})), 'playerId');
-                    })
-                    .catch(_ => {}); // swallow error
+        if (activeCountry) {
+            playersCache.activeCountry = await getActiveCountryPlayers(activeCountry);
+
+            const player = playersCache.activeCountry ? playersCache.activeCountry.find(p => p.id === playerId) : null;
+            if (player) {
+                isPlayerFromActiveCountry = true;
+
+                // active country player
+                await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country: activeCountry}))
+                        .then(document => {
+                            overridePlayersPp = Object.assign(
+                                {},
+                                    overridePlayersPp,
+                                    convertArrayToObjectByKey(
+                                    parseSsLeaderboardScores(document)
+                                            .map(s => ({playerId: s.playerId, pp: s.pp})), 'playerId')
+                            )
+                        })
+                        .catch(_ => {}); // swallow error
+            }
         }
     });
 
-    function getRanking(players, overridePlayersPp) {
-        if (!players || !playerId) return null;
-
-        const ranking = players
-                .map(u => {
-                    if (overridePlayersPp && overridePlayersPp[u.id] && overridePlayersPp[u.id].pp) {
-                        u.pp = overridePlayersPp[u.id].pp;
-                    }
-                    return u;
-                })
-                .sort((a, b) => b.pp - a.pp) // sort it again after override
-                .map((p, idx) => ({...p, countryRank: idx + 1}));
-
-        const playerIdx = ranking.findIndex(p => p.id === playerId);
-        if (playerIdx < 0) return null;
-
-        let startIdx = playerIdx - (numOfItems - (numOfItems > 2 ? 2 : 1)) - (playerIdx + 1 === ranking.length ? 1 : 0);
-        if (startIdx < 0) startIdx = 0;
-
-        return ranking.slice(startIdx, startIdx + numOfItems);
+    function getPage(rank) {
+        return Math.ceil((rank - 1) / PLAYERS_PER_PAGE);
     }
 
-    $: ranking = getRanking(players, overridePlayersPp);
+    async function fetchRanking(url, rank) {
+        const playerPage = getPage(rank);
+        const firstPlayerRank = rank - (numOfItems - (numOfItems > 2 ? 2 : 1));
+        const firstPlayerRankPage = getPage(firstPlayerRank);
+        const lastPlayerRankPage = getPage(rank + 1);
+
+        const pages = [... new Set([playerPage, firstPlayerRankPage, lastPlayerRankPage])];
+
+        let ranking = [];
+        for (const page of pages) {
+            ranking = ranking.concat(
+                    await fetchHtmlPage(queue.SCORESABER, substituteVars(url, {page}))
+                            .then(document => parseSsLeaderboardScores(document))
+                            .then(players => players.map(p => {
+                                const {tr, mods, percent, score, timesetAgo, rank, playerId, playerName, ...player} = p;
+                                return {...player, id: playerId, name: playerName, miniRank: rank};
+                            }))
+            )
+        }
+
+        return ranking.sort((a, b) => b.pp - a.pp);
+    }
+
+    function setPlayers(type, overridePlayersPp, country, activeCountry, isPlayerFromActiveCountry, cache) {
+        players = null;
+        error = null;
+
+        switch(type) {
+            case 'global':
+                if (!(cache && cache.global && cache.global.length)) {
+                    if (!globalRank) return;
+
+                    loading = true;
+                    players = null;
+
+                    fetchRanking(GLOBAL_URL, globalRank)
+                    .then(ranking => {
+                        players = cache.global = ranking;
+
+                        loading = false;
+                    })
+                    .catch(e => {
+                        loading = false;
+
+                        error = $_.common.downloadError;
+                    })
+                } else {
+                    players = cache.global;
+                }
+
+                return;
+
+            case 'country':
+                if (isPlayerFromActiveCountry && cache.activeCountry) {
+                    players = cache.activeCountry
+                            .map(u => {
+                                if (overridePlayersPp && overridePlayersPp[u.id] && overridePlayersPp[u.id].pp) {
+                                    u.pp = overridePlayersPp[u.id].pp;
+                                }
+                                return u;
+                            })
+                            .sort((a, b) => b.pp - a.pp) // sort it again after override
+                            .map((p, idx) => ({...p, miniRank: idx + 1}));
+
+                    loading = false;
+
+                    return;
+                }
+                break;
+        }
+    }
+
+    function getRanking(players) {
+        if (!players || !playerId) return null;
+
+        const playerIdx = players.findIndex(p => p.id === playerId);
+        if (playerIdx < 0) return null;
+
+        let startIdx = playerIdx - (numOfItems - (numOfItems > 2 ? 2 : 1)) - (playerIdx + 1 === players.length ? 1 : 0);
+        if (startIdx < 0) startIdx = 0;
+
+        return players.slice(startIdx, startIdx + numOfItems);
+    }
+
+    $: {
+        setPlayers(type, overridePlayersPp, country, activeCountry, isPlayerFromActiveCountry, playersCache);
+    }
+    $: ranking = getRanking(players);
 </script>
 
-{#if ranking && ranking.length}
-    <table class="sspl">
-        <tbody>
-        {#each ranking as row}
-            <tr>
-                <td>
-                    <Rank rank={row.countryRank}/>
-                </td>
-                <td>
-                    <Player user={row}/>
-                </td>
-                <td>
-                    <Pp pp="{row.pp}" zero={formatNumber(0)} prevPp={playerPp} inline={true}/>
-                </td>
-            </tr>
-        {/each}
-        </tbody>
-    </table>
+{#if loading}
+    <div class="spinner-box">
+        <i class="fas fa-sun fa-spin fa-3x"></i>
+    </div>
+{:else}
+    {#if ranking && ranking.length}
+        <table class="sspl">
+            <tbody>
+            {#each ranking as row}
+                <tr>
+                    <td>
+                        <Rank rank={row.miniRank}/>
+                    </td>
+                    <td>
+                        <Player user={row}/>
+                    </td>
+                    <td>
+                        <Pp pp="{row.pp}" zero={formatNumber(0)} prevPp={playerPp} inline={true}/>
+                    </td>
+                </tr>
+            {/each}
+            </tbody>
+        </table>
+    {:else if error}
+        <p class="error">{error}</p>
+    {:else}
+        <p>{$_.common.noData}</p>
+    {/if}
 {/if}
 
 <style>
+    .spinner-box {
+        padding: .5rem;
+        text-align: center;
+    }
     table tbody td {
         padding: 0.25em 0.25em;
+    }
+    .error {
+        font-weight: 500;
+        color: red;
     }
 </style>
 

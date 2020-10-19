@@ -120,3 +120,12 @@ body .select select {
     width: auto;
   }
 }
+
+.fa-spin-x {
+  animation: fa-spin-x 2s infinite linear
+}
+
+@keyframes fa-spin-x {
+  0% {transform: rotateX(0deg)}
+  to {transform: rotateX(1turn)}
+}

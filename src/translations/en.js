@@ -275,5 +275,6 @@ export default {
         nothingSelected: 'Nothing selected',
         to: 'to',
         noData: 'No data',
+        downloadError: 'Download error',
     }
 }

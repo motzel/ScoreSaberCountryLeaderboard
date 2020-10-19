@@ -22,7 +22,7 @@
         getCountryRanking,
         getPlayerInfo,
         getRankedScoresByPlayerId, getPlayers,
-        getScoresByPlayerId, getPlayerSongScoreHistory
+        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer
     } from "../../../scoresaber/players";
     import {
         extractDiffAndType,
@@ -528,7 +528,7 @@
 
         const playerInfo = await getPlayerInfo(playerId);
         if (playerInfo) {
-            isPlayerFromCurrentCountry = country && playerInfo.country && country.toLowerCase() === playerInfo.country.toLowerCase();
+            isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, country);
         }
 
         const config = await getConfig('songBrowser');

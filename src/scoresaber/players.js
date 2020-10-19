@@ -10,12 +10,12 @@ import {getMainPlayerId} from "../plugin-config";
 import {findDiffInfo, getMaxScore} from "../song";
 import {getSongByHash} from "../network/beatsaver";
 
-export const isActiveCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
+export const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
 export const getActiveCountryPlayers = async (country, withMain = true) => {
     const players = (await getPlayers()) ?? {};
     const mainPlayerId = withMain ? await getMainPlayerId() : null;
-    return Object.values(players).filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isActiveCountryPlayer(p, country))
+    return Object.values(players).filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isCountryPlayer(p, country))
 }
 export const getActiveCountryPlayersIds = async (country, withMain = true) => (await getActiveCountryPlayers(country, withMain)).filter(p => !!p.id).map(p => p.id);
 
@@ -87,7 +87,7 @@ export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
 
     const players = await getPlayers();
 
-    return friendsIds.filter(playerId => !isActiveCountryPlayer(players?.[playerId] ?? null, country));
+    return friendsIds.filter(playerId => !isCountryPlayer(players?.[playerId] ?? null, country));
 }
 
 export const getManuallyAddedPlayers = async (country, withMain = false) => Object.values(mapPlayersToObj(await getManuallyAddedPlayersIds(country, withMain), await getPlayers()));

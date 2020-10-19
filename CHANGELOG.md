@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.2
+- [+] mini global ranking on the player's profile, thx Drakonno
+
 0.9.8.1
 - [+] mini country ranking on the player's profile, thx Agent
 

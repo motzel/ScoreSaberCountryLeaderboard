@@ -276,5 +276,6 @@ export default {
         nothingSelected: 'Nic nie wybrano',
         to: 'do',
         noData: 'Brak danych',
+        downloadError: 'Błąd pobierania',
     }
 }

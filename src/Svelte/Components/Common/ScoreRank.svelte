@@ -114,16 +114,7 @@
 		font-weight: 500;
 	}
 
-	.fa-spin-x {
-		animation: fa-spin-x 2s infinite linear
-	}
-
 	.country-rank {
 		margin-left: .25rem;
-	}
-
-	@keyframes fa-spin-x {
-		0% {transform: rotateX(0deg)}
-		to {transform: rotateX(1turn)}
 	}
 </style>
