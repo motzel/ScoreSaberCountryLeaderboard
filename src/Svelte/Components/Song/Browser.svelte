@@ -1177,7 +1177,7 @@
 
                 // filter by country rank
                 (
-                  !isPlayerFromCurrentCountry || countryRankPassesCondition(s.leaderboardId, playersSeries[0], allFilters.countryRankVal, allFilters.countryRankOp.id)
+                  !isPlayerFromCurrentCountry || allFilters.songType.id === 'rankeds_unplayed' || countryRankPassesCondition(s.leaderboardId, playersSeries[0], allFilters.countryRankVal, allFilters.countryRankOp.id)
                 )
               )
 

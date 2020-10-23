@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.3
+- [!] "not played only" filter fix, thx Modren
+
 0.9.8.2
 - [+] mini global ranking on the player's profile, thx Drakonno
 
