@@ -345,7 +345,6 @@ async function setupProfile() {
     await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
         leaderboardId: s.leaderboardId,
         rank         : s.rank,
-        timeset      : dateFromString(s.timeset)
     })));
 
     if (songEnhanceEnabled)

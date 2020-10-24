@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.4
+- [!] fix overwriting of the previous score date when refreshing rank
+
 0.9.8.3
 - [!] "not played only" filter fix, thx Modren
 

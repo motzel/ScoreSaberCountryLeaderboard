@@ -409,7 +409,6 @@ export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTim
                             )).map(s => ({
                                 leaderboardId: s.leaderboardId,
                                 rank: s.rank,
-                                timeset: dateFromString(s.timeset)
                             })),
                           'leaderboardId'
                         )
