@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.5
+- [!] fix rank chart timezone problem
+
 0.9.8.4
 - [!] fix overwriting of the previous score date when refreshing rank
 

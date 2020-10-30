@@ -8,7 +8,7 @@
     import Avatar from "../Common/Avatar.svelte";
 
     import {PLAYERS_PER_PAGE, MAGIC_HISTORY_NUMBER} from "../../../network/scoresaber/consts";
-    import {daysAgo, getFirstNotNewerThan, toUTCDate} from "../../../utils/date";
+    import {daysAgo, getFirstNotNewerThan, toSSDate} from "../../../utils/date";
     import {getAllPlayersRanking} from "../../../scoresaber/players";
     import {_, trans} from "../../stores/i18n";
     import {formatNumber} from "../../../utils/format";
@@ -56,7 +56,7 @@
                 .reduce((cum, user) => {
                     const {id, name, country, pp, rank, userHistory, weeklyDiff} = user;
 
-                    const historicalTimestamp = userHistory ? getFirstNotNewerThan(toUTCDate(daysAgo(selectedDiff.value + 1)), Object.keys(userHistory)) : null;
+                    const historicalTimestamp = userHistory ? getFirstNotNewerThan(toSSDate(daysAgo(selectedDiff.value + 1)), Object.keys(userHistory)) : null;
 
                     const change = rank && weeklyDiff && rank !== MAGIC_HISTORY_NUMBER && weeklyDiff !== MAGIC_HISTORY_NUMBER
                             ? weeklyDiff

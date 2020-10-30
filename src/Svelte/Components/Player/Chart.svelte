@@ -1,7 +1,7 @@
 <script>
     import {getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerInfo, getScoresByPlayerId} from "../../../scoresaber/players";
-    import {dateFromString, toUTCDate} from "../../../utils/date";
+    import {dateFromString, toSSDate} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
@@ -61,13 +61,16 @@
                 : null;
         if (userHistory) {
             const historyData = Object.entries(userHistory).reduce((cum, {0: timestamp, 1: history}) => {
-                const historyDate = toUTCDate(new Date(parseInt(timestamp, 10)));
-                const diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
+                const historyDate = toSSDate(new Date(parseInt(timestamp, 10)));
+                let diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
+                if (diffInDays < 0) diffInDays = 0;
 
                 cum[diffInDays] = history;
 
                 return cum;
             }, {})
+
+            if (!historyData[0] && historyData[1]) historyData[0] = {...historyData[1]};
 
             if (Object.keys(historyData).length) {
                 ppData = daysAgo.map(d => historyData[d] ? historyData[d].pp : null)
