@@ -1442,7 +1442,7 @@
             {#if viewType.id === 'cards'}
             <div class="columns card-view is-multiline">
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")}>
+                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
                         <Card leaderboardId={song.leaderboardId} hash={song.id} padding="1em" iconSize="0.875em"
                               songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
                               diffInfo={song.diff}
@@ -1747,7 +1747,7 @@
                         {/each}
                     </tr>
                     {#if !!song.leaderboardOpened}
-                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)}>
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
                         <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
                     </td></tr>
                     {/if}

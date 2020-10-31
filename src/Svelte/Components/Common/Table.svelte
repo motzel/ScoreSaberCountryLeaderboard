@@ -185,7 +185,7 @@
                             {/each}
                         </tr>
                         {#if withDetails && detailsOpened.includes(rowIdx + page * itemsPerPage)}
-                        <tr class="row--details">
+                        <tr class="row--details" on:dblclick={() => onDetailsButtonClick(rowIdx)}>
                             <td class="col--details" colspan={tableHeader.length + 1}>
                                 <slot name="details" rowIdx={rowIdx + page * itemsPerPage} {row}></slot>
                             </td>

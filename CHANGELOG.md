@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.6
+- [+] now a double-clicking on the song's leaderboard closes it, thx Rocker
+
 0.9.8.5
 - [!] fix rank chart timezone problem
 
