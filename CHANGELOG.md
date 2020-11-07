@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.8.7
+- [!] the percentage on the leaderboard page is not changed if the score is with modifiers and a percentage is available
+
 0.9.8.6
 - [+] now a double-clicking on the song's leaderboard closes it, thx Rocker
 
