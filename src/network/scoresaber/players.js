@@ -224,7 +224,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
                         {pp, rank, score, uScore, timestamp: timestampFromString(timeset)}
                     )
 
-                    newScores.scores[leaderboardId].history = newScores.scores[leaderboardId].history.slice(0,3);
+                newScores.scores[leaderboardId].history = newScores.scores[leaderboardId].history.slice(0,3);
             }
         })
 
