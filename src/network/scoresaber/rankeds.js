@@ -22,7 +22,8 @@ const fetchRankedSongsArray = async () =>
                 ? songs?.songs.map((s) => ({
                     leaderboardId: s.uid,
                     id: s.id,
-                    name: s.name + ' ' + s.songSubName,
+                    name: s.name,
+                    subName: s.songSubName,
                     songAuthor: s.songAuthorName,
                     levelAuthor: s.levelAuthorName,
                     diff: extractDiffAndType(s.diff),

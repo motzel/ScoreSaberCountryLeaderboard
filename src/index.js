@@ -696,6 +696,7 @@ async function init() {
 
         // fetch cache
         const data = await getCacheAndConvertIfNeeded();
+        console.log(data); return;
 
         // reload page when data was imported
         eventBus.on('data-imported', () => window.location.reload());

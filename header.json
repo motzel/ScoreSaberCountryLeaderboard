@@ -10,7 +10,7 @@
   "supportURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/issues",
   "match": ["https://scoresaber.com/*"],
   "include": ["/^https://scoresaber\\.com\\/global(\\/\\d+&country=pl|\\?country=pl)/"],
-  "require": [],
+  "require": ["https://cdnjs.cloudflare.com/ajax/libs/localforage/1.7.3/localforage.min.js"],
   "grant": [
     "GM_addStyle", "GM_info", "GM_xmlhttpRequest"
   ],

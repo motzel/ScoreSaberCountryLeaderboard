@@ -1,154 +1,126 @@
 import log from './utils/logger';
 import {convertFetchedRankedSongsToObj, fetchRankedSongsArray} from "./network/scoresaber/rankeds";
-import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from "./network/scoresaber/players";
-import {dateFromString} from "./utils/date";
-import {refreshSongCountryRanksCache} from "./song";
-import logger from "./utils/logger";
+import {openDB} from 'idb';
+import {convertFromLocalForage, fetchLocalForageData} from './db/convert-localforage'
 
-const CACHE_KEY = 'sspl_users';
 const THEME_KEY = 'sspl_theme';
+const SSPL_DB_VERSION = 2;
 
 export const Globals = {data: null};
 
-const getCache = async () => new Promise((resolve, reject) =>
-    window.localforage.getItem(CACHE_KEY, function (err, value) {
-        resolve(value);
-    })
-);
+export let db = null;
 
 export const lastUpdated = async () => (await getCacheAndConvertIfNeeded()).lastUpdated;
 
 export const isAnyData = async () => {await getCacheAndConvertIfNeeded(); return Globals.data && Object.keys(Globals.data.users).length}
 
-export async function getCacheAndConvertIfNeeded(forceDb = false, forceCache = false) {
-    if ((Globals.data && !forceDb) || forceCache) return Globals.data;
+async function openDatabase(cache = null) {
+    db = await openDB('sspl', SSPL_DB_VERSION, {
+        async upgrade(db, oldVersion, newVersion, transaction) {
+            log.info(`Converting database from version ${oldVersion} to version ${newVersion}`);
 
-    log.info("Data fetch from cache");
+            switch (newVersion) {
+                case 2:
+                    db.createObjectStore('players', {
+                        keyPath: 'id',
+                        autoIncrement: false,
+                    });
 
-    const CURRENT_CACHE_VERSION = 1.5;
+                    const playersHistory = db.createObjectStore('players-history', {
+                        keyPath: '_id',
+                        autoIncrement: true,
+                    });
+                    playersHistory.createIndex('players-history-playerId', 'playerId', {unique: false});
 
-    const prepareFreshCache = () => ({
-        version: CURRENT_CACHE_VERSION,
-        lastUpdated: null,
-        users: {},
-        rankedSongs: null,
-        rankedSongsLastUpdated: null,
-        beatSaver: {}
-    });
+                    const scoresStore = db.createObjectStore('scores', {
+                        keyPath: 'id',
+                        autoIncrement: false,
+                    });
+                    scoresStore.createIndex('scores-leaderboard', 'leaderboardId', {unique: false});
+                    scoresStore.createIndex('scores-player', 'playerId', {unique: false});
 
-    let cache = (await getCache()) ?? prepareFreshCache();
+                    const leaderboardsStore = db.createObjectStore('leaderboards', {
+                        keyPath: 'leaderboardId',
+                        autoIncrement: false,
+                    });
+                    leaderboardsStore.createIndex('leaderboards-status', 'status', {unique: false});
 
-    if(cache.version < 1.2) {
-        log.warn("The old data format is no longer supported, sorry. Initializing fresh cache.");
-        cache = prepareFreshCache();
-    }
+                    const songsStore = db.createObjectStore('songs', {
+                        keyPath: 'hash',
+                        autoIncrement: false,
+                    });
+                    songsStore.createIndex('songs-key', 'key', {unique: true});
 
-    if (!cache.config) {
-        if (!cache.config) cache.config = {};
-        if (!cache.config.users) cache.config.users = {main: null, country: null, additionalForCountry: ADDITIONAL_COUNTRY_PLAYERS_IDS, groups: []};
-        if (!cache.config.songBrowser) cache.config.songBrowser = {};
-        if (!cache.config.songLeaderboard) cache.config.songLeaderboard = {};
-        if (!cache.config.profile) cache.config.profile = {};
-        if (!cache.config.ss) cache.config.ss = {song: {}};
+                    db.createObjectStore('twitch', {
+                        keyPath: 'playerId',
+                        autoIncrement: false,
+                    });
 
-        cache.config.profile.enlargeAvatar = true;
-        cache.config.profile.showOnePpCalc = true;
-        cache.config.profile.showTwitchIcon = false;
-        cache.config.profile.showChart = true;
+                    const rankedsChangesStore = db.createObjectStore('rankeds-changes', {
+                        keyPath: '_id',
+                        autoIncrement: true,
+                    });
+                    rankedsChangesStore.createIndex('rankeds-changes-timestamp', 'timestamp', {unique: false});
+                    rankedsChangesStore.createIndex('rankeds-changes-leaderboardId', 'leaderboardId', {unique: false});
 
-        cache.config.songBrowser.autoTransform = false;
-        cache.config.songBrowser.defaultView = 'compact';
-        cache.config.songBrowser.defaultType = 'all';
-        cache.config.songBrowser.defaultSort = 'timeset';
-        cache.config.songBrowser.showColumns = ['timeset', 'rank', 'pp', 'acc', 'score', 'diff', 'icons']
-        cache.config.songBrowser.showIcons = ['bsr', 'bs', 'preview', 'twitch'];
+                    db.createObjectStore('key-value', {
+                        keyPath: 'key',
+                        autoIncrement: false,
+                    });
 
-        cache.config.songLeaderboard.showDiff = true;
-        cache.config.songLeaderboard.showWhatIfPp = true;
-
-        cache.config.ss.song.enhance = true;
-        cache.config.ss.song.showDiff = true;
-        cache.config.ss.song.showWhatIfPp = true;
-    }
-    if (!cache.config.others) cache.config.others = {theme: 'darkss'}
-
-    if (cache.config.others.bgDownload === undefined) cache.config.others.bgDownload = true;
-    if (cache.config.others.viewsUpdate === undefined) cache.config.others.viewsUpdate = 'keep-view';
-
-    if (cache.config.others.language === undefined) cache.config.others.language = cache.lastUpdated ? 'pl' : 'en';
-    if (cache.config.others.locale === undefined) cache.config.others.locale = cache.lastUpdated ? 'pl-PL' : 'en-US';
-
-    if (!cache.config.songLeaderboard.defaultType) cache.config.songLeaderboard.defaultType = 'country';
-
-    setThemeInFastCache(cache.config.others.theme);
-
-    if(cache.version === 1.2) {
-        cache.config.profile.showTwitchIcon = true
-        cache.version = 1.3;
-    }
-
-    if (cache.version === 1.3) {
-        // fix timeset bug - forceDb refetch all scores since fuckup day (commit 822ac040)
-        const fuckupDay = dateFromString("2020-09-28T21:09:00Z");
-
-        if (cache.rankedSongsChanges) {
-            const rankedSongsChangesTimestamps = Object.keys(cache.rankedSongsChanges).sort((a, b) => a - b).slice(0, 1);
-            if (rankedSongsChangesTimestamps.length) {
-                const firstTimestamp = parseInt(rankedSongsChangesTimestamps[0], 10);
-                if (new Date(firstTimestamp) > fuckupDay) {
-                    // replacement of the timestamp of the first rankeds download to just before the fuckup (in order not to update all rankeds)
-                    cache.rankedSongsChanges[fuckupDay.getTime() - 1000*60*60*24] = [...cache.rankedSongsChanges[firstTimestamp]];
-                    delete cache.rankedSongsChanges[firstTimestamp];
-                }
+                    await convertFromLocalForage(cache, transaction);
             }
-        }
 
-        if (cache.users) {
-            const playersToUpdate = Object.values(cache.users)
-                .filter(p => p && p.scores)
-                .map(player => ({
-                    id: player.id,
-                    lastUpdated: player.lastUpdated,
-                    songsWithoutTimeset: Object.values(player.scores).filter(s => !dateFromString(s.timeset))
-                }))
-                .filter(p => p.songsWithoutTimeset.length || p.id === cache.config.users.main);
+            log.info("Database converted");
+        },
 
-            playersToUpdate.forEach(player => {
-                const lastUpdated = dateFromString(player.lastUpdated);
-                if (lastUpdated > fuckupDay) {
-                    cache.users[player.id].lastUpdated = new Date(fuckupDay.getTime());
-                }
-            })
-        }
+        // TODO
+        blocked() {
+            console.warn('DB blocked')
+        },
+        blocking(event) {
+            // other tab tries to open newer db version - close connection
+            console.warn('DB blocking', event)
+            db.close();
 
-        if (!cache.config.songBrowser.showColumns.includes('rank'))
-            cache.config.songBrowser.showColumns.push('rank');
-
-        cache.version = 1.4;
-        await setCache(cache);
-    }
-
-    if (cache.version === 1.4) {
-        Globals.data = cache;
-
-        logger.info('Cache country ranks for the first time');
-
-        await refreshSongCountryRanksCache();
-
-        logger.info('Cache country ranks for the first time / Done');
-
-        cache.version = 1.5;
-    }
-
-    Globals.data = cache;
-
-    return cache;
+            // TODO: should be reopened with new version: event.newVersion
+            // TODO: or rather notify user / auto reload page
+        },
+        terminated() {
+            console.warn('DB terminated')
+        },
+    });
 }
 
-export async function setCache(value) {
-    Globals.data = value;
+export async function getCacheAndConvertIfNeeded(forceDb = false, forceCache = false) {
+    // TODO: remove Globals.data dependency
+    if ((Globals.data && !forceDb) || forceCache) return Globals.data;
 
-    return window.localforage.setItem(CACHE_KEY, value);
+    let cache = null;
+    if (await isConversionFromLocalforageNeeded()) {
+        cache = await fetchLocalForageData();
+
+        Globals.data = cache;
+    }
+
+    await openDatabase(cache)
+
+    // console.time("sspl get");
+    // console.log(await db.get('leaderboards', 220734));
+    // console.timeLog("sspl get", "Leaderboard GET");
+    // console.log(await db.getAllFromIndex('leaderboards', 'leaderboards-status', 'ranked'));
+    // console.timeLog("sspl get", "Leaderboard by index GET (rankeds)");
+    // console.log(convertArrayToObjectByKey(await db.getAll('leaderboards'), 'leaderboardId'));
+    // console.timeLog("sspl get", "Leaderboard GET (all)");
+    // const scores = (await db.getAllFromIndex('scores', 'scores-player', '76561198035381239x'))
+    // // const scores = (await db.getAll('scores'))
+    //   .filter(s => !s.acc && cache.beatSaver.hashes[s.hash]);
+    // console.log(scores);
+    // console.timeLog("sspl get", "Player scores GET (76561198035381239)");
+    // console.timeEnd("sspl get");
+
+    // TODO: remove it
+    return null;
 }
 
 export function getThemeFromFastCache() {
@@ -157,4 +129,19 @@ export function getThemeFromFastCache() {
 
 export function setThemeInFastCache(theme) {
     return window.localStorage.setItem(THEME_KEY, theme);
+}
+
+async function isConversionFromLocalforageNeeded() {
+    let convertingFromLocalForageNeeded = false;
+    try {
+        const db1 = await openDB('sspl', 1, {
+            async upgrade(db, oldVersion, newVersion) {
+                convertingFromLocalForageNeeded = true;
+            },
+        });
+        db1.close();
+    } catch {
+        // swallow error - old localforage cache is already converted
+    }
+    return convertingFromLocalForageNeeded
 }
