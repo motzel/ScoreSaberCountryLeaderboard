@@ -206,7 +206,7 @@ async function setupLeaderboard() {
 
                     const percentage = s.tr.querySelector('td.percentage center');
                     if (percentage && s.score && maxScore && maxScore > 0) {
-                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.percent ? s.percent * 100 : s.score * 100 / maxScore) + '%';
+                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.mods !== '-' && s.percent ? s.percent * 100 : s.score * 100 / maxScore) + '%';
                     }
 
                     if (s.pp !== null) {

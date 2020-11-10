@@ -5,7 +5,7 @@
 [!] bug fix
 [*] other changes
 
-0.9.8.7
+0.9.8.8 / 0.9.8.7
 - [!] the percentage on the leaderboard page is not changed if the score is with modifiers and a percentage is available
 
 0.9.8.6
