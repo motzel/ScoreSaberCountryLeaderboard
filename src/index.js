@@ -31,6 +31,7 @@ import {getConfig, getMainPlayerId} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
+import initDatabase from './db/db';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import nodeSync from "./network/multinode-sync";
@@ -180,8 +181,8 @@ async function setupLeaderboard() {
             }
         });
 
-        const ssConfig = await getConfig('ss');
-        const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
+        const ssConfig = await getConfig('ssSong');
+        const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
         if (songEnhanceEnabled) {
             const scores = parseSsLeaderboardScores(document);
@@ -303,11 +304,11 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    const ssConfig = await getConfig('ss');
-    const showDiff = !!ssConfig.song.showDiff;
-    const showWhatIfPp = !!ssConfig.song.showWhatIfPp;
+    const ssConfig = await getConfig('ssSong');
+    const showDiff = !!ssConfig.showDiff;
+    const showWhatIfPp = !!ssConfig.showWhatIfPp;
 
-    const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
+    const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
     const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
         const leaderboard = await getSongScoreByPlayerId(profileId, s.leaderboardId);
@@ -655,7 +656,8 @@ async function setupDelayed() {
         await setupProfile();
     }
 
-    await initDownloadManager();
+    // TODO: enable it when new DB methods would be implemented
+    // await initDownloadManager();
 }
 
 function rafAsync() {
@@ -694,9 +696,23 @@ async function init() {
             return;
         }
 
-        // fetch cache
-        const data = await getCacheAndConvertIfNeeded();
-        console.log(data); return;
+        const db = await initDatabase();
+
+        console.log(await getConfig());
+
+        console.time("sspl get");
+        console.log(await db.get('leaderboards', 220734));
+        console.timeLog("sspl get", "Leaderboard GET");
+        console.log(await db.getAllFromIndex('leaderboards', 'leaderboards-status', 'ranked'));
+        console.timeLog("sspl get", "Leaderboard by index GET (rankeds)");
+        console.log(convertArrayToObjectByKey(await db.getAll('leaderboards'), 'leaderboardId'));
+        console.timeLog("sspl get", "Leaderboard GET (all)");
+        const scores = (await db.getAllFromIndex('scores', 'scores-player', '76561198035381239x'))
+        // const scores = (await db.getAll('scores'))
+          .filter(s => !s.acc && cache.beatSaver.hashes[s.hash]);
+        console.log(scores);
+        console.timeLog("sspl get", "Player scores GET (76561198035381239)");
+        console.timeEnd("sspl get");
 
         // reload page when data was imported
         eventBus.on('data-imported', () => window.location.reload());

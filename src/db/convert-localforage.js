@@ -164,7 +164,7 @@ export const convertFromLocalForage = async (cache, transaction) => {
     .map(key => keyValue.push({key, value: cache?.[key] ? dateFromString(cache[key]) : null}));
 
   store = transaction.objectStore('key-value');
-  promises = keyValue.map(value => store.put(value));
+  promises = keyValue.map(data => store.put(data.value, data.key));
   await Promise.all(promises);
 
   await transaction.done;
