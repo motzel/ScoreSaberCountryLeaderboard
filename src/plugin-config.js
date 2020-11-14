@@ -1,16 +1,16 @@
-import keyValueRepository from './db/repositorry/key-value';
+import keyValueRepository from './db/repository/key-value';
 
 const STORE_CONFIG_KEY = 'config';
 
 export const getConfig = async (key = null, refreshCache = false) => {
-  const config = await keyValueRepository.get(STORE_CONFIG_KEY, refreshCache);
+  const config = await keyValueRepository().get(STORE_CONFIG_KEY, refreshCache);
 
   if (!config) return null;
 
   return key ? (config[key] ? config[key] : null) : config;
 }
 
-export const setConfig = async config => keyValueRepository.set(STORE_CONFIG_KEY, config);
+export const setConfig = async config => keyValueRepository().set(config, STORE_CONFIG_KEY);
 
 export const getMainPlayerId = async () => {
   const usersConfig = await getConfig('users');

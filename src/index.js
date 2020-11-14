@@ -22,7 +22,7 @@ import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
     extractDiffAndType,
     getSongMaxScore,
-    getSongMaxScoreWithDiffAndType, refreshSongCountryRanksCache
+    getSongMaxScoreWithDiffAndType
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
@@ -505,10 +505,10 @@ async function setupProfile() {
 }
 
 async function setupCountryRanking(diffOffset = 6) {
-    log.info("Setup country ranking");
-
     const country = getRankingCountry();
     if (!country) return; // not a country leaderboard page
+
+    log.info("Setup country ranking");
 
     if(!(await isCurrentCountryRankingPage())) {
         const rankingTable = document.querySelector('table.ranking.global');
@@ -698,21 +698,25 @@ async function init() {
 
         const db = await initDatabase();
 
-        console.log(await getConfig());
+        // pre-warm config cache
+        await getConfig();
 
-        console.time("sspl get");
-        console.log(await db.get('leaderboards', 220734));
-        console.timeLog("sspl get", "Leaderboard GET");
-        console.log(await db.getAllFromIndex('leaderboards', 'leaderboards-status', 'ranked'));
-        console.timeLog("sspl get", "Leaderboard by index GET (rankeds)");
-        console.log(convertArrayToObjectByKey(await db.getAll('leaderboards'), 'leaderboardId'));
-        console.timeLog("sspl get", "Leaderboard GET (all)");
-        const scores = (await db.getAllFromIndex('scores', 'scores-player', '76561198035381239x'))
-        // const scores = (await db.getAll('scores'))
-          .filter(s => !s.acc && cache.beatSaver.hashes[s.hash]);
-        console.log(scores);
-        console.timeLog("sspl get", "Player scores GET (76561198035381239)");
-        console.timeEnd("sspl get");
+        // const player = await db.get('players', '76561198035381239')
+        // console.log(player);
+
+        // console.time("sspl get");
+        // console.log(await db.get('leaderboards', 220734));
+        // console.timeLog("sspl get", "Leaderboard GET");
+        // console.log(await db.getAllFromIndex('leaderboards', 'leaderboards-status', 'ranked'));
+        // console.timeLog("sspl get", "Leaderboard by index GET (rankeds)");
+        // console.log(convertArrayToObjectByKey(await db.getAll('leaderboards'), 'leaderboardId'));
+        // console.timeLog("sspl get", "Leaderboard GET (all)");
+        // const scores = (await db.getAllFromIndex('scores', 'scores-player', '76561198035381239x'))
+        // // const scores = (await db.getAll('scores'))
+        //   .filter(s => !s.acc && cache.beatSaver.hashes[s.hash]);
+        // console.log(scores);
+        // console.timeLog("sspl get", "Player scores GET (76561198035381239)");
+        // console.timeEnd("sspl get");
 
         // reload page when data was imported
         eventBus.on('data-imported', () => window.location.reload());
@@ -721,14 +725,14 @@ async function init() {
             [
                 refinedThemeSetup(),
                 setLangFromConfig(),
-                setupGlobalEventsListeners(),
-                setupCountryRanking(),
+                // setupGlobalEventsListeners(),
+                // setupCountryRanking(),
                 setupPlayerAvatar(),
-                setupTwitch(),
+                // setupTwitch(),
             ]
         )
 
-        await setupDelayed();
+        // await setupDelayed();
 
         log.info("Setup complete");
     }

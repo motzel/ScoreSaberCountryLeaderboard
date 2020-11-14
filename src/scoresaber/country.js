@@ -1,20 +1,15 @@
-import {getConfig} from "../plugin-config";
+import {getConfig, setConfig} from "../plugin-config";
 import eventBus from "../utils/broadcast-channel-pubsub";
-import {getCacheAndConvertIfNeeded, setCache} from "../store";
 
-export const getActiveCountry = async () => {
-    const country = (await getConfig('users'))?.country ?? null;
-
-    return country;
-}
+export const getActiveCountry = async () => (await getConfig('users'))?.country ?? null;
 
 eventBus.on('country-set', async ({country, persist}) => {
-    const data = await getCacheAndConvertIfNeeded();
-    if(!data?.config?.users) return;
+    const config = await getConfig();
+    if(!config?.users) return;
 
-    data.config.users.country = country;
+    config.users.country = country;
 
-    if(persist) await setCache(data);
+    if(persist) await setConfig(config);
 })
 
 eventBus.on('reload-browser-cmd', () => {
