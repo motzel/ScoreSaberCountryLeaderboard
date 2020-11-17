@@ -12,10 +12,20 @@ export default (storeName, inlineKeyName = undefined) => {
     return repositoryCache.get(key, async () => db.get(storeName, key));
   };
 
-  const getAll = async(refreshCache = false) => {
-    if (refreshCache) repositoryCache.forget(ALL_KEY);
+  const getAll = async(query = undefined, count = undefined, refreshCache = false) => {
+    const key = (query ? query : ALL_KEY) + '-' + (count ? count : ALL_KEY)
 
-    return repositoryCache.get(ALL_KEY, async () => db.getAll(storeName));
+    if (refreshCache) repositoryCache.forget(key);
+
+    return repositoryCache.get(key, async () => db.getAll(storeName, query, count));
+  }
+
+  const getAllFromIndex = async(indexName, query = undefined, count = undefined, refreshCache = false) => {
+    const key = indexName + '-' + (query ? query : ALL_KEY) + '-' + (count ? count : ALL_KEY)
+
+    if (refreshCache) repositoryCache.forget(key);
+
+    return repositoryCache.get(key, async () => db.getAllFromIndex(storeName, indexName, query, count));
   }
 
   const set = async (value, key) => {
@@ -28,5 +38,5 @@ export default (storeName, inlineKeyName = undefined) => {
 
   const flushCache = () => repositoryCache.flush();
 
-  return {get, getAll, set, flushCache, forgetCachedKey};
+  return {get, getAll, getAllFromIndex, set, flushCache, forgetCachedKey};
 };

@@ -17,12 +17,12 @@ import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 
 import log from './utils/logger';
 import tempConfig from './temp';
-import {getCacheAndConvertIfNeeded, getThemeFromFastCache} from "./store";
+import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
     extractDiffAndType,
     getSongMaxScore,
-    getSongMaxScoreWithDiffAndType
+    getSongMaxScoreWithDiffAndType, getSongScores,
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
@@ -36,19 +36,19 @@ import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import nodeSync from "./network/multinode-sync";
 import {
-    getAllActivePlayers,
+    getAllActivePlayers, getFriendsIds, getPlayerGroups, getPlayerInfo,
     getPlayerProfileUrl,
     getPlayerSongScore, getPlayerSongScoreHistory,
     getScoresByPlayerId,
-    getSongScoreByPlayerId
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
 import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
+import scoresRepository from "./db/repository/scores";
 
-const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
+const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
@@ -189,11 +189,8 @@ async function setupLeaderboard() {
             if (scores) {
                 let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
                 if (leaderboardId) {
-                    const diff = (await getAllActivePlayers(await getActiveCountry()))
-                        .map(player => getPlayerSongScore(player, leaderboardId)?.diff)
-                        .filter(diff => diff)
-                        .slice(0, 1);
-                    if(diff && diff.length) diffInfo = extractDiffAndType(diff[0]);
+                    const leaderboardScores = await getSongScores(leaderboardId, 1);
+                    if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
                 }
 
                 const maxScore = await getSongMaxScoreWithDiffAndType(songInfoData.hash, diffInfo);
@@ -258,7 +255,8 @@ async function setupProfile() {
     const profileId = getProfileId();
     if (!profileId) return;
 
-    const data = await getCacheAndConvertIfNeeded();
+    // TODO: find all usages
+    const playerInfo = await getPlayerInfo(profileId);
 
     const playerScores = await getScoresByPlayerId(profileId);
     const isPlayerDataAvailable = playerScores && Object.keys(playerScores).length;
@@ -311,10 +309,10 @@ async function setupProfile() {
     const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
     const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
-        const leaderboard = await getSongScoreByPlayerId(profileId, s.leaderboardId);
+        const leaderboard = playerScores.find(s => s.leaderboardId);
         if (leaderboard && songEnhanceEnabled) {
             try {
-                const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
+                const maxSongScore = await getSongMaxScore(leaderboard.hash, leaderboard.diff);
 
                 if (!s.percent && s.score) {
                     s.percent = maxSongScore
@@ -330,6 +328,7 @@ async function setupProfile() {
 
                 s.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
 
+                // TODO: look at song.js::getLeaderboard() lines 153/173
                 const playHistory = await getPlayerSongScoreHistory(leaderboard);
                 const history = playHistory && playHistory.length ? playHistory[0] : null;
                 s.prevRank = showDiff && history ? history.rank : null;
@@ -378,7 +377,7 @@ async function setupProfile() {
     const mainColumn = mainUl.closest('.column');
     if (mainColumn) {
         if (isPlayerDataAvailable) {
-            let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
+            let ssplCountryRank = playerInfo?.ssplCountryRank;
             const country = await getActiveCountry();
             ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
             const rankLi = mainColumn.querySelector('ul li:first-of-type');
@@ -434,7 +433,7 @@ async function setupProfile() {
             new Profile({
                 target: ul,
                 props: {
-                    profile: data.users?.[profileId] ?? null,
+                    profile: playerInfo,
                 }
             });
             mainColumn.closest('.columns').appendChild(additionalProfile);
@@ -701,6 +700,13 @@ async function init() {
         // pre-warm config cache
         await getConfig();
 
+        // const getLocalforageCache = async () => new Promise((resolve, reject) =>
+        //   window.localforage.getItem('sspl_users', function (err, value) {
+        //       resolve(value);
+        //   })
+        // );
+        // console.log(await getLocalforageCache());
+
         // const player = await db.get('players', '76561198035381239')
         // console.log(player);
 
@@ -725,14 +731,14 @@ async function init() {
             [
                 refinedThemeSetup(),
                 setLangFromConfig(),
-                // setupGlobalEventsListeners(),
-                // setupCountryRanking(),
+                setupGlobalEventsListeners(),
+                setupCountryRanking(),
                 setupPlayerAvatar(),
-                // setupTwitch(),
+                setupTwitch(),
             ]
         )
 
-        // await setupDelayed();
+        await setupDelayed();
 
         log.info("Setup complete");
     }

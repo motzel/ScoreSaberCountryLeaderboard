@@ -167,6 +167,11 @@ export const convertFromLocalForage = async (cache, transaction) => {
   promises = keyValue.map(data => store.put(data.value, data.key));
   await Promise.all(promises);
 
+  const groups = getPlayerGroups(cache) ?? {};
+  store = transaction.objectStore('groups');
+  promises = Object.values(groups).reduce((cum, group) => cum.concat(group.players.map(playerId => store.put({name: group.name, playerId}))), []);
+  await Promise.all(promises);
+
   await transaction.done;
 }
 

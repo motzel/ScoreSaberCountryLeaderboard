@@ -8,12 +8,16 @@
 
     import {getConfig} from '../../../plugin-config';
     import {RANKED, UNRANKED} from '../../../scoresaber/rankeds';
-    import {diffColors} from '../../../song';
+    import {diffColors, getAccFromScore} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
-    import {dateFromString, timestampFromString} from "../../../utils/date";
+    import {timestampFromString} from "../../../utils/date";
+
+    import {getScoresByPlayerId} from '../../../scoresaber/players'
 
     export let profile;
+
+    let playerScores = null;
 
     let mode = 'pp-stars';
     let showCalc = false;
@@ -57,6 +61,10 @@
     ];
 
     onMount(async () => {
+        if (profile) {
+            playerScores = await getScoresByPlayerId(profile.id);
+        }
+
         const profileConfig = await getConfig('profile');
         if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
 
@@ -86,8 +94,7 @@
         stats = scores.reduce((cum, s) => {
             if (!s.maxScoreEx) return cum;
 
-            const scoreMult = s.uScore ? s.score / s.uScore : 1
-            s.acc = s.score / s.maxScoreEx / scoreMult * 100;
+            s.acc = getAccFromScore(s);
 
             cum.totalScore += s.uScore ? s.uScore : s.score;
             cum.totalAcc += s.acc;
@@ -108,10 +115,9 @@
         return stats;
     }
 
-    $: allRankedScores = profile.scores
-      ? Object.values(profile.scores)
-        .filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
-      : null;
+    $: allRankedScores = playerScores
+      ? playerScores.filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
+      : [];
 
     $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - timestampFromString(s.timeset) <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
 

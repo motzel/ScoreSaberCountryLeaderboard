@@ -5,7 +5,7 @@
     import debounce from '../../../utils/debounce';
     import {getAllActivePlayers, getPlayerScores} from "../../../scoresaber/players";
     import {dateFromString} from "../../../utils/date";
-    import {extractDiffAndType, getSongDiffInfo} from "../../../song";
+    import {extractDiffAndType, getAccFromScore, getSongDiffInfo} from "../../../song";
     import {trans} from "../../stores/i18n";
 
     import Table from '../Common/Table.svelte';
@@ -56,8 +56,7 @@
                             cum = cum.concat(
                                 Object.values(scores)
                                     .map(s => {
-                                        s.scoreMult = s.uScore ? s.score / s.uScore : 1;
-                                        s.acc = s.maxScoreEx ? s.score / s.maxScoreEx / s.scoreMult * 100 : null;
+                                        s.acc = getAccFromScore(s);
                                         s.diffInfo = extractDiffAndType(s.diff);
 
                                         return {
@@ -100,7 +99,7 @@
                     const songInfo = await getSongDiffInfo(data[i].id, data[i].diffInfo, true);
                     if (songInfo) {
                         data[i].maxScoreEx = songInfo.maxScore;
-                        data[i].acc = data[i].maxScoreEx ? data[i].score / data[i].maxScoreEx / data[i].scoreMult * 100 : null;
+                        data[i].acc = getAccFromScore(data[i]);
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
@@ -128,7 +127,7 @@
 
                                 if (songInfo) {
                                     song.maxScoreEx = songInfo.maxScore;
-                                    song.acc = song.maxScoreEx ? song.score / song.maxScoreEx / song.scoreMult * 100 : null;
+                                    song.acc = getAccFromScore(song);
                                 }
                             }
                         })

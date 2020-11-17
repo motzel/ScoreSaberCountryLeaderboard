@@ -3,18 +3,13 @@ import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
     getActiveCountryPlayers,
-    getActiveCountryPlayersIds,
     getAllActivePlayers,
     getFriends,
-    getPlayerInfoFromPlayers,
-    getPlayerScores,
     getPlayerSongScore,
-    getPlayerSongScoreHistory,
-    getScoresByPlayerId,
-    getSongScoreByPlayerId
 } from "./scoresaber/players";
 import {getActiveCountry} from "./scoresaber/country";
-import {getCacheAndConvertIfNeeded, setCache} from "./store";
+import {getCacheAndConvertIfNeeded} from "./store";
+import scoresRepository from './db/repository/scores'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -100,6 +95,7 @@ export async function refreshSongCountryRanksCache(leaderboardIds = []) {
     for (let leaderboardId of leaderboardIds.map(s => parseInt(s, 10))) {
         const scores = players
             .map(player => {
+                // TODO: getPlayerSongScore should by awaited
                 const score = getPlayerSongScore(player, leaderboardId);
                 return score && score.score ? {playerId: player.id, score: score.score} : null;
             })
@@ -118,6 +114,17 @@ export async function refreshSongCountryRanksCache(leaderboardIds = []) {
     }
 }
 
+export const getSongScores = async (leaderboardId, count = undefined) => scoresRepository().getAllFromIndex('scores-leaderboard', leaderboardId, count);
+
+export function getAccFromScore(score, maxSongScore) {
+    const scoreMult = score.uScore && score.score ? score.score / score.uScore : 1
+
+    return maxSongScore
+      ? score.score / maxSongScore / scoreMult * 100
+      : (score.maxScoreEx
+        ? score.score / score.maxScoreEx / scoreMult * 100
+        : null)
+}
 export async function getLeaderboard(leaderboardId, country, type = 'country') {
     let players;
     switch(type) {
@@ -136,74 +143,47 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
     }
     if (!players || !players.length) return [];
 
-    const filteredScores = players
-        .map(player => getPlayerSongScore(player, leaderboardId) ? {playerId: player.id, songHash: getPlayerSongScore(player, leaderboardId).id} : null)
-        .filter(s => s)
-    ;
+    const songScores = await getSongScores(leaderboardId);
+    if (!songScores) return [];
+
+    const playersIds = players.map(player => player.id);
+
+    const filteredScores = songScores.filter(s => playersIds.includes(s.playerId));
     if (!filteredScores.length) return [];
 
-    const songInfo = filteredScores[0].songHash ? await getSongByHash(filteredScores[0].songHash) : null;
+    const songInfo = filteredScores[0].hash ? await getSongByHash(filteredScores[0].hash) : null;
     const songCharacteristics = songInfo?.metadata?.characteristics;
-    let diffInfo = null, maxSongScore = 0;
+    let diffInfo = null, maxSongScore = undefined;
 
     players = convertArrayToObjectByKey(players, 'id');
 
-    return (await filteredScores.map(s => s.playerId)
-        .reduce(async (cum, playerId) => {
-            cum = await cum;
+    return filteredScores
+      .map(score => {
+        const player = players[score.playerId];
+        if (!player) return null;
 
-            const playerSongScore = getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId);
-            if (!playerSongScore) return cum;
+        if (maxSongScore === undefined) {
+          diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, score.diffInfo);
+          maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : null;
+        }
 
-            if (!maxSongScore && !cum.length) {
-                diffInfo = findDiffInfo(
-                    songCharacteristics,
-                    playerSongScore.diff
-                );
-                maxSongScore =
-                    diffInfo?.length && diffInfo?.notes
-                        ? getMaxScore(diffInfo.notes)
-                        : 0;
-            }
+        const playHistory = (score.history ?? []).map(score => ({...score, acc: getAccFromScore(score, maxSongScore), timeset: new Date(score.timestamp)}));
 
-            const {scores, ...user} = getPlayerInfoFromPlayers(players, playerId);
-            const {
-                id: songHash,
-                score,
-                uScore,
-                timeset,
-                rank,
-                mods,
-                pp,
-                maxScoreEx,
-                ..._
-            } = playerSongScore;
-
-            const playHistory = await getPlayerSongScoreHistory(playerSongScore, maxSongScore);
-
-            const scoreMult = uScore && score ? score / uScore : 1
-            cum.push(
-                Object.assign({}, user, {
-                    songHash,
-                    score,
-                    timeset,
-                    rank,
-                    mods,
-                    pp,
-                    playHistory,
-                    percent: maxSongScore
-                        ? score / maxSongScore / scoreMult
-                        : (maxScoreEx
-                            ? score / maxScoreEx / scoreMult
-                            : null)
-                })
-            );
-
-            return cum;
-        }, [])
-    )
-        .map((u) => Object.assign({}, u, {hidden: shouldBeHidden(u)}))
-        .sort((a, b) => b.score - a.score);
+        return {
+          ...player,
+          songHash: score.hash,
+          score: score.score,
+          timeset: score.timeset,
+          rank: score.rank,
+          mods: score.mods,
+          pp: score.pp,
+          playHistory,
+          acc: getAccFromScore(score, maxSongScore),
+        };
+      })
+      .filter(score => score) // filter out empty items
+      .map(score => ({...score, hidden: shouldBeHidden(score)}))
+      .sort((a, b) => b.score - a.score);
 }
 
 export async function getSongMaxScore(hash, diff) {

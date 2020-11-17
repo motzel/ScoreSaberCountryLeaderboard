@@ -65,6 +65,9 @@ async function openDatabase(cache = null) {
             // no autoIncrement, no keyPath - key must be provided
             db.createObjectStore('key-value');
 
+            const groups = db.createObjectStore('groups', {autoIncrement: true});
+            groups.createIndex('groups-name', 'name', {unique: false});
+
             await convertFromLocalForage(cache, transaction);
         }
 

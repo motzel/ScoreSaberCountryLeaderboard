@@ -6,6 +6,7 @@
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
     import Button from "../Common/Button.svelte";
+    import {getAccFromScore} from '../../../song'
 
     export let profileId = null;
     export let history = null;
@@ -33,8 +34,7 @@
         chartData = Object.values(playerScores)
                 .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && !!rankeds[s.leaderboardId])
                 .map(s => {
-                    const scoreMult = s.uScore ? s.score / s.uScore : 1;
-                    const acc = s.score / s.maxScoreEx / scoreMult * 100;
+                    const acc = getAccFromScore(s)
 
                     return {
                         x: rankeds[s.leaderboardId].stars,
@@ -55,6 +55,7 @@
         const daysAgo = Array(50).fill(0).map((v, i) => i).reverse();
 
         let ppData = [];
+        // TODO: replace with player history repository
         const playerInfo = await getPlayerInfo(profileId);
         const userHistory = playerInfo && playerInfo.userHistory && Object.keys(playerInfo.userHistory).length
                 ? playerInfo.userHistory

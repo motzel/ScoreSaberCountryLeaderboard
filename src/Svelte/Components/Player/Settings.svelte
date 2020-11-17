@@ -396,6 +396,7 @@
             }
         }
 
+        // TODO: getPlayerSongScore should by awaited
         const profileExists = !!getPlayerScores(getPlayerInfoFromData(data, profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
             if (!profileExists && player && player.id === profileId) {

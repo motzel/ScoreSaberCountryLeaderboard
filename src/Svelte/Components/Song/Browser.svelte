@@ -25,10 +25,10 @@
         getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer
     } from "../../../scoresaber/players";
     import {
-        extractDiffAndType,
+        extractDiffAndType, getAccFromScore,
         getHumanDiffInfo,
         getSongDiffInfo,
-        getSongMaxScoreWithDiffAndType
+        getSongMaxScoreWithDiffAndType,
     } from "../../../song";
     import {generateCsv, downloadCsv} from '../../../utils/csv';
     import {downloadJson} from '../../../utils/json';
@@ -729,11 +729,10 @@
                 const series = allSeries[seriesKey];
 
                 if (series.scores[song.leaderboardId] && song.maxScoreEx) {
-                    const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
-                    const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
+                    const maxScoreEx = song.maxScoreEx;
 
-                    series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
-                    series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
+                    series.scores[song.leaderboardId].acc = getAccFromScore({...series.scores[song.leaderboardId], maxScoreEx});
+                    series.scores[song.leaderboardId].prevAcc = getAccFromScore({maxScoreEx, score: series.scores[song.leaderboardId].prevScore, uScore: series.scores[song.leaderboardId].prevUScore});
                 }
             }
         }
@@ -997,8 +996,6 @@
                                     s.weightedPp = score.weightedPp; // in order to cache for next iteration
                                 }
 
-                                s.scoreMult = score.uScore ? score.score / score.uScore : 1;
-
                                 return score;
                             }),
                           'leaderboardId'
@@ -1076,13 +1073,13 @@
                           const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
                           const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
 
-                          const scoreMult = series.scores[s.leaderboardId].scoreMult ? series.scores[s.leaderboardId].scoreMult : 1
-                          series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx / scoreMult * 100 : null;
+                          series.scores[s.leaderboardId].acc = getAccFromScore({...series.scores[s.leaderboardId], maxScoreEx});
 
                           series.scores[s.leaderboardId].diffPp = null;
 
                           // get player previous scores
                           if(idx === 0) {
+                              // TODO: look at song.js::getLeaderboard() lines 153/173
                               const playHistory = await getPlayerSongScoreHistory(series.scores[s.leaderboardId], maxScoreEx);
 
                               if (playHistory && playHistory.length) {
@@ -1093,8 +1090,7 @@
                                   })
                                   series.scores[s.leaderboardId].prevTimeset = new Date(playHistory[0]['timestamp']);
 
-                                  series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
-                                  series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
+                                  series.scores[s.leaderboardId].prevAcc = getAccFromScore({maxScoreEx, score: series.scores[s.leaderboardId].prevScore, uScore: series.scores[s.leaderboardId].prevUScore});
                               }
                           }
 
@@ -1243,6 +1239,7 @@
               if (!maxScore) {
                   try {
                       // try to get max score from cache
+                      // TODO: check if it should be s.hash instead s.id
                       maxScore = await getSongMaxScoreWithDiffAndType(s.id, s.diff, true);
                   }
                   catch (e) {
@@ -1269,6 +1266,7 @@
     }
 
     async function exportPlaylist() {
+        // TODO: replace with scores repository
         const allPlayedSongs = Object.values(Object.values(await getPlayers()).reduce((cum, u) => ({...cum, ...u.scores}), {}));
         const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.id}));
         const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;

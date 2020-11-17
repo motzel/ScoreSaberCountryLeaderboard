@@ -192,6 +192,7 @@ export const updateActivePlayers = async (persist = true) => {
 }
 
 export const getPlayerWithUpdatedScores = async (playerId, progressCallback = null) => {
+    // TODO: replace with scores repository
     let player = await getPlayerInfo(playerId);
     if (!player) return null;
 
@@ -370,6 +371,7 @@ export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTim
     try {
         emitEventForScoresUpdate('player-score-update-start', playerId, leaderboardIds);
 
+        // TODO: replace with scores repository
         const playerInfo = await getPlayerInfo(playerId);
         if (!playerInfo || !playerInfo.scores) throw 'Player not found';
 

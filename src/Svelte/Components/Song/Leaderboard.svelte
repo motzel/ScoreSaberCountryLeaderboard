@@ -133,8 +133,8 @@
                     </td>
                     <td class="mods">{item.mods && item.mods.length ? item.mods : '-'}</td>
                     <td class="percentage">
-                        <Value value={item.percent*100} zero="-" suffix="%"
-                               prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].percent*100 : null}/>
+                        <Value value={item.acc} zero="-" suffix="%"
+                               prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].acc : null}/>
                     </td>
                     <td class="pp">
                         <Pp pp="{item.pp}"

@@ -1,6 +1,6 @@
 <script>
     import {onMount} from 'svelte';
-    import {extractDiffAndType, getSongDiffInfo} from "../../../song";
+    import {extractDiffAndType, getSongDiffInfo, getSongScores} from "../../../song";
     import {getConfig} from "../../../plugin-config";
 
     import Icons from "./Icons.svelte";
@@ -40,11 +40,8 @@
 
         diffInfo = {diff: difficulty, type: 'Standard'};
         if (leaderboardId) {
-            const diff = (await getAllActivePlayers(await getActiveCountry()))
-                    .map(player => getPlayerSongScore(player, leaderboardId) ? getPlayerSongScore(player, leaderboardId).diff : null)
-                    .filter(diff => diff)
-                    .slice(0, 1);
-            if(diff && diff.length) diffInfo = extractDiffAndType(diff[0]);
+            const leaderboardScores = await getSongScores(leaderboardId, 1);
+            if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
         }
 
         songInfo = await getSongDiffInfo(hash, diffInfo);

@@ -3,6 +3,7 @@ import {substituteVars} from "../utils/format";
 import {default as queue} from "./queue";
 import {getCacheAndConvertIfNeeded, setCache} from "../store";
 import log from '../utils/logger';
+import songsRepository from "../db/repository/songs";
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
@@ -11,8 +12,8 @@ const SONG_BY_KEY_URL = BEATSAVER_API_URL + '/maps/detail/${key}'
 export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false) => {
     hash = hash.toLowerCase();
 
-    const data = await getCacheAndConvertIfNeeded();
-    if (!forceUpdate && data.beatSaver && data.beatSaver.hashes && data.beatSaver.hashes[hash]) return Promise.resolve(data.beatSaver.hashes[hash]);
+    const songInfo = await songsRepository().get(hash);
+    if (!forceUpdate && songInfo) return Promise.resolve(songInfo);
 
     if(cacheOnly) return null;
 
@@ -30,6 +31,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
     }
 };
 
+// TODO:
 export const getSongByKey = async (key, forceUpdate = false) => {
     key = key.toLowerCase();
 
@@ -55,20 +57,11 @@ export const getSongByKey = async (key, forceUpdate = false) => {
 };
 
 async function cacheSongInfo(songInfo) {
-    const data = await getCacheAndConvertIfNeeded();
+    if (!songInfo.hash) return null;
 
     delete songInfo.description;
 
-    if (!data.beatSaver) data.beatSaver = {hashes: {}, keys: {}};
-    if (!data.beatSaver.hashes) data.beatSaver.hashes = {};
-    if (!data.beatSaver.keys) data.beatSaver.keys = {};
-
-    if (songInfo.hash) {
-        data.beatSaver.hashes[songInfo.hash.toLowerCase()] = songInfo;
-        if (songInfo.key) data.beatSaver.keys[songInfo.key.toLowerCase()] = songInfo.hash;
-    }
-
-    await setCache(data);
+    await songsRepository().set(songInfo);
 
     return songInfo;
 }
