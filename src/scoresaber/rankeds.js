@@ -1,23 +1,24 @@
-import {getCacheAndConvertIfNeeded} from "../store";
+import leaderboardsRepository from "../db/repository/leaderboards";
+import keyValueRepository from "../db/repository/key-value";
+import rankedsChangesRepository from "../db/repository/rankeds-changes";
+import {convertArrayToObjectByKey} from '../utils/js'
 
-export const getRankedSongs = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.rankedSongs ?? null;
-export const getRankedSongsLastUpdated = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.rankedSongsLastUpdated ?? null;
-export const getRankedChanges = async _ => (await getCacheAndConvertIfNeeded()).rankedSongsChanges ?? {};
-export const getFilteredRankedChanges = async filterTimestampFunc => {
-    const rankedSongsChanges = await getRankedChanges();
-
-    const changeTimestampsSorted = Object.keys(rankedSongsChanges).sort((a, b) => a - b);
-
-    const timestampsMatchingFilter = changeTimestampsSorted.filter(filterTimestampFunc);
+export const getRankedSongs = async (force = false) => {
+    const rankeds = await leaderboardsRepository().getAllFromIndex('leaderboards-status', 'ranked', undefined, force);
+    return rankeds ? convertArrayToObjectByKey(rankeds, 'leaderboardId') : null;
+}
+export const getRankedSongsLastUpdated = async (refreshCache = true) => keyValueRepository().get('rankedSongsLastUpdated', refreshCache);
+export const getRankedChanges = async query => {
+    return rankedsChangesRepository().getAllFromIndex('rankeds-changes-timestamp', query);
+}
+export const getRankedsChangesSince = async sinceTimestamp => {
+    const changes = await rankedsChangesRepository().getAllFromIndex('rankeds-changes-timestamp', IDBKeyRange.lowerBound(sinceTimestamp));
+    if (!changes || !changes.length) return {};
 
     // return all song changes for matched timestamps {leaderboardId: [{change1}, {change2}...]}
-    return timestampsMatchingFilter.reduce((cum, timestamp) => {
-        rankedSongsChanges[timestamp].forEach(c => {
-            cum[c.leaderboardId] = cum[c.leaderboardId] ?? [];
-            cum[c.leaderboardId].push({...c, timestamp: parseInt(timestamp, 10)});
-        });
-
-        return cum
+    return changes.reduce((cum, change) => {
+        cum[change.leaderboardId] = cum[change.leaderboardId] ?? [];
+        cum[change.leaderboardId].push(change);
     }, {});
 }
 

@@ -66,7 +66,7 @@ export const convertFromLocalForage = async (cache, transaction) => {
     .reduce((cum, p) => cum.concat(
       p.scores
         ? Object.values(p.scores).map(s => {
-          let {id, diff, difficulty, timeset, name, songSubName, maxScoreEx, scoreMult, ...score} = s;
+          let {id, diff, difficulty, timeset, name, songSubName, scoreMult, ...score} = s;
           name = name + (songSubName && songSubName.length ? ' ' + songSubName : '');
           return {...score, name, hash: id, id: s.playerId + '_' + s.leaderboardId, timeset: dateFromString(timeset)};
         })
@@ -132,7 +132,7 @@ export const convertFromLocalForage = async (cache, transaction) => {
   }
 
   if(cache?.rankedSongsChanges) {
-    const rankedChanges = Object.entries(cache.rankedSongsChanges).reduce((cum, [timestamp, changes]) => cum.concat(changes.map(c => ({...c, timestamp}))), []);
+    const rankedChanges = Object.entries(cache.rankedSongsChanges).reduce((cum, [timestamp, changes]) => cum.concat(changes.map(c => ({...c, timestamp: parseInt(timestamp, 10)}))), []);
     store = transaction.objectStore('rankeds-changes');
     promises = rankedChanges.map(c => store.put(c));
     await Promise.all(promises);

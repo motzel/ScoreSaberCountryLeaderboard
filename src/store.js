@@ -11,7 +11,11 @@ export const isAnyData = async () => {const players = await getPlayers(); return
 export const Globals = {data: null};
 
 // TODO: remove it when new DB methods would be ready
-export const getCacheAndConvertIfNeeded = async () => null;
+export const getCacheAndConvertIfNeeded = async () => {
+    console.error('getCache() should NOT be used anymore');
+
+    return null;
+}
 
 export function getThemeFromFastCache() {
     return window.localStorage.getItem(THEME_KEY);

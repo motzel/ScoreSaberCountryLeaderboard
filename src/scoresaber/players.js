@@ -4,7 +4,7 @@ import groupsRepository from "../db/repository/groups";
 import {getAdditionalPlayers} from "../network/scoresaber/players";
 import tempConfig from '../temp';
 import {getCacheAndConvertIfNeeded} from "../store";
-import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
+import {getRankedsChangesSince, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString, timestampFromString} from "../utils/date";
@@ -170,7 +170,7 @@ export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null
 }
 
 const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
-    const songsChangedAfterPreviousUpdate = await getFilteredRankedChanges(timestamp => timestamp >= previousLastUpdated);
+    const songsChangedAfterPreviousUpdate = await getRankedsChangesSince(previousLastUpdated);
 
     // check all song changed after previous update
     return Object.keys(songsChangedAfterPreviousUpdate).reduce((cum, leaderboardId) => {

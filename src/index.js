@@ -20,14 +20,13 @@ import tempConfig from './temp';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
-    extractDiffAndType,
     getSongMaxScore,
     getSongMaxScoreWithDiffAndType, getSongScores,
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
-import {getConfig, getMainPlayerId} from "./plugin-config";
+import {getConfig, getMainPlayerId, setConfig} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
@@ -36,9 +35,9 @@ import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import nodeSync from "./network/multinode-sync";
 import {
-    getAllActivePlayers, getFriendsIds, getPlayerGroups, getPlayerInfo,
+    getPlayerInfo,
     getPlayerProfileUrl,
-    getPlayerSongScore, getPlayerSongScoreHistory,
+    getPlayerSongScoreHistory,
     getScoresByPlayerId,
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
@@ -46,7 +45,6 @@ import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
-import scoresRepository from "./db/repository/scores";
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -698,14 +696,19 @@ async function init() {
         const db = await initDatabase();
 
         // pre-warm config cache
-        await getConfig();
+        const config = await getConfig();
 
+
+        // TODO: remove it after refactoring
         // const getLocalforageCache = async () => new Promise((resolve, reject) =>
         //   window.localforage.getItem('sspl_users', function (err, value) {
         //       resolve(value);
         //   })
         // );
         // console.log(await getLocalforageCache());
+
+        // config.songBrowser.autoTransform = false;
+        // await setConfig(config);
 
         // const player = await db.get('players', '76561198035381239')
         // console.log(player);
