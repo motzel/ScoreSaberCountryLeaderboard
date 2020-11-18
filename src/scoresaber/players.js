@@ -4,7 +4,6 @@ import scoresRepository from "../db/repository/scores";
 import groupsRepository from "../db/repository/groups";
 import {getAdditionalPlayers} from "../network/scoresaber/players";
 import tempConfig from '../temp';
-import {getCacheAndConvertIfNeeded} from "../store";
 import {getRankedsChangesSince, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
@@ -48,6 +47,18 @@ export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerI
 export const getPlayerLastUpdated = async playerId => (await getPlayerInfo(playerId))?.lastUpdated ?? null;
 export const getPlayerProfileLastUpdated = async playerId => (await getPlayerInfo(playerId))?.profileLastUpdated ?? null;
 
+export const removeAllPlayerData = async playerId => {
+    const playerHistory = await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId);
+    const playerScores = await scoresRepository().getAllFromIndex('scores-playerId', playerId);
+
+    await Promise.all(
+      []
+        .concat(playerHistory.map(ph => playersHistoryRepository().deleteObject(ph)))
+        .concat(playerScores.map(s => scoresRepository().deleteObject(s)))
+        .concat([playersRepository().delete(playerId)])
+    );
+};
+
 export const getPlayerGroups = async groupName => {
     const groups = await groupsRepository().getAllFromIndex('groups-name', groupName);
 
@@ -64,23 +75,24 @@ export const getPlayerGroups = async groupName => {
       : null;
 };
 
-export const addPlayerToGroup = async (playerId, groupId = 'default', groupName = 'Default') => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data?.groups) data.groups = {};
+export const addPlayerToGroup = async (playerId, groupName = 'Default') => {
+    const isPlayerAlreadyAdded = (await groupsRepository().getAllFromIndex('groups-name', groupName, undefined, true))
+      .some(g => g.playerId === playerId);
+    if (isPlayerAlreadyAdded) return;
 
-    const groups = data.groups;
-    if(!groups[groupId]) groups[groupId] = {name: groupName, players: []};
-
-    groups[groupId].players = arrayUnique(groups[groupId].players.concat([playerId]));
+    return groupsRepository().set({groupName, playerId});
 }
 
-export const removePlayerFromGroup = async (playerId, removeData = true, groupId = 'default') => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data?.groups?.[groupId]?.players) return;
+export const removePlayerFromGroup = async (playerId, removeData = true, groupName = 'Default') => {
+    const playerGroups = await groupsRepository().getAllFromIndex('groups-playerId', playerId, undefined, true);
 
-    data.groups[groupId].players = data.groups[groupId].players.filter(pId => pId !== playerId);
+    const playerGroupsToRemove = playerGroups.filter(pg => !groupName || pg.name === groupName);
 
-    if (!!data?.users?.[playerId] && removeData) delete data.users[playerId];
+    await Promise.all(playerGroupsToRemove.map(async pg => groupsRepository().deleteObject(pg)));
+
+    if (!removeData || playerGroups.length > playerGroupsToRemove.length) return;
+
+    await removeAllPlayerData(playerId);
 }
 
 export const getFriendsIds = async (withMain = false) => {
@@ -121,7 +133,7 @@ export const getPlayerAvatarUrl = async playerId => {
 
 export const getPlayerScores = player => player?.scores ? player.scores : null;
 
-export const getScoresByPlayerId = async playerId => scoresRepository().getAllFromIndex('scores-player', playerId);
+export const getScoresByPlayerId = async playerId => scoresRepository().getAllFromIndex('scores-playerId', playerId);
 
 export const getRankedScoresByPlayerId = async playerId => {
     const scores = await getScoresByPlayerId(playerId);

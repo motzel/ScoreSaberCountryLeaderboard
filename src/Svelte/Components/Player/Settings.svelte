@@ -7,14 +7,14 @@
     import File from '../Common/File.svelte';
     import Modal from '../Common/Modal.svelte';
 
-    import {getConfig} from "../../../plugin-config";
+    import {getConfig, setConfig} from "../../../plugin-config";
     import twitch from '../../../services/twitch';
     import {
         addPlayerToGroup, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
-        getPlayerInfo, getPlayerInfoFromData, getPlayerScores,
+        getPlayerInfo,
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
-    import {getCacheAndConvertIfNeeded, setCache, setThemeInFastCache} from "../../../store";
+    import {setThemeInFastCache} from "../../../store";
     import {dateFromString} from "../../../utils/date";
     import importJsonData from "../../../utils/import";
     import exportJsonData from "../../../utils/export";
@@ -301,9 +301,8 @@
         isFriend = (await getFriendsIds()).includes(profileId);
     }
 
+    let initialized = false;
     onMount(async () => {
-        const data = await getCacheAndConvertIfNeeded();
-
         country = await getActiveCountry();
 
         dataAvailable = await isDataAvailable();
@@ -375,13 +374,14 @@
             if (!twitchProfile.id) {
                 const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
                 if (fetchedProfile) {
-                    twitchProfile = Object.assign({}, twitchProfile, fetchedProfile);
-                    data.twitch.users[profileId] = twitchProfile;
+                    twitchProfile = {...twitchProfile, ...fetchedProfile, playerId: profileId};
+
+                    await twitch.storeProfile(twitchProfile);
                 }
             }
 
             if (twitchProfile.id) {
-                const scoresRecentPlay = data.users[profileId].recentPlay ? data.users[profileId].recentPlay : data.users[profileId].lastUpdated;
+                const scoresRecentPlay = playerInfo.recentPlay ? playerInfo.recentPlay : playerInfo.lastUpdated;
                 const twitchLastUpdated = twitchProfile.lastUpdated;
 
                 if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
@@ -390,14 +390,15 @@
                         twitchProfile.videos = videos.data;
                         twitchProfile.lastUpdated = new Date();
 
-                        await setCache(data);
+                        await twitch.storeProfile(twitchProfile);
                     }
                 }
             }
         }
 
-        // TODO: getPlayerSongScore should by awaited
-        const profileExists = !!getPlayerScores(getPlayerInfoFromData(data, profileId));
+        initialized = true;
+
+        const profileExists = !!(await getPlayerInfo(profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
             if (!profileExists && player && player.id === profileId) {
                 // TODO: reload profile page for now, try to do it to be more dynamic
@@ -417,13 +418,14 @@
     async function setAsMainProfile() {
         if (!profileId) return;
 
-        const data = await getCacheAndConvertIfNeeded();
-        data.config.users.main = profileId;
-        await setCache(data);
+        if (!config.users) config.users = {};
+        config.users.main = profileId;
+        await setConfig(config);
 
         location.reload();
     }
 
+    // TODO: rewrite
     function importData(e) {
         if (importBtn) importBtn.$set({disabled: true});
         if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
@@ -435,7 +437,7 @@
               importBtn.$set({disabled: false});
           },
           async json => {
-              await setCache(json);
+              // await setCache(json);
 
               if (importBtn) importBtn.$set({disabled: false});
               if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
@@ -445,6 +447,7 @@
         )
     }
 
+    // TODO: rewrite
     function exportData() {
         exportJsonData();
     }
@@ -487,29 +490,23 @@
 
         setThemeInFastCache(values.theme.id);
 
-        const data = await getCacheAndConvertIfNeeded();
-        await setCache(data);
+        await setConfig(config);
 
         eventBus.publish('config-changed', config)
 
         showSettingsModal = false;
     }
 
-    async function storePlayerStatusChanges() {
-        await setCache(await getCacheAndConvertIfNeeded());
-        await refreshPlayerStatus();
-    }
-
     async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
-        await storePlayerStatusChanges();
+        await refreshPlayerStatus();
 
         eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
     async function removePlayerFromFriends() {
         await removePlayerFromGroup(profileId, isManuallyAddedPlayer);
-        await storePlayerStatusChanges();
+        await refreshPlayerStatus();
 
         if (isManuallyAddedPlayer)
             eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
@@ -538,7 +535,7 @@
     }
 </script>
 
-{#if profileId}
+{#if initialized && profileId}
     <div class="buttons flex-center" class:flex-column={!dataAvailable}>
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
@@ -703,17 +700,17 @@
                     <div class="menu-label">{$_.profile.settings.defaultSongList.header}</div>
                     <div>
                         <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ss.song.enhance}>
+                            <input type="checkbox" bind:checked={config.ssSong.enhance}>
                             {$_.profile.settings.defaultSongList.enhance}
                         </label>
 
                         <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ss.song.showDiff}>
+                            <input type="checkbox" bind:checked={config.ssSong.showDiff}>
                             {$_.profile.settings.defaultSongList.showDiff}
                         </label>
 
                         <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ss.song.showWhatIfPp}>
+                            <input type="checkbox" bind:checked={config.ssSong.showWhatIfPp}>
                             {$_.profile.settings.songLeaderboard.showWhatIfPp}
                         </label>
                     </div>

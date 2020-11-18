@@ -28,6 +28,7 @@ async function openDatabase(cache = null) {
             });
 
             const playersHistory = db.createObjectStore('players-history', {
+              keyPath: '_idbId',
               autoIncrement: true,
             });
             playersHistory.createIndex('players-history-playerId', 'playerId', {unique: false});
@@ -36,8 +37,8 @@ async function openDatabase(cache = null) {
               keyPath: 'id',
               autoIncrement: false,
             });
-            scoresStore.createIndex('scores-leaderboard', 'leaderboardId', {unique: false});
-            scoresStore.createIndex('scores-player', 'playerId', {unique: false});
+            scoresStore.createIndex('scores-leaderboardId', 'leaderboardId', {unique: false});
+            scoresStore.createIndex('scores-playerId', 'playerId', {unique: false});
 
             const leaderboardsStore = db.createObjectStore('leaderboards', {
               keyPath: 'leaderboardId',
@@ -57,6 +58,7 @@ async function openDatabase(cache = null) {
             });
 
             const rankedsChangesStore = db.createObjectStore('rankeds-changes', {
+              keyPath: '_idbId',
               autoIncrement: true,
             });
             rankedsChangesStore.createIndex('rankeds-changes-timestamp', 'timestamp', {unique: false});
@@ -65,8 +67,9 @@ async function openDatabase(cache = null) {
             // no autoIncrement, no keyPath - key must be provided
             db.createObjectStore('key-value');
 
-            const groups = db.createObjectStore('groups', {autoIncrement: true});
+            const groups = db.createObjectStore('groups', {keyPath: '_idbId', autoIncrement: true});
             groups.createIndex('groups-name', 'name', {unique: false});
+            groups.createIndex('groups-playerId', 'playerId', {unique: false});
 
             await convertFromLocalForage(cache, transaction);
         }

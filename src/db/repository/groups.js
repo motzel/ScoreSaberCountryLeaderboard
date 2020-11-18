@@ -2,4 +2,4 @@ import createRepository from './generic';
 
 let repository;
 
-export default () => repository ? repository : repository = createRepository('groups');
+export default () => repository ? repository : repository = createRepository('groups', '_idbId');

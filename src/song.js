@@ -114,7 +114,7 @@ export async function refreshSongCountryRanksCache(leaderboardIds = []) {
     }
 }
 
-export const getSongScores = async (leaderboardId, count = undefined) => scoresRepository().getAllFromIndex('scores-leaderboard', leaderboardId, count);
+export const getSongScores = async (leaderboardId, count = undefined) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, count);
 
 export function getAccFromScore(score, maxSongScore) {
     const scoreMult = score.uScore && score.score ? score.score / score.uScore : 1

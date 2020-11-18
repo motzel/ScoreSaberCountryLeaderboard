@@ -1,6 +1,5 @@
 import {getFirstRegexpMatch} from "../utils/js";
 import {SCORESABER_URL} from "../network/scoresaber/consts";
-import {getCacheAndConvertIfNeeded, setCache} from "../store";
 import {dateFromString} from "../utils/date";
 import {
     getAuthUrl,
@@ -9,6 +8,8 @@ import {
     getVideos as apiGetVideos,
     getStreams as apiGetStreams
 } from "../network/twitch";
+import twitchRepository from "../db/repository/twitch";
+import keyValueRepository from "../db/repository/key-value";
 
 const users = {
     '76561198059659922': 'patian25',
@@ -48,13 +49,13 @@ const getTwitchTokenFromUrl = () => {
 }
 
 const getCurrentToken = async () => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data || !data.twitch || !data.twitch.token) return null;
+    const token = await keyValueRepository().get('twitchToken', true);
+    if (!token) return null;
 
-    const expires = dateFromString(data.twitch.token.expires);
+    const expires = dateFromString(token.expires);
     const expiresIn = expires - (new Date());
 
-    return Object.assign({}, data.twitch.token, {expires, expires_in: expiresIn > 0 ? expiresIn : 0});
+    return {...token, expires, expires_in: expiresIn > 0 ? expiresIn : 0};
 }
 
 const getProfileByUsername = async userName => {
@@ -80,16 +81,10 @@ const getStreams = async userId => {
     return apiGetStreams(token.accessToken, userId)
 }
 
-const updateTwitchUser = async (profileId, twitchLogin) => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data) return;
+const updateTwitchUser = async (playerId, twitchLogin) => {
+    const existingTwitchProfile = await getProfileByPlayerId(playerId);
 
-    if (!data.twitch) data.twitch = {token: null};
-
-    if (!data.twitch.users) data.twitch.users = {};
-
-    const existingTwitchProfile = data?.twitch?.users?.[profileId];
-    data.twitch.users[profileId] = Object.assign({}, existingTwitchProfile ?? {}, {login: twitchLogin, lastUpdated: null});
+    await storeProfile(Object.assign({}, existingTwitchProfile ?? {}, {login: twitchLogin, lastUpdated: null, playerId}));
 }
 
 const createTwitchUsersCache = async () => {
@@ -98,15 +93,10 @@ const createTwitchUsersCache = async () => {
     })
 }
 
-const getProfileName = async ssProfileId => {
-    const data = await getCacheAndConvertIfNeeded();
+const getProfileByPlayerId = async (playerId, refreshCache = false) => await twitchRepository().get(playerId, refreshCache) ?? null;
+const storeProfile = async twitchProfile => twitchRepository().set(twitchProfile);
 
-    return data?.twitch?.users?.[ssProfileId];
-}
-
-const isProfileTwitchConnected = async ssProfileId => {
-    return !!(await getProfileName(ssProfileId) && data?.users?.[ssProfileId]);
-}
+const isProfileTwitchConnected = async ssProfileId => !!(await getProfileByPlayerId(ssProfileId));
 
 export default {
     getAuthUrl,
@@ -117,32 +107,30 @@ export default {
     processTokenIfAvailable: async () => {
         const twitchToken = getTwitchTokenFromUrl();
         if (twitchToken) {
-            const data = await getCacheAndConvertIfNeeded();
-            if (!data.twitch) data.twitch = {token: null};
-
             // validate token
             const tokenValidation = await validateToken(twitchToken.accessToken);
 
             const expiresIn = tokenValidation.expires_in * 1000;
 
-            data.twitch.token = Object.assign(
+            await keyValueRepository().set(
+              Object.assign(
                 {},
-                data.twitch.token,
                 tokenValidation,
                 {
                     accessToken: twitchToken.accessToken,
                     expires: (new Date(Date.now() + expiresIn)).toISOString(),
                     expires_in: expiresIn
                 }
+              ),
+              'twitchToken'
             );
-
-            await setCache(data);
 
             if (twitchToken.url) window.location.href = twitchToken.url;
         }
     },
     updateTwitchUser,
     createTwitchUsersCache,
-    getProfileName,
-    isProfileTwitchConnected
+    getProfileName: getProfileByPlayerId,
+    isProfileTwitchConnected,
+    storeProfile,
 }

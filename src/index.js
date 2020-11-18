@@ -720,7 +720,7 @@ async function init() {
         // console.timeLog("sspl get", "Leaderboard by index GET (rankeds)");
         // console.log(convertArrayToObjectByKey(await db.getAll('leaderboards'), 'leaderboardId'));
         // console.timeLog("sspl get", "Leaderboard GET (all)");
-        // const scores = (await db.getAllFromIndex('scores', 'scores-player', '76561198035381239x'))
+        // const scores = (await db.getAllFromIndex('scores', 'scores-playerId', '76561198035381239x'))
         // // const scores = (await db.getAll('scores'))
         //   .filter(s => !s.acc && cache.beatSaver.hashes[s.hash]);
         // console.log(scores);
