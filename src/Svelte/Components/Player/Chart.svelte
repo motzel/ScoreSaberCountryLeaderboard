@@ -1,6 +1,6 @@
 <script>
     import {getRankedSongs} from "../../../scoresaber/rankeds";
-    import {getPlayerInfo, getScoresByPlayerId} from "../../../scoresaber/players";
+    import {getPlayerHistory, getScoresByPlayerId} from "../../../scoresaber/players";
     import {dateFromString, toSSDate} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
@@ -32,7 +32,7 @@
         if (!playerScores) return;
 
         chartData = Object.values(playerScores)
-                .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && !!rankeds[s.leaderboardId])
+                .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId])
                 .map(s => {
                     const acc = getAccFromScore(s)
 
@@ -40,7 +40,7 @@
                         x: rankeds[s.leaderboardId].stars,
                         y: acc,
                         leaderboardId: s.leaderboardId,
-                        name: s.name + ' ' + s.songSubName,
+                        name: s.name,
                         songAuthor: s.songAuthorName,
                         levelAuthor: s.levelAuthorName,
                         timeset: dateFromString(s.timeset)
@@ -55,18 +55,14 @@
         const daysAgo = Array(50).fill(0).map((v, i) => i).reverse();
 
         let ppData = [];
-        // TODO: replace with player history repository
-        const playerInfo = await getPlayerInfo(profileId);
-        const userHistory = playerInfo && playerInfo.userHistory && Object.keys(playerInfo.userHistory).length
-                ? playerInfo.userHistory
-                : null;
+        const userHistory = await getPlayerHistory(profileId);
         if (userHistory) {
-            const historyData = Object.entries(userHistory).reduce((cum, {0: timestamp, 1: history}) => {
-                const historyDate = toSSDate(new Date(parseInt(timestamp, 10)));
+            const historyData = userHistory.reduce((cum, historyItem) => {
+                const historyDate = toSSDate(dateFromString(historyItem.timestamp));
                 let diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
                 if (diffInDays < 0) diffInDays = 0;
 
-                cum[diffInDays] = history;
+                cum[diffInDays] = historyItem;
 
                 return cum;
             }, {})

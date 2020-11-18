@@ -1,4 +1,5 @@
 import playersRepository from "../db/repository/players";
+import playersHistoryRepository from "../db/repository/players-history";
 import scoresRepository from "../db/repository/scores";
 import groupsRepository from "../db/repository/groups";
 import {getAdditionalPlayers} from "../network/scoresaber/players";
@@ -40,6 +41,7 @@ export const getPlayers = async _ => playersRepository().getAll();
 export const getPlayersFromData = data => data?.users ? data.users : null;
 
 export const getPlayerInfo = async playerId => await playersRepository().get(playerId) ?? null;
+export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
 export const getPlayerInfoFromData = (data, playerId) => getPlayersFromData(data)?.[playerId] ? getPlayersFromData(data)[playerId] : null;
 export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerId] ? players[playerId] : null;
 
