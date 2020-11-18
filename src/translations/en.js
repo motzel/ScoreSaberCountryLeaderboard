@@ -63,6 +63,7 @@ export default {
             replays: 'Replays watched by others',
             role: 'Role',
             rankedPlayCount: 'Ranked play count',
+            avgCountryRank: 'Average rank in country leaderboards',
             totalRankedScore: 'Total ranked score',
             avgRankedAccuracy: 'Average ranked accuracy',
             medianRankedAccuracy: 'Median ranked accuracy',

@@ -64,6 +64,7 @@ export default {
             replays: 'Powtórki obejrzane przez innych',
             role: 'Rola',
             rankedPlayCount: 'Liczba zagranych rankedów',
+            avgCountryRank: 'Średnia pozycja na krajowych leaderboardach',
             totalRankedScore: 'Wynik rankedów razem',
             avgRankedAccuracy: 'Średnia celność rankedów',
             medianRankedAccuracy: 'Mediana celności rankedów',

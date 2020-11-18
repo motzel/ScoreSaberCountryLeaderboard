@@ -5,10 +5,11 @@
     export let value;
     export let precision = 2;
     export let suffix = "";
+    export let prefix = "";
 </script>
 
 <li>
-    <strong>{label}: </strong> {formatNumber(value, precision)}{suffix}
+    <strong>{label}: </strong> {#if value}{prefix}{formatNumber(value, precision)}{suffix}{:else}-{/if}
     <slot></slot>
 </li>
 
