@@ -32,6 +32,7 @@ async function openDatabase(cache = null) {
               autoIncrement: true,
             });
             playersHistory.createIndex('players-history-playerId', 'playerId', {unique: false});
+            playersHistory.createIndex('players-history-timestamp', 'timestamp', {unique: false});
 
             const scoresStore = db.createObjectStore('scores', {
               keyPath: 'id',

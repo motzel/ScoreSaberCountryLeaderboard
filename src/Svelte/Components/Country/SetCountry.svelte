@@ -32,14 +32,6 @@
 		})
 	});
 
-	async function setCountry() {
-		const data = await getCacheAndConvertIfNeeded();
-
-		await setCache(data);
-
-		showConfirmationModal = false;
-	}
-
 	function onOk() {
 		onboarding = true;
 		dataDownloaded = false;

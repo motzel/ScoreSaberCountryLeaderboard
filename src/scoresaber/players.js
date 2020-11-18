@@ -41,6 +41,7 @@ export const getPlayersFromData = data => data?.users ? data.users : null;
 
 export const getPlayerInfo = async playerId => await playersRepository().get(playerId) ?? null;
 export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
+export const getAllPlayersHistory = async query => await playersHistoryRepository().getAllFromIndex('players-history-timestamp', query) ?? [];
 export const getPlayerInfoFromData = (data, playerId) => getPlayersFromData(data)?.[playerId] ? getPlayersFromData(data)[playerId] : null;
 export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerId] ? players[playerId] : null;
 

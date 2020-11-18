@@ -10,7 +10,7 @@ import {
     getPlayerInfo, getPlayerInfoFromPlayers,
     getPlayerRankedsScorePagesToUpdate, getPlayers, getPlayerScorePagesToUpdate, getPlayerScores, getScoresByPlayerId
 } from "../../scoresaber/players";
-import {dateFromString, timestampFromString, toSSDate} from "../../utils/date";
+import {dateFromString, timestampFromString, toSSTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
@@ -200,7 +200,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
     player = {...player};
 
     const {rank, pp, countryRank, ssplCountryRank} = player;
-    player.userHistory = Object.assign({}, player.userHistory ?? {}, {[toSSDate(new Date())]: {rank, pp, countryRank, ssplCountryRank}})
+    player.userHistory = Object.assign({}, player.userHistory ?? {}, {[toSSTimestamp(new Date())]: {rank, pp, countryRank, ssplCountryRank}})
 
     const playerLastUpdated = dateFromString(player.lastUpdated ?? null);
     let newScores = await fetchAllNewScores(

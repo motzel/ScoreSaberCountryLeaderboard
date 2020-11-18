@@ -1,7 +1,7 @@
 <script>
     import {getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerHistory, getScoresByPlayerId} from "../../../scoresaber/players";
-    import {dateFromString, toSSDate} from "../../../utils/date";
+    import {dateFromString, toSSTimestamp} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
@@ -58,7 +58,7 @@
         const userHistory = await getPlayerHistory(profileId);
         if (userHistory) {
             const historyData = userHistory.reduce((cum, historyItem) => {
-                const historyDate = toSSDate(dateFromString(historyItem.timestamp));
+                const historyDate = toSSTimestamp(dateFromString(historyItem.timestamp));
                 let diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
                 if (diffInDays < 0) diffInDays = 0;
 
