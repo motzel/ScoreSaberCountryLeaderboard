@@ -1,7 +1,6 @@
 import {fetchApiPage} from "./fetch";
 import {substituteVars} from "../utils/format";
 import {default as queue} from "./queue";
-import {getCacheAndConvertIfNeeded, setCache} from "../store";
 import log from '../utils/logger';
 import songsRepository from "../db/repository/songs";
 
@@ -31,16 +30,13 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
     }
 };
 
-// TODO:
-export const getSongByKey = async (key, forceUpdate = false) => {
+export const getSongByKey = async (key, forceUpdate = false, cacheOnly = false) => {
     key = key.toLowerCase();
 
-    const data = await getCacheAndConvertIfNeeded();
-    if (
-        !forceUpdate && data.beatSaver &&
-        data.beatSaver.keys && data.beatSaver.keys[key] &&
-        data.beatSaver.hashes && data.beatSaver.hashes[data.beatSaver.keys[key]]
-    ) return Promise.resolve(data.beatSaver.hashes[data.beatSaver.keys[key]]);
+    const songInfo = await songsRepository().getFromIndex('songs-key', key);
+    if (!forceUpdate && songInfo) return Promise.resolve(songInfo);
+
+    if(cacheOnly) return null;
 
     try {
         const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_KEY_URL, {key}));
@@ -57,7 +53,10 @@ export const getSongByKey = async (key, forceUpdate = false) => {
 };
 
 async function cacheSongInfo(songInfo) {
-    if (!songInfo.hash) return null;
+    if (!songInfo.hash || !songInfo.key) return null;
+
+    songInfo.hash = songInfo.hash.toLowerCase();
+    songInfo.key = songInfo.key.toLowerCase();
 
     delete songInfo.description;
 

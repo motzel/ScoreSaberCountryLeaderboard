@@ -67,6 +67,10 @@ export function extractDiffAndType(ssDiff) {
     };
 }
 
+export function getDiffAndTypeFromOnlyDiffName(ssString) {
+    return extractDiffAndType('_' + ssString.replace('Expert+', 'ExpertPlus') + '_SoloStandard');
+}
+
 export function findDiffInfoWithDiffAndType(characteristics, diffAndType) {
     if (!characteristics || !diffAndType) return null;
 

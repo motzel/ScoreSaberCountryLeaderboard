@@ -68,6 +68,7 @@ export const convertFromLocalForage = async (cache, transaction) => {
         ? Object.values(p.scores).map(s => {
           let {id, diff, difficulty, timeset, name, songSubName, scoreMult, ...score} = s;
           name = name + (songSubName && songSubName.length ? ' ' + songSubName : '');
+          if (!score.diffInfo && diff && diff.length) score.diffInfo = extractDiffAndType(score.diff);
           return {...score, name, hash: id, id: s.playerId + '_' + s.leaderboardId, timeset: dateFromString(timeset)};
         })
         : [],

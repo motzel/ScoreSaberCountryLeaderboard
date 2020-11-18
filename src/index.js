@@ -20,7 +20,8 @@ import tempConfig from './temp';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
-    getSongMaxScore,
+    getAccFromScore,
+    getDiffAndTypeFromOnlyDiffName,
     getSongMaxScoreWithDiffAndType, getSongScores,
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
@@ -37,14 +38,13 @@ import nodeSync from "./network/multinode-sync";
 import {
     getPlayerInfo,
     getPlayerProfileUrl,
-    getPlayerSongScoreHistory,
     getScoresByPlayerId,
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
 import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
-import {formatNumber} from "./utils/format";
+import {formatNumber, round} from "./utils/format";
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -253,7 +253,6 @@ async function setupProfile() {
     const profileId = getProfileId();
     if (!profileId) return;
 
-    // TODO: find all usages
     const playerInfo = await getPlayerInfo(profileId);
 
     const playerScores = await getScoresByPlayerId(profileId);
@@ -307,33 +306,44 @@ async function setupProfile() {
     const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
     const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
-        const leaderboard = playerScores.find(s => s.leaderboardId);
-        if (leaderboard && songEnhanceEnabled) {
-            try {
-                const maxSongScore = await getSongMaxScore(leaderboard.hash, leaderboard.diff);
+        const leaderboard = playerScores.find(ps => ps.leaderboardId === s.leaderboardId);
 
-                if (!s.percent && s.score) {
-                    s.percent = maxSongScore
-                        ? s.score / maxSongScore
-                        : (leaderboard.maxScoreEx
-                            ? s.score / leaderboard.maxScoreEx
-                            : null);
+        if (songEnhanceEnabled && !autoTransformEnabled) {
+            try {
+                const maxSongScore = await getSongMaxScoreWithDiffAndType(
+                  leaderboard?.hash ? leaderboard.hash : s.id,
+                  leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
+                );
+
+                const maxScoreEx = leaderboard?.maxScoreEx;
+
+                s.acc = s.percent ? s.percent * 100 : null;
+
+                const useCurrentScoreAsPrev = (s.pp && leaderboard?.pp && round(leaderboard.pp) < round(s.pp)) ||
+                  (s.score && leaderboard?.score && leaderboard.score < s.score);
+
+                if (!s.acc && s.score && (maxSongScore || maxScoreEx)) {
+                    s.acc = getAccFromScore({score: s.score, maxScoreEx}, maxSongScore);
                 }
 
                 if(!s.score && s.percent) {
-                    s.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(s.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
+                    s.score = maxSongScore || maxScoreEx ? Math.round(s.percent * (maxSongScore ? maxSongScore : maxScoreEx)) : null;
                 }
 
-                s.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+                s.hidden = leaderboard?.acc ? shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, acc: leaderboard.acc})) : false;
 
-                // TODO: look at song.js::getLeaderboard() lines 153/173
-                const playHistory = await getPlayerSongScoreHistory(leaderboard);
-                const history = playHistory && playHistory.length ? playHistory[0] : null;
-                s.prevRank = showDiff && history ? history.rank : null;
-                s.prevPp = showDiff && history ? history.pp : null;
-                s.prevScore = showDiff && history ? history.score : null;
-                s.prevTimeset = showDiff && history ? history.timeset : null;
-                s.prevPercent = showDiff && history ? history.percent : null;
+                const history = leaderboard?.history?.[0];
+                if (showDiff && (useCurrentScoreAsPrev || history)) {
+                    s.prevRank = useCurrentScoreAsPrev ? leaderboard.rank : history.rank;
+                    s.prevPp = useCurrentScoreAsPrev ? leaderboard.pp : history.pp;
+                    s.prevScore = useCurrentScoreAsPrev ? leaderboard.score : history.score;
+                    s.prevTimeset = dateFromString(useCurrentScoreAsPrev ? leaderboard.timeset : history.timeset);
+                    s.prevAcc = getAccFromScore({
+                        score: useCurrentScoreAsPrev ? leaderboard.score : history.score,
+                        uScore: useCurrentScoreAsPrev ? leaderboard.uScore : history.uScore,
+                        maxScoreEx,
+                    }, maxSongScore);
+                }
             } catch (e) {} // swallow error
         }
 
@@ -345,7 +355,7 @@ async function setupProfile() {
         rank         : s.rank,
     })));
 
-    if (songEnhanceEnabled)
+    if (songEnhanceEnabled && !autoTransformEnabled)
         parsedScores
             .filter(s => null !== s.tr)
             .forEach(s => {
@@ -705,10 +715,11 @@ async function init() {
         //       resolve(value);
         //   })
         // );
-        // console.log(await getLocalforageCache());
+        // const oldData = await getLocalforageCache()
+        // console.log(oldData);
 
-        // config.songBrowser.autoTransform = false;
-        // await setConfig(config);
+        config.songBrowser.autoTransform = false;
+        await setConfig(config);
 
         // const player = await db.get('players', '76561198035381239')
         // console.log(player);
