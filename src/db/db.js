@@ -1,11 +1,16 @@
 import {convertFromLocalForage, fetchLocalForageData} from './convert-localforage'
 import {openDB} from 'idb'
 import log from '../utils/logger'
+import {isDateObject} from '../utils/js'
 
 const SSPL_DB_VERSION = 2;
 export let db = null;
 
 export default async () => {
+  IDBKeyRange.prototype.toString = function () {
+    return "IDBKeyRange-" + (isDateObject(this.lower) ? this.lower.getTime() : this.lower) + '-' + (isDateObject(this.upper) ? this.upper : this.upper);
+  }
+
   let cache = null;
   if (await isConversionFromLocalforageNeeded()) {
     cache = await fetchLocalForageData();
@@ -40,6 +45,8 @@ async function openDatabase(cache = null) {
             });
             scoresStore.createIndex('scores-leaderboardId', 'leaderboardId', {unique: false});
             scoresStore.createIndex('scores-playerId', 'playerId', {unique: false});
+            scoresStore.createIndex('scores-timeset', 'timeset', {unique: false});
+            scoresStore.createIndex('scores-pp', 'pp', {unique: false});
 
             const leaderboardsStore = db.createObjectStore('leaderboards', {
               keyPath: 'leaderboardId',

@@ -132,7 +132,7 @@
             <header>
                 <h2 class="title is-5">{$_.dashboard.bestScores}</h2>
                 <nav>
-                    <Range bind:value={minPp} min={0} max={700} step={1} suffix="pp" inline={true}/>
+                    <Range bind:value={minPp} min={0.1} max={700} step={1} suffix="pp" inline={true}/>
                 </nav>
             </header>
 

@@ -17,6 +17,8 @@ export default () => {
 
   const has = key => cache[key] !== undefined;
 
+  const getKeys = _ => Object.keys(cache);
+
   const forget = key => delete cache[key];
 
   const flush = () => cache = {};
@@ -25,6 +27,7 @@ export default () => {
     has,
     get,
     set,
+    getKeys,
     forget,
     flush,
   }

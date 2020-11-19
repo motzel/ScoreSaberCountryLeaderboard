@@ -66,9 +66,9 @@ export const convertFromLocalForage = async (cache, transaction) => {
     .reduce((cum, p) => cum.concat(
       p.scores
         ? Object.values(p.scores).map(s => {
-          let {id, diff, difficulty, timeset, name, songSubName, scoreMult, ...score} = s;
+          let {id, difficulty, timeset, name, songSubName, scoreMult, ...score} = s;
           name = name + (songSubName && songSubName.length ? ' ' + songSubName : '');
-          if (!score.diffInfo && diff && diff.length) score.diffInfo = extractDiffAndType(score.diff);
+          score.diffInfo = !score.diffInfo && score.diff && score.diff.length ? extractDiffAndType(score.diff) : score.diffInfo;
           return {...score, name, hash: id, id: s.playerId + '_' + s.leaderboardId, timeset: dateFromString(timeset)};
         })
         : [],

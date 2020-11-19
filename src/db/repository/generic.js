@@ -4,8 +4,11 @@ import {db} from '../db';
 const ALL_KEY = '__ALL';
 const NONE_KEY = '__NONE';
 
+// TODO: add cache tags support for easier cache invalidation
 export default (storeName, inlineKeyName = undefined) => {
   let repositoryCache = cache();
+
+  const getCachedKeys = _ => repositoryCache.getKeys();
 
   const forgetCachedKey = key => repositoryCache.forget(key);
 
@@ -61,5 +64,5 @@ export default (storeName, inlineKeyName = undefined) => {
     return del(obj[inlineKeyName]);
   }
 
-  return {get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, flushCache, forgetCachedKey};
+  return {get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, flushCache, forgetCachedKey, getCachedKeys};
 };

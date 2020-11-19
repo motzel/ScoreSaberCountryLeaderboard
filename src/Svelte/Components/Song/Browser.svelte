@@ -760,7 +760,7 @@
             if (!song.maxScoreEx || !song.bpm) {
                 try {
                     // try to get max score from cache
-                    const songInfo = await getSongDiffInfo(song.id, song.diff, true);
+                    const songInfo = await getSongDiffInfo(song.hash, song.diff, true);
                     if (songInfo) {
                         song.maxScoreEx = songInfo.maxScore;
                         song.bpm = songInfo.bpm;
@@ -776,7 +776,7 @@
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
-                            promise: getSongDiffInfo(song.id, song.diff, false),
+                            promise: getSongDiffInfo(song.hash, song.diff, false),
                             song,
                             current
                         })
