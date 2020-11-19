@@ -7,8 +7,13 @@ import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
     getActiveCountryPlayers,
     getManuallyAddedPlayersIds,
-    getPlayerInfo, getPlayerInfoFromPlayers,
-    getPlayerRankedsScorePagesToUpdate, getPlayers, getPlayerScorePagesToUpdate, getPlayerScores, getScoresByPlayerId
+    getPlayerInfo,
+    getPlayerInfoFromPlayers,
+    getPlayerRankedsScorePagesToUpdate,
+    getPlayers,
+    getPlayerScorePagesToUpdate,
+    getScoresByPlayerId,
+    setSongScore,
 } from "../../scoresaber/players";
 import {dateFromString, timestampFromString, toSSTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
@@ -309,33 +314,42 @@ const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
     leaderboardIds.forEach(leaderboardId => emitEventForScoreUpdate(eventName, playerId, {leaderboardId}));
 }
 
-export const setRefreshedPlayerScores = async (playerId, scores) => {
-    const data = await getCacheAndConvertIfNeeded();
+export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true) => {
+    let playerScores;
+    if (someFieldsUpdateOnly) {
+        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
 
-    const playerScores = await getScoresByPlayerId(playerId);
-    if (!playerScores) {
-        emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
+        if (!playerScores) {
+            emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
 
-        return false;
+            return false;
+        }
     }
 
-    scores.forEach(s => {
-        if (!s.leaderboardId) return;
+    const updatedScores = scores
+      .map(s => {
+          if (!s.leaderboardId) return;
 
-        if (!playerScores[s.leaderboardId]) {
-            emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
+          s.id = playerId + '_' + s.leaderboardId;
+          s.playerId = playerId;
 
-            return;
-        }
+          const currentScore = playerScores[s.leaderboardId] ?? null;
 
-        if (!s.timeset) delete s.timeset;
+          if (someFieldsUpdateOnly && !currentScore) {
+              emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
 
-        playerScores[s.leaderboardId] = {...playerScores[s.leaderboardId], ...s, lastUpdated: new Date()};
+              return null;
+          }
 
-        emitEventForScoreUpdate('player-score-updated', playerId, playerScores[s.leaderboardId]);
-    })
+          const updatedScore = {...currentScore ?? {}, ...s, lastUpdated: new Date()};
 
-    await setCache(data);
+          emitEventForScoreUpdate('player-score-updated', playerId, updatedScore);
+
+          return updatedScore;
+      })
+      .filter(s => s?.timeset); // filter out scores without timeset field set
+
+    await Promise.all(updatedScores.map(s => setSongScore(s)));
 
     return true;
 }
@@ -364,16 +378,18 @@ export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
     }
 }
 
-export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
+export const refreshPlayerScoreRank = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
     let pages = [];
     let playerScoresPages = null;
 
     try {
         emitEventForScoresUpdate('player-score-update-start', playerId, leaderboardIds);
 
-        // TODO: replace with scores repository
-        const playerInfo = await getPlayerInfo(playerId);
-        if (!playerInfo || !playerInfo.scores) throw 'Player not found';
+        const playerInfo = await getPlayerInfo(playerId, true);
+        if (!playerInfo) throw 'Player not found';
+
+        const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+        if (!playerScores) throw 'Player scores not found';
 
         const cachedRecentPlay = dateFromString(playerInfo.recentPlay);
         if (!lastScoreTimeset || !cachedRecentPlay || cachedRecentPlay < lastScoreTimeset) {
@@ -382,7 +398,7 @@ export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTim
 
         const pagesInProgress = playersPagesInProgress[playerId] ?? [];
 
-        playerScoresPages = getPlayerScorePagesToUpdate(playerInfo.scores, leaderboardIds, true);
+        playerScoresPages = getPlayerScorePagesToUpdate(playerScores, leaderboardIds, true);
 
         pages = Object.keys(playerScoresPages).filter(p => !pagesInProgress.includes(p));
 

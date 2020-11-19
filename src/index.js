@@ -718,8 +718,8 @@ async function init() {
         // const oldData = await getLocalforageCache()
         // console.log(oldData);
 
-        config.songBrowser.autoTransform = false;
-        await setConfig(config);
+        // config.songBrowser.autoTransform = false;
+        // await setConfig(config);
 
         // const player = await db.get('players', '76561198035381239')
         // console.log(player);

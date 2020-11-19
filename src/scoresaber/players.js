@@ -39,7 +39,7 @@ export const isDataAvailable = async () => !isEmpty(await getPlayers());
 export const getPlayers = async _ => playersRepository().getAll();
 export const getPlayersFromData = data => data?.users ? data.users : null;
 
-export const getPlayerInfo = async playerId => await playersRepository().get(playerId) ?? null;
+export const getPlayerInfo = async (playerId, refreshCache = false) => await playersRepository().get(playerId, refreshCache) ?? null;
 export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
 export const getAllPlayersHistory = async query => await playersHistoryRepository().getAllFromIndex('players-history-timestamp', query) ?? [];
 export const getPlayerInfoFromData = (data, playerId) => getPlayersFromData(data)?.[playerId] ? getPlayersFromData(data)[playerId] : null;
@@ -134,7 +134,7 @@ export const getPlayerAvatarUrl = async playerId => {
 
 export const getPlayerScores = player => player?.scores ? player.scores : null;
 
-export const getScoresByPlayerId = async playerId => scoresRepository().getAllFromIndex('scores-playerId', playerId);
+export const getScoresByPlayerId = async (playerId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-playerId', playerId, undefined, refreshCache);
 export const getAllScoresSince = async sinceDate => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
 export const getAllScoresWithPpOver = async minPp => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined);
 
@@ -149,7 +149,8 @@ export const getRankedScoresByPlayerId = async playerId => {
 }
 
 export const getPlayerSongScore = async (player, leaderboardId) => getSongScoreByPlayerId(player?.id + '_' + leaderboardId);
-export const getSongScoreByPlayerId = async (playerId, leaderboardId) => scoresRepository().get(playerId + '_' + leaderboardId)
+export const getSongScoreByPlayerId = async (playerId, leaderboardId) => scoresRepository().get(playerId + '_' + leaderboardId);
+export const setSongScore = async score => scoresRepository().set(score);
 
 // TODO: look at song.js::getLeaderboard() lines 153/173
 export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null) => {

@@ -55,7 +55,7 @@
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
     import ScoreRank from "../Common/ScoreRank.svelte";
-    import {refreshPlayerScores} from "../../../network/scoresaber/players";
+    import {refreshPlayerScoreRank} from "../../../network/scoresaber/players";
 
     export let playerId;
     export let snipedIds = [];
@@ -843,7 +843,7 @@
 
             if (leaderboardIdsToRefresh.length) {
                 const playerRecentPlay = new Date(Math.max(songPage.series[0].recentPlay, recentPlay))
-                refreshPlayerScores(songPage.series[0].id, leaderboardIdsToRefresh, playerRecentPlay).then(_ => {});
+                refreshPlayerScoreRank(songPage.series[0].id, leaderboardIdsToRefresh, playerRecentPlay).then(_ => {});
             }
         }
         catch (e) {
