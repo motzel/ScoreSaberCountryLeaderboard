@@ -42,9 +42,9 @@ import {
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
 import {setRefreshedPlayerScores} from "./network/scoresaber/players";
-import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber, round} from "./utils/format";
+import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
