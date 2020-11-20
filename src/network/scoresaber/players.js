@@ -22,10 +22,12 @@ import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
 import {getMainPlayerId} from "../../plugin-config";
 import {refreshSongCountryRanksCache} from "../../song";
+import keyValueRepository from '../../db/repository/key-value'
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
-export const getActivePlayersLastUpdate = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.activePlayersLastUpdate ?? null;
+export const getActivePlayersLastUpdate = async (force = false) => keyValueRepository().get('activePlayersLastUpdate', force)
+// TODO: get it from DB
 export const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 export const convertPlayerInfo = info => {
     const {
