@@ -60,7 +60,6 @@
 
 	async function onTwitchUserLink() {
 		await twitch.updateTwitchUser(profileId, twitchUser.login);
-		await setCache(await getCacheAndConvertIfNeeded());
 
 		eventBus.publish('player-twitch-linked', {
 			nodeId     : nodeSync.getId(),

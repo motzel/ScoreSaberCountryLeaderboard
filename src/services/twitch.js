@@ -67,14 +67,14 @@ const getProfileByUsername = async userName => {
     return profile && profile.data && profile.data.length ? profile.data[0] : null;
 }
 
-const getVideos = async (userId, type = 'archive') => {
+const fetchVideos = async (userId, type = 'archive') => {
     const token = (await getCurrentToken());
     if (!token || !token.expires_in || token.expires_in <= 0) return null;
 
     return apiGetVideos(token.accessToken, userId, type)
 }
 
-const getStreams = async userId => {
+const fetchStreams = async userId => {
     const token = (await getCurrentToken());
     if (!token || !token.expires_in || token.expires_in <= 0) return null;
 
@@ -102,8 +102,8 @@ export default {
     getAuthUrl,
     getCurrentToken,
     getProfileByUsername,
-    getVideos,
-    getStreams,
+    fetchVideos,
+    fetchStreams,
     processTokenIfAvailable: async () => {
         const twitchToken = getTwitchTokenFromUrl();
         if (twitchToken) {
@@ -130,7 +130,7 @@ export default {
     },
     updateTwitchUser,
     createTwitchUsersCache,
-    getProfileName: getProfileByPlayerId,
+    getProfileByPlayerId,
     isProfileTwitchConnected,
     storeProfile,
 }

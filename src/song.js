@@ -118,7 +118,7 @@ export async function refreshSongCountryRanksCache(leaderboardIds = []) {
     }
 }
 
-export const getSongScores = async (leaderboardId, count = undefined) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, count);
+export const getSongScores = async (leaderboardId, count = undefined, refreshCache = false) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, count, refreshCache);
 
 export function getAccFromScore(score, maxSongScore) {
     const scoreMult = score.uScore && score.score ? score.score / score.uScore : 1
@@ -129,25 +129,25 @@ export function getAccFromScore(score, maxSongScore) {
         ? score.score / score.maxScoreEx / scoreMult * 100
         : null)
 }
-export async function getLeaderboard(leaderboardId, country, type = 'country') {
+export async function getLeaderboard(leaderboardId, country, type = 'country', refreshCache = false) {
     let players;
     switch(type) {
       case 'all':
-        players = await getAllActivePlayers(country);
+        players = await getAllActivePlayers(country, refreshCache);
         break;
 
       case 'manually_added':
-        players = await getFriends(country, true);
+        players = await getFriends(country, true, refreshCache);
         break;
 
       case 'country':
       default:
-        players = await getActiveCountryPlayers(country, true);
+        players = await getActiveCountryPlayers(country, true, refreshCache);
         break;
     }
     if (!players || !players.length) return [];
 
-    const songScores = await getSongScores(leaderboardId);
+    const songScores = await getSongScores(leaderboardId, undefined, refreshCache);
     if (!songScores) return [];
 
     const playersIds = players.map(player => player.id);

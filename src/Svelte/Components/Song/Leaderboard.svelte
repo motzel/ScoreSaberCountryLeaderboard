@@ -38,10 +38,10 @@
 
     let leaderboardType;
 
-    async function refreshLeaderboard() {
+    async function refreshLeaderboard(refreshCache = false) {
         if (!leaderboardType) return;
 
-        leaderboard = await getLeaderboard(leaderboardId, country, leaderboardType);
+        leaderboard = await getLeaderboard(leaderboardId, country, leaderboardType, refreshCache);
     }
 
     onMount(async () => {
@@ -53,14 +53,8 @@
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
         showBgCover = showBgCover && config.showBgCover !== false;
 
-        const refresh = async nodeId => {
-            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
-
-            await refreshLeaderboard();
-        }
-
+        const refresh = async nodeId => refreshLeaderboard(nodeId !== nodeSync.getId());
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-
         const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
 

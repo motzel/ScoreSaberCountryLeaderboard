@@ -12,7 +12,7 @@ export const Globals = {data: null};
 
 // TODO: remove it when new DB methods would be ready
 export const getCacheAndConvertIfNeeded = async () => {
-    console.error('getCache() should NOT be used anymore');
+    console.trace('getCache() should NOT be used anymore');
 
     return null;
 }
@@ -26,5 +26,5 @@ export function setThemeInFastCache(theme) {
 }
 
 export function setCache() {
-    console.error('setCache() should NOT be used anymore');
+    console.trace('setCache() should NOT be used anymore');
 }

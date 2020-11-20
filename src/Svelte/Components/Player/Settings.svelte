@@ -356,7 +356,7 @@
 
         filterSortTypes();
 
-        twitchProfile = await twitch.getProfileName(profileId);
+        twitchProfile = await twitch.getProfileByPlayerId(profileId);
         twitchToken = await twitch.getCurrentToken();
         const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
         const tokenExpireSoon = tokenExpireInDays <= 3;
@@ -385,7 +385,7 @@
                 const twitchLastUpdated = twitchProfile.lastUpdated;
 
                 if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
-                    const videos = await twitch.getVideos(twitchProfile.id);
+                    const videos = await twitch.fetchVideos(twitchProfile.id);
                     if (videos && videos.data) {
                         twitchProfile.videos = videos.data;
                         twitchProfile.lastUpdated = new Date();
