@@ -3,8 +3,8 @@ import keyValueRepository from "../db/repository/key-value";
 import rankedsChangesRepository from "../db/repository/rankeds-changes";
 import {convertArrayToObjectByKey} from '../utils/js'
 
-export const getRankedSongs = async (force = false) => {
-    const rankeds = await leaderboardsRepository().getAllFromIndex('leaderboards-status', 'ranked', undefined, force);
+export const getRankedSongs = async (refreshCache = false) => {
+    const rankeds = await leaderboardsRepository().getAllFromIndex('leaderboards-status', 'ranked', undefined, refreshCache);
     return rankeds ? convertArrayToObjectByKey(rankeds, 'leaderboardId') : null;
 }
 export const getRankedSongsLastUpdated = async (refreshCache = true) => keyValueRepository().get('rankedSongsLastUpdated', refreshCache);

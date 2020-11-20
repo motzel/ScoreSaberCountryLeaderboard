@@ -343,23 +343,23 @@
     }
 
     const getCurrentlySelectedPlayersIds = () => [playerId].concat(snipedIds);
-    const getPlayersScores = async (force = false) => {
+    const getPlayersScores = async (refreshCache = false) => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId, force)));
+        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId, refreshCache)));
 
         return playersIds.reduce((cum, playerId, idx) => {
             cum[playerId] = convertArrayToObjectByKey(scores[idx], 'leaderboardId');
             return cum;
         }, {});
     }
-    const getPlayersInfosForCurrentlySelected = async (force = false, withScores = true) => {
+    const getPlayersInfosForCurrentlySelected = async (refreshCache = false, withScores = true) => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId, force)));
+        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId, refreshCache)));
 
         if (withScores) {
-            const playersScores = await getPlayersScores(force);
+            const playersScores = await getPlayersScores(refreshCache);
 
             return playersInfos.map(playerInfo => ({...playerInfo, scores: playersScores[playerInfo.id] ? playersScores[playerInfo.id] : {}}));
         } else {
@@ -367,8 +367,8 @@
         }
     }
 
-    const generateRefreshTag = async (force = false) => {
-        const playerInfos = await getPlayersInfosForCurrentlySelected(force);
+    const generateRefreshTag = async (refreshCache = false) => {
+        const playerInfos = await getPlayersInfosForCurrentlySelected(refreshCache);
 
         const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '')
 
