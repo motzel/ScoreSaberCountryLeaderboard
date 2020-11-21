@@ -45,6 +45,7 @@ import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber, round} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
+import {updateRankeds} from './network/scoresaber/rankeds'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -695,8 +696,6 @@ async function waitForSSEInit(timeout) {
 
 let initialized = false;
 
-import keyValueRepository from "./db/repository/key-value";
-import twitchRepository from "./db/repository/twitch";
 async function init() {
     try {
         log.info("init");
@@ -710,22 +709,7 @@ async function init() {
         // pre-warm config cache
         const config = await getConfig();
 
-        try {
-            const result = await db.runInTransaction(['key-value', 'twitch'], async tx => {
-                console.log("Transaction stores: ", tx.getStores(), `Transaction includes twitch store: ${tx.getStores().includes('twitch')}, transaction mode: ${tx.getMode()}`);
-
-                await keyValueRepository().set('xxx', 'xxx');
-                await twitchRepository().set({playerId: 'yyy'});
-
-                return 'OK';
-            });
-
-            console.log('Transaction completed SUCCESSFULLY', result);
-        }
-        catch(e) {
-            console.error('Transaction ERROR: ', e)
-        }
-        return;
+        console.log(await updateRankeds()); return;
 
         // TODO: remove it after refactoring
         // const getLocalforageCache = async () => new Promise((resolve, reject) =>

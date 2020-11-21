@@ -96,15 +96,15 @@ export const convertFromLocalForage = async (cache, transaction) => {
 
         if (!diffInfo && diff && diff.length) diffInfo = extractDiffAndType(diff);
 
+        name = name + (subName && subName.length ? ' ' + subName : '');
+
         return {
           diffInfo,
-          difficulty,
           hash,
           leaderboardId,
           levelAuthor,
           name,
           songAuthor,
-          subName,
           maxScoreEx,
           stars: null,
           status: 'unranked'

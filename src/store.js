@@ -7,9 +7,6 @@ export const lastUpdated = async (refreshCache = true) => keyValueRepository().g
 
 export const isAnyData = async () => {const players = await getPlayers(); return players && players.length}
 
-// TODO: remove dependency
-export const Globals = {data: null};
-
 // TODO: remove it when new DB methods would be ready
 export const getCacheAndConvertIfNeeded = async () => {
     console.trace('getCache() should NOT be used anymore');
