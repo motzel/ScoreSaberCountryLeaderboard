@@ -708,6 +708,29 @@ async function init() {
         // pre-warm config cache
         const config = await getConfig();
 
+        db.runInTransaction(['key-value', 'twitch'], async tx => {
+            console.log("Transaction stores: ", tx.getStores(), `Transaction includes twitch store: ${tx.getStores().includes('twitch')}, transaction mode: ${tx.getMode()}`);
+
+            const promises = [];
+            const store = tx.objectStore('key-value');
+            promises.push(store.put('xxx', 'xxx'));
+            promises.push(store.put('yyy', 'yyy'));
+
+            const twitchStore = tx.objectStore('twitch');
+            promises.push(twitchStore.put({playerId: 'zzz'}));
+
+            await tx.abort();
+            // twitchStore.put({playerId: 'zzz2'}); // DOMException: Failed to execute 'put' on 'IDBObjectStore': The transaction has finished.
+
+            promises.push(tx.done);
+
+            await Promise.all(promises);
+
+            return 'OK';
+        })
+          .then(result => console.log('Transaction completed successfully', result))
+          .catch(e => console.error('Transaction error', e));
+        return;
 
         // TODO: remove it after refactoring
         // const getLocalforageCache = async () => new Promise((resolve, reject) =>

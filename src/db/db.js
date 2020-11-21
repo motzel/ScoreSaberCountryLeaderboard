@@ -11,6 +11,7 @@ export default async () => {
     return "IDBKeyRange-" + (isDateObject(this.lower) ? this.lower.getTime() : this.lower) + '-' + (isDateObject(this.upper) ? this.upper : this.upper);
   }
 
+  // TODO: remove compatibility layer after 1.0 release
   let cache = null;
   if (await isConversionFromLocalforageNeeded()) {
     cache = await fetchLocalForageData();
@@ -101,6 +102,37 @@ async function openDatabase(cache = null) {
         console.warn('DB terminated')
       },
     });
+
+    // enhance db object
+    let _currentTransaction = null;
+    const getCurrentTransaction = () => _currentTransaction;
+    const getTransactionMode = () => _currentTransaction?.mode ?? null;
+    const getTransactionStores = () => [..._currentTransaction?.objectStoreNames ?? []];
+    const runInTransaction = async (objectStores, closure, mode = 'readwrite', options = {durability: 'strict'}) => {
+      try {
+        if (_currentTransaction) return Promise.reject('Another transaction in progress');
+
+        _currentTransaction = db.transaction(objectStores, mode, options);
+
+        _currentTransaction.getMode = getTransactionMode;
+        _currentTransaction.getStores = getTransactionStores;
+
+        const result = await closure(_currentTransaction);
+
+        await _currentTransaction.done;
+
+        _currentTransaction = null;
+
+        return result;
+      }
+      catch(e) {
+        _currentTransaction = null;
+
+        throw e;
+      }
+    }
+    db.getCurrentTransaction = getCurrentTransaction;
+    db.runInTransaction = runInTransaction;
 
     return db;
   }
