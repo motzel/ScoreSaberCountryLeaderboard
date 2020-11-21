@@ -45,7 +45,13 @@ export default (storeName, inlineKeyName = undefined) => {
   }
 
   const set = async (value, key) => {
-    await db.put(storeName, value, inlineKeyName ? undefined : key);
+    const tx = db.getCurrentTransaction();
+
+    if (tx) {
+      await tx.objectStore(storeName).put(value, inlineKeyName ? undefined : key);
+    } else {
+      await db.put(storeName, value, inlineKeyName ? undefined : key);
+    }
 
     return repositoryCache.set(inlineKeyName ? value[inlineKeyName] : key, value);
   }

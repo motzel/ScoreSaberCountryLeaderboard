@@ -117,13 +117,16 @@ async function openDatabase(cache = null) {
         _currentTransaction.getMode = getTransactionMode;
         _currentTransaction.getStores = getTransactionStores;
 
-        const result = await closure(_currentTransaction);
+        try {
+          const result = await closure(_currentTransaction);
 
-        await _currentTransaction.done;
+          await _currentTransaction.done;
 
-        _currentTransaction = null;
-
-        return result;
+          return result;
+        }
+        finally {
+          _currentTransaction = null;
+        }
       }
       catch(e) {
         _currentTransaction = null;

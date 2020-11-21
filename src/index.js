@@ -695,6 +695,8 @@ async function waitForSSEInit(timeout) {
 
 let initialized = false;
 
+import keyValueRepository from "./db/repository/key-value";
+import twitchRepository from "./db/repository/twitch";
 async function init() {
     try {
         log.info("init");
@@ -708,28 +710,21 @@ async function init() {
         // pre-warm config cache
         const config = await getConfig();
 
-        db.runInTransaction(['key-value', 'twitch'], async tx => {
-            console.log("Transaction stores: ", tx.getStores(), `Transaction includes twitch store: ${tx.getStores().includes('twitch')}, transaction mode: ${tx.getMode()}`);
+        try {
+            const result = await db.runInTransaction(['key-value', 'twitch'], async tx => {
+                console.log("Transaction stores: ", tx.getStores(), `Transaction includes twitch store: ${tx.getStores().includes('twitch')}, transaction mode: ${tx.getMode()}`);
 
-            const promises = [];
-            const store = tx.objectStore('key-value');
-            promises.push(store.put('xxx', 'xxx'));
-            promises.push(store.put('yyy', 'yyy'));
+                await keyValueRepository().set('xxx', 'xxx');
+                await twitchRepository().set({playerId: 'yyy'});
 
-            const twitchStore = tx.objectStore('twitch');
-            promises.push(twitchStore.put({playerId: 'zzz'}));
+                return 'OK';
+            });
 
-            await tx.abort();
-            // twitchStore.put({playerId: 'zzz2'}); // DOMException: Failed to execute 'put' on 'IDBObjectStore': The transaction has finished.
-
-            promises.push(tx.done);
-
-            await Promise.all(promises);
-
-            return 'OK';
-        })
-          .then(result => console.log('Transaction completed successfully', result))
-          .catch(e => console.error('Transaction error', e));
+            console.log('Transaction completed SUCCESSFULLY', result);
+        }
+        catch(e) {
+            console.error('Transaction ERROR: ', e)
+        }
         return;
 
         // TODO: remove it after refactoring
