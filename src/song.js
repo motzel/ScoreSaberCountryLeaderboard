@@ -1,15 +1,16 @@
-import {capitalize, convertArrayToObjectByKey} from "./utils/js";
+import {capitalize, convertArrayToObjectByKey, isEmpty} from "./utils/js";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
-    getActiveCountryPlayers,
-    getAllActivePlayers,
+    getActiveCountryPlayers, getActiveCountryPlayersIds,
+    getAllActivePlayers, getAllScores,
     getFriends,
     getPlayerSongScore,
 } from "./scoresaber/players";
 import {getActiveCountry} from "./scoresaber/country";
 import {getCacheAndConvertIfNeeded} from "./store";
 import scoresRepository from './db/repository/scores'
+import cacheRepository from './db/repository/cache';
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -86,36 +87,39 @@ export function findDiffInfo(characteristics, ssDiff) {
     return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
 }
 
-export async function refreshSongCountryRanksCache(leaderboardIds = []) {
-    const country = await getActiveCountry();
-    if (!country) return;
+export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
+  const country = await getActiveCountry();
+  const countryPlayersIds = await getActiveCountryPlayersIds(country, true, true);
 
-    const players = (await getActiveCountryPlayers(country, false))
-    if (!leaderboardIds || !leaderboardIds.length)
-        leaderboardIds = [...new Set(players.reduce((cum, player) => cum.concat(Object.keys(player.scores)), []))];
+  const SSPL_RANKS_CACHE_KEY = 'ssplCountryRanks'
+  const ssplCountryRanks = await cacheRepository().get(SSPL_RANKS_CACHE_KEY) ?? {};
+  const shouldProcessAllLeaderboards = isEmpty(ssplCountryRanks);
 
-    const data = await getCacheAndConvertIfNeeded();
+  const scores = (await getAllScores() ?? [])
+    .filter(score => score.score && countryPlayersIds.includes(score.playerId) && (
+        shouldProcessAllLeaderboards ||
+        (onlyLeaderboardsIds && onlyLeaderboardsIds.includes(score.leaderboardId))
+      ),
+    );
 
-    for (let leaderboardId of leaderboardIds.map(s => parseInt(s, 10))) {
-        const scores = players
-            .map(player => {
-                // TODO: getPlayerSongScore should by awaited
-                const score = getPlayerSongScore(player, leaderboardId);
-                return score && score.score ? {playerId: player.id, score: score.score} : null;
-            })
-            .filter(s => s)
-            .sort((a, b) => b.score - a.score);
+  const leaderboards = convertArrayToObjectByKey(scores, 'leaderboardId', true);
+  Object.keys(leaderboards).forEach(leaderboardId => {
+    ssplCountryRanks[leaderboardId] = leaderboards[leaderboardId]
+      .sort((a, b) => b.score - a.score)
+      .map((score, idx, leaderboard) => ({
+        playerId: score.playerId,
+        ssplCountryRank: {[country]: {rank: idx + 1, total: leaderboard.length}},
+      }))
+      .reduce((cum, rank) => {
+        cum[rank.playerId] = rank.ssplCountryRank;
+        return cum;
+      }, {})
+    ;
+  });
 
-        scores.forEach((d, pos) => {
-            if (!data.users[d.playerId].scores[leaderboardId].ssplCountryRank)
-                data.users[d.playerId].scores[leaderboardId].ssplCountryRank = {[country]: null};
+  await cacheRepository().set(ssplCountryRanks, SSPL_RANKS_CACHE_KEY);
 
-            data.users[d.playerId].scores[leaderboardId].ssplCountryRank[country] = {
-                rank: pos + 1,
-                total: scores.length
-            };
-        });
-    }
+  return ssplCountryRanks;
 }
 
 export const getSongScores = async (leaderboardId, count = undefined, refreshCache = false) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, count, refreshCache);

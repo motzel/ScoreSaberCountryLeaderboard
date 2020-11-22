@@ -59,7 +59,7 @@
         if (userHistory) {
             const historyData = userHistory.reduce((cum, historyItem) => {
                 const historyDate = toSSTimestamp(dateFromString(historyItem.timestamp));
-                let diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
+                let diffInDays = Math.floor((new Date(toSSTimestamp(new Date())) - historyDate) / (1000 * 60 * 60 * 24));
                 if (diffInDays < 0) diffInDays = 0;
 
                 cum[diffInDays] = historyItem;

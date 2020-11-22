@@ -27,7 +27,7 @@ import {
 import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
-import {getConfig, getMainPlayerId, setConfig} from "./plugin-config";
+import {getConfig, getMainPlayerId} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
@@ -41,11 +41,12 @@ import {
     getScoresByPlayerId,
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
-import {setRefreshedPlayerScores} from "./network/scoresaber/players";
+import {
+    setRefreshedPlayerScores,
+} from "./network/scoresaber/players";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber, round} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
-import {updateRankeds} from './network/scoresaber/rankeds'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -708,8 +709,6 @@ async function init() {
 
         // pre-warm config cache
         const config = await getConfig();
-
-        console.log(await updateRankeds()); return;
 
         // TODO: remove it after refactoring
         // const getLocalforageCache = async () => new Promise((resolve, reject) =>

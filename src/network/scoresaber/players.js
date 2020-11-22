@@ -1,16 +1,13 @@
 import {substituteVars} from "../../utils/format";
 import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
 import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
-import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
+import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
-    getActiveCountryPlayers,
     getManuallyAddedPlayersIds,
     getPlayerInfo,
-    getPlayerInfoFromPlayers,
     getPlayerRankedsScorePagesToUpdate,
-    getPlayers,
     getPlayerScorePagesToUpdate,
     getScoresByPlayerId,
     setSongScore,
@@ -21,144 +18,83 @@ import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
 import {getMainPlayerId} from "../../plugin-config";
-import {refreshSongCountryRanksCache} from "../../song";
+import {updateSongCountryRanks} from "../../song";
+import {parseSsFloat} from '../../scoresaber/other';
 import keyValueRepository from '../../db/repository/key-value'
+import playersRepository from '../../db/repository/players';
+import {db} from '../../db/db'
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
 export const getActivePlayersLastUpdate = async (refreshCache = false) => keyValueRepository().get('activePlayersLastUpdate', refreshCache)
 // TODO: get it from DB
 export const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
-export const convertPlayerInfo = info => {
-    const {
-        playerName,
-        playerId,
-        role,
-        badges,
-        permissions,
-        banned,
-        history,
-        ...playerInfo
-    } = info.playerInfo;
+export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId: playerId})).then(info => {
+    const {playerInfo: {playerId: id, playerName: name, avatar, rank, countryRank, pp, country, history, inactive, banned}} = info;
+    const weeklyDiff =  history ? (history.length >= 7 ? history[6] - history[0] : 0) : null;
+    return {
+        avatar,
+        country,
+        countryRank,
+        id,
+        inactive: !!inactive || !!banned,
+        name,
+        pp,
+        rank,
+        url: substituteVars(USER_PROFILE_URL, {userId: id}),
+        weeklyDiff,
+    };
+});
+export const fetchSsCountryRankPage = async (country, page = 1) =>
+  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+    .map(a => {
+        const tr = a.closest("tr");
+        const id = getFirstRegexpMatch(/\/(\d+)$/, a.href)
 
-    playerInfo.inactive = !!(playerInfo.inactive);
-
-    return Object.assign(
-        {
-            id: playerId,
-            name: playerName,
-            playerId,
-            playerName,
-            url: substituteVars(USER_PROFILE_URL, {
-                userId: playerId
-            }),
-            recentPlay: null,
-
-            userHistory: {},
-            scores: {}
-        },
-        playerInfo,
-        {stats: info.scoreStats}
-    );
-};
-export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId})).then(info => {
-    const history = info?.playerInfo?.history.split(',').reverse();
-    info.playerInfo.weeklyDiff =  history ? (history.length >= 7 ? history[6] - history[0] : 0) : null;
-    return info;
-})
-
-const updatePlayerInfo = async (info, players) => {
-    const player = getPlayerInfoFromPlayers(players, info.playerInfo.playerId);
-
-    const {recentPlay, scores, userHistory} = player ? player : {recentPlay: null, userHistory: {}, scores: {}};
-
-    if (!info.scoreStats || !player) {
-        const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
-        if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
-
-        return Object.assign({}, players[info.playerInfo.playerId] ?? {}, convertPlayerInfo(playerInfo), {
-            profileLastUpdated: new Date(),
-            recentPlay,
-            scores,
-            userHistory
-        });
-    }
-
-    return Object.assign({}, player ?? {}, info.playerInfo, info.scoreStats);
+        return {
+            avatar: tr.querySelector('td.picture img').src,
+            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
+            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+            id,
+            inactive: false,
+            name: a.querySelector('.songTop.pp').innerText,
+            pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue').innerText),
+            rank: null,
+            url: substituteVars(USER_PROFILE_URL, {userId: id}),
+            weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
+        }
+    });
+export const fetchSsCountryRanking = async (country, count = 50) => {
+    return (await Promise.all(
+      new Array(Math.ceil(count / PLAYERS_PER_PAGE)).fill(null)
+        .map(async (_, idx) => fetchSsCountryRankPage(country, idx + 1)),
+    ))
+      .reduce((cum, rankPage) => cum.concat(rankPage), [])
+      .slice(0, count);
 }
-export const updateActivePlayers = async (persist = true) => {
-    const data = await getCacheAndConvertIfNeeded();
-
-    const country = await getActiveCountry();
-
-    const previousCountryPlayersIds = (await getActiveCountryPlayers(country)).map(p => p.id);
-
-    // set all cached country players as inactive
-    if (data.users)
-        Object.keys(data.users).map(userId => {
-            if (data.users?.[userId]?.ssplCountryRank) {
-                data.users[userId].inactive = true;
-                data.users[userId].ssplCountryRank = null;
-            }
-        })
-
-    const page = 1;
-
+export const fetchCountryRanking = async (country, withMain = true, count = 50) => {
+    country = country ?? await getActiveCountry();
     const mainPlayerId = await getMainPlayerId();
+    const ssCountryRanking = country ? await fetchSsCountryRanking(country) : [];
+    const ssCountryRankingContainsMainPlayerId = ssCountryRanking.filter(p => mainPlayerId && p.id === mainPlayerId).length > 0;
+    const additionalPlayersIds = getAdditionalPlayers(country).concat(withMain && mainPlayerId && !ssCountryRankingContainsMainPlayerId ? [mainPlayerId] : []);
 
-    const countryPlayers =
-      Object.values(convertArrayToObjectByKey(
-        (await Promise.all(
-          (country
-              ? [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
-              : []
-          )
-            .map(a => {
-                  const tr = a.closest("tr");
+    return ssCountryRanking.concat(await Promise.all(additionalPlayersIds.map(async playerId => fetchPlayerInfo(playerId))))
+      .filter(player => !player.inactive)
+      .sort((a, b) => b.pp - a.pp)
+      .map((player, idx) => ({...player, ssplCountryRank: country ? {[country]: idx + 1} : null}))
+      .slice(0, 50);
+}
 
-                  return {
-                      playerInfo: {
-                          id                : getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                          name              : a.querySelector('.songTop.pp').innerText,
-                          playerId          : getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                          playerName        : a.querySelector('.songTop.pp').innerText,
-                          avatar            : tr.querySelector('td.picture img').src,
-                          countryRank       : parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
-                          pp                : parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
-                          country           : getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
-                          inactive          : false,
-                          weeklyDiff        : parseInt(tr.querySelector('td.diff').innerText, 10),
-                          profileLastUpdated: new Date()
-                      },
-                      scoreStats: {}
-                  }
-              }
-            )
-            .concat(getAdditionalPlayers(country).concat(mainPlayerId ? [mainPlayerId] : []).map(playerId => ({
-                playerInfo: {
-                    playerId,
-                    inactive: false
-                }
-            })))
-            .map(async info => updatePlayerInfo(info, data?.users))
-        )),
-        'id'
-      ))
-            .sort((a, b) => b.pp - a.pp)
-            .map((u, idx) => ({...u, ssplCountryRank: {[country]: idx + 1}}))
-            .slice(0, 50);
-
+export const updateActivePlayers = async () => {
+    const country = await getActiveCountry();
+    const countryPlayers = country ? await fetchCountryRanking(country) : [];
     const countryPlayersIds = countryPlayers.map(player => player.id);
 
     const manuallyAddedPlayers = await Promise.all(
-        (await getManuallyAddedPlayersIds(country))
-            .filter(playerId => !countryPlayersIds.includes(playerId))
-            .map(playerId => updatePlayerInfo({
-                playerInfo: {
-                    playerId,
-                    inactive: false
-                }
-            }, data?.users))
+      (await getManuallyAddedPlayersIds(country))
+        .filter(playerId => !countryPlayersIds.includes(playerId))
+        .map(async playerId => fetchPlayerInfo(playerId))
     );
 
     const allPlayers = {
@@ -166,32 +102,75 @@ export const updateActivePlayers = async (persist = true) => {
         ...convertArrayToObjectByKey(manuallyAddedPlayers, 'id')
     }
 
-    data.activePlayersLastUpdate = new Date().toISOString();
+    await db.runInTransaction(['players', 'players-history'], async tx => {
+        let cursor = await tx.objectStore('players').openCursor();
+        while (cursor) {
+            const dbPlayer = cursor.value;
+            const {lastUpdated, recentPlay} = dbPlayer;
 
-    data.users = {
-        ...data.users,
-        ...allPlayers
-    }
+            const fetchedPlayer = allPlayers[dbPlayer.id] ? allPlayers[dbPlayer.id] : {inactive: true, ssplCountryRank: null};
+            const {inactive, ssplCountryRank} = fetchedPlayer;
+
+            const player = {
+                ...dbPlayer,
+                ...fetchedPlayer,
+                inactive,
+                lastUpdated: lastUpdated ?? null,
+                recentPlay: recentPlay ?? null,
+                ssplCountryRank: ssplCountryRank ?? null,
+                profileLastUpdated: new Date(),
+            };
+
+            fetchedPlayer.processed = true;
+
+            await cursor.update(player);
+
+            cursor = await cursor.continue();
+        }
+
+        Object.values(allPlayers).filter(p => !p.processed).forEach(player => {
+            const {lastUpdated, recentPlay, ssplCountryRank} = player;
+
+            tx.objectStore('players').put({
+                ...player,
+                lastUpdated: lastUpdated ?? null,
+                recentPlay: recentPlay ?? null,
+                ssplCountryRank: ssplCountryRank ?? null,
+                profileLastUpdated: new Date(),
+            })
+        });
+
+        // remove all today's history
+        const timestamp = new Date(toSSTimestamp(new Date()));
+        cursor = await tx.objectStore('players-history').index('players-history-timestamp').openCursor(timestamp);
+        while (cursor) {
+            await cursor.delete();
+
+            cursor = await cursor.continue();
+        }
+
+        // update today's history
+        Object.values(allPlayers).forEach(player => {
+            const {countryRank, id, pp, ssplCountryRank} = player;
+
+            tx.objectStore('players-history').put({
+                countryRank,
+                playerId: id,
+                pp,
+                ssplCountryRank,
+                timestamp
+            });
+        });
+    });
+
+    // clear all players cache
+    playersRepository().flushCache();
 
     if (country) {
-        const removedPlayers = previousCountryPlayersIds.filter(playerId => !countryPlayersIds.includes(playerId));
-        const newPlayers = countryPlayersIds.filter(playerId => !previousCountryPlayersIds.includes(playerId));
-        const changedPlayers = newPlayers.concat(removedPlayers);
-
-        const players = await getPlayers();
-        const leaderboardIds = [...new Set(
-            Object.values(players ?? {})
-                .filter(player => player && player.id && changedPlayers.includes(player.id))
-                .map(player => Object.keys(player.scores))
-                .filter(s => s && s.length)
-                .reduce((cum, ids) => cum.concat(ids), [])
-        )];
-        await refreshSongCountryRanksCache(leaderboardIds);
+        await updateSongCountryRanks();
     }
 
-    if (persist) {
-        await setCache(data);
-    }
+    await keyValueRepository().set(new Date(), 'activePlayersLastUpdate');
 
     eventBus.publish('active-players-updated', {nodeId: nodeSync.getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
 
@@ -284,7 +263,7 @@ export const getPlayerWithUpdatedScores = async (playerId, progressCallback = nu
         leaderboardIdsToRefresh = leaderboardIdsToRefresh.concat(Object.keys(updatedPlayerScores));
     }
 
-    await refreshSongCountryRanksCache(leaderboardIdsToRefresh);
+    await updateSongCountryRanks(leaderboardIdsToRefresh);
 
     return player;
 }

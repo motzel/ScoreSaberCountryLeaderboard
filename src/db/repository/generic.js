@@ -1,12 +1,14 @@
 import cache from '../cache';
 import {db} from '../db';
 
-const ALL_KEY = '__ALL';
+export const ALL_KEY = '__ALL';
 const NONE_KEY = '__NONE';
 
 // TODO: add cache tags support for easier cache invalidation
 export default (storeName, inlineKeyName = undefined) => {
   let repositoryCache = cache();
+
+  const getCacheKeyFor =  (query, count, indexName) => (indexName ? indexName : ALL_KEY) + '-' + (query ? query : NONE_KEY) + '-' + (count ? count : ALL_KEY);
 
   const getCachedKeys = _ => repositoryCache.getKeys();
 
@@ -15,33 +17,35 @@ export default (storeName, inlineKeyName = undefined) => {
   const flushCache = () => repositoryCache.flush();
 
   const get = async (key, refreshCache = false) => {
-    if (refreshCache) repositoryCache.forget(key);
+    const cacheKey = getCacheKeyFor(key);
 
-    return repositoryCache.get(key, async () => db.get(storeName, key));
+    if (refreshCache) repositoryCache.forget(cacheKey);
+
+    return repositoryCache.get(cacheKey, async () => db.get(storeName, key));
   };
 
   const getFromIndex = async (indexName, query, refreshCache = false) => {
-    const key = indexName + '-' + (query ? query : NONE_KEY);
+    const cacheKey = getCacheKeyFor(query, undefined, indexName);
 
-    if (refreshCache) repositoryCache.forget(key);
+    if (refreshCache) repositoryCache.forget(cacheKey);
 
-    return repositoryCache.get(key, async () => db.getFromIndex(storeName, indexName, query));
+    return repositoryCache.get(cacheKey, async () => db.getFromIndex(storeName, indexName, query));
   };
 
   const getAll = async(query = undefined, count = undefined, refreshCache = false) => {
-    const key = (query ? query : ALL_KEY) + '-' + (count ? count : ALL_KEY)
+    const cacheKey = getCacheKeyFor(query, count);
 
-    if (refreshCache) repositoryCache.forget(key);
+    if (refreshCache) repositoryCache.forget(cacheKey);
 
-    return repositoryCache.get(key, async () => db.getAll(storeName, query, count));
+    return repositoryCache.get(cacheKey, async () => db.getAll(storeName, query, count));
   }
 
   const getAllFromIndex = async(indexName, query = undefined, count = undefined, refreshCache = false) => {
-    const key = indexName + '-' + (query ? query : ALL_KEY) + '-' + (count ? count : ALL_KEY)
+    const cacheKey = getCacheKeyFor(query, count, indexName);
 
-    if (refreshCache) repositoryCache.forget(key);
+    if (refreshCache) repositoryCache.forget(cacheKey);
 
-    return repositoryCache.get(key, async () => db.getAllFromIndex(storeName, indexName, query, count));
+    return repositoryCache.get(cacheKey, async () => db.getAllFromIndex(storeName, indexName, query, count));
   }
 
   const set = async (value, key) => {
@@ -53,13 +57,13 @@ export default (storeName, inlineKeyName = undefined) => {
       await db.put(storeName, value, inlineKeyName ? undefined : key);
     }
 
-    return repositoryCache.set(inlineKeyName ? value[inlineKeyName] : key, value);
+    return repositoryCache.set(getCacheKeyFor(inlineKeyName ? value[inlineKeyName] : key), value);
   }
 
   const del = async key => {
     await db.delete(storeName, key);
 
-    return repositoryCache.forget(key);
+    return repositoryCache.forget(getCacheKeyFor(key));
   }
 
   const deleteObject = async obj => {
@@ -70,5 +74,7 @@ export default (storeName, inlineKeyName = undefined) => {
     return del(obj[inlineKeyName]);
   }
 
-  return {get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, flushCache, forgetCachedKey, getCachedKeys};
+  const openCursor = async (mode = 'readonly') => db.transaction(storeName, mode).store.openCursor();
+
+  return {get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, flushCache, forgetCachedKey, getCachedKeys, getCacheKeyFor};
 };

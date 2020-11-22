@@ -76,6 +76,8 @@ async function openDatabase(cache = null) {
             // no autoIncrement, no keyPath - key must be provided
             db.createObjectStore('key-value');
 
+            db.createObjectStore('cache');
+
             const groups = db.createObjectStore('groups', {keyPath: '_idbId', autoIncrement: true});
             groups.createIndex('groups-name', 'name', {unique: false});
             groups.createIndex('groups-playerId', 'playerId', {unique: false});
@@ -108,6 +110,9 @@ async function openDatabase(cache = null) {
     const getCurrentTransaction = () => _currentTransaction;
     const getTransactionMode = () => _currentTransaction?.mode ?? null;
     const getTransactionStores = () => [..._currentTransaction?.objectStoreNames ?? []];
+
+    // Closure code should awaits DB operations ONLY or fail
+    // https://github.com/jakearchibald/idb#user-content-transaction-lifetime
     const runInTransaction = async (objectStores, closure, mode = 'readwrite', options = {durability: 'strict'}) => {
       try {
         if (_currentTransaction) return Promise.reject('Another transaction in progress');

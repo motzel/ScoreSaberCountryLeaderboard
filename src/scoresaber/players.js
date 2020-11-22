@@ -37,12 +37,10 @@ export const getCountryRanking = async (country) => {
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
 
 export const getPlayers = async (refreshCache = false) => playersRepository().getAll(undefined, undefined, refreshCache);
-export const getPlayersFromData = data => data?.users ? data.users : null;
 
 export const getPlayerInfo = async (playerId, refreshCache = false) => await playersRepository().get(playerId, refreshCache) ?? null;
 export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
 export const getAllPlayersHistory = async query => await playersHistoryRepository().getAllFromIndex('players-history-timestamp', query) ?? [];
-export const getPlayerInfoFromData = (data, playerId) => getPlayersFromData(data)?.[playerId] ? getPlayersFromData(data)[playerId] : null;
 export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerId] ? players[playerId] : null;
 
 export const getPlayerLastUpdated = async playerId => (await getPlayerInfo(playerId))?.lastUpdated ?? null;
@@ -134,6 +132,7 @@ export const getPlayerAvatarUrl = async playerId => {
 
 export const getPlayerScores = player => player?.scores ? player.scores : null;
 
+export const getAllScores = async () => scoresRepository().getAll();
 export const getScoresByPlayerId = async (playerId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-playerId', playerId, undefined, refreshCache);
 export const getAllScoresSince = async sinceDate => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
 export const getAllScoresWithPpOver = async minPp => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined);
