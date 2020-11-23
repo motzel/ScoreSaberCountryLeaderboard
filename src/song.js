@@ -94,7 +94,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const countryPlayersIds = await getActiveCountryPlayersIds(country, true, true);
 
   const ssplCountryRanks = await getSsplCountryRanks();
-  const shouldProcessAllLeaderboards = isEmpty(ssplCountryRanks);
+  const shouldProcessAllLeaderboards = isEmpty(ssplCountryRanks) || !onlyLeaderboardsIds;
 
   const scores = (await getAllScores() ?? [])
     .filter(score => score.score && countryPlayersIds.includes(score.playerId) && (
