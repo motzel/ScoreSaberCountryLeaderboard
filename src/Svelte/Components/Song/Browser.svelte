@@ -57,6 +57,7 @@
     import Icons from "./Icons.svelte";
     import ScoreRank from "../Common/ScoreRank.svelte";
     import {refreshPlayerScoreRank} from "../../../network/scoresaber/players";
+    import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
 
     export let playerId;
     export let snipedIds = [];
@@ -679,7 +680,7 @@
     const playerIsNotTheBest = (leaderboardId, series, playerHasScore = false) => (!getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best) && (!playerHasScore || !!getSeriesSong(leaderboardId, series))
     const countryRankPassesCondition = (leaderboardId, series, rankToCompare, rankCondition = '>=') => {
         const songScore = getSeriesSong(leaderboardId, series);
-        if (!songScore || !songScore.countryRank) return false;
+        if (!songScore || !songScore.countryRank) return true;
 
         const rank = songScore.countryRank;
 
@@ -974,6 +975,8 @@
 
             const playersInfos = await getPlayersInfosForCurrentlySelected(false, true);
 
+            const ssplCountryRanksCache = await getSsplCountryRanks();
+
             const playersSeries = await Promise.all(playersInfos
               .map(async pInfo => {
                   const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
@@ -996,9 +999,12 @@
                                 const {id, name, songAuthorName, levelAuthorName, diff, maxScoreEx, playerId, ...score} = s;
                                 score.timeset = dateFromString(s.timeset);
 
+                                score.ssplCountryRank = ssplCountryRanksCache[score.leaderboardId] && ssplCountryRanksCache[score.leaderboardId][playerInfo.id]
+                                 ? ssplCountryRanksCache[score.leaderboardId][playerInfo.id]
+                                 : null;
                                 score.countryRank = country && score.ssplCountryRank && score.ssplCountryRank[country]
-                                        ? score.ssplCountryRank[country].rank
-                                        : null;
+                                 ? score.ssplCountryRank[country].rank
+                                 : null;
 
                                 if (score.pp > 0 && !score.weightedPp) {
                                     score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);

@@ -2,6 +2,7 @@ import {convertFromLocalForage, fetchLocalForageData} from './convert-localforag
 import {openDB} from 'idb'
 import log from '../utils/logger'
 import {isDateObject} from '../utils/js'
+import {updateSongCountryRanks} from '../song'
 
 const SSPL_DB_VERSION = 2;
 export let db = null;
@@ -22,9 +23,14 @@ export default async () => {
 
 async function openDatabase(cache = null) {
   try {
+    let dbNewVersion = 0, dbOldVersion = 0;
+
     db = await openDB('sspl', SSPL_DB_VERSION, {
       async upgrade(db, oldVersion, newVersion, transaction) {
         log.info(`Converting database from version ${oldVersion} to version ${newVersion}`);
+
+        dbNewVersion = newVersion;
+        dbOldVersion = oldVersion;
 
         switch (newVersion) {
           case 2:
@@ -141,6 +147,11 @@ async function openDatabase(cache = null) {
     }
     db.getCurrentTransaction = getCurrentTransaction;
     db.runInTransaction = runInTransaction;
+
+    if (dbNewVersion === 2 && dbOldVersion !== dbNewVersion) {
+      log.info("Create country ranks cache");
+      await updateSongCountryRanks();
+    }
 
     return db;
   }

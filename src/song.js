@@ -2,15 +2,17 @@ import {capitalize, convertArrayToObjectByKey, isEmpty} from "./utils/js";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
-    getActiveCountryPlayers, getActiveCountryPlayersIds,
-    getAllActivePlayers, getAllScores,
-    getFriends,
-    getPlayerSongScore,
+  getActiveCountryPlayers,
+  getActiveCountryPlayersIds,
+  getAllActivePlayers,
+  getAllScores,
+  getFriends,
 } from "./scoresaber/players";
 import {getActiveCountry} from "./scoresaber/country";
-import {getCacheAndConvertIfNeeded} from "./store";
 import scoresRepository from './db/repository/scores'
-import cacheRepository from './db/repository/cache';
+import {getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
+import eventBus from './utils/broadcast-channel-pubsub'
+import nodeSync from './network/multinode-sync'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -91,8 +93,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const country = await getActiveCountry();
   const countryPlayersIds = await getActiveCountryPlayersIds(country, true, true);
 
-  const SSPL_RANKS_CACHE_KEY = 'ssplCountryRanks'
-  const ssplCountryRanks = await cacheRepository().get(SSPL_RANKS_CACHE_KEY) ?? {};
+  const ssplCountryRanks = await getSsplCountryRanks();
   const shouldProcessAllLeaderboards = isEmpty(ssplCountryRanks);
 
   const scores = (await getAllScores() ?? [])
@@ -117,7 +118,10 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
     ;
   });
 
-  await cacheRepository().set(ssplCountryRanks, SSPL_RANKS_CACHE_KEY);
+
+  await setSsplCountryRanks(ssplCountryRanks);
+
+  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync.getId(), ssplCountryRanks});
 
   return ssplCountryRanks;
 }

@@ -15,6 +15,8 @@
 
     import {getScoresByPlayerId} from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
+    import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
+    import Value from '../Common/Value.svelte'
 
     export let profile;
 
@@ -37,11 +39,11 @@
             {_key: 'dashboard.periods.lastHalfYear', value: 182},
             {_key: 'dashboard.periods.lastYear', value: 365},
             {_key: 'dashboard.periods.all', value: ALL},
-        ]
+        ],
     }
 
     let values = {
-        selectedPeriod: strings.periods.find(p => p.value === ALL)
+        selectedPeriod: strings.periods.find(p => p.value === ALL),
     }
 
     function translateAllStrings() {
@@ -63,6 +65,12 @@
         {name: 'A', min: null, max: 80, value: 0, color: diffColors.easy},
     ];
 
+    let ssplCountryRanksCache = {};
+
+    let initialized = false;
+
+    const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
+
     onMount(async () => {
         if (profile) {
             playerScores = await getScoresByPlayerId(profile.id);
@@ -75,25 +83,45 @@
 
         if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
 
+        // TODO: refresh when changed
+        await refreshSsplCountryRanksCache();
+
         // TODO: reload profile page for now, try to do it to be more dynamic
         const dataRefreshed = eventBus.on('data-refreshed', ({nodeId}) => window.location.reload());
-
         const playerTwitchLinked = eventBus.on('player-twitch-linked', async () => window.location.reload());
+
+        const ssplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => refreshSsplCountryRanksCache());
+
+        initialized = true;
 
         return () => {
             dataRefreshed();
             playerTwitchLinked();
+            ssplCountryRanksCacheUpdated();
         }
     })
 
     function getPlayerStats(scores, country) {
+        if (!initialized) return;
+
         badgesDef.forEach(badge => {
             badge.value = 0;
             badge.title = !badge.min ? '< ' + badge.max + '%' : (!badge.max ? '> ' + badge.min + '%' : badge.min + '% - ' + badge.max + '%');
         });
 
-        let stats = {badges: badgesDef, totalAcc: 0, totalScore: 0, avgAcc: 0, playCount: scores.length, medianAcc:
-             0, stdDeviation: 0, avgRank: null, totalRank: 0};
+        let stats = {
+            badges: badgesDef,
+            totalAcc: 0,
+            totalScore: 0,
+            avgAcc: 0,
+            playCount: scores.length,
+            medianAcc: 0,
+            stdDeviation: 0,
+            bestRank: null,
+            bestRankCnt: 0,
+            avgRank: null,
+            totalRank: 0,
+        };
 
         if (!scores || !scores.length) return stats;
 
@@ -105,16 +133,21 @@
             cum.totalScore += s.uScore ? s.uScore : s.score;
             cum.totalAcc += s.acc;
 
-            cum.totalRank += country && s.ssplCountryRank && s.ssplCountryRank[country] && s.ssplCountryRank[country].rank
-             ? s.ssplCountryRank[country].rank
-             : 0;
+            const ssplCountryRank = country && ssplCountryRanksCache[s.leaderboardId] && ssplCountryRanksCache[s.leaderboardId][s.playerId] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country];
+            cum.totalRank += ssplCountryRank ? ssplCountryRank.rank : 0;
+
+            if (cum.bestRank === null || (ssplCountryRank && ssplCountryRank.rank <= cum.bestRank)) {
+                if (cum.bestRank === null || ssplCountryRank.rank < cum.bestRank) cum.bestRankCnt = 1; else cum.bestRankCnt += 1;
+
+                cum.bestRank = ssplCountryRank.rank;
+            }
 
             cum.badges.forEach(badge => {
                 if ((!badge.min || badge.min <= s.acc) && (!badge.max || badge.max > s.acc)) badge.value++;
             })
 
             return cum;
-        }, {badges: badgesDef, totalAcc: 0, totalScore: 0, totalRank: 0, avgAcc: 0, playCount: scores.length})
+        }, {...stats})
 
         stats.medianAcc = (scores.sort((a, b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc;
         stats.avgAcc = stats.totalAcc / scores.length;
@@ -128,12 +161,12 @@
     }
 
     $: allRankedScores = playerScores
-      ? playerScores.filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
-      : [];
+     ? playerScores.filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
+     : [];
 
     $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - timestampFromString(s.timeset) <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
 
-    $: stats = getPlayerStats(filteredScores, country);
+    $: stats = getPlayerStats(filteredScores, country, ssplCountryRanksCache, initialized);
 
     $: {
         translateAllStrings($_);
@@ -145,7 +178,10 @@
         <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
     </ProfileLine>
     {#if country}
-    <ProfileLine label={$_.profile.stats.avgCountryRank} value={stats.avgRank} precision={2} prefix="#" />
+    <ProfileLine label={$_.profile.stats.countryRank} noValue="">
+        {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />),
+        {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
+    </ProfileLine>
     {/if}
     <ProfileLine label={$_.profile.stats.totalRankedScore} value={stats.totalScore} precision={0}/>
     <ProfileLine label={$_.profile.stats.avgRankedAccuracy} value={stats.avgAcc} suffix="%"/>
