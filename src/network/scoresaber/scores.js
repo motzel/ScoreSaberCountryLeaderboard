@@ -5,16 +5,13 @@ import {dateFromString} from "../../utils/date";
 import queue from "../queue";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import {parseSsUserScores} from '../../scoresaber/scores'
+import {extractDiffAndType} from '../../song'
 
 export const fetchRecentScores = async (userId, page = 1, rateLimitCallback = null, ...leaderboards) =>
     fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page, rateLimitCallback).then((s) =>
         s && s.scores
             ? s.scores
-                .filter(
-                    (s) =>
-                        !leaderboards.length ||
-                        leaderboards.includes(s.leaderboardId)
-                )
+                .filter(s => !leaderboards.length || leaderboards.includes(s.leaderboardId))
                 .map(s => ({
                     scoreId: s.scoreId,
                     leaderboardId: s.leaderboardId,
@@ -22,16 +19,15 @@ export const fetchRecentScores = async (userId, page = 1, rateLimitCallback = nu
                     uScore: s.unmodififiedScore,
                     mods: s.mods,
                     playerId: userId,
-                    timeset: s.timeSet,
+                    timeset: dateFromString(s.timeSet),
                     pp: s.pp,
                     weight: s.weight,
-                    id: s.songHash,
-                    name: s.songName,
-                    songSubName: s.songSubName,
+                    hash: s.songHash,
+                    name: s.songName + (s.songSubName && s.songSubName.length ? ' ' + s.songSubName : ''),
                     songAuthorName: s.songAuthorName,
                     levelAuthorName: s.levelAuthorName,
                     diff: s.difficultyRaw,
-                    difficulty: s.difficulty,
+                    diffInfo: extractDiffAndType(s.difficultyRaw),
                     maxScoreEx: s.maxScore,
                     rank: s.rank,
                     lastUpdated: new Date(),
@@ -45,12 +41,13 @@ let stopFetchingScores = false;
 eventBus.on('stop-fetching-scores-cmd', () => {stopFetchingScores = true;});
 
 export async function fetchAllNewScores(
-    user,
+    player,
     lastUpdated = null,
     progressCallback = null
 ) {
     let allScores = {
-        lastUpdated,
+        lastUpdated: new Date(),
+        recentPlay: null,
         scores: {}
     };
 
@@ -64,8 +61,8 @@ export async function fetchAllNewScores(
         }
 
         const progressInfo = {
-            id: user.id,
-            name: user.name,
+            id: player.id,
+            name: player.name,
             page: page,
             total: null
         };
@@ -74,7 +71,7 @@ export async function fetchAllNewScores(
 
         let scorePage;
         try {
-            scorePage = await fetchRecentScores(user.id, page, (time) => {
+            scorePage = await fetchRecentScores(player.id, page, (time) => {
                 if (progressCallback) progressCallback(Object.assign({}, progressInfo, {wait: time}))
             });
         }
@@ -93,7 +90,7 @@ export async function fetchAllNewScores(
             const scoreTimeset = dateFromString(scorePage[i].timeset);
             if (lastUpdated && scoreTimeset <= lastUpdated) {
                 // remember most recent play time
-                if (recentPlay) allScores.lastUpdated = recentPlay;
+                if (recentPlay) allScores.recentPlay = recentPlay;
 
                 return allScores;
             }
@@ -102,12 +99,12 @@ export async function fetchAllNewScores(
         }
 
         // remember most recent play time
-        if (recentPlay) allScores.lastUpdated = recentPlay;
+        if (recentPlay) allScores.recentPlay = recentPlay;
 
         if (scorePage.length < 8) break;
     }
 
-    allScores.lastUpdated = recentPlay;
+    allScores.recentPlay = recentPlay;
 
     return allScores;
 }

@@ -18,7 +18,6 @@
     import {getLeaderboard} from "../../../song";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
-    import {getCacheAndConvertIfNeeded} from "../../../store";
     import {_} from '../../stores/i18n';
 
     export let leaderboardId;
@@ -55,7 +54,7 @@
 
         const refresh = async nodeId => refreshLeaderboard(nodeId !== nodeSync.getId());
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
+        const playerScoresUpdatedHandler = debounce(async ({nodeId, playerId}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
 
         return () => {

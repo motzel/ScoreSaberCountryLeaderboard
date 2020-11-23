@@ -4,6 +4,7 @@
     import nodeSync from '../../../network/multinode-sync';
     import debounce from '../../../utils/debounce';
     import {
+        flushScoresCache,
         getAllActivePlayers, getAllActivePlayersIds,
         getAllScoresSince,
         getAllScoresWithPpOver,
@@ -76,13 +77,12 @@
 
     onMount(async () => {
         const refresh = async nodeId => {
-            // TODO: forget cache
-            // if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
-            // await refreshScores();
+            if (nodeId !== nodeSync.getId()) flushScoresCache();
+            await refreshScores();
         }
 
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
+        const playerScoresUpdatedHandler = debounce(async ({nodeId, playerId}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
 
         return () => {

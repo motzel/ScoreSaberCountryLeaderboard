@@ -53,7 +53,7 @@ const enqueuePlayerScores = async (queue, playerId, force = false, then = null, 
         const mergedMetadata = {type: TYPES.PLAYER_SCORES, nodeId: nodeSync.getId(), playerId, ...metadata};
         queue.add(
             async () => await updatePlayerScores(
-                playerId, true, true,
+                playerId, true,
                 info => {
                     const {id, ...rest} = info;
                     eventBus.publish('bg-download-progress', {size: queue.size() + 1, label: QUEUE_LABEL, ...mergedMetadata, ...rest})

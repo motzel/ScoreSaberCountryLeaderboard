@@ -21,7 +21,3 @@ export function getThemeFromFastCache() {
 export function setThemeInFastCache(theme) {
     return window.localStorage.setItem(THEME_KEY, theme);
 }
-
-export function setCache() {
-    console.trace('setCache() should NOT be used anymore');
-}

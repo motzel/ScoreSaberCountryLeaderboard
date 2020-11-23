@@ -1,7 +1,6 @@
 <script>
 	import {onMount} from "svelte";
 	import eventBus from '../../../utils/broadcast-channel-pubsub';
-	import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
 	import {_, trans} from "../../stores/i18n";
 	import {getActiveCountry} from "../../../scoresaber/country";
 

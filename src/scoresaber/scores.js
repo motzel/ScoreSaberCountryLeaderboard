@@ -1,5 +1,6 @@
 import {parseSsFloat, parseSsInt} from './other'
 import {getFirstRegexpMatch} from '../utils/js'
+import {getDiffAndTypeFromOnlyDiffName} from '../song'
 
 export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.ranking tbody tr')].map(tr => {
   let ret = {tr};
@@ -66,15 +67,16 @@ export const parseSsUserScores = doc => [...doc.querySelectorAll('table.ranking 
   ret.songImg = img ? img.src : null;
 
   const imgMatch = img ? img.src.match(/([^\/]+)\.(jpg|jpeg|png)$/) : null;
-  ret.id = imgMatch ? imgMatch[1] : null;
+  ret.hash = imgMatch ? imgMatch[1] : null;
 
   const songPp = tr.querySelector('th.song a .songTop.pp');
   const songMatch = songPp ? songPp.innerHTML.match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
   if (songMatch) {
     ret.songName = songMatch[1];
     ret.songDiff = songMatch[2];
+    ret.diffInfo = getDiffAndTypeFromOnlyDiffName(ret.songDiff);
   } else {
-    ret = Object.assign(ret, {songName: null, songDiff: null});
+    ret = Object.assign(ret, {songName: null, songDiff: null, diffInfo: null});
   }
 
   const songMapper = tr.querySelector('th.song a .songTop.mapper');

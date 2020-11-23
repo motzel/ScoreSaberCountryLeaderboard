@@ -399,8 +399,8 @@
         initialized = true;
 
         const profileExists = !!(await getPlayerInfo(profileId));
-        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
-            if (!profileExists && player && player.id === profileId) {
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => {
+            if (!profileExists && playerId === profileId) {
                 // TODO: reload profile page for now, try to do it to be more dynamic
                 window.location.reload();
             }

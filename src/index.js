@@ -41,9 +41,7 @@ import {
     getScoresByPlayerId,
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
-import {
-    setRefreshedPlayerScores,
-} from "./network/scoresaber/players";
+import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber, round} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
@@ -313,7 +311,7 @@ async function setupProfile() {
         if (songEnhanceEnabled && !autoTransformEnabled) {
             try {
                 const maxSongScore = await getSongMaxScoreWithDiffAndType(
-                  leaderboard?.hash ? leaderboard.hash : s.id,
+                  leaderboard?.hash ? leaderboard.hash : s.hash,
                   leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
                 );
 
@@ -665,8 +663,7 @@ async function setupDelayed() {
         await setupProfile();
     }
 
-    // TODO: enable it when new DB methods would be implemented
-    // await initDownloadManager();
+    await initDownloadManager();
 }
 
 function rafAsync() {
@@ -709,35 +706,6 @@ async function init() {
 
         // pre-warm config cache
         const config = await getConfig();
-
-        // TODO: remove it after refactoring
-        // const getLocalforageCache = async () => new Promise((resolve, reject) =>
-        //   window.localforage.getItem('sspl_users', function (err, value) {
-        //       resolve(value);
-        //   })
-        // );
-        // const oldData = await getLocalforageCache()
-        // console.log(oldData);
-
-        // config.songBrowser.autoTransform = false;
-        // await setConfig(config);
-
-        // const player = await db.get('players', '76561198035381239')
-        // console.log(player);
-
-        // console.time("sspl get");
-        // console.log(await db.get('leaderboards', 220734));
-        // console.timeLog("sspl get", "Leaderboard GET");
-        // console.log(await db.getAllFromIndex('leaderboards', 'leaderboards-status', 'ranked'));
-        // console.timeLog("sspl get", "Leaderboard by index GET (rankeds)");
-        // console.log(convertArrayToObjectByKey(await db.getAll('leaderboards'), 'leaderboardId'));
-        // console.timeLog("sspl get", "Leaderboard GET (all)");
-        // const scores = (await db.getAllFromIndex('scores', 'scores-playerId', '76561198035381239x'))
-        // // const scores = (await db.getAll('scores'))
-        //   .filter(s => !s.acc && cache.beatSaver.hashes[s.hash]);
-        // console.log(scores);
-        // console.timeLog("sspl get", "Player scores GET (76561198035381239)");
-        // console.timeEnd("sspl get");
 
         // reload page when data was imported
         eventBus.on('data-imported', () => window.location.reload());

@@ -1,6 +1,7 @@
 import download from './download';
 import {getCacheAndConvertIfNeeded} from "../store";
 
+// TODO:
 export default async (filename = 'sspl-export-'+(new Date()).toISOString().replace(/:/g, '_')+'.json') => {
 	const data = await getCacheAndConvertIfNeeded();
 	if (data?.twitch?.token) data.twitch.token = null;

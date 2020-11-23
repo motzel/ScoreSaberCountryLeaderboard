@@ -36,6 +36,7 @@ export const getCountryRanking = async (country) => {
 
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
 
+export const flushPlayersCache = () => playersRepository().flushCache();
 export const getPlayers = async (refreshCache = false) => playersRepository().getAll(undefined, undefined, refreshCache);
 
 export const getPlayerInfo = async (playerId, refreshCache = false) => await playersRepository().get(playerId, refreshCache) ?? null;
@@ -132,6 +133,7 @@ export const getPlayerAvatarUrl = async playerId => {
 
 export const getPlayerScores = player => player?.scores ? player.scores : null;
 
+export const flushScoresCache = () => scoresRepository().flushCache();
 export const getAllScores = async () => scoresRepository().getAll();
 export const getScoresByPlayerId = async (playerId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-playerId', playerId, undefined, refreshCache);
 export const getAllScoresSince = async sinceDate => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
@@ -187,17 +189,17 @@ export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null
 }
 
 const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
-    const songsChangedAfterPreviousUpdate = await getRankedsChangesSince(previousLastUpdated);
+    const songsChangedAfterPreviousUpdate = await getRankedsChangesSince(previousLastUpdated.getTime());
 
     // check all song changed after previous update
     return Object.keys(songsChangedAfterPreviousUpdate).reduce((cum, leaderboardId) => {
         // skip if the player didn't play the song
         if (!scores[leaderboardId]) return cum;
 
-        const songLastPlayTimestamp = timestampFromString(scores[leaderboardId].timeset);
+        const songLastPlay = scores[leaderboardId]?.timeset;
 
         // skip if song was played AFTER previous update (because all new scores were downloaded with current update, changed or not)
-        if (songLastPlayTimestamp && songLastPlayTimestamp > previousLastUpdated) return cum;
+        if (songLastPlay && songLastPlay > previousLastUpdated) return cum;
 
         // mark song to update
         cum.push(parseInt(leaderboardId, 10));

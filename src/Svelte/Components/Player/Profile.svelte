@@ -136,7 +136,7 @@
             const ssplCountryRank = country && ssplCountryRanksCache[s.leaderboardId] && ssplCountryRanksCache[s.leaderboardId][s.playerId] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country];
             cum.totalRank += ssplCountryRank ? ssplCountryRank.rank : 0;
 
-            if (cum.bestRank === null || (ssplCountryRank && ssplCountryRank.rank <= cum.bestRank)) {
+            if (ssplCountryRank && (cum.bestRank === null || ssplCountryRank.rank <= cum.bestRank)) {
                 if (cum.bestRank === null || ssplCountryRank.rank < cum.bestRank) cum.bestRankCnt = 1; else cum.bestRankCnt += 1;
 
                 cum.bestRank = ssplCountryRank.rank;

@@ -5,7 +5,6 @@
     import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
     import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
-    import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {
         addToDate,
         dateFromString,
@@ -22,7 +21,7 @@
         getCountryRanking,
         getPlayerInfo,
         getRankedScoresByPlayerId, getPlayers,
-        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer
+        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer, flushScoresCache,
     } from "../../../scoresaber/players";
     import {
         extractDiffAndType, getAccFromScore,
@@ -369,7 +368,7 @@
     }
 
     const generateRefreshTag = async (refreshCache = false) => {
-        const playerInfos = await getPlayersInfosForCurrentlySelected(refreshCache);
+        const playerInfos = await getPlayersInfosForCurrentlySelected(refreshCache, false);
 
         const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '')
 
@@ -397,8 +396,8 @@
                 enabled: true
             });
 
-        const userIds = [playerId].concat(snipedIds);
-        const playersInfos = await getPlayersInfosForCurrentlySelected();
+        const playersIds = getCurrentlySelectedPlayersIds();
+        const playersInfos = await getPlayersInfosForCurrentlySelected(false, false);
         if (playersInfos.length) {
             playersInfos.forEach((playerInfo, idx) => {
                 const name = playerInfo ? playerInfo.name : null;
@@ -443,7 +442,7 @@
                     })
 
                     if (newFields.length) {
-                        if (userIds.length > 1) types.push({label: name, type: 'label'})
+                        if (playersIds.length > 1) types.push({label: name, type: 'label'})
                         types = types.concat(newFields);
                     }
                 }
@@ -607,16 +606,18 @@
           .filter(u => u.id !== playerId)
         ;
 
-        const forceRefresh = async (nodeId, player) => {
+        const forceRefresh = async (nodeId, updatedPlayerId) => {
             // return if not relevant for current dataset
-            if (!player || !player.id || !playerId || ![playerId].concat(snipedIds).includes(player.id)) return;
+            if (!updatedPlayerId || !getCurrentlySelectedPlayersIds().includes(updatedPlayerId)) return;
+
+            if (nodeId !== nodeSync.getId()) flushScoresCache();
 
             await generateRefreshTag(nodeId !== nodeSync.getId());
         }
 
         await updateViewUpdatesConfig();
 
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, player}) => await forceRefresh(nodeId, player));
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => await forceRefresh(nodeId, playerId));
         const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);
 
         initialized = true;

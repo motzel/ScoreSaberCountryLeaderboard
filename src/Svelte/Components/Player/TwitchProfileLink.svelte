@@ -8,7 +8,6 @@
 	import Button from "../Common/Button.svelte";
 	import Modal from '../Common/Modal.svelte';
 	import {getPlayerInfo} from "../../../scoresaber/players";
-	import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
 
 	export let profileId;
 	export let twitchLogin;

@@ -5,8 +5,7 @@
     import Button from '../Common/Button.svelte';
     import FormattedDate from '../Common/FormattedDate.svelte';
 
-    import {getCacheAndConvertIfNeeded, setCache, lastUpdated as getAnyLastUpdated} from '../../../store';
-    import queue from "../../../network/queue";
+    import {lastUpdated as getAnyLastUpdated} from '../../../store';
     import {escapeHtml} from '../../../utils/js';
     import log from '../../../utils/logger';
 
@@ -18,7 +17,7 @@
     import {dateFromString} from "../../../utils/date";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import {getPlayerLastUpdated} from "../../../scoresaber/players";
+    import {flushPlayersCache, getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
     import nodeSync from '../../../network/multinode-sync';
 
@@ -31,7 +30,6 @@
     export let forceShowProgress = false;
     export let showLastDownloaded = true;
     export let refreshLabel = "";
-    export let persistEachDl = false;
 
     let stateObj = {
         started: false,
@@ -90,10 +88,10 @@
             await setLastRefreshDate();
         })
 
-        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, player}) => {
-            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => {
+            if (nodeId !== nodeSync.getId()) flushPlayersCache();
 
-            if (player && player.id === profileId) {
+            if (playerId === profileId) {
                 await setLastRefreshDate();
             }
         })
@@ -116,7 +114,7 @@
             const playerLastUpdated = await getPlayerLastUpdated(profileId);
             if (playerLastUpdated) $lastUpdatedState = dateFromString(playerLastUpdated);
         } else {
-            getAnyLastUpdated().then(d => $lastUpdatedState = dateFromString(d));
+            getAnyLastUpdated(true).then(d => $lastUpdatedState = dateFromString(d));
         }
     }
 
@@ -164,7 +162,6 @@
         for(let idx = 0; idx < activePlayers.length; idx++) {
             await updatePlayerScores(
                 activePlayers[idx].id,
-                persistEachDl,
                 false,
                 info => updateProgress(Object.assign({}, info, {percent: Math.floor((idx / activePlayers.length) * 100)}))
             );
@@ -175,8 +172,6 @@
                 return;
             }
         }
-
-        await setCache(await getCacheAndConvertIfNeeded());
 
         updateState({started: false});
 
