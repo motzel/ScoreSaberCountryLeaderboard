@@ -2,7 +2,7 @@ import eventBus from "../utils/broadcast-channel-pubsub";
 import nodeSync from './multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
-import {getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
+import {flushPlayersCache, getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
 import {dateFromString} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
@@ -286,14 +286,10 @@ export default async () => {
         currentMasterId = masterNodeId;
     });
 
-    const refreshData = async ({nodeId}) => {
-        if (nodeId !== nodeSync.getId()) {
-            await getCacheAndConvertIfNeeded(true);
-        }
-    };
+    const refreshPlayersData = () => flushPlayersCache();
 
     eventBus.on('player-added', async ({playerId, nodeId}) => {
-        await refreshData({nodeId});
+        refreshPlayersData({nodeId});
 
         await enqueue(
             queue, TYPES.ACTIVE_PLAYERS, true,
@@ -304,7 +300,7 @@ export default async () => {
     });
 
     eventBus.on('player-added-to-friends', async ({playerId, nodeId}) => {
-        await refreshData({nodeId});
+        refreshPlayersData({nodeId});
 
         await enqueue(
           queue, TYPES.ACTIVE_PLAYERS, true,
@@ -314,9 +310,9 @@ export default async () => {
         await processQueue(queue);
     });
 
-    eventBus.on('player-removed', refreshData);
+    eventBus.on('player-removed', refreshPlayersData);
 
-    eventBus.on('player-removed-from-friends', refreshData);
+    eventBus.on('player-removed-from-friends', refreshPlayersData);
 
     eventBus.on('dl-manager-pause-cmd', () => {
         logger.debug('Pause Dl Manager', 'DlManager');
