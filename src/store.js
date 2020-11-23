@@ -5,7 +5,7 @@ const THEME_KEY = 'sspl_theme';
 
 export const lastUpdated = async (refreshCache = true) => keyValueRepository().get('lastUpdated', refreshCache);
 
-export const isAnyData = async () => {const players = await getPlayers(); return players && players.length}
+export const isAnyData = async () => (await getPlayers() ?? []).length;
 
 export function getThemeFromFastCache() {
     return window.localStorage.getItem(THEME_KEY);

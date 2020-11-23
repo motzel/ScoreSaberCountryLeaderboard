@@ -5,6 +5,8 @@ export const ALL_KEY = '__ALL';
 const NONE_KEY = '__NONE';
 
 // TODO: add cache tags support for easier cache invalidation
+// TODO: customize getAll() and getAllFromIndex() methods - don't fetch from DB if cached superset exists (i.e. without query)
+// TODO: customize get() method - don't fetch from DB if cache for getAll() exists
 export default (storeName, inlineKeyName = undefined) => {
   let repositoryCache = cache();
 

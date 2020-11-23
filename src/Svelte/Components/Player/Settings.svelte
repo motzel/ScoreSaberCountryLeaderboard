@@ -425,7 +425,7 @@
         location.reload();
     }
 
-    // TODO: rewrite
+    // TODO: rewrite it
     function importData(e) {
         if (importBtn) importBtn.$set({disabled: true});
         if (noDataImportBtn) noDataImportBtn.$set({disabled: true});

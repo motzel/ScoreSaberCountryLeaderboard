@@ -81,8 +81,9 @@
             await refreshScores();
         }
 
+        // TODO: check if it still works
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-        const playerScoresUpdatedHandler = debounce(async ({nodeId, playerId}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
+        const playerScoresUpdatedHandler = debounce(async ({nodeId}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
 
         return () => {
