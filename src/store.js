@@ -7,13 +7,6 @@ export const lastUpdated = async (refreshCache = true) => keyValueRepository().g
 
 export const isAnyData = async () => {const players = await getPlayers(); return players && players.length}
 
-// TODO: remove it when new DB methods would be ready
-export const getCacheAndConvertIfNeeded = async () => {
-    console.trace('getCache() should NOT be used anymore');
-
-    return null;
-}
-
 export function getThemeFromFastCache() {
     return window.localStorage.getItem(THEME_KEY);
 }

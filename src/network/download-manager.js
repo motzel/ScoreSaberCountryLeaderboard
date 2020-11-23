@@ -7,7 +7,6 @@ import {dateFromString} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
-import {getCacheAndConvertIfNeeded} from "../store";
 import logger from "../utils/logger";
 import {getActiveCountry} from "../scoresaber/country";
 
