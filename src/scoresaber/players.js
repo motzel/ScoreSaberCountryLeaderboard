@@ -7,7 +7,7 @@ import tempConfig from '../temp';
 import {getRankedsChangesSince, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
-import {dateFromString, timestampFromString} from "../utils/date";
+import {dateFromString} from "../utils/date";
 import {arrayUnique, convertArrayToObjectByKey, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
 import {findDiffInfo, getMaxScore} from "../song";

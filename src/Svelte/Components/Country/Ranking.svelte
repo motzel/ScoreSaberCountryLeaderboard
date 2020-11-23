@@ -70,6 +70,7 @@
                         u.pp = overridePlayersPp[u.id].pp;
                     }
 
+                    // TODO: weekly diff should be taken from SS API/Page
                     const {rank, weeklyDiff} = u;
 
                     const change = rank && weeklyDiff && rank !== MAGIC_HISTORY_NUMBER && weeklyDiff !== MAGIC_HISTORY_NUMBER

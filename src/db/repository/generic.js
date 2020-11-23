@@ -16,6 +16,16 @@ export default (storeName, inlineKeyName = undefined) => {
 
   const flushCache = () => repositoryCache.flush();
 
+  const getStoreName = () => storeName;
+
+  const getAllKeys = async(query = undefined, count = undefined, refreshCache = false) => {
+    const cacheKey = 'KEYS-' + getCacheKeyFor(query, count);
+
+    if (refreshCache) repositoryCache.forget(cacheKey);
+
+    return repositoryCache.get(cacheKey, async () => db.getAllKeys(storeName, query, count));
+  }
+
   const get = async (key, refreshCache = false) => {
     const cacheKey = getCacheKeyFor(key);
 
@@ -76,5 +86,5 @@ export default (storeName, inlineKeyName = undefined) => {
 
   const openCursor = async (mode = 'readonly') => db.transaction(storeName, mode).store.openCursor();
 
-  return {get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, flushCache, forgetCachedKey, getCachedKeys, getCacheKeyFor};
+  return {getStoreName, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, flushCache, forgetCachedKey, getCachedKeys, getCacheKeyFor};
 };

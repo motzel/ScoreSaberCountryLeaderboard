@@ -447,7 +447,6 @@
         )
     }
 
-    // TODO: rewrite
     function exportData() {
         exportJsonData();
     }
