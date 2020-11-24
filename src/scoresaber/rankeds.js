@@ -1,12 +1,11 @@
-import leaderboardsRepository from "../db/repository/leaderboards";
+import rankedsRepository from "../db/repository/rankeds";
 import keyValueRepository from "../db/repository/key-value";
 import rankedsChangesRepository from "../db/repository/rankeds-changes";
 import {convertArrayToObjectByKey} from '../utils/js'
 
-export const getRankedSongs = async (refreshCache = false) => {
-    const rankeds = await leaderboardsRepository().getAllFromIndex('leaderboards-status', 'ranked', undefined, refreshCache);
-    return rankeds ? convertArrayToObjectByKey(rankeds, 'leaderboardId') : null;
-}
+export const storeRanked = async ranked => rankedsRepository().set(ranked);
+export const storeRankeds = async rankeds => Promise.all(rankeds.map(async ranked => storeRanked(ranked)));
+export const getRankedSongs = async (refreshCache = false) => convertArrayToObjectByKey(await rankedsRepository().getAll(undefined, refreshCache) ?? {}, 'leaderboardId');
 export const getRankedSongsLastUpdated = async (refreshCache = true) => keyValueRepository().get('rankedSongsLastUpdated', refreshCache);
 export const setRankedSongsLastUpdated = async date => keyValueRepository().set(date,'rankedSongsLastUpdated');
 export const getRankedChanges = async query => rankedsChangesRepository().getAllFromIndex('rankeds-changes-timestamp', query);

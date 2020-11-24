@@ -136,11 +136,11 @@ export const getPlayerScores = player => player?.scores ? player.scores : null;
 export const flushScoresCache = () => scoresRepository().flushCache();
 export const getAllScores = async () => scoresRepository().getAll();
 export const getScoresByPlayerId = async (playerId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-playerId', playerId, undefined, refreshCache);
-export const getAllScoresSince = async sinceDate => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
-export const getAllScoresWithPpOver = async minPp => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined);
+export const getAllScoresSince = async (sinceDate, refreshCache = false) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined, undefined, refreshCache);
+export const getAllScoresWithPpOver = async (minPp, refreshCache = false) => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined, undefined, refreshCache);
 
-export const getRankedScoresByPlayerId = async playerId => {
-    const scores = await getScoresByPlayerId(playerId);
+export const getRankedScoresByPlayerId = async (playerId, refreshCache = false) => {
+    const scores = await getScoresByPlayerId(playerId, refreshCache);
     const rankedMaps = await getRankedSongs();
     return scores
         ? Object.values(scores)

@@ -702,6 +702,7 @@ async function init() {
             return;
         }
 
+        // TODO: add modal when DB conversion in progress
         const db = await initDatabase();
 
         // pre-warm config cache

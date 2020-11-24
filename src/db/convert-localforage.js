@@ -78,46 +78,16 @@ export const convertFromLocalForage = async (cache, transaction) => {
   promises = scores.map(s => store.put(s));
   await Promise.all(promises);
 
-  const rankeds = convertArrayToObjectByKey(
-    Object.values(cache.rankedSongs).map(s => {
-      let {diff: diffInfo, difficulty, id: hash, oldStars, firstSeen, ...song} = s;
+  const rankeds = Object.values(cache.rankedSongs).map(s => {
+    let {diff: diffInfo, difficulty, id: hash, oldStars, firstSeen, ...song} = s;
 
-      firstSeen = firstSeen ? new Date(parseInt(firstSeen, 10)) : null;
+    firstSeen = firstSeen ? new Date(parseInt(firstSeen, 10)) : null;
 
-      return {...song, firstSeen, diffInfo, hash, status: 'ranked'}
-    }),
-    'leaderboardId',
-  );
-
-  const leaderboards = Object.values({
-    ...activePlayers.reduce((cum, p) => {
-      const leaderboards = Object.values(p.scores).map(s => {
-        let {diff, diffInfo, difficulty, id: hash, leaderboardId, levelAuthorName: levelAuthor, name, songAuthorName: songAuthor, songSubName: subName, maxScoreEx} = s;
-
-        if (!diffInfo && diff && diff.length) diffInfo = extractDiffAndType(diff);
-
-        name = name + (subName && subName.length ? ' ' + subName : '');
-
-        return {
-          diffInfo,
-          hash,
-          leaderboardId,
-          levelAuthor,
-          name,
-          songAuthor,
-          maxScoreEx,
-          stars: null,
-          status: 'unranked'
-        };
-      });
-
-      return {...convertArrayToObjectByKey(leaderboards, 'leaderboardId'), ...cum};
-    }, {}),
-    ...rankeds
+    return {...song, firstSeen, diffInfo, hash}
   });
 
-  store = transaction.objectStore('leaderboards');
-  promises = leaderboards.map(s => store.put(s));
+  store = transaction.objectStore('rankeds');
+  promises = rankeds.map(s => store.put(s));
   await Promise.all(promises);
 
   if(cache?.beatSaver?.hashes) {

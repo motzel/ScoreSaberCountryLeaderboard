@@ -2,7 +2,7 @@ import download from './download';
 
 import groupsRepository from "../db/repository/groups";
 import keyValueRepository from "../db/repository/key-value";
-import leaderboardsRepository from "../db/repository/leaderboards";
+import rankedsRepository from "../db/repository/rankeds";
 import playersRepository from "../db/repository/players";
 import playersHistoryRepository from "../db/repository/players-history";
 import rankedsChangesRepository from "../db/repository/rankeds-changes";
@@ -11,7 +11,7 @@ import songsRepository from "../db/repository/songs";
 import twitchRepository from "../db/repository/twitch";
 
 export default async (filename = 'sspl-db-export-'+(new Date()).toISOString().replace(/:/g, '_')+'.json') => {
-	const repositories = [groupsRepository, leaderboardsRepository, playersRepository, playersHistoryRepository, rankedsChangesRepository, scoresRepository, songsRepository, twitchRepository];
+	const repositories = [groupsRepository, rankedsRepository, playersRepository, playersHistoryRepository, rankedsChangesRepository, scoresRepository, songsRepository, twitchRepository];
 	const data = (await Promise.all(repositories.map(async repository => repository().getAll())))
 		.reduce((cum, repositoryData, idx) => {
 			cum[repositories[idx]().getStoreName()] = repositoryData;

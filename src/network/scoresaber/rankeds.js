@@ -5,9 +5,8 @@ import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../multinode-sync";
-import {getRankedSongs, setRankedSongsLastUpdated, storeRankedsChanges} from '../../scoresaber/rankeds'
+import {getRankedSongs, setRankedSongsLastUpdated, storeRankeds, storeRankedsChanges} from '../../scoresaber/rankeds'
 import {db} from "../../db/db";
-import {storeLeaderboards} from '../../scoresaber/leaderboards'
 
 const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
@@ -30,7 +29,6 @@ const fetchRankedSongsArray = async () =>
                     diff: extractDiffAndType(s.diff),
                     stars: s.stars,
                     oldStars: null,
-                    status: 'ranked'
                 }))
                 : []
         );
@@ -79,8 +77,7 @@ export async function updateRankeds() {
 
   const changedLeaderboards = changed
     .map(s => ({
-      ...(fetchedRankedSongs?.[s.leaderboardId] ? fetchedRankedSongs[s.leaderboardId] : oldRankedSongs?.[s.leaderboardId]), ...s,
-      status: s.stars ? 'ranked' : 'unranked',
+      ...(fetchedRankedSongs?.[s.leaderboardId] ? fetchedRankedSongs[s.leaderboardId] : oldRankedSongs?.[s.leaderboardId]), ...s
     }))
     .filter(s => s.hash)
     .map(l => {
@@ -89,8 +86,8 @@ export async function updateRankeds() {
     });
 
   try {
-    await db.runInTransaction(['leaderboards', 'rankeds-changes', 'key-value'], async _ => {
-      await storeLeaderboards(changedLeaderboards);
+    await db.runInTransaction(['rankeds', 'rankeds-changes', 'key-value'], async _ => {
+      await storeRankeds(changedLeaderboards);
       await storeRankedsChanges(changed);
       await setRankedSongsLastUpdated(new Date());
     });

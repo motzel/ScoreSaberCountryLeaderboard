@@ -55,11 +55,10 @@ async function openDatabase(cache = null) {
             scoresStore.createIndex('scores-timeset', 'timeset', {unique: false});
             scoresStore.createIndex('scores-pp', 'pp', {unique: false});
 
-            const leaderboardsStore = db.createObjectStore('leaderboards', {
+            db.createObjectStore('rankeds', {
               keyPath: 'leaderboardId',
               autoIncrement: false,
             });
-            leaderboardsStore.createIndex('leaderboards-status', 'status', {unique: false});
 
             const songsStore = db.createObjectStore('songs', {
               keyPath: 'hash',
