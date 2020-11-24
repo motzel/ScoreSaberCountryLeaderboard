@@ -16,23 +16,16 @@
     export let country;
     export let overridePlayersPp = {};
     export let itemsPerPage = 25;
-    export let diff = 6;
     export let filterFunc = null;
     export let refreshTag = null;
 
     const DB_FETCH_DIFF = 14;
-    const diffOptions = [
-        {value: 0, text: trans('dashboard.ranking.changeOptions.day')},
-        {value: 6, text: trans('dashboard.ranking.changeOptions.week')},
-        {value: 29, text: trans('dashboard.ranking.changeOptions.month')}
-    ];
 
-    let users = [];
+    let players = [];
     onMount(async () => {
-        users = await getAllPlayersRanking(country);
+        players = await getAllPlayersRanking(country);
     });
 
-    let selectedDiff = diffOptions.find(i => i.value === diff);
     let ranking = [];
 
     const header = [
@@ -45,8 +38,9 @@
     let rows = [];
 
     async function addPlayersHistory() {
-        const timestampDiffAgo = toSSTimestamp(daysAgo(selectedDiff.value + 1));
-        const dbFetchTimestamp = toSSTimestamp(daysAgo(selectedDiff.value + 1 + DB_FETCH_DIFF));
+        const DIFF_DAYS = 7;
+        const timestampDiffAgo = toSSTimestamp(daysAgo(DIFF_DAYS));
+        const dbFetchTimestamp = toSSTimestamp(daysAgo(DIFF_DAYS + DB_FETCH_DIFF));
         const playersHistory = (await getAllPlayersHistory(IDBKeyRange.bound(new Date(dbFetchTimestamp), new Date(timestampDiffAgo))))
          .reduce((cum, item) => {
              if (!cum[item.playerId]) cum[item.playerId] = {};
@@ -63,27 +57,22 @@
         });
     }
 
-    $: if (users && (selectedDiff || refreshTag)) {
-        ranking = users
-                .map(u => {
-                    if (overridePlayersPp[u.id] && overridePlayersPp[u.id].pp) {
-                        u.pp = overridePlayersPp[u.id].pp;
+    $: if (players && refreshTag) {
+        ranking = players
+                .map(player => {
+                    if (overridePlayersPp[player.id] && overridePlayersPp[player.id].pp) {
+                        player.pp = overridePlayersPp[player.id].pp;
                     }
 
-                    // TODO: weekly diff should be taken from SS API/Page
-                    const {rank, weeklyDiff} = u;
+                    const {weeklyDiff:change} = player;
 
-                    const change = rank && weeklyDiff && rank !== MAGIC_HISTORY_NUMBER && weeklyDiff !== MAGIC_HISTORY_NUMBER
-                     ? weeklyDiff
-                     : null;
-
-                    return {...u, change, weeklyDiff_className: 'diff ' + (change ? (change > 0 ? 'inc' : 'dec') : '')};
+                    return {...player, change, weeklyDiff_className: 'diff ' + (change ? (change > 0 ? 'inc' : 'dec') : '')};
                 })
                 .sort((a,b) => b.pp - a.pp) // sort it again after override
                 .filter(p => !filterFunc || filterFunc(p));
     }
 
-    $: addPlayersHistory(users, selectedDiff, refreshTag, overridePlayersPp, filterFunc);
+    $: addPlayersHistory(players, refreshTag, overridePlayersPp, filterFunc);
 </script>
 
 {#if ranking && ranking.length}
