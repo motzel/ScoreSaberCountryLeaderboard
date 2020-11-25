@@ -300,8 +300,8 @@ async function setupProfile() {
     if(tbl) tbl.classList.add('sspl');
 
     const ssConfig = await getConfig('ssSong');
-    const showDiff = !!ssConfig.showDiff;
-    const showWhatIfPp = !!ssConfig.showWhatIfPp;
+    const showDiff = !!ssConfig?.showDiff;
+    const showWhatIfPp = !!ssConfig?.showWhatIfPp;
 
     const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
