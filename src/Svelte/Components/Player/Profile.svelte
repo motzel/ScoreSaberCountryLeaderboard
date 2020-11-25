@@ -87,16 +87,13 @@
         await refreshSsplCountryRanksCache();
 
         // TODO: reload profile page for now, try to do it to be more dynamic
-        const dataRefreshed = eventBus.on('data-refreshed', ({nodeId}) => window.location.reload());
-        const playerTwitchLinked = eventBus.on('player-twitch-linked', async () => window.location.reload());
-
+        const dataRefreshed = eventBus.on('data-refreshed', () => window.location.reload());
         const ssplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => refreshSsplCountryRanksCache());
 
         initialized = true;
 
         return () => {
             dataRefreshed();
-            playerTwitchLinked();
             ssplCountryRanksCacheUpdated();
         }
     })

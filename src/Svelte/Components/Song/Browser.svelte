@@ -20,8 +20,8 @@
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
-        getRankedScoresByPlayerId, getPlayers,
-        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer, flushScoresCache,
+        getRankedScoresByPlayerId,
+        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer, flushScoresCache, flushPlayersCache,
     } from "../../../scoresaber/players";
     import {
         extractDiffAndType, getAccFromScore,
@@ -367,10 +367,13 @@
         }
     }
 
-    const generateRefreshTag = async (refreshCache = false) => {
-        const playerInfos = await getPlayersInfosForCurrentlySelected(refreshCache, false);
+    const generateRefreshTag = async () => {
+        const playerInfos = await getPlayersInfosForCurrentlySelected();
+        const playerTwitchProfile = await twitch.getProfileByPlayerId(playerId);
+        const playerTwitchUpdated = playerTwitchProfile && playerTwitchProfile.lastUpdated ? timestampFromString
+        (playerTwitchProfile.lastUpdated) : '';
 
-        const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '')
+        const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '') + ':' + playerTwitchUpdated;
 
         if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
     }
@@ -606,26 +609,32 @@
           .filter(u => u.id !== playerId)
         ;
 
-        const forceRefresh = async (nodeId, updatedPlayerId) => {
-            // return if not relevant for current dataset
-            if (!updatedPlayerId || !getCurrentlySelectedPlayersIds().includes(updatedPlayerId)) return;
-
-            if (nodeId !== nodeSync.getId()) flushScoresCache();
-
-            await generateRefreshTag(nodeId !== nodeSync.getId());
-        }
-
         await updateViewUpdatesConfig();
 
-        // TODO: update score cache
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => await forceRefresh(nodeId, playerId));
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({playerId}) => {
+            // return if not relevant for current dataset
+            if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
+
+            flushPlayersCache();
+            flushScoresCache();
+
+            await generateRefreshTag();
+        });
         const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);
+
+        const twitchVideosUpdated = eventBus.on('player-twitch-videos-updated', async ({playerId}) => {
+            // return if not relevant for current dataset
+            if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
+
+            await generateRefreshTag();
+        });
 
         initialized = true;
 
         return () => {
             playerScoresUpdatedUnsubscriber();
             configChangedUnsubscriber();
+            twitchVideosUpdated();
         }
     });
 

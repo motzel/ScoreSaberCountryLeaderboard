@@ -379,20 +379,7 @@
                 }
             }
 
-            if (twitchProfile.id) {
-                const scoresRecentPlay = playerInfo.recentPlay ? playerInfo.recentPlay : playerInfo.lastUpdated;
-                const twitchLastUpdated = twitchProfile.lastUpdated;
-
-                if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
-                    const videos = await twitch.fetchVideos(twitchProfile.id);
-                    if (videos && videos.data) {
-                        twitchProfile.videos = videos.data;
-                        twitchProfile.lastUpdated = new Date();
-
-                        await twitch.storeProfile(twitchProfile);
-                    }
-                }
-            }
+            await twitch.updateVideosForPlayerId(profileId);
         }
 
         initialized = true;

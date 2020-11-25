@@ -629,12 +629,6 @@ async function setupPlayerAvatar() {
 async function setupTwitch() {
     await twitch.processTokenIfAvailable();
     await twitch.createTwitchUsersCache();
-
-    eventBus.on('player-twitch-linked', async ({nodeId, playerId, twitchLogin}) => {
-        if (nodeId !== nodeSync.getId()) {
-            await twitch.updateTwitchUser(playerId, twitchLogin);
-        }
-    })
 }
 
 async function setupGlobalEventsListeners() {
@@ -646,7 +640,11 @@ async function setupGlobalEventsListeners() {
         if (!playerScores || !playerScores[leaderboardId]) return;
 
         playerScores[leaderboardId] = {...playerScores[leaderboardId], ...data};
-    })
+    });
+
+    eventBus.on('player-twitch-linked', async ({playerId}) => {
+        await twitch.updateVideosForPlayerId(playerId);
+    });
 }
 
 async function setupDelayed() {

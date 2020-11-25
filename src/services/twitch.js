@@ -10,6 +10,9 @@ import {
 } from "../network/twitch";
 import twitchRepository from "../db/repository/twitch";
 import keyValueRepository from "../db/repository/key-value";
+import {getPlayerInfo} from '../scoresaber/players';
+import eventBus from '../utils/broadcast-channel-pubsub';
+import nodeSync from "../network/multinode-sync";
 
 const users = {
     '76561198059659922': 'patian25',
@@ -84,7 +87,7 @@ const fetchStreams = async userId => {
 const updateTwitchUser = async (playerId, twitchLogin) => {
     const existingTwitchProfile = await getProfileByPlayerId(playerId);
 
-    await storeProfile(Object.assign({}, existingTwitchProfile ?? {}, {login: twitchLogin, lastUpdated: null, playerId}));
+    await storeProfile(Object.assign({lastUpdated: null}, existingTwitchProfile ?? {}, {login: twitchLogin, playerId}));
 }
 
 const createTwitchUsersCache = async () => {
@@ -96,6 +99,31 @@ const createTwitchUsersCache = async () => {
 const getProfileByPlayerId = async (playerId, refreshCache = false) => await twitchRepository().get(playerId, refreshCache) ?? null;
 const storeProfile = async twitchProfile => twitchRepository().set(twitchProfile);
 
+const updateVideosForPlayerId = async playerId => {
+    const twitchProfile = await getProfileByPlayerId(playerId, true);
+    const playerInfo = await getPlayerInfo(playerId);
+
+    if (twitchProfile.id && playerInfo) {
+        const scoresRecentPlay = playerInfo.recentPlay ? playerInfo.recentPlay : playerInfo.lastUpdated;
+        const twitchLastUpdated = twitchProfile.lastUpdated;
+
+        if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
+            const videos = await fetchVideos(twitchProfile.id);
+
+            twitchProfile.videos = videos.data;
+            twitchProfile.lastUpdated = new Date();
+            await storeProfile(twitchProfile);
+
+            if (videos && videos.data && videos.data.length) {
+                eventBus.publish('player-twitch-videos-updated', {
+                    nodeId     : nodeSync.getId(),
+                    playerId,
+                    twitchProfile,
+                });
+            }
+        }
+    }
+};
 const isProfileTwitchConnected = async ssProfileId => !!(await getProfileByPlayerId(ssProfileId));
 
 export default {
@@ -104,6 +132,7 @@ export default {
     getProfileByUsername,
     fetchVideos,
     fetchStreams,
+    updateVideosForPlayerId,
     processTokenIfAvailable: async () => {
         const twitchToken = getTwitchTokenFromUrl();
         if (twitchToken) {
