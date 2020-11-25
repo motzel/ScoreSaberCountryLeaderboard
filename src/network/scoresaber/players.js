@@ -333,6 +333,8 @@ export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdat
 
     await Promise.all(updatedScores.map(s => setSongScore(s)));
 
+    // TODO: clear cache? or maybe refresh in event handler?
+
     return true;
 }
 
@@ -360,7 +362,6 @@ export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
     }
 }
 
-// TODO: shouldn't it be cached like ssplCountryRank key in cache repository?
 export const refreshPlayerScoreRank = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
     let pages = [];
     let playerScoresPages = null;

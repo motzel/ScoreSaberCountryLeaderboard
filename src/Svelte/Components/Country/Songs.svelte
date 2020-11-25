@@ -77,6 +77,8 @@
 
     onMount(async () => {
         const refresh = async nodeId => {
+            // TODO: cache shouldn't be flushed only if data downloaded on other node
+            // TODO: instead try to update cache or just flush cache every time
             if (nodeId !== nodeSync.getId()) flushScoresCache();
             await refreshScores();
         }

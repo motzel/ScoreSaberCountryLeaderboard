@@ -617,7 +617,7 @@
 
         await updateViewUpdatesConfig();
 
-        // TODO: check if it still works
+        // TODO: update score cache
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => await forceRefresh(nodeId, playerId));
         const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);
 

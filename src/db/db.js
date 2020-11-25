@@ -97,9 +97,9 @@ async function openDatabase(cache = null) {
       blocked() {
         console.warn('DB blocked')
       },
-      blocking(event) {
+      blocking() {
         // other tab tries to open newer db version - close connection
-        console.warn('DB blocking', event)
+        console.warn('DB blocking... will be closed')
         db.close();
 
         // TODO: should be reopened with new version: event.newVersion
