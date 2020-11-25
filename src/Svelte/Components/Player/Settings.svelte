@@ -16,8 +16,7 @@
     } from "../../../scoresaber/players";
     import {setThemeInFastCache} from "../../../store";
     import {dateFromString} from "../../../utils/date";
-    import importJsonData from "../../../utils/import";
-    import exportJsonData from "../../../utils/export";
+    import {importDataHandler, exportJsonData} from "../../../utils/export-import";
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
@@ -425,30 +424,45 @@
         location.reload();
     }
 
-    // TODO: rewrite it
+    let importing = false;
     function importData(e) {
-        if (importBtn) importBtn.$set({disabled: true});
-        if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
+        try {
+            importing = true;
+            if (importBtn) importBtn.$set({disabled: true});
+            if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
 
-        importJsonData(
-          e,
-          msg => {
-              alert(msg)
-              importBtn.$set({disabled: false});
-          },
-          async json => {
-              // await setCache(json);
+            importDataHandler(
+             e,
+             msg => {
+                 importing = false;
 
-              if (importBtn) importBtn.$set({disabled: false});
-              if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
+                 alert(msg)
 
-              eventBus.publish('data-imported', {});
-          }
-        )
+                 importBtn.$set({disabled: false});
+             },
+             async json => {
+                 importing = false;
+                 if (importBtn) importBtn.$set({disabled: false});
+                 if (noDataImportBtn) noDataImportBtn.$set({disabled: false});
+
+                 eventBus.publish('data-imported', {});
+             }
+            );
+        }
+        catch {
+            importing = false;
+        }
     }
 
-    function exportData() {
-        exportJsonData();
+    let exporting = false;
+    async function exportData() {
+        try {
+            exporting = true;
+            await exportJsonData();
+        }
+        finally {
+            exporting = false;
+        }
     }
 
     function onSongTypeChange() {
@@ -740,8 +754,8 @@
                 </div>
 
                 <div class="column">
-                    <Button iconFa="fas fa-download" label={$_.profile.settings.export} on:click={exportData}/>
-                    <File iconFa="fas fa-upload" label={$_.profile.settings.import} accept="application/json" bind:this={importBtn}
+                    <Button iconFa={exporting ? "fas fa-spin fa-spinner" : "fas fa-download"} label={$_.profile.settings.export} on:click={exportData}/>
+                    <File iconFa={importing ? "fas fa-spin fa-spinner" : "fas fa-upload"} label={$_.profile.settings.import} accept="application/json" bind:this={importBtn}
                           on:change={importData}/>
                 </div>
             </footer>

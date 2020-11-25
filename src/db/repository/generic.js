@@ -20,6 +20,8 @@ export default (storeName, inlineKeyName = undefined) => {
 
   const getStoreName = () => storeName;
 
+  const hasOutOfLineKey = () => inlineKeyName === undefined;
+
   const getAllKeys = async(query = undefined, count = undefined, refreshCache = false) => {
     const cacheKey = 'KEYS-' + getCacheKeyFor(query, count);
 
@@ -88,5 +90,5 @@ export default (storeName, inlineKeyName = undefined) => {
 
   const openCursor = async (mode = 'readonly') => db.transaction(storeName, mode).store.openCursor();
 
-  return {getStoreName, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, flushCache, forgetCachedKey, getCachedKeys, getCacheKeyFor};
+  return {getStoreName, hasOutOfLineKey, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, flushCache, forgetCachedKey, getCachedKeys, getCacheKeyFor};
 };

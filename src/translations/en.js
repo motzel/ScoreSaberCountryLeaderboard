@@ -279,5 +279,11 @@ export default {
         to: 'to',
         noData: 'No data',
         downloadError: 'Download error',
-    }
+    },
+    import: {
+        selectJsonFile: 'Select the JSON file containing the data export',
+        oldVerNotSupported: 'Importing a file from an older version of the plugin is not supported',
+        incorrectFile: 'Invalid export file',
+        incorrectJsonFile: 'Invalid JSON file'
+    },
 }
