@@ -34,8 +34,8 @@ import initDownloadManager from './network/download-manager';
 import initDatabase from './db/db';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
-import nodeSync from "./network/multinode-sync";
 import {
+    flushPlayersCache, flushPlayersHistoryCache, flushScoresCache,
     getPlayerInfo,
     getPlayerProfileUrl,
     getScoresByPlayerId,
@@ -45,6 +45,9 @@ import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber, round} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
+import nodeSync from './network/multinode-sync'
+import {flushRankedsCache, flushRankedsChangesCache} from './scoresaber/rankeds'
+import {flushSsplCountryRanksCache} from './scoresaber/sspl-cache'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -632,18 +635,46 @@ async function setupTwitch() {
 }
 
 async function setupGlobalEventsListeners() {
-    // update scores done on other node
-    eventBus.on('player-score-updated', async ({nodeId, playerId, leaderboardId, ...data}) => {
-        if (nodeId === nodeSync.getId() || !playerId || !leaderboardId) return;
+    const reloadPage = () => window.location.reload();
 
-        const playerScores = await getScoresByPlayerId(playerId);
-        if (!playerScores || !playerScores[leaderboardId]) return;
+    // reload page when data was imported
+    eventBus.on('data-imported', reloadPage);
 
-        playerScores[leaderboardId] = {...playerScores[leaderboardId], ...data};
-    });
+    eventBus.on('reload-browser-cmd', reloadPage);
 
     eventBus.on('player-twitch-linked', async ({playerId}) => {
         await twitch.updateVideosForPlayerId(playerId);
+    });
+
+    eventBus.on('active-players-updated', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushPlayersCache();
+        flushPlayersHistoryCache();
+    });
+
+    eventBus.on('player-scores-updated', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushPlayersCache();
+        flushScoresCache();
+    });
+
+    eventBus.on('rankeds-changed', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushRankedsCache();
+        flushRankedsChangesCache();
+    });
+
+    eventBus.on('sspl-country-ranks-cache-updated', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushSsplCountryRanksCache();
     });
 }
 
@@ -705,9 +736,6 @@ async function init() {
 
         // pre-warm config cache
         const config = await getConfig();
-
-        // reload page when data was imported
-        eventBus.on('data-imported', () => window.location.reload());
 
         await Promise.allSettled(
             [

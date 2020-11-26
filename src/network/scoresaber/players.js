@@ -4,6 +4,7 @@ import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} fr
 import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import {
+    flushPlayersCache, flushPlayersHistoryCache, flushScoresCache,
     getManuallyAddedPlayersIds,
     getPlayerInfo,
     getPlayerRankedsScorePagesToUpdate,
@@ -166,7 +167,8 @@ export const updateActivePlayers = async () => {
     });
 
     // clear all players cache
-    playersRepository().flushCache();
+    flushPlayersCache();
+    flushPlayersHistoryCache();
 
     if (country) {
         await updateSongCountryRanks();
@@ -278,6 +280,9 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
     }
 
     if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
+
+    flushPlayersCache();
+    flushScoresCache();
 
     if (emitEvents) {
         eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), playerId, scores: scoresToSave});

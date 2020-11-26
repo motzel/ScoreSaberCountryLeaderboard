@@ -10,7 +10,7 @@ import {
 } from "./scoresaber/players";
 import {getActiveCountry} from "./scoresaber/country";
 import scoresRepository from './db/repository/scores'
-import {getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
+import {flushSsplCountryRanksCache, getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
 import eventBus from './utils/broadcast-channel-pubsub'
 import nodeSync from './network/multinode-sync'
 
@@ -120,6 +120,8 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
 
 
   await setSsplCountryRanks(ssplCountryRanks);
+
+  flushSsplCountryRanksCache();
 
   eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync.getId(), ssplCountryRanks});
 

@@ -88,9 +88,7 @@
             await setLastRefreshDate();
         })
 
-        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => {
-            if (nodeId !== nodeSync.getId()) flushPlayersCache();
-
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
             if (playerId === profileId) {
                 await setLastRefreshDate();
             }

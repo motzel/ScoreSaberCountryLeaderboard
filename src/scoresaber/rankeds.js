@@ -3,6 +3,8 @@ import keyValueRepository from "../db/repository/key-value";
 import rankedsChangesRepository from "../db/repository/rankeds-changes";
 import {convertArrayToObjectByKey} from '../utils/js'
 
+export const flushRankedsCache = () => rankedsRepository().flushCache();
+export const flushRankedsChangesCache = () => rankedsChangesRepository().flushCache();
 export const storeRanked = async ranked => rankedsRepository().set(ranked);
 export const storeRankeds = async rankeds => Promise.all(rankeds.map(async ranked => storeRanked(ranked)));
 export const getRankedSongs = async (refreshCache = false) => convertArrayToObjectByKey(await rankedsRepository().getAll(undefined, refreshCache) ?? {}, 'leaderboardId');

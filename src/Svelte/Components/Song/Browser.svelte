@@ -615,9 +615,6 @@
             // return if not relevant for current dataset
             if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
 
-            flushPlayersCache();
-            flushScoresCache();
-
             await generateRefreshTag();
         });
         const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);

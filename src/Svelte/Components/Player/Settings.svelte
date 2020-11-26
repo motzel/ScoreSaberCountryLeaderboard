@@ -15,7 +15,6 @@
         isDataAvailable, removePlayerFromGroup
     } from "../../../scoresaber/players";
     import {setThemeInFastCache} from "../../../store";
-    import {dateFromString} from "../../../utils/date";
     import {importDataHandler, exportJsonData} from "../../../utils/export-import";
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
@@ -385,7 +384,7 @@
         initialized = true;
 
         const profileExists = !!(await getPlayerInfo(profileId));
-        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({nodeId, playerId}) => {
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
             if (!profileExists && playerId === profileId) {
                 // TODO: reload profile page for now, try to do it to be more dynamic
                 window.location.reload();

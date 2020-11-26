@@ -5,7 +5,13 @@ import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../multinode-sync";
-import {getRankedSongs, setRankedSongsLastUpdated, storeRankeds, storeRankedsChanges} from '../../scoresaber/rankeds'
+import {
+  flushRankedsCache, flushRankedsChangesCache,
+  getRankedSongs,
+  setRankedSongsLastUpdated,
+  storeRankeds,
+  storeRankedsChanges,
+} from '../../scoresaber/rankeds'
 import {db} from "../../db/db";
 
 const convertFetchedRankedSongsToObj = (songs) =>
@@ -91,6 +97,9 @@ export async function updateRankeds() {
       await storeRankedsChanges(changed);
       await setRankedSongsLastUpdated(new Date());
     });
+
+    flushRankedsCache();
+    flushRankedsChangesCache();
 
     if (changed.length) {
       eventBus.publish('rankeds-changed', {nodeId: nodeSync.getId(), changed, allRankeds: fetchedRankedSongs});

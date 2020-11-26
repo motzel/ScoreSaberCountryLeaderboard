@@ -1,14 +1,11 @@
 <script>
     import {onMount} from 'svelte';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
     import debounce from '../../../utils/debounce';
     import {
-        flushScoresCache,
-        getAllActivePlayers, getAllActivePlayersIds,
+        getAllActivePlayers,
         getAllScoresSince,
         getAllScoresWithPpOver,
-        getPlayerScores,
     } from "../../../scoresaber/players";
     import {getAccFromScore, getSongDiffInfo} from "../../../song";
     import {trans} from "../../stores/i18n";
@@ -52,14 +49,14 @@
 
     async function refreshScores() {
         if (refreshTag === null) return;
+
         const playersScores = sortBy === 'timeset'
          ? await getAllScoresSince(min ? min : undefined)
          : (
           sortBy === 'pp'
            ? await getAllScoresWithPpOver(min ? min : undefined)
            : await getAllScoresSince()
-         )
-        ;
+         );
 
         const allPlayersArr = await getAllActivePlayers(country);
         const allPlayers = allPlayersArr ? convertArrayToObjectByKey(allPlayersArr, 'id') : {};
@@ -76,17 +73,8 @@
     }
 
     onMount(async () => {
-        const refresh = async nodeId => {
-            // TODO: cache shouldn't be flushed only if data downloaded on other node
-            // TODO: instead try to update cache or just flush cache every time
-            if (nodeId !== nodeSync.getId()) flushScoresCache();
-            await refreshScores();
-        }
-
-        // TODO: check if it still works
-        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-        const playerScoresUpdatedHandler = debounce(async ({nodeId}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async () => await refreshScores());
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', debounce(async () => await refreshScores(), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY))
 
         return () => {
             dataRefreshedUnsubscriber();

@@ -37,8 +37,8 @@ export const getCountryRanking = async (country) => {
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
 
 export const flushPlayersCache = () => playersRepository().flushCache();
+export const flushPlayersHistoryCache = () => playersHistoryRepository().flushCache();
 export const getPlayers = async (refreshCache = false) => playersRepository().getAll(undefined, undefined, refreshCache);
-
 export const getPlayerInfo = async (playerId, refreshCache = false) => await playersRepository().get(playerId, refreshCache) ?? null;
 export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
 export const getAllPlayersHistory = async query => await playersHistoryRepository().getAllFromIndex('players-history-timestamp', query) ?? [];
