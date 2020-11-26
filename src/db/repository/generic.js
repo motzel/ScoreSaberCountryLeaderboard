@@ -8,7 +8,7 @@ const NONE_KEY = '__NONE';
 // TODO: customize getAll() and getAllFromIndex() methods - don't fetch from DB if cached superset exists (i.e. without query)
 // TODO: customize get() method - don't fetch from DB if cache for getAll() exists
 export default (storeName, inlineKeyName = undefined) => {
-  let repositoryCache = cache();
+  let repositoryCache = cache(storeName);
 
   const getCacheKeyFor =  (query, count, indexName) => (indexName ? indexName : ALL_KEY) + '-' + (query ? query : NONE_KEY) + '-' + (count ? count : ALL_KEY);
 
