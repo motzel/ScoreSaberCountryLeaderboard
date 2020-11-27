@@ -1039,7 +1039,7 @@
                           name         : s.name.trim(),
                           songAuthor   : s.songAuthorName,
                           levelAuthor  : s.levelAuthorName,
-                          diff         : extractDiffAndType(s.diff),
+                          diffInfo     : s.diffInfo,
                           stars        : s.stars ? s.stars : null,
                           oldStars     : null,
                           maxScoreEx
@@ -1257,7 +1257,7 @@
         const data = await calcPromised;
         const transformedData = await Promise.all(
           data.songs.map(async s => {
-              const diffInfo = getHumanDiffInfo(s.diff);
+              const humanDiffInfo = getHumanDiffInfo(s.diffInfo);
 
               let maxScore = s.maxScoreEx;
               if (!maxScore) {
@@ -1272,7 +1272,7 @@
               }
 
               return Object.assign({}, s, {
-                  difficulty: diffInfo ? diffInfo.name : '',
+                  difficulty: humanDiffInfo ? humanDiffInfo.name : '',
                   maxScore  : maxScore ? maxScore : '',
                   timeset   : getScoreValueByKey(data.series[0], s, 'timeset'),
                   score     : getScoreValueByKey(data.series[0], s, 'score'),
@@ -1465,7 +1465,7 @@
                     <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
                         <Card leaderboardId={song.leaderboardId} hash={song.hash} padding="1em" iconSize="0.875em"
                               songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
-                              diffInfo={song.diff}
+                              diffInfo={song.diffInfo}
                               stars={selectedSongCols.find(c=>c.key==='stars') ? song.stars : (song.stars ? 0 : null)}
                               maxPp={selectedSongCols.find(c=>c.key==='maxPp') ? song.maxPp : null}
                               duration={selectedSongCols.find(c=>c.key==='length') ? song.length : null}
@@ -1625,7 +1625,7 @@
                         {/if}
 
                         <td class="diff">
-                            <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
+                            <Difficulty diff={song.diffInfo} useShortName={true} reverseColors={true}/>
                         </td>
 
                         <td class="song">
