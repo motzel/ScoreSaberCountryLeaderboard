@@ -1734,34 +1734,8 @@
 
                         {#each selectedAdditionalCols as col,idx (col.key)}
                             <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
-                                {#if song.key && song.key.length}
-                                    {#if shownIcons.includes('bsr')}
-                                        <Button iconFa="fas fa-exclamation" title={$_.songBrowser.icons.bsrTooltip}
-                                                on:click={copyToClipboard('!bsr ' + song.key)}/>
-                                    {/if}
-                                    {#if shownIcons.includes('bs')}
-                                        <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank">
-                                            <Button icon={beatSaverSvg} title={$_.songBrowser.icons.beatSaverTooltip}/>
-                                        </a>
-                                    {/if}
-
-                                    {#if shownIcons.includes('oneclick')}
-                                        <a href="beatsaver://{song.key}">
-                                            <Button iconFa="far fa-hand-pointer" title={$_.songBrowser.icons.oneclick}/>
-                                        </a>
-                                    {/if}
-
-                                    {#if shownIcons.includes('preview')}
-                                        <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank">
-                                            <Button iconFa="fa fa-play-circle" title={$_.songBrowser.icons.preview}/>
-                                        </a>
-                                    {/if}
-                                {/if}
-
-                                {#if song.video && song.video.url && shownIcons.includes('twitch')}
-                                    <a class="video" href="{song.video.url}" target="_blank">
-                                        <Button iconFa="fab fa-twitch" type="twitch" title={$_.songBrowser.icons.twitchTooltip}/>
-                                    </a>
+                                {#if col.key === 'icons' && song.hash && song.hash.length}
+                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                 {/if}
                             </td>
                         {/each}
