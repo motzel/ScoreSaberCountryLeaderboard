@@ -1,16 +1,17 @@
 import keyValueRepository from './db/repository/key-value';
+import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from './network/scoresaber/players'
 
 const STORE_CONFIG_KEY = 'config';
 
 export const getConfig = async (key = null, refreshCache = false) => {
-  const config = await keyValueRepository().get(STORE_CONFIG_KEY, refreshCache);
+  let config = await keyValueRepository().get(STORE_CONFIG_KEY, refreshCache);
 
   // return default configuration
-  if (!config) return {
+  if (!config) config = {
     "users": {
       "main": null,
       "country": null,
-      "additionalForCountry": {},
+      "additionalForCountry": ADDITIONAL_COUNTRY_PLAYERS_IDS,
     },
     "songBrowser": {
       "autoTransform": false,

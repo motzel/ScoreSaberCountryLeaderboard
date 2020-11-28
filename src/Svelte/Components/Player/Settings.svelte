@@ -12,7 +12,7 @@
     import {
         addPlayerToGroup, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
         getPlayerInfo,
-        isDataAvailable, removePlayerFromGroup
+        isDataAvailable, removePlayerFromGroup, updatePlayer,
     } from "../../../scoresaber/players";
     import {setThemeInFastCache} from "../../../store";
     import {importDataHandler, exportJsonData} from "../../../utils/export-import";
@@ -407,6 +407,8 @@
         config.users.main = profileId;
         await setConfig(config);
 
+        await updatePlayer({id: profileId});
+
         location.reload();
     }
 
@@ -498,6 +500,7 @@
 
     async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
+        await updatePlayer({id: profileId});
         await refreshPlayerStatus();
 
         eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});

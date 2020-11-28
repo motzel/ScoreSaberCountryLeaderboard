@@ -32,7 +32,7 @@ export const TYPES = {
 }
 
 const enqueuePlayerScores = async (queue, playerId, force = false, then = null, refreshInterval = PLAYERS_SCORES_REFRESH, priority = PLAYER_SCORES_PRIORITY, metadata = {}) => {
-    logger.debug(`Starting enqueuing  player ${playerId}`, 'DlManager')
+    logger.debug(`Starting enqueuing scores of player ${playerId}`, 'DlManager')
 
     const QUEUE_LABEL = `${TYPES.PLAYER_SCORES}-${playerId}`;
     if (queue.contains(QUEUE_LABEL)) return;
@@ -44,10 +44,10 @@ const enqueuePlayerScores = async (queue, playerId, force = false, then = null, 
 
     const shouldBeQueued = force || !lastUpdated || Date.now() - lastUpdated > refreshInterval;
 
-    logger.trace(`Player ${playerId} last updated on ${lastUpdated ? lastUpdated.toISOString() : 'NEVER'}. ${!shouldBeQueued ? 'SKIPPED' : (force ? 'FORCED' : '')}`, 'DlManager')
+    logger.trace(`Scores of player ${playerId} last updated on ${lastUpdated ? lastUpdated.toISOString() : 'NEVER'}. ${!shouldBeQueued ? 'SKIPPED' : (force ? 'FORCED' : '')}`, 'DlManager')
 
     if (shouldBeQueued) {
-        logger.debug(`Player ${playerId} enqueued`, 'DlManager')
+        logger.debug(`Scores of player ${playerId} enqueued`, 'DlManager')
 
         const mergedMetadata = {type: TYPES.PLAYER_SCORES, nodeId: nodeSync.getId(), playerId, ...metadata};
         queue.add(
@@ -69,7 +69,7 @@ const enqueueMainPlayer = async (queue, force = false, then = null) => {
     if (!mainPlayerId) return;
 
     const playerInfo = await getPlayerInfo(mainPlayerId);
-    if (!playerInfo)
+    if (!playerInfo?.lastUpdated)
         await enqueueActivePlayers(queue, true, async () => {
             await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true})
         }, MAIN_PLAYER_PRIORITY + 1);
@@ -97,7 +97,7 @@ const enqueueRankeds = async (queue, force = false, then = null) => {
 }
 
 const enqueueActivePlayers = async (queue, force = false, then = null, priority = ACTIVE_PLAYERS_PRIORITY) => {
-    logger.debug(`Starting enqueuing  active players`, 'DlManager');
+    logger.debug(`Starting enqueuing active players`, 'DlManager');
 
     const QUEUE_LABEL = TYPES.ACTIVE_PLAYERS;
     if (queue.contains(QUEUE_LABEL)) return;

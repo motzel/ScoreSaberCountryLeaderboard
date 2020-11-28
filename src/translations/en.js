@@ -204,7 +204,7 @@ export default {
     refresh: {
         lastDownload: 'Downloaded:',
         rankedsDownload: 'Downloading current rankeds',
-        countryPlayersDownload: 'Downloading the top 50 ${country}...',
+        countryPlayersDownload: 'Downloading active players',
         waiting: '[Waiting ${seconds}s]',
         error: 'Download error. Try again.',
         btnDisabledBgDlInProgress: 'Refreshing disabled. Background downloading in progress...',

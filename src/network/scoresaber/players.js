@@ -94,7 +94,7 @@ export const updateActivePlayers = async () => {
     const countryPlayersIds = countryPlayers.map(player => player.id);
 
     const manuallyAddedPlayers = await Promise.all(
-      (await getManuallyAddedPlayersIds(country))
+      (await getManuallyAddedPlayersIds(country, !country))
         .filter(playerId => !countryPlayersIds.includes(playerId))
         .map(async playerId => fetchPlayerInfo(playerId))
     );

@@ -174,7 +174,7 @@
     <ProfileLine label={$_.profile.stats.rankedPlayCount} value={stats.playCount} precision={0}>
         <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
     </ProfileLine>
-    {#if country}
+    {#if country && (stats.bestRank || stats.avgRank)}
     <ProfileLine label={$_.profile.stats.countryRank} noValue="">
         {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />),
         {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />

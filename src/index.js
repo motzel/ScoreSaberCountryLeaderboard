@@ -22,7 +22,7 @@ import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
     getAccFromScore,
-    getDiffAndTypeFromOnlyDiffName, getMaxScore,
+    getDiffAndTypeFromOnlyDiffName,
     getSongMaxScore, getSongScores,
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
@@ -309,7 +309,7 @@ async function setupProfile() {
 
     const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
-    const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
+    const parsedScores = Promise.all(parseSsUserScores(document).map(async s => {
         const leaderboard = playerScores.find(ps => ps.leaderboardId === s.leaderboardId);
 
         if (songEnhanceEnabled && !autoTransformEnabled) {
@@ -358,27 +358,31 @@ async function setupProfile() {
         }
 
         return s;
-    }));
+    }))
+      .then(async parsedScores => {
+          await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
+              leaderboardId: s.leaderboardId,
+              rank         : s.rank,
+          })));
 
-    await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
-        leaderboardId: s.leaderboardId,
-        rank         : s.rank,
-    })));
+          return parsedScores
+      })
+      .then(parsedScores => {
+          if (songEnhanceEnabled && !autoTransformEnabled)
+              parsedScores
+                .filter(s => null !== s.tr)
+                .forEach(s => {
+                    const score = s.tr.querySelector('.score');
+                    if(!score) return;
 
-    if (songEnhanceEnabled && !autoTransformEnabled)
-        parsedScores
-            .filter(s => null !== s.tr)
-            .forEach(s => {
-                const score = s.tr.querySelector('.score');
-                if(!score) return;
+                    score.innerHTML = "";
 
-                score.innerHTML = "";
-
-                new SongScore({
-                    target: score,
-                    props: {song: s, showWhatIfPp}
-                })
-            });
+                    new SongScore({
+                        target: score,
+                        props: {song: s, showWhatIfPp}
+                    })
+                });
+      });
 
     const header = document.querySelector('.content .column h5').closest('.box');
     if (header) {
@@ -742,7 +746,7 @@ async function init() {
             target: document.body,
         });
 
-        const db = await initDatabase();
+        await initDatabase();
 
         // pre-warm config cache
         const config = await getConfig();

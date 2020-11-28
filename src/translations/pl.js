@@ -205,7 +205,7 @@ export default {
     refresh: {
         lastDownload: 'Pobrano:',
         rankedsDownload: 'Pobieranie aktualnych rankedów',
-        countryPlayersDownload: 'Pobieranie listy top 50 ${country}...',
+        countryPlayersDownload: 'Pobieranie aktywnych graczy',
         waiting: '[Czekam ${seconds}s]',
         error: 'Błąd pobierania danych. Spróbuj ponownie.',
         btnDisabledBgDlInProgress: 'Odświeżanie wyłączone. Trwa pobieranie w tle...',
