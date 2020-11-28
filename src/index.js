@@ -14,6 +14,7 @@ import Flag from './Svelte/Components/Common/Flag.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 import Chart from './Svelte/Components/Player/Chart.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
+import Message from './Svelte/Components/Global/Message.svelte';
 
 import log from './utils/logger';
 import tempConfig from './temp';
@@ -737,7 +738,10 @@ async function init() {
             return;
         }
 
-        // TODO: add modal when DB conversion in progress
+        new Message({
+            target: document.body,
+        });
+
         const db = await initDatabase();
 
         // pre-warm config cache

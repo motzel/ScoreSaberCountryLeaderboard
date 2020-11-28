@@ -274,6 +274,7 @@ export default {
         ok: 'OK',
         save: 'Zapisz',
         cancel: 'Anuluj',
+        close: 'Zamknij',
         options: 'Opcje',
         search: 'Szukaj',
         nothingSelected: 'Nic nie wybrano',
@@ -287,4 +288,8 @@ export default {
         incorrectFile: 'Niepoprawny plik eksportu',
         incorrectJsonFile: 'Niepoprawny plik JSON'
     },
+    db: {
+        conversionMessage: 'Konwersja bazy danych',
+        conversionSecondaryMessage: 'Proszę czekać, nie powinno to zająć dłużej niż pół minuty...',
+    }
 }

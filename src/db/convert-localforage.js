@@ -1,8 +1,10 @@
 import {dateFromString} from '../utils/date'
-import {arrayUnique, convertArrayToObjectByKey} from '../utils/js'
+import {arrayUnique} from '../utils/js'
 import {extractDiffAndType} from '../song'
 import log from '../utils/logger'
 import {setThemeInFastCache} from '../store'
+import eventBus from "../utils/broadcast-channel-pubsub"
+import {setCurrentLang, trans} from "../Svelte/stores/i18n"
 
 const getActiveCountry = cache => cache?.config?.users?.country ?? null;
 const getPlayers = cache => cache?.users ?? null;
@@ -40,6 +42,13 @@ const getManuallyAddedPlayersIds = (cache, country, withMain = false) => {
 const getAllActivePlayersIds = (cache, country) => arrayUnique((getActiveCountryPlayersIds(cache, country)).concat(getManuallyAddedPlayersIds(cache, country)));
 
 export const convertFromLocalForage = async (cache, transaction) => {
+  setCurrentLang(cache?.config?.others?.language ?? 'en');
+
+  eventBus.publish(
+    'show-global-message',
+    {message: trans('db.conversionMessage'), secondaryMessage: trans('db.conversionSecondaryMessage'), closeButtonLabel: null}
+  );
+
   const activePlayersIds = getAllActivePlayersIds(cache, getActiveCountry(cache));
 
   const activePlayers = Object.values(cache.users)
@@ -144,6 +153,8 @@ export const convertFromLocalForage = async (cache, transaction) => {
   await Promise.all(promises);
 
   await transaction.done;
+
+  eventBus.publish('hide-global-message');
 }
 
 export const fetchLocalForageData = async _ => {

@@ -273,6 +273,7 @@ export default {
         ok: 'OK',
         save: 'Save',
         cancel: 'Cancel',
+        close: 'Close',
         options: 'Options',
         search: 'Search',
         nothingSelected: 'Nothing selected',
@@ -286,4 +287,8 @@ export default {
         incorrectFile: 'Invalid export file',
         incorrectJsonFile: 'Invalid JSON file'
     },
+    db: {
+        conversionMessage: 'Database conversion',
+        conversionSecondaryMessage: 'Please wait, this should not take more than half a minute...',
+    }
 }

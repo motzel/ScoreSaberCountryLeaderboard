@@ -3,6 +3,7 @@ import {openDB} from 'idb'
 import log from '../utils/logger'
 import {isDateObject} from '../utils/js'
 import {updateSongCountryRanks} from '../song'
+import eventBus from '../utils/broadcast-channel-pubsub'
 
 const SSPL_DB_VERSION = 2;
 export let db = null;
@@ -102,11 +103,15 @@ async function openDatabase(cache = null) {
         console.warn('DB blocking... will be closed')
         db.close();
 
+        eventBus.publish('dl-manager-pause-cmd');
+
         // TODO: should be reopened with new version: event.newVersion
         // TODO: or rather notify user / auto reload page
       },
       terminated() {
-        console.warn('DB terminated')
+        console.warn('DB terminated');
+
+        eventBus.publish('dl-manager-pause-cmd');
       },
     });
 
