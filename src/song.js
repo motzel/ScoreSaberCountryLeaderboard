@@ -200,20 +200,12 @@ export async function getLeaderboard(leaderboardId, country, type = 'country', r
       .sort((a, b) => b.score - a.score);
 }
 
-export async function getSongMaxScore(hash, diff) {
-    const songInfo = await getSongByHash(hash);
-    const songCharacteristics = songInfo?.metadata?.characteristics;
-    const diffInfo = findDiffInfo(songCharacteristics, diff);
-
-    return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
-}
-
-export async function getSongMaxScoreWithDiffAndType(hash, diffAndType, cacheOnly = false, forceUpdate = false) {
+export async function getSongMaxScore(hash, diffInfo, cacheOnly = false, forceUpdate = false) {
     const songInfo = await getSongByHash(hash, forceUpdate, cacheOnly);
     const songCharacteristics = songInfo?.metadata?.characteristics;
-    const diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffAndType);
+    const songDiffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffInfo);
 
-    return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
+    return songDiffInfo?.length && songDiffInfo?.notes ? getMaxScore(songDiffInfo.notes) : 0;
 }
 
 export async function getSongDiffInfo(hash, diffAndType, cacheOnly = false) {

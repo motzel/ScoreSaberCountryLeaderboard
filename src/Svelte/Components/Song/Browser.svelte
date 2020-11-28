@@ -15,26 +15,24 @@
     import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
     import {
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
         getRankedScoresByPlayerId,
-        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer, flushScoresCache, flushPlayersCache,
+        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer,
     } from "../../../scoresaber/players";
     import {
-        extractDiffAndType, getAccFromScore,
+        getAccFromScore,
         getHumanDiffInfo,
         getSongDiffInfo,
-        getSongMaxScoreWithDiffAndType,
+        getSongMaxScore,
     } from "../../../song";
     import {generateCsv, downloadCsv} from '../../../utils/csv';
     import {downloadJson} from '../../../utils/json';
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
     import {getConfig, getMainPlayerId, setConfig} from "../../../plugin-config";
-    import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
     import {getActiveCountry} from "../../../scoresaber/country";
     import {_, trans} from "../../stores/i18n";
     import twitch from '../../../services/twitch';
@@ -679,7 +677,6 @@
         return songName.toLowerCase().includes(name.toLowerCase());
     }
     const songIsUnranked = song => !song.stars;
-    // const noPlayerScore = r => !r?.user?.acc;
 
     // post-filters
     const bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiffPp && song.bestDiffPp > minPpDiff;
@@ -779,7 +776,7 @@
             if (!song.maxScoreEx || !song.bpm) {
                 try {
                     // try to get max score from cache
-                    const songInfo = await getSongDiffInfo(song.hash, song.diff, true);
+                    const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
                     if (songInfo) {
                         song.maxScoreEx = songInfo.maxScore;
                         song.bpm = songInfo.bpm;
@@ -795,7 +792,7 @@
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
-                            promise: getSongDiffInfo(song.hash, song.diff, false),
+                            promise: getSongDiffInfo(song.hash, song.diffInfo, false),
                             song,
                             current
                         })
@@ -811,36 +808,34 @@
 
         // wait for resolve all song diff info promises
         if (promisesToResolve.length)
-            Promise.allSettled(promisesToResolve.map(arr => arr.promise)).then(all => {
-                all.forEach(async (result, idx) => {
-                    if (result.status === 'fulfilled') {
-                        const songInfo = result.value;
-                        const song = promisesToResolve[idx].song;
+            Promise.allSettled(promisesToResolve.map(arr => arr.promise))
+             .then(all => Promise.all(all.map(async (result, idx) => {
+                     if (result.status === 'fulfilled') {
+                         const songInfo = result.value;
+                         const song = promisesToResolve[idx].song;
 
-                        if (songInfo) {
-                            song.maxScoreEx = songInfo.maxScore;
-                            song.bpm = songInfo.bpm;
-                            song.njs = songInfo.njs;
-                            song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
-                            song.length = songInfo.length;
-                            song.key = songInfo.key;
+                         if (songInfo) {
+                             song.maxScoreEx = songInfo.maxScore;
+                             song.bpm = songInfo.bpm;
+                             song.njs = songInfo.njs;
+                             song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
+                             song.length = songInfo.length;
+                             song.key = songInfo.key;
 
-                            if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
-                                const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
-                                if (video) song.video = video;
-                            }
+                             if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
+                                 const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
+                                 if (video) song.video = video;
+                             }
 
-                            updateAccFromMaxScore(song, songPage.series);
-                        }
-                    }
-                })
-
-                return all;
-            }).then(_ => {
-                if (promisesToResolve.length && promisesToResolve[0].current === currentPage) {
-                    completeFetchingNewPage(songPage)
-                }
-            });
+                             updateAccFromMaxScore(song, songPage.series);
+                         }
+                     }
+             })))
+             .then(_ => {
+                 if (promisesToResolve.length && promisesToResolve[0].current === currentPage) {
+                     completeFetchingNewPage(songPage)
+                 }
+             });
 
         try {
             const leaderboardIdsToRefresh = songPage.series && songPage.series.length
@@ -1103,7 +1098,6 @@
 
                           // get player previous scores
                           if(idx === 0) {
-                              // TODO: look at song.js::getLeaderboard() lines 153/173
                               const playHistory = await getPlayerSongScoreHistory(series.scores[s.leaderboardId], maxScoreEx);
 
                               if (playHistory && playHistory.length) {
@@ -1263,8 +1257,7 @@
               if (!maxScore) {
                   try {
                       // try to get max score from cache
-                      // TODO: check if it should be s.hash instead s.id
-                      maxScore = await getSongMaxScoreWithDiffAndType(s.id, s.diff, true);
+                      maxScore = await getSongMaxScore(s.hash, s.diffInfo, true);
                   }
                   catch (e) {
                       // swallow error

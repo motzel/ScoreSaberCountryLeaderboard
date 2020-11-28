@@ -10,7 +10,7 @@ import {
     getPlayerRankedsScorePagesToUpdate,
     getPlayerScorePagesToUpdate,
     getScoresByPlayerId,
-    setSongScore,
+    updateSongScore,
 } from "../../scoresaber/players";
 import {dateFromString, toSSTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
@@ -21,7 +21,6 @@ import {getMainPlayerId} from "../../plugin-config";
 import {updateSongCountryRanks} from "../../song";
 import {parseSsFloat} from '../../scoresaber/other';
 import keyValueRepository from '../../db/repository/key-value'
-import playersRepository from '../../db/repository/players';
 import {db} from '../../db/db'
 import tempConfig from '../../temp'
 import players from '../../db/repository/players'
@@ -336,7 +335,7 @@ export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdat
       })
       .filter(s => s?.timeset); // filter out scores without timeset field set
 
-    await Promise.all(updatedScores.map(s => setSongScore(s)));
+    await Promise.all(updatedScores.map(s => updateSongScore(s)));
 
     // TODO: clear cache? or maybe refresh in event handler?
 

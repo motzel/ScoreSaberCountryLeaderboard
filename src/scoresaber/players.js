@@ -151,7 +151,7 @@ export const getRankedScoresByPlayerId = async (playerId, refreshCache = false) 
 
 export const getPlayerSongScore = async (player, leaderboardId) => getSongScoreByPlayerId(player?.id + '_' + leaderboardId);
 export const getSongScoreByPlayerId = async (playerId, leaderboardId) => scoresRepository().get(playerId + '_' + leaderboardId);
-export const setSongScore = async score => scoresRepository().set(score);
+export const updateSongScore = async score => scoresRepository().set(score);
 
 // TODO: look at song.js::getLeaderboard() lines 153/173
 export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null) => {

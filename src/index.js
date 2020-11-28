@@ -21,8 +21,8 @@ import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
     getAccFromScore,
-    getDiffAndTypeFromOnlyDiffName,
-    getSongMaxScoreWithDiffAndType, getSongScores,
+    getDiffAndTypeFromOnlyDiffName, getMaxScore,
+    getSongMaxScore, getSongScores,
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
@@ -194,7 +194,7 @@ async function setupLeaderboard() {
                     if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
                 }
 
-                const maxScore = await getSongMaxScoreWithDiffAndType(songInfoData.hash, diffInfo);
+                const maxScore = await getSongMaxScore(songInfoData.hash, diffInfo);
                 scores.forEach(s => {
                     if (s.score) {
                         const score = s.tr.querySelector('td.score');
@@ -313,7 +313,7 @@ async function setupProfile() {
 
         if (songEnhanceEnabled && !autoTransformEnabled) {
             try {
-                const maxSongScore = await getSongMaxScoreWithDiffAndType(
+                const maxSongScore = await getSongMaxScore(
                   leaderboard?.hash ? leaderboard.hash : s.hash,
                   leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
                 );
