@@ -318,19 +318,25 @@ async function setupProfile() {
                   leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
                 );
 
-                const maxScoreEx = leaderboard?.maxScoreEx;
+                const maxScoreEx = maxSongScore ?? leaderboard?.maxScoreEx;
+
+                const ssScoreDate = dateFromString(s.timeset);
+                const useDownloadedScore = leaderboard?.timeset && ssScoreDate && leaderboard?.timeset?.getTime() === ssScoreDate.getTime();
+                if (useDownloadedScore) {
+                    s = {...s, ...leaderboard, maxScoreEx, percent: maxScoreEx && leaderboard?.score ? leaderboard.score / maxScoreEx : s.percent};
+                }
 
                 s.acc = s.percent ? s.percent * 100 : null;
 
                 const useCurrentScoreAsPrev = (s.pp && leaderboard?.pp && round(leaderboard.pp) < round(s.pp)) ||
                   (s.score && leaderboard?.score && leaderboard.score < s.score);
 
-                if (!s.acc && s.score && (maxSongScore || maxScoreEx)) {
-                    s.acc = getAccFromScore({score: s.score, maxScoreEx}, maxSongScore);
+                if (!s.acc && s.score && maxScoreEx) {
+                    s.acc = getAccFromScore({score: s.score, maxScoreEx});
                 }
 
                 if(!s.score && s.percent) {
-                    s.score = maxSongScore || maxScoreEx ? Math.round(s.percent * (maxSongScore ? maxSongScore : maxScoreEx)) : null;
+                    s.score = maxScoreEx ? Math.round(s.percent * maxScoreEx) : null;
                 }
 
                 s.hidden = leaderboard?.acc ? shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, acc: leaderboard.acc})) : false;
@@ -345,7 +351,7 @@ async function setupProfile() {
                         score: useCurrentScoreAsPrev ? leaderboard.score : history.score,
                         uScore: useCurrentScoreAsPrev ? leaderboard.uScore : history.uScore,
                         maxScoreEx,
-                    }, maxSongScore);
+                    });
                 }
             } catch (e) {} // swallow error
         }
