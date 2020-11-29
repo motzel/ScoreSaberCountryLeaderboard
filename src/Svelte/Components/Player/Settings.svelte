@@ -300,6 +300,36 @@
     }
 
     let initialized = false;
+
+    async function refreshTwitchProfile() {
+        twitchProfile = await twitch.getProfileByPlayerId(profileId, true);
+        twitchToken = await twitch.getCurrentToken();
+        const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
+        const tokenExpireSoon = tokenExpireInDays <= 3;
+
+        const showTwitchBtnEnabledInConfig = !!(config && config.profile && config.profile.showTwitchIcon);
+
+        showTwitchLinkBtn = (showTwitchBtnEnabledInConfig && !twitchToken) || (twitchToken && tokenExpireSoon);
+        showTwitchUserBtn = showTwitchBtnEnabledInConfig && twitchToken && playerInfo && !playerInfo.inactive;
+
+        twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? trans('profile.twitch.linked') : trans('profile.twitch.renew')) : trans('profile.twitch.link');
+        twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? trans('profile.twitch.daysLeft', {days: tokenExpireInDays}) : null;
+        twitchBtnDisabled = !tokenExpireSoon;
+
+        if (twitchProfile) {
+            if (!twitchProfile.id) {
+                const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
+                if (fetchedProfile) {
+                    twitchProfile = {...twitchProfile, ...fetchedProfile, playerId: profileId};
+
+                    await twitch.storeProfile(twitchProfile);
+                }
+            }
+
+            await twitch.updateVideosForPlayerId(profileId);
+        }
+    }
+
     onMount(async () => {
         country = await getActiveCountry();
 
@@ -354,32 +384,7 @@
 
         filterSortTypes();
 
-        twitchProfile = await twitch.getProfileByPlayerId(profileId);
-        twitchToken = await twitch.getCurrentToken();
-        const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
-        const tokenExpireSoon = tokenExpireInDays <= 3;
-
-        const showTwitchBtnEnabledInConfig = !!(config && config.profile && config.profile.showTwitchIcon);
-
-        showTwitchLinkBtn = (showTwitchBtnEnabledInConfig && !twitchToken) || (twitchToken && tokenExpireSoon);
-        showTwitchUserBtn = showTwitchBtnEnabledInConfig && twitchToken && playerInfo && !playerInfo.inactive;
-
-        twitchBtnLabel = twitchToken ? (!tokenExpireSoon ? trans('profile.twitch.linked') : trans('profile.twitch.renew')) : trans('profile.twitch.link');
-        twitchBtnTitle = twitchToken && tokenExpireInDays > 0 ? trans('profile.twitch.daysLeft', {days: tokenExpireInDays}) : null;
-        twitchBtnDisabled = !tokenExpireSoon;
-
-        if (twitchProfile) {
-            if (!twitchProfile.id) {
-                const fetchedProfile = await twitch.getProfileByUsername(twitchProfile.login);
-                if (fetchedProfile) {
-                    twitchProfile = {...twitchProfile, ...fetchedProfile, playerId: profileId};
-
-                    await twitch.storeProfile(twitchProfile);
-                }
-            }
-
-            await twitch.updateVideosForPlayerId(profileId);
-        }
+        await refreshTwitchProfile()
 
         initialized = true;
 
@@ -394,9 +399,15 @@
         // TODO: reload profile page for now, try to do it to be more dynamic
         const unsubscriberConfigChanged = eventBus.on('config-changed', () => window.location.reload());
 
+        const twitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
+            if(playerId === profileId) await refreshTwitchProfile();
+        });
+
+
         return () => {
             unsubscriberScoresUpdated();
             unsubscriberConfigChanged();
+            twitchLinked();
         }
     })
 

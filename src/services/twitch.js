@@ -110,7 +110,7 @@ const updateVideosForPlayerId = async playerId => {
         if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
             const videos = await fetchVideos(twitchProfile.id);
 
-            twitchProfile.videos = videos.data;
+            twitchProfile.videos = videos?.data ?? null;
             twitchProfile.lastUpdated = new Date();
             await storeProfile(twitchProfile);
 
