@@ -8,9 +8,9 @@
     "format": "gulp --color format"
   },
   "devDependencies": {
-    "@babel/core": "^7.11.1",
-    "@babel/plugin-proposal-optional-chaining": "^7.11.0",
-    "@babel/preset-env": "^7.11.0",
+    "@babel/core": "^7.12.3",
+    "@babel/plugin-proposal-optional-chaining": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
     "autoprefixer": "^9.8.6",
     "babel-loader": "^8.1.0",
     "babel-minify-webpack-plugin": "^0.3.1",
@@ -19,19 +19,19 @@
     "cssnano": "^4.1.10",
     "gulp": "^4.0.2",
     "gulp-prettier": "^3.0.0",
-    "moment": "^2.27.0",
-    "p-queue": "^6.6.0",
+    "idb": "^5.0.7",
+    "moment": "^2.29.1",
+    "p-queue": "^6.6.2",
     "postcss-loader": "^3.0.0",
-    "prettier": "^2.0.5",
-    "svelte": "^3.24.1",
+    "prettier": "^2.1.2",
+    "svelte": "^3.29.4",
     "svelte-loader": "^2.13.6",
-    "terser-webpack-plugin": "^2.3.7",
+    "svg-inline-loader": "^0.8.2",
+    "terser-webpack-plugin": "^2.3.8",
     "to-string-loader": "^1.1.6",
-    "url-loader": "^4.1.0",
-    "webpack": "^4.44.1",
+    "url-loader": "^4.1.1",
+    "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12"
   },
-  "dependencies": {
-    "svg-inline-loader": "^0.8.2"
-  }
+  "dependencies": {}
 }

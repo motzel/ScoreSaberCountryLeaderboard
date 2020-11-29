@@ -2,12 +2,11 @@ import eventBus from "../utils/broadcast-channel-pubsub";
 import nodeSync from './multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
-import {getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
+import {flushPlayersCache, getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
 import {dateFromString} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
-import {getCacheAndConvertIfNeeded} from "../store";
 import logger from "../utils/logger";
 import {getActiveCountry} from "../scoresaber/country";
 
@@ -33,7 +32,7 @@ export const TYPES = {
 }
 
 const enqueuePlayerScores = async (queue, playerId, force = false, then = null, refreshInterval = PLAYERS_SCORES_REFRESH, priority = PLAYER_SCORES_PRIORITY, metadata = {}) => {
-    logger.debug(`Starting enqueuing  player ${playerId}`, 'DlManager')
+    logger.debug(`Starting enqueuing scores of player ${playerId}`, 'DlManager')
 
     const QUEUE_LABEL = `${TYPES.PLAYER_SCORES}-${playerId}`;
     if (queue.contains(QUEUE_LABEL)) return;
@@ -45,15 +44,15 @@ const enqueuePlayerScores = async (queue, playerId, force = false, then = null, 
 
     const shouldBeQueued = force || !lastUpdated || Date.now() - lastUpdated > refreshInterval;
 
-    logger.trace(`Player ${playerId} last updated on ${lastUpdated ? lastUpdated.toISOString() : 'NEVER'}. ${!shouldBeQueued ? 'SKIPPED' : (force ? 'FORCED' : '')}`, 'DlManager')
+    logger.trace(`Scores of player ${playerId} last updated on ${lastUpdated ? lastUpdated.toISOString() : 'NEVER'}. ${!shouldBeQueued ? 'SKIPPED' : (force ? 'FORCED' : '')}`, 'DlManager')
 
     if (shouldBeQueued) {
-        logger.debug(`Player ${playerId} enqueued`, 'DlManager')
+        logger.debug(`Scores of player ${playerId} enqueued`, 'DlManager')
 
         const mergedMetadata = {type: TYPES.PLAYER_SCORES, nodeId: nodeSync.getId(), playerId, ...metadata};
         queue.add(
             async () => await updatePlayerScores(
-                playerId, true, true,
+                playerId, true,
                 info => {
                     const {id, ...rest} = info;
                     eventBus.publish('bg-download-progress', {size: queue.size() + 1, label: QUEUE_LABEL, ...mergedMetadata, ...rest})
@@ -70,7 +69,7 @@ const enqueueMainPlayer = async (queue, force = false, then = null) => {
     if (!mainPlayerId) return;
 
     const playerInfo = await getPlayerInfo(mainPlayerId);
-    if (!playerInfo)
+    if (!playerInfo?.lastUpdated)
         await enqueueActivePlayers(queue, true, async () => {
             await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true})
         }, MAIN_PLAYER_PRIORITY + 1);
@@ -98,7 +97,7 @@ const enqueueRankeds = async (queue, force = false, then = null) => {
 }
 
 const enqueueActivePlayers = async (queue, force = false, then = null, priority = ACTIVE_PLAYERS_PRIORITY) => {
-    logger.debug(`Starting enqueuing  active players`, 'DlManager');
+    logger.debug(`Starting enqueuing active players`, 'DlManager');
 
     const QUEUE_LABEL = TYPES.ACTIVE_PLAYERS;
     if (queue.contains(QUEUE_LABEL)) return;
@@ -286,14 +285,10 @@ export default async () => {
         currentMasterId = masterNodeId;
     });
 
-    const refreshData = async ({nodeId}) => {
-        if (nodeId !== nodeSync.getId()) {
-            await getCacheAndConvertIfNeeded(true);
-        }
-    };
+    const refreshPlayersData = () => flushPlayersCache();
 
     eventBus.on('player-added', async ({playerId, nodeId}) => {
-        await refreshData({nodeId});
+        refreshPlayersData({nodeId});
 
         await enqueue(
             queue, TYPES.ACTIVE_PLAYERS, true,
@@ -304,7 +299,7 @@ export default async () => {
     });
 
     eventBus.on('player-added-to-friends', async ({playerId, nodeId}) => {
-        await refreshData({nodeId});
+        refreshPlayersData({nodeId});
 
         await enqueue(
           queue, TYPES.ACTIVE_PLAYERS, true,
@@ -314,9 +309,9 @@ export default async () => {
         await processQueue(queue);
     });
 
-    eventBus.on('player-removed', refreshData);
+    eventBus.on('player-removed', refreshPlayersData);
 
-    eventBus.on('player-removed-from-friends', refreshData);
+    eventBus.on('player-removed-from-friends', refreshPlayersData);
 
     eventBus.on('dl-manager-pause-cmd', () => {
         logger.debug('Pause Dl Manager', 'DlManager');

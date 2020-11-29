@@ -13,7 +13,7 @@ export function toUTCDate(date) {
     return Date.UTC(year, month, day, 0, 0, 0, 0);
 }
 
-export function toSSDate(date) {
+export function toSSTimestamp(date) {
     return (new Date(Date.parse(date.toLocaleString('pl-PL', { timeZone: 'Australia/Brisbane',hour12: false,
         year: "numeric",
         month: "2-digit",

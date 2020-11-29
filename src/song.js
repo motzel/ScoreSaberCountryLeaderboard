@@ -1,20 +1,18 @@
-import {capitalize, convertArrayToObjectByKey} from "./utils/js";
+import {capitalize, convertArrayToObjectByKey, isEmpty} from "./utils/js";
 import {shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
-    getActiveCountryPlayers,
-    getActiveCountryPlayersIds,
-    getAllActivePlayers,
-    getFriends,
-    getPlayerInfoFromPlayers,
-    getPlayerScores,
-    getPlayerSongScore,
-    getPlayerSongScoreHistory,
-    getScoresByPlayerId,
-    getSongScoreByPlayerId
+  getActiveCountryPlayers,
+  getActiveCountryPlayersIds,
+  getAllActivePlayers,
+  getAllScores,
+  getFriends,
 } from "./scoresaber/players";
 import {getActiveCountry} from "./scoresaber/country";
-import {getCacheAndConvertIfNeeded, setCache} from "./store";
+import scoresRepository from './db/repository/scores'
+import {flushSsplCountryRanksCache, getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
+import eventBus from './utils/broadcast-channel-pubsub'
+import nodeSync from './network/multinode-sync'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -72,6 +70,10 @@ export function extractDiffAndType(ssDiff) {
     };
 }
 
+export function getDiffAndTypeFromOnlyDiffName(ssString) {
+    return extractDiffAndType('_' + ssString.replace('Expert+', 'ExpertPlus') + '_SoloStandard');
+}
+
 export function findDiffInfoWithDiffAndType(characteristics, diffAndType) {
     if (!characteristics || !diffAndType) return null;
 
@@ -87,139 +89,123 @@ export function findDiffInfo(characteristics, ssDiff) {
     return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
 }
 
-export async function refreshSongCountryRanksCache(leaderboardIds = []) {
-    const country = await getActiveCountry();
-    if (!country) return;
+export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
+  const country = await getActiveCountry();
+  const countryPlayersIds = await getActiveCountryPlayersIds(country, true, true);
 
-    const players = (await getActiveCountryPlayers(country, false))
-    if (!leaderboardIds || !leaderboardIds.length)
-        leaderboardIds = [...new Set(players.reduce((cum, player) => cum.concat(Object.keys(player.scores)), []))];
+  const ssplCountryRanks = await getSsplCountryRanks();
+  const shouldProcessAllLeaderboards = isEmpty(ssplCountryRanks) || !onlyLeaderboardsIds;
 
-    const data = await getCacheAndConvertIfNeeded();
+  const scores = (await getAllScores() ?? [])
+    .filter(score => score.score && countryPlayersIds.includes(score.playerId) && (
+        shouldProcessAllLeaderboards ||
+        (onlyLeaderboardsIds && onlyLeaderboardsIds.includes(score.leaderboardId))
+      ),
+    );
 
-    for (let leaderboardId of leaderboardIds.map(s => parseInt(s, 10))) {
-        const scores = players
-            .map(player => {
-                const score = getPlayerSongScore(player, leaderboardId);
-                return score && score.score ? {playerId: player.id, score: score.score} : null;
-            })
-            .filter(s => s)
-            .sort((a, b) => b.score - a.score);
+  const leaderboards = convertArrayToObjectByKey(scores, 'leaderboardId', true);
+  Object.keys(leaderboards).forEach(leaderboardId => {
+    ssplCountryRanks[leaderboardId] = leaderboards[leaderboardId]
+      .sort((a, b) => b.score - a.score)
+      .map((score, idx, leaderboard) => ({
+        playerId: score.playerId,
+        ssplCountryRank: {[country]: {rank: idx + 1, total: leaderboard.length}},
+      }))
+      .reduce((cum, rank) => {
+        cum[rank.playerId] = rank.ssplCountryRank;
+        return cum;
+      }, {})
+    ;
+  });
 
-        scores.forEach((d, pos) => {
-            if (!data.users[d.playerId].scores[leaderboardId].ssplCountryRank)
-                data.users[d.playerId].scores[leaderboardId].ssplCountryRank = {[country]: null};
 
-            data.users[d.playerId].scores[leaderboardId].ssplCountryRank[country] = {
-                rank: pos + 1,
-                total: scores.length
-            };
-        });
-    }
+  await setSsplCountryRanks(ssplCountryRanks);
+
+  flushSsplCountryRanksCache();
+
+  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync.getId(), ssplCountryRanks});
+
+  return ssplCountryRanks;
 }
 
-export async function getLeaderboard(leaderboardId, country, type = 'country') {
+export const getSongScores = async (leaderboardId, count = undefined, refreshCache = false) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, count, refreshCache);
+
+export function getAccFromScore(score, maxSongScore) {
+    const scoreMult = score.uScore && score.score ? score.score / score.uScore : 1
+
+    return maxSongScore
+      ? score.score / maxSongScore / scoreMult * 100
+      : (score.maxScoreEx
+        ? score.score / score.maxScoreEx / scoreMult * 100
+        : null)
+}
+export async function getLeaderboard(leaderboardId, country, type = 'country', refreshCache = false) {
     let players;
     switch(type) {
       case 'all':
-        players = await getAllActivePlayers(country);
+        players = await getAllActivePlayers(country, refreshCache);
         break;
 
       case 'manually_added':
-        players = await getFriends(country, true);
+        players = await getFriends(country, true, refreshCache);
         break;
 
       case 'country':
       default:
-        players = await getActiveCountryPlayers(country, true);
+        players = await getActiveCountryPlayers(country, true, refreshCache);
         break;
     }
     if (!players || !players.length) return [];
 
-    const filteredScores = players
-        .map(player => getPlayerSongScore(player, leaderboardId) ? {playerId: player.id, songHash: getPlayerSongScore(player, leaderboardId).id} : null)
-        .filter(s => s)
-    ;
+    const songScores = await getSongScores(leaderboardId, undefined, refreshCache);
+    if (!songScores) return [];
+
+    const playersIds = players.map(player => player.id);
+
+    const filteredScores = songScores.filter(s => playersIds.includes(s.playerId));
     if (!filteredScores.length) return [];
 
-    const songInfo = filteredScores[0].songHash ? await getSongByHash(filteredScores[0].songHash) : null;
+    const songInfo = filteredScores[0].hash ? await getSongByHash(filteredScores[0].hash) : null;
     const songCharacteristics = songInfo?.metadata?.characteristics;
-    let diffInfo = null, maxSongScore = 0;
+    let diffInfo = null, maxSongScore = undefined;
 
     players = convertArrayToObjectByKey(players, 'id');
 
-    return (await filteredScores.map(s => s.playerId)
-        .reduce(async (cum, playerId) => {
-            cum = await cum;
+    return filteredScores
+      .map(score => {
+        const player = players[score.playerId];
+        if (!player) return null;
 
-            const playerSongScore = getPlayerSongScore(getPlayerInfoFromPlayers(players, playerId), leaderboardId);
-            if (!playerSongScore) return cum;
+        if (maxSongScore === undefined) {
+          diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, score.diffInfo);
+          maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : null;
+        }
 
-            if (!maxSongScore && !cum.length) {
-                diffInfo = findDiffInfo(
-                    songCharacteristics,
-                    playerSongScore.diff
-                );
-                maxSongScore =
-                    diffInfo?.length && diffInfo?.notes
-                        ? getMaxScore(diffInfo.notes)
-                        : 0;
-            }
+        const playHistory = (score.history ?? []).map(score => ({...score, acc: getAccFromScore(score, maxSongScore), timeset: new Date(score.timestamp)}));
 
-            const {scores, ...user} = getPlayerInfoFromPlayers(players, playerId);
-            const {
-                id: songHash,
-                score,
-                uScore,
-                timeset,
-                rank,
-                mods,
-                pp,
-                maxScoreEx,
-                ..._
-            } = playerSongScore;
-
-            const playHistory = await getPlayerSongScoreHistory(playerSongScore, maxSongScore);
-
-            const scoreMult = uScore && score ? score / uScore : 1
-            cum.push(
-                Object.assign({}, user, {
-                    songHash,
-                    score,
-                    timeset,
-                    rank,
-                    mods,
-                    pp,
-                    playHistory,
-                    percent: maxSongScore
-                        ? score / maxSongScore / scoreMult
-                        : (maxScoreEx
-                            ? score / maxScoreEx / scoreMult
-                            : null)
-                })
-            );
-
-            return cum;
-        }, [])
-    )
-        .map((u) => Object.assign({}, u, {hidden: shouldBeHidden(u)}))
-        .sort((a, b) => b.score - a.score);
+        return {
+          ...player,
+          songHash: score.hash,
+          score: score.score,
+          timeset: score.timeset,
+          rank: score.rank,
+          mods: score.mods,
+          pp: score.pp,
+          playHistory,
+          acc: getAccFromScore(score, maxSongScore),
+        };
+      })
+      .filter(score => score) // filter out empty items
+      .map(score => ({...score, hidden: shouldBeHidden(score)}))
+      .sort((a, b) => b.score - a.score);
 }
 
-export async function getSongMaxScore(hash, diff) {
-    const songInfo = await getSongByHash(hash);
-    const songCharacteristics = songInfo?.metadata?.characteristics;
-    const diffInfo = findDiffInfo(songCharacteristics, diff);
-
-    return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
-}
-
-export async function getSongMaxScoreWithDiffAndType(hash, diffAndType, cacheOnly = false, forceUpdate = false) {
+export async function getSongMaxScore(hash, diffInfo, cacheOnly = false, forceUpdate = false) {
     const songInfo = await getSongByHash(hash, forceUpdate, cacheOnly);
     const songCharacteristics = songInfo?.metadata?.characteristics;
-    const diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffAndType);
+    const songDiffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffInfo);
 
-    return diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0;
+    return songDiffInfo?.length && songDiffInfo?.notes ? getMaxScore(songDiffInfo.notes) : 0;
 }
 
 export async function getSongDiffInfo(hash, diffAndType, cacheOnly = false) {

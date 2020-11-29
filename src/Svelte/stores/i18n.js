@@ -17,8 +17,8 @@ const locales = {
     'es-ES': {id: 'es-ES', name: 'España'},
 };
 
-let currentLang = 'pl';
-let currentLocale = 'pl';
+let currentLang = 'en';
+let currentLocale = 'en-US';
 
 export const getTranslations = () => languages[currentLang].strings;
 

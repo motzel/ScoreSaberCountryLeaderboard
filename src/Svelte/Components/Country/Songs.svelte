@@ -1,11 +1,13 @@
 <script>
     import {onMount} from 'svelte';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
     import debounce from '../../../utils/debounce';
-    import {getAllActivePlayers, getPlayerScores} from "../../../scoresaber/players";
-    import {dateFromString} from "../../../utils/date";
-    import {extractDiffAndType, getSongDiffInfo} from "../../../song";
+    import {
+        getAllActivePlayers,
+        getAllScoresSince,
+        getAllScoresWithPpOver,
+    } from "../../../scoresaber/players";
+    import {getAccFromScore, getSongDiffInfo} from "../../../song";
     import {trans} from "../../stores/i18n";
 
     import Table from '../Common/Table.svelte';
@@ -18,7 +20,7 @@
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
     import Leaderboard from "../Song/Leaderboard.svelte";
-    import {getCacheAndConvertIfNeeded} from "../../../store";
+    import {convertArrayToObjectByKey} from '../../../utils/js'
 
     export let country;
     export let sortBy = 'timeset'
@@ -46,43 +48,33 @@
     let scores = [];
 
     async function refreshScores() {
-        scores = (await getAllActivePlayers(country))
-                .reduce((cum, player) => {
-                    if (player) {
-                        const {id, country, name} = player;
+        if (refreshTag === null) return;
 
-                        const scores = getPlayerScores(player);
-                        if (scores)
-                            cum = cum.concat(
-                                Object.values(scores)
-                                    .map(s => {
-                                        s.scoreMult = s.uScore ? s.score / s.uScore : 1;
-                                        s.acc = s.maxScoreEx ? s.score / s.maxScoreEx / s.scoreMult * 100 : null;
-                                        s.diffInfo = extractDiffAndType(s.diff);
+        const playersScores = sortBy === 'timeset'
+         ? await getAllScoresSince(min ? min : undefined)
+         : (
+          sortBy === 'pp'
+           ? await getAllScoresWithPpOver(min ? min : undefined)
+           : await getAllScoresSince()
+         );
 
-                                        return {
-                                            ...s,
-                                            timeset: dateFromString(s.timeset),
-                                            playerInfo: {id, country, name}
-                                        }
-                                    })
-                            )
-                    }
-                    return cum;
-                }, [])
-        ;
+        const allPlayersArr = await getAllActivePlayers(country);
+        const allPlayers = allPlayersArr ? convertArrayToObjectByKey(allPlayersArr, 'id') : {};
+        const allPlayersIds = Object.keys(allPlayers);
+
+        scores = playersScores
+         .filter(s => allPlayersIds.includes(s.playerId))
+         .map(s => {
+             const player = allPlayers[s.playerId];
+             const {id, country, name} = player;
+
+             return {...s, playerInfo: {id, country, name}}
+         });
     }
 
     onMount(async () => {
-        const refresh = async nodeId => {
-            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
-
-            await refreshScores();
-        }
-
-        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async () => await refreshScores());
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', debounce(async () => await refreshScores(), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY))
 
         return () => {
             dataRefreshedUnsubscriber();
@@ -95,22 +87,26 @@
 
         // try to get max score from cache
         for (const i in data) {
-            if (!data[i].maxScoreEx) {
-                try {
-                    const songInfo = await getSongDiffInfo(data[i].id, data[i].diffInfo, true);
-                    if (songInfo) {
-                        data[i].maxScoreEx = songInfo.maxScore;
-                        data[i].acc = data[i].maxScoreEx ? data[i].score / data[i].maxScoreEx / data[i].scoreMult * 100 : null;
-                    } else {
-                        // try to fetch song info from beat saver and populate it later
-                        promisesToResolve.push({
-                            promise: getSongDiffInfo(data[i].id, data[i].diffInfo, false),
-                            song: data[i],
-                            page
-                        })
+            if(!data[i].acc) {
+                if (!data[i].maxScoreEx && data[i].diffInfo) {
+                    try {
+                        const songInfo = await getSongDiffInfo(data[i].hash, data[i].diffInfo, true);
+                        if (songInfo) {
+                            data[i].maxScoreEx = songInfo.maxScore;
+                            data[i].acc = getAccFromScore(data[i]);
+                        } else {
+                            // try to fetch song info from beat saver and populate it later
+                            promisesToResolve.push({
+                                promise: getSongDiffInfo(data[i].hash, data[i].diffInfo, false),
+                                song: data[i],
+                                page
+                            })
+                        }
+                    } catch (e) {
+                        // swallow error
                     }
-                } catch (e) {
-                    // swallow error
+                } else {
+                    data[i].acc = getAccFromScore(data[i]);
                 }
             }
         }
@@ -128,7 +124,7 @@
 
                                 if (songInfo) {
                                     song.maxScoreEx = songInfo.maxScore;
-                                    song.acc = song.maxScoreEx ? song.score / song.maxScoreEx / song.scoreMult * 100 : null;
+                                    song.acc = getAccFromScore(song);
                                 }
                             }
                         })
@@ -151,7 +147,7 @@
             .map((s, idx) => ({...s, rank: idx + 1}));
 
     $: {
-        refreshScores(refreshTag);
+        refreshScores(sortBy, min, refreshTag);
     }
 </script>
 

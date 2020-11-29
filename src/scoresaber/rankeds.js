@@ -1,25 +1,29 @@
-import {getCacheAndConvertIfNeeded} from "../store";
+import rankedsRepository from "../db/repository/rankeds";
+import keyValueRepository from "../db/repository/key-value";
+import rankedsChangesRepository from "../db/repository/rankeds-changes";
+import {convertArrayToObjectByKey} from '../utils/js'
 
-export const getRankedSongs = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.rankedSongs ?? null;
-export const getRankedSongsLastUpdated = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.rankedSongsLastUpdated ?? null;
-export const getRankedChanges = async _ => (await getCacheAndConvertIfNeeded()).rankedSongsChanges ?? {};
-export const getFilteredRankedChanges = async filterTimestampFunc => {
-    const rankedSongsChanges = await getRankedChanges();
-
-    const changeTimestampsSorted = Object.keys(rankedSongsChanges).sort((a, b) => a - b);
-
-    const timestampsMatchingFilter = changeTimestampsSorted.filter(filterTimestampFunc);
+export const flushRankedsCache = () => rankedsRepository().flushCache();
+export const flushRankedsChangesCache = () => rankedsChangesRepository().flushCache();
+export const storeRanked = async ranked => rankedsRepository().set(ranked);
+export const storeRankeds = async rankeds => Promise.all(rankeds.map(async ranked => storeRanked(ranked)));
+export const getRankedSongs = async (refreshCache = false) => convertArrayToObjectByKey(await rankedsRepository().getAll(undefined, refreshCache) ?? {}, 'leaderboardId');
+export const getRankedSongsLastUpdated = async (refreshCache = true) => keyValueRepository().get('rankedSongsLastUpdated', refreshCache);
+export const setRankedSongsLastUpdated = async date => keyValueRepository().set(date,'rankedSongsLastUpdated');
+export const getRankedChanges = async query => rankedsChangesRepository().getAllFromIndex('rankeds-changes-timestamp', query);
+export const getRankedsChangesSince = async sinceTimestamp => {
+    const changes = await getRankedChanges(IDBKeyRange.lowerBound(sinceTimestamp));
+    if (!changes || !changes.length) return {};
 
     // return all song changes for matched timestamps {leaderboardId: [{change1}, {change2}...]}
-    return timestampsMatchingFilter.reduce((cum, timestamp) => {
-        rankedSongsChanges[timestamp].forEach(c => {
-            cum[c.leaderboardId] = cum[c.leaderboardId] ?? [];
-            cum[c.leaderboardId].push({...c, timestamp: parseInt(timestamp, 10)});
-        });
+    return changes.reduce((cum, change) => {
+        cum[change.leaderboardId] = cum[change.leaderboardId] ?? [];
+        cum[change.leaderboardId].push(change);
 
-        return cum
+        return cum;
     }, {});
 }
+export const storeRankedsChanges = async rankedsChanges => Promise.all(rankedsChanges.map(async rc => rankedsChangesRepository().set(rc)));
 
 // errors in API
 export const UNRANKED = [97223, 20506, 102179, 102180];

@@ -64,6 +64,9 @@ export default {
             replays: 'Powtórki obejrzane przez innych',
             role: 'Rola',
             rankedPlayCount: 'Liczba zagranych rankedów',
+            countryRank: 'Pozycja na krajowych leaderboardach',
+            best: 'Naj.',
+            avg: 'Śr.',
             totalRankedScore: 'Wynik rankedów razem',
             avgRankedAccuracy: 'Średnia celność rankedów',
             medianRankedAccuracy: 'Mediana celności rankedów',
@@ -202,7 +205,7 @@ export default {
     refresh: {
         lastDownload: 'Pobrano:',
         rankedsDownload: 'Pobieranie aktualnych rankedów',
-        countryPlayersDownload: 'Pobieranie listy top 50 ${country}...',
+        countryPlayersDownload: 'Pobieranie aktywnych graczy',
         waiting: '[Czekam ${seconds}s]',
         error: 'Błąd pobierania danych. Spróbuj ponownie.',
         btnDisabledBgDlInProgress: 'Odświeżanie wyłączone. Trwa pobieranie w tle...',
@@ -271,11 +274,22 @@ export default {
         ok: 'OK',
         save: 'Zapisz',
         cancel: 'Anuluj',
+        close: 'Zamknij',
         options: 'Opcje',
         search: 'Szukaj',
         nothingSelected: 'Nic nie wybrano',
         to: 'do',
         noData: 'Brak danych',
         downloadError: 'Błąd pobierania',
+    },
+    import: {
+        selectJsonFile: 'Wybierz plik JSON zawierający eksport danych',
+        oldVerNotSupported: 'Import pliku ze starszej wersji pluginu nie jest wspierany',
+        incorrectFile: 'Niepoprawny plik eksportu',
+        incorrectJsonFile: 'Niepoprawny plik JSON'
+    },
+    db: {
+        conversionMessage: 'Konwersja bazy danych',
+        conversionSecondaryMessage: 'Proszę czekać, nie powinno to zająć dłużej niż pół minuty...',
     }
 }

@@ -1,11 +1,12 @@
 <script>
     import {getRankedSongs} from "../../../scoresaber/rankeds";
-    import {getPlayerInfo, getScoresByPlayerId} from "../../../scoresaber/players";
-    import {dateFromString, toSSDate} from "../../../utils/date";
+    import {getPlayerHistory, getScoresByPlayerId} from "../../../scoresaber/players";
+    import {dateFromString, toSSTimestamp} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
     import Button from "../Common/Button.svelte";
+    import {getAccFromScore} from '../../../song'
 
     export let profileId = null;
     export let history = null;
@@ -31,16 +32,15 @@
         if (!playerScores) return;
 
         chartData = Object.values(playerScores)
-                .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && !!rankeds[s.leaderboardId])
+                .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId])
                 .map(s => {
-                    const scoreMult = s.uScore ? s.score / s.uScore : 1;
-                    const acc = s.score / s.maxScoreEx / scoreMult * 100;
+                    const acc = getAccFromScore(s)
 
                     return {
                         x: rankeds[s.leaderboardId].stars,
                         y: acc,
                         leaderboardId: s.leaderboardId,
-                        name: s.name + ' ' + s.songSubName,
+                        name: s.name,
                         songAuthor: s.songAuthorName,
                         levelAuthor: s.levelAuthorName,
                         timeset: dateFromString(s.timeset)
@@ -55,17 +55,14 @@
         const daysAgo = Array(50).fill(0).map((v, i) => i).reverse();
 
         let ppData = [];
-        const playerInfo = await getPlayerInfo(profileId);
-        const userHistory = playerInfo && playerInfo.userHistory && Object.keys(playerInfo.userHistory).length
-                ? playerInfo.userHistory
-                : null;
+        const userHistory = await getPlayerHistory(profileId);
         if (userHistory) {
-            const historyData = Object.entries(userHistory).reduce((cum, {0: timestamp, 1: history}) => {
-                const historyDate = toSSDate(new Date(parseInt(timestamp, 10)));
-                let diffInDays = Math.floor((new Date() - historyDate) / (1000 * 60 * 60 * 24));
+            const historyData = userHistory.reduce((cum, historyItem) => {
+                const historyDate = toSSTimestamp(dateFromString(historyItem.timestamp));
+                let diffInDays = Math.floor((new Date(toSSTimestamp(new Date())) - historyDate) / (1000 * 60 * 60 * 24));
                 if (diffInDays < 0) diffInDays = 0;
 
-                cum[diffInDays] = history;
+                cum[diffInDays] = historyItem;
 
                 return cum;
             }, {})

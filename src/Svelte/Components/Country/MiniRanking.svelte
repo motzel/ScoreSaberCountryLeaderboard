@@ -7,11 +7,11 @@
     import {GLOBAL_URL, PLAYERS_PER_PAGE, USERS_URL} from "../../../network/scoresaber/consts";
     import {getActiveCountryPlayers,} from "../../../scoresaber/players";
     import {formatNumber, substituteVars} from "../../../utils/format";
-    import {parseSsLeaderboardScores} from "../../../network/scoresaber/scores";
     import {convertArrayToObjectByKey} from "../../../utils/js";
     import {delay, fetchHtmlPage} from "../../../network/fetch";
     import queue from "../../../network/queue";
     import {getActiveCountry} from "../../../scoresaber/country";
+    import {parseSsLeaderboardScores} from '../../../scoresaber/scores'
 
     export let type = "country";
     export let country;

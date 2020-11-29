@@ -1,6 +1,5 @@
 import {getFirstRegexpMatch} from "../utils/js";
 import {SCORESABER_URL} from "../network/scoresaber/consts";
-import {getCacheAndConvertIfNeeded, setCache} from "../store";
 import {dateFromString} from "../utils/date";
 import {
     getAuthUrl,
@@ -9,6 +8,11 @@ import {
     getVideos as apiGetVideos,
     getStreams as apiGetStreams
 } from "../network/twitch";
+import twitchRepository from "../db/repository/twitch";
+import keyValueRepository from "../db/repository/key-value";
+import {getPlayerInfo} from '../scoresaber/players';
+import eventBus from '../utils/broadcast-channel-pubsub';
+import nodeSync from "../network/multinode-sync";
 
 const users = {
     '76561198059659922': 'patian25',
@@ -48,13 +52,13 @@ const getTwitchTokenFromUrl = () => {
 }
 
 const getCurrentToken = async () => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data || !data.twitch || !data.twitch.token) return null;
+    const token = await keyValueRepository().get('twitchToken', true);
+    if (!token) return null;
 
-    const expires = dateFromString(data.twitch.token.expires);
+    const expires = dateFromString(token.expires);
     const expiresIn = expires - (new Date());
 
-    return Object.assign({}, data.twitch.token, {expires, expires_in: expiresIn > 0 ? expiresIn : 0});
+    return {...token, expires, expires_in: expiresIn > 0 ? expiresIn : 0};
 }
 
 const getProfileByUsername = async userName => {
@@ -66,30 +70,24 @@ const getProfileByUsername = async userName => {
     return profile && profile.data && profile.data.length ? profile.data[0] : null;
 }
 
-const getVideos = async (userId, type = 'archive') => {
+const fetchVideos = async (userId, type = 'archive') => {
     const token = (await getCurrentToken());
     if (!token || !token.expires_in || token.expires_in <= 0) return null;
 
     return apiGetVideos(token.accessToken, userId, type)
 }
 
-const getStreams = async userId => {
+const fetchStreams = async userId => {
     const token = (await getCurrentToken());
     if (!token || !token.expires_in || token.expires_in <= 0) return null;
 
     return apiGetStreams(token.accessToken, userId)
 }
 
-const updateTwitchUser = async (profileId, twitchLogin) => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data) return;
+const updateTwitchUser = async (playerId, twitchLogin) => {
+    const existingTwitchProfile = await getProfileByPlayerId(playerId);
 
-    if (!data.twitch) data.twitch = {token: null};
-
-    if (!data.twitch.users) data.twitch.users = {};
-
-    const existingTwitchProfile = data?.twitch?.users?.[profileId];
-    data.twitch.users[profileId] = Object.assign({}, existingTwitchProfile ?? {}, {login: twitchLogin, lastUpdated: null});
+    await storeProfile(Object.assign({lastUpdated: null}, existingTwitchProfile ?? {}, {login: twitchLogin, playerId}));
 }
 
 const createTwitchUsersCache = async () => {
@@ -98,51 +96,70 @@ const createTwitchUsersCache = async () => {
     })
 }
 
-const getProfileName = async ssProfileId => {
-    const data = await getCacheAndConvertIfNeeded();
+const getProfileByPlayerId = async (playerId, refreshCache = false) => await twitchRepository().get(playerId, refreshCache) ?? null;
+const storeProfile = async twitchProfile => twitchRepository().set(twitchProfile);
 
-    return data?.twitch?.users?.[ssProfileId];
-}
+const updateVideosForPlayerId = async playerId => {
+    const twitchProfile = await getProfileByPlayerId(playerId, true);
+    const playerInfo = await getPlayerInfo(playerId);
 
-const isProfileTwitchConnected = async ssProfileId => {
-    return !!(await getProfileName(ssProfileId) && data?.users?.[ssProfileId]);
-}
+    if (twitchProfile.id && playerInfo) {
+        const scoresRecentPlay = playerInfo.recentPlay ? playerInfo.recentPlay : playerInfo.lastUpdated;
+        const twitchLastUpdated = twitchProfile.lastUpdated;
+
+        if (!scoresRecentPlay || !twitchLastUpdated || dateFromString(scoresRecentPlay) > dateFromString(twitchLastUpdated)) {
+            const videos = await fetchVideos(twitchProfile.id);
+
+            twitchProfile.videos = videos.data;
+            twitchProfile.lastUpdated = new Date();
+            await storeProfile(twitchProfile);
+
+            if (videos && videos.data && videos.data.length) {
+                eventBus.publish('player-twitch-videos-updated', {
+                    nodeId     : nodeSync.getId(),
+                    playerId,
+                    twitchProfile,
+                });
+            }
+        }
+    }
+};
+const isProfileTwitchConnected = async ssProfileId => !!(await getProfileByPlayerId(ssProfileId));
 
 export default {
     getAuthUrl,
     getCurrentToken,
     getProfileByUsername,
-    getVideos,
-    getStreams,
+    fetchVideos,
+    fetchStreams,
+    updateVideosForPlayerId,
     processTokenIfAvailable: async () => {
         const twitchToken = getTwitchTokenFromUrl();
         if (twitchToken) {
-            const data = await getCacheAndConvertIfNeeded();
-            if (!data.twitch) data.twitch = {token: null};
-
             // validate token
             const tokenValidation = await validateToken(twitchToken.accessToken);
 
             const expiresIn = tokenValidation.expires_in * 1000;
 
-            data.twitch.token = Object.assign(
+            await keyValueRepository().set(
+              Object.assign(
                 {},
-                data.twitch.token,
                 tokenValidation,
                 {
                     accessToken: twitchToken.accessToken,
                     expires: (new Date(Date.now() + expiresIn)).toISOString(),
                     expires_in: expiresIn
                 }
+              ),
+              'twitchToken'
             );
-
-            await setCache(data);
 
             if (twitchToken.url) window.location.href = twitchToken.url;
         }
     },
     updateTwitchUser,
     createTwitchUsersCache,
-    getProfileName,
-    isProfileTwitchConnected
+    getProfileByPlayerId,
+    isProfileTwitchConnected,
+    storeProfile,
 }

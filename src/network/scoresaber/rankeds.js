@@ -1,11 +1,18 @@
 import {fetchApiPage} from "../fetch";
-import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {arrayDifference, nullIfUndefined} from "../../utils/js";
-import {PLAYS_PER_PAGE, SCORESABER_URL} from "./consts";
+import {SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../multinode-sync";
+import {
+  flushRankedsCache, flushRankedsChangesCache,
+  getRankedSongs,
+  setRankedSongsLastUpdated,
+  storeRankeds,
+  storeRankedsChanges,
+} from '../../scoresaber/rankeds'
+import {db} from "../../db/db";
 
 const convertFetchedRankedSongsToObj = (songs) =>
     songs.length
@@ -21,76 +28,85 @@ const fetchRankedSongsArray = async () =>
             songs?.songs
                 ? songs?.songs.map((s) => ({
                     leaderboardId: s.uid,
-                    id: s.id,
-                    name: s.name + ' ' + s.songSubName,
+                    hash: s.id,
+                    name: s.name + (s.songSubName && s.songSubName.length ? ' ' + s.songSubName : ''),
                     songAuthor: s.songAuthorName,
                     levelAuthor: s.levelAuthorName,
                     diff: extractDiffAndType(s.diff),
                     stars: s.stars,
-                    oldStars: null
+                    oldStars: null,
                 }))
                 : []
         );
 
-export async function updateRankeds(persist = true) {
-    let fetchedRankedSongs;
-    try {
-        fetchedRankedSongs = await fetchRankedSongsArray();
-        if (!fetchedRankedSongs || !fetchedRankedSongs.length) return null;
-    } catch (e) {
-        return null;
-    }
+export async function updateRankeds() {
+  let fetchedRankedSongs;
+  try {
+    fetchedRankedSongs = await fetchRankedSongsArray();
+    if (!fetchedRankedSongs || !fetchedRankedSongs.length) return null;
+  } catch (e) {
+    return null;
+  }
 
-    const data = await getCacheAndConvertIfNeeded(true);
+  const oldRankedSongs = await getRankedSongs() ?? {};
 
-    // add firstSeen property
-    fetchedRankedSongs = convertFetchedRankedSongsToObj(
-        fetchedRankedSongs.map(s => ({...s, firstSeen: data?.[s.leaderboardId]?.firstSeen ?? Date.now()}))
-    );
+  // add firstSeen property
+  fetchedRankedSongs = convertFetchedRankedSongsToObj(
+    fetchedRankedSongs.map(s => ({...s, firstSeen: oldRankedSongs?.[s.leaderboardId]?.firstSeen ?? new Date()})),
+  );
 
-    const oldRankedSongs = data.rankedSongs ? data.rankedSongs : {};
+  // find differences between old and new ranked songs
+  const changed =
+    // concat new rankeds...
+    arrayDifference(
+      Object.keys(fetchedRankedSongs),
+      Object.keys(oldRankedSongs),
+    ).map(leaderboardId => ({
+      leaderboardId: parseInt(leaderboardId, 10),
+      oldStars: null,
+      stars: fetchedRankedSongs[leaderboardId].stars,
+      timestamp: Date.now()
+    }))
+      // ... with changed rankeds
+      .concat(
+        Object.values(oldRankedSongs)
+          .filter((s) => s.stars !== fetchedRankedSongs?.[s.leaderboardId]?.stars)
+          .map(s => ({
+              leaderboardId: s.leaderboardId,
+              oldStars: s.stars,
+              stars: nullIfUndefined(fetchedRankedSongs?.[s.leaderboardId]?.stars),
+              timestamp: Date.now()
+            }),
+          ),
+      )
+  ;
 
-    // find differences between old and new ranked songs
-    const changed =
-        // concat new rankeds...
-        arrayDifference(
-            Object.keys(fetchedRankedSongs),
-            Object.keys(oldRankedSongs)
-        ).map(leaderboardId => ({
-            leaderboardId: parseInt(leaderboardId, 10),
-            oldStars: null,
-            stars: fetchedRankedSongs[leaderboardId].stars
-        }))
-            // ... with changed rankeds
-            .concat(
-                Object.values(oldRankedSongs)
-                    .filter((s) => s.stars !== fetchedRankedSongs?.[s.leaderboardId]?.stars)
-                    .map(s => ({
-                            leaderboardId: s.leaderboardId,
-                            oldStars: s.stars,
-                            stars: nullIfUndefined(fetchedRankedSongs?.[s.leaderboardId]?.stars)
-                        })
-                    )
-            )
-    ;
+  const changedLeaderboards = changed
+    .map(s => ({
+      ...(fetchedRankedSongs?.[s.leaderboardId] ? fetchedRankedSongs[s.leaderboardId] : oldRankedSongs?.[s.leaderboardId]), ...s
+    }))
+    .filter(s => s.hash)
+    .map(l => {
+      const {oldStars, timestamp, ...leaderboard} = l;
+      return leaderboard;
+    });
 
-    // store all new ranked songs
-    data.rankedSongs = fetchedRankedSongs;
-    data.rankedSongsLastUpdated = new Date().toISOString();
+  try {
+    await db.runInTransaction(['rankeds', 'rankeds-changes', 'key-value'], async _ => {
+      await storeRankeds(changedLeaderboards);
+      await storeRankedsChanges(changed);
+      await setRankedSongsLastUpdated(new Date());
+    });
 
-    // store changes
+    flushRankedsCache();
+    flushRankedsChangesCache();
+
     if (changed.length) {
-        if (!data.rankedSongsChanges) data.rankedSongsChanges = {};
-        data.rankedSongsChanges[Date.now()] = changed;
-    }
-
-    if (persist) {
-        await setCache(data);
-    }
-
-    if (changed.length) {
-        eventBus.publish('rankeds-changed', {nodeId: nodeSync.getId(), changed, allRankeds: fetchedRankedSongs});
+      eventBus.publish('rankeds-changed', {nodeId: nodeSync.getId(), changed, allRankeds: fetchedRankedSongs});
     }
 
     return changed;
+  } catch (e) {
+    return null;
+  }
 }

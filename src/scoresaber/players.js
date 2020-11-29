@@ -1,28 +1,28 @@
+import playersRepository from "../db/repository/players";
+import playersHistoryRepository from "../db/repository/players-history";
+import scoresRepository from "../db/repository/scores";
+import groupsRepository from "../db/repository/groups";
 import {getAdditionalPlayers} from "../network/scoresaber/players";
 import tempConfig from '../temp';
-import {getCacheAndConvertIfNeeded} from "../store";
-import {getFilteredRankedChanges, getRankedSongs} from "./rankeds";
+import {getRankedsChangesSince, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
-import {dateFromString, timestampFromString} from "../utils/date";
-import {arrayUnique, isEmpty} from "../utils/js";
+import {dateFromString} from "../utils/date";
+import {arrayUnique, convertArrayToObjectByKey, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
 import {findDiffInfo, getMaxScore} from "../song";
 import {getSongByHash} from "../network/beatsaver";
 
 export const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
 
-export const getActiveCountryPlayers = async (country, withMain = true) => {
-    const players = (await getPlayers()) ?? {};
+export const getActiveCountryPlayers = async (country, withMain = true, refreshCache = false) => {
+    const players = await getPlayers(refreshCache) ?? {};
     const mainPlayerId = withMain ? await getMainPlayerId() : null;
-    return Object.values(players).filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isCountryPlayer(p, country))
+    return players.filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isCountryPlayer(p, country))
 }
-export const getActiveCountryPlayersIds = async (country, withMain = true) => (await getActiveCountryPlayers(country, withMain)).filter(p => !!p.id).map(p => p.id);
+export const getActiveCountryPlayersIds = async (country, withMain = true, refreshCache = false) => (await getActiveCountryPlayers(country, withMain, refreshCache)).filter(p => !!p.id).map(p => p.id);
 
-export const mapPlayersToObj = (playerIds, players) => playerIds.reduce((cum, playerId) => {
-    cum[playerId] = players[playerId] ?? {};
-    return cum;
-}, {})
+export const filterPlayersByIdsList = (playerIds, players) => players.filter(player => playerIds.includes(player.id));
 
 export const getAllPlayersRanking = async country => {
     const players = await getAllActivePlayers(country);
@@ -36,65 +36,92 @@ export const getCountryRanking = async (country) => {
 
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
 
-export const getPlayers = async () => (await getCacheAndConvertIfNeeded())?.users;
-export const getPlayersFromData = data => data?.users ? data.users : null;
-
-export const getPlayerInfo = async playerId => (await getPlayers())?.[playerId] ?? null;
-export const getPlayerInfoFromData = (data, playerId) => getPlayersFromData(data)?.[playerId] ? getPlayersFromData(data)[playerId] : null;
+export const flushPlayersCache = () => playersRepository().flushCache();
+export const flushPlayersHistoryCache = () => playersHistoryRepository().flushCache();
+export const updatePlayer = async playerInfo => playersRepository().set(playerInfo);
+export const getPlayers = async (refreshCache = false) => playersRepository().getAll(undefined, undefined, refreshCache);
+export const getPlayerInfo = async (playerId, refreshCache = false) => await playersRepository().get(playerId, refreshCache) ?? null;
+export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
+export const getAllPlayersHistory = async query => await playersHistoryRepository().getAllFromIndex('players-history-timestamp', query) ?? [];
 export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerId] ? players[playerId] : null;
 
 export const getPlayerLastUpdated = async playerId => (await getPlayerInfo(playerId))?.lastUpdated ?? null;
 export const getPlayerProfileLastUpdated = async playerId => (await getPlayerInfo(playerId))?.profileLastUpdated ?? null;
 
-export const getPlayerGroups = async () => (await getCacheAndConvertIfNeeded())?.groups ?? null;
+export const removeAllPlayerData = async playerId => {
+    const playerHistory = await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId);
+    const playerScores = await scoresRepository().getAllFromIndex('scores-playerId', playerId);
 
-export const addPlayerToGroup = async (playerId, groupId = 'default', groupName = 'Default') => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data?.groups) data.groups = {};
+    await Promise.all(
+      []
+        .concat(playerHistory.map(ph => playersHistoryRepository().deleteObject(ph)))
+        .concat(playerScores.map(s => scoresRepository().deleteObject(s)))
+        .concat([playersRepository().delete(playerId)])
+    );
+};
 
-    const groups = data.groups;
-    if(!groups[groupId]) groups[groupId] = {name: groupName, players: []};
+export const getPlayerGroups = async (groupName, refreshCache = false) => {
+    const groups = await groupsRepository().getAllFromIndex('groups-name', groupName, undefined, refreshCache);
 
-    groups[groupId].players = arrayUnique(groups[groupId].players.concat([playerId]));
+    return groups && groups.length
+      ? Object.values(
+        groups.reduce((cum, playerGroup) => {
+            if (!cum[playerGroup.name]) cum[playerGroup.name] = {name: playerGroup.name, players: []};
+
+            cum[playerGroup.name].players.push(playerGroup.playerId);
+
+            return cum;
+        }, {}),
+      )
+      : null;
+};
+
+export const addPlayerToGroup = async (playerId, groupName = 'Default') => {
+    const isPlayerAlreadyAdded = (await groupsRepository().getAllFromIndex('groups-name', groupName, undefined, true))
+      .some(g => g.playerId === playerId);
+    if (isPlayerAlreadyAdded) return;
+
+    return groupsRepository().set({groupName, playerId});
 }
 
-export const removePlayerFromGroup = async (playerId, removeData = true, groupId = 'default') => {
-    const data = await getCacheAndConvertIfNeeded();
-    if (!data?.groups?.[groupId]?.players) return;
+export const removePlayerFromGroup = async (playerId, removeData = true, groupName = 'Default') => {
+    const playerGroups = await groupsRepository().getAllFromIndex('groups-playerId', playerId, undefined, true);
 
-    data.groups[groupId].players = data.groups[groupId].players.filter(pId => pId !== playerId);
+    const playerGroupsToRemove = playerGroups.filter(pg => !groupName || pg.name === groupName);
 
-    if (!!data?.users?.[playerId] && removeData) delete data.users[playerId];
+    await Promise.all(playerGroupsToRemove.map(async pg => groupsRepository().deleteObject(pg)));
+
+    if (!removeData || playerGroups.length > playerGroupsToRemove.length) return;
+
+    await removeAllPlayerData(playerId);
 }
 
-export const getGroupPlayerIds = async (groupId) => (await getPlayerGroups())?.[groupId] ?? null;
-
-export const getFriendsIds = async (withMain = false) => {
-    const groups = (await getPlayerGroups()) ?? {};
+export const getFriendsIds = async (withMain = false, refreshCache = false) => {
+    const groups = await getPlayerGroups(undefined, refreshCache) ?? [];
 
     return arrayUnique(
-      Object.keys(groups)
-        .reduce((cum, groupId) => cum.concat(groups[groupId].players), [])
+      groups
+        .reduce((cum, group) => cum.concat(group.players), [])
         .concat(withMain ? [await getMainPlayerId()] : [])
         .filter(playerId => playerId)
     );
 }
 
-export const getFriends = async (country, withMain = false) => Object.values(mapPlayersToObj(await getFriendsIds(country, withMain), await getPlayers()));
+export const getFriends = async (country, withMain = false, refreshCache = false) => filterPlayersByIdsList(await getFriendsIds(withMain, refreshCache), await getPlayers(refreshCache));
 
-export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
-    const friendsIds = await getFriendsIds(withMain);
+export const getManuallyAddedPlayersIds = async (country, withMain = false, refreshCache = false) => {
+    const friendsIds = await getFriendsIds(withMain, refreshCache);
 
-    const players = await getPlayers();
+    const players = convertArrayToObjectByKey(await getPlayers(refreshCache), 'id');
 
     return friendsIds.filter(playerId => !isCountryPlayer(players?.[playerId] ?? null, country));
 }
 
-export const getManuallyAddedPlayers = async (country, withMain = false) => Object.values(mapPlayersToObj(await getManuallyAddedPlayersIds(country, withMain), await getPlayers()));
+export const getManuallyAddedPlayers = async (country, withMain = false) => filterPlayersByIdsList(await getManuallyAddedPlayersIds(country, withMain), await getPlayers());
 
-export const getAllActivePlayersIds = async (country) => arrayUnique((await getActiveCountryPlayersIds(country)).concat(await getManuallyAddedPlayersIds(country)));
+export const getAllActivePlayersIds = async (country, refreshCache = false) => arrayUnique((await getActiveCountryPlayersIds(country, true, refreshCache)).concat(await getManuallyAddedPlayersIds(country, false, refreshCache)));
 
-export const getAllActivePlayers = async (country) => Object.values(mapPlayersToObj(await getAllActivePlayersIds(country), await getPlayers()));
+export const getAllActivePlayers = async (country, refreshCache = false) => filterPlayersByIdsList(await getAllActivePlayersIds(country, refreshCache), await getPlayers(refreshCache));
 
 export const getPlayerProfileUrl = (playerId, recentPlaysPage = false) => substituteVars(USER_PROFILE_URL + (recentPlaysPage ? '?sort=2' : ''), {userId: playerId})
 
@@ -107,10 +134,14 @@ export const getPlayerAvatarUrl = async playerId => {
 
 export const getPlayerScores = player => player?.scores ? player.scores : null;
 
-export const getScoresByPlayerId = async playerId => getPlayerScores(await getPlayerInfo(playerId))
+export const flushScoresCache = () => scoresRepository().flushCache();
+export const getAllScores = async () => scoresRepository().getAll();
+export const getScoresByPlayerId = async (playerId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-playerId', playerId, undefined, refreshCache);
+export const getAllScoresSince = async (sinceDate, refreshCache = false) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined, undefined, refreshCache);
+export const getAllScoresWithPpOver = async (minPp, refreshCache = false) => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined, undefined, refreshCache);
 
-export const getRankedScoresByPlayerId = async playerId => {
-    const scores = await getScoresByPlayerId(playerId);
+export const getRankedScoresByPlayerId = async (playerId, refreshCache = false) => {
+    const scores = await getScoresByPlayerId(playerId, refreshCache);
     const rankedMaps = await getRankedSongs();
     return scores
         ? Object.values(scores)
@@ -119,66 +150,31 @@ export const getRankedScoresByPlayerId = async playerId => {
         : [];
 }
 
-export const getPlayerSongScore = (player, leaderboardId) => {
-    if (!player) return null;
+export const getPlayerSongScore = async (player, leaderboardId) => getSongScoreByPlayerId(player?.id + '_' + leaderboardId);
+export const getSongScoreByPlayerId = async (playerId, leaderboardId) => scoresRepository().get(playerId + '_' + leaderboardId);
+export const updateSongScore = async score => scoresRepository().set(score);
 
-    const score = getPlayerScores(player)?.[leaderboardId];
-
-    return score ? score : null;
-}
-
-export const getSongScoreByPlayerId = async (playerId, leaderboardId) => {
-    const score = (await getScoresByPlayerId(playerId))?.[leaderboardId];
-
-    return score ? score : null;
-}
-
-export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null) => {
+export const getPlayerSongScoreHistory = async (playerScore) => {
     if (!playerScore || !playerScore.history) return null;
-
-    if (!maxSongScore) {
-        const songInfo = playerScore.id ? await getSongByHash(playerScore.id) : null;
-        const songCharacteristics = songInfo?.metadata?.characteristics;
-
-        const diffInfo = findDiffInfo(
-            songCharacteristics,
-            playerScore.diff
-        );
-        maxSongScore =
-            diffInfo?.length && diffInfo?.notes
-                ? getMaxScore(diffInfo.notes)
-                : 0;
-    }
 
     return playerScore.history
         .filter(h => h.score && h.score !== playerScore.score)
         .sort((a, b) => b.score - a.score)
-        .map(h => Object.assign(
-            {},
-            h,
-            {
-                timeset: new Date(h.timestamp),
-                percent: maxSongScore
-                    ? h.score / maxSongScore / (h.uScore ? h.score / h.uScore : 1)
-                    : (playerScore.maxScoreEx
-                        ? h.score / playerScore.maxScoreEx / (h.uScore ? h.score / h.uScore : 1)
-                        : null)
-            }
-        ));
+        .map(h => ({...h, timeset: new Date(h.timestamp)}));
 }
 
 const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
-    const songsChangedAfterPreviousUpdate = await getFilteredRankedChanges(timestamp => timestamp >= previousLastUpdated);
+    const songsChangedAfterPreviousUpdate = await getRankedsChangesSince(previousLastUpdated.getTime());
 
     // check all song changed after previous update
     return Object.keys(songsChangedAfterPreviousUpdate).reduce((cum, leaderboardId) => {
         // skip if the player didn't play the song
         if (!scores[leaderboardId]) return cum;
 
-        const songLastPlayTimestamp = timestampFromString(scores[leaderboardId].timeset);
+        const songLastPlay = scores[leaderboardId]?.timeset;
 
         // skip if song was played AFTER previous update (because all new scores were downloaded with current update, changed or not)
-        if (songLastPlayTimestamp && songLastPlayTimestamp > previousLastUpdated) return cum;
+        if (songLastPlay && songLastPlay > previousLastUpdated) return cum;
 
         // mark song to update
         cum.push(parseInt(leaderboardId, 10));

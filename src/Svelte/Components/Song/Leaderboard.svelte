@@ -18,7 +18,6 @@
     import {getLeaderboard} from "../../../song";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import nodeSync from '../../../network/multinode-sync';
-    import {getCacheAndConvertIfNeeded} from "../../../store";
     import {_} from '../../stores/i18n';
 
     export let leaderboardId;
@@ -53,16 +52,8 @@
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
         showBgCover = showBgCover && config.showBgCover !== false;
 
-        const refresh = async nodeId => {
-            if (nodeId !== nodeSync.getId()) await getCacheAndConvertIfNeeded(true);
-
-            await refreshLeaderboard();
-        }
-
-        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async ({nodeId}) => await refresh(nodeId));
-
-        const playerScoresUpdatedHandler = debounce(async ({nodeId, player}) => await refresh(nodeId), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY);
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', playerScoresUpdatedHandler)
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async () => await refreshLeaderboard());
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', debounce(async () => await refreshLeaderboard(), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY))
 
         return () => {
             dataRefreshedUnsubscriber();
@@ -133,8 +124,8 @@
                     </td>
                     <td class="mods">{item.mods && item.mods.length ? item.mods : '-'}</td>
                     <td class="percentage">
-                        <Value value={item.percent*100} zero="-" suffix="%"
-                               prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].percent*100 : null}/>
+                        <Value value={item.acc} zero="-" suffix="%"
+                               prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].acc : null}/>
                     </td>
                     <td class="pp">
                         <Pp pp="{item.pp}"

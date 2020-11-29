@@ -8,7 +8,7 @@
 	import {_, trans} from "../../stores/i18n";
 
 	import Value from './Value.svelte';
-	import {refreshPlayerScores} from "../../../network/scoresaber/players";
+	import {refreshPlayerScoreRank} from "../../../network/scoresaber/players";
 
 	export let rank;
 	export let countryRank;
@@ -74,7 +74,7 @@
 
 		refreshing = true;
 
-		await refreshPlayerScores(playerId, [leaderboardId], recentPlay);
+		await refreshPlayerScoreRank(playerId, [leaderboardId], recentPlay);
 	}
 
 	$: if(refreshDate) {

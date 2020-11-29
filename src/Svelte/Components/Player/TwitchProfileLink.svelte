@@ -8,7 +8,6 @@
 	import Button from "../Common/Button.svelte";
 	import Modal from '../Common/Modal.svelte';
 	import {getPlayerInfo} from "../../../scoresaber/players";
-	import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
 
 	export let profileId;
 	export let twitchLogin;
@@ -60,7 +59,6 @@
 
 	async function onTwitchUserLink() {
 		await twitch.updateTwitchUser(profileId, twitchUser.login);
-		await setCache(await getCacheAndConvertIfNeeded());
 
 		eventBus.publish('player-twitch-linked', {
 			nodeId     : nodeSync.getId(),

@@ -5,7 +5,7 @@ const ENABLE_EASTER_EGGS = true;
 const easterEggConditions = [
     [
         { field: 'id', value: '76561198165064325', cond: '===' },
-        { field: 'percent', value: 0.85, cond: '<' }
+        { field: 'acc', value: 85, cond: '<' }
     ]
 ];
 

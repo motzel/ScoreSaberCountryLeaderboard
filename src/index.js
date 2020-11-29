@@ -14,15 +14,16 @@ import Flag from './Svelte/Components/Common/Flag.svelte';
 import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 import Chart from './Svelte/Components/Player/Chart.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
+import Message from './Svelte/Components/Global/Message.svelte';
 
 import log from './utils/logger';
 import tempConfig from './temp';
-import {getCacheAndConvertIfNeeded, getThemeFromFastCache} from "./store";
+import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
-    extractDiffAndType,
-    getSongMaxScore,
-    getSongMaxScoreWithDiffAndType, refreshSongCountryRanksCache
+    getAccFromScore,
+    getDiffAndTypeFromOnlyDiffName,
+    getSongMaxScore, getSongScores,
 } from "./song";
 import {shouldBeHidden} from "./eastereggs";
 
@@ -31,23 +32,25 @@ import {getConfig, getMainPlayerId} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
+import initDatabase from './db/db';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
-import nodeSync from "./network/multinode-sync";
 import {
-    getAllActivePlayers,
+    flushPlayersCache, flushPlayersHistoryCache, flushScoresCache,
+    getPlayerInfo,
     getPlayerProfileUrl,
-    getPlayerSongScore, getPlayerSongScoreHistory,
     getScoresByPlayerId,
-    getSongScoreByPlayerId
 } from "./scoresaber/players";
 import {dateFromString} from "./utils/date";
 import {setRefreshedPlayerScores} from "./network/scoresaber/players";
-import {parseSsLeaderboardScores, parseSsUserScores} from "./network/scoresaber/scores";
 import {parseSsInt} from "./scoresaber/other";
-import {formatNumber} from "./utils/format";
+import {formatNumber, round} from "./utils/format";
+import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
+import nodeSync from './network/multinode-sync'
+import {flushRankedsCache, flushRankedsChangesCache} from './scoresaber/rankeds'
+import {flushSsplCountryRanksCache} from './scoresaber/sspl-cache'
 
-const getLeaderboardId = () => getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase());
+const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
 const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
@@ -122,7 +125,6 @@ async function setupLeaderboard() {
         { passive: true }
     );
 
-    // TODO: dont show when no user data is available
     const config = await getConfig('songLeaderboard');
     const mainPlayerId = await getMainPlayerId();
     if (mainPlayerId && !!config.showWhatIfPp) {
@@ -180,22 +182,19 @@ async function setupLeaderboard() {
             }
         });
 
-        const ssConfig = await getConfig('ss');
-        const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
+        const ssConfig = await getConfig('ssSong');
+        const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
         if (songEnhanceEnabled) {
             const scores = parseSsLeaderboardScores(document);
             if (scores) {
                 let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
                 if (leaderboardId) {
-                    const diff = (await getAllActivePlayers(await getActiveCountry()))
-                        .map(player => getPlayerSongScore(player, leaderboardId)?.diff)
-                        .filter(diff => diff)
-                        .slice(0, 1);
-                    if(diff && diff.length) diffInfo = extractDiffAndType(diff[0]);
+                    const leaderboardScores = await getSongScores(leaderboardId, 1);
+                    if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
                 }
 
-                const maxScore = await getSongMaxScoreWithDiffAndType(songInfoData.hash, diffInfo);
+                const maxScore = await getSongMaxScore(songInfoData.hash, diffInfo);
                 scores.forEach(s => {
                     if (s.score) {
                         const score = s.tr.querySelector('td.score');
@@ -257,7 +256,7 @@ async function setupProfile() {
     const profileId = getProfileId();
     if (!profileId) return;
 
-    const data = await getCacheAndConvertIfNeeded();
+    const playerInfo = await getPlayerInfo(profileId);
 
     const playerScores = await getScoresByPlayerId(profileId);
     const isPlayerDataAvailable = playerScores && Object.keys(playerScores).length;
@@ -303,64 +302,86 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    const ssConfig = await getConfig('ss');
-    const showDiff = !!ssConfig.song.showDiff;
-    const showWhatIfPp = !!ssConfig.song.showWhatIfPp;
+    const ssConfig = await getConfig('ssSong');
+    const showDiff = !!ssConfig?.showDiff;
+    const showWhatIfPp = !!ssConfig?.showWhatIfPp;
 
-    const songEnhanceEnabled = ssConfig && ssConfig.song && !!ssConfig.song.enhance;
+    const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
 
-    const parsedScores = await Promise.all(parseSsUserScores(document).map(async s => {
-        const leaderboard = await getSongScoreByPlayerId(profileId, s.leaderboardId);
-        if (leaderboard && songEnhanceEnabled) {
+    const parsedScores = Promise.all(parseSsUserScores(document).map(async s => {
+        const leaderboard = playerScores.find(ps => ps.leaderboardId === s.leaderboardId);
+
+        if (songEnhanceEnabled && !autoTransformEnabled) {
             try {
-                const maxSongScore = await getSongMaxScore(leaderboard.id, leaderboard.diff);
+                const maxSongScore = await getSongMaxScore(
+                  leaderboard?.hash ? leaderboard.hash : s.hash,
+                  leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
+                );
 
-                if (!s.percent && s.score) {
-                    s.percent = maxSongScore
-                        ? s.score / maxSongScore
-                        : (leaderboard.maxScoreEx
-                            ? s.score / leaderboard.maxScoreEx
-                            : null);
+                const maxScoreEx = maxSongScore ?? leaderboard?.maxScoreEx;
+
+                const ssScoreDate = dateFromString(s.timeset);
+                const useDownloadedScore = leaderboard?.timeset && ssScoreDate && leaderboard?.timeset?.getTime() === ssScoreDate.getTime();
+                if (useDownloadedScore) {
+                    s = {...s, ...leaderboard, maxScoreEx, percent: maxScoreEx && leaderboard?.score ? leaderboard.score / maxScoreEx : s.percent};
+                }
+
+                s.acc = s.percent ? s.percent * 100 : null;
+
+                const useCurrentScoreAsPrev = (s.pp && leaderboard?.pp && round(leaderboard.pp) < round(s.pp)) ||
+                  (s.score && leaderboard?.score && leaderboard.score < s.score);
+
+                if (!s.acc && s.score && maxScoreEx) {
+                    s.acc = getAccFromScore({score: s.score, maxScoreEx});
                 }
 
                 if(!s.score && s.percent) {
-                    s.score = maxSongScore || leaderboard.maxScoreEx ? Math.round(s.percent * (maxSongScore ? maxSongScore : leaderboard.maxScoreEx)) : null;
+                    s.score = maxScoreEx ? Math.round(s.percent * maxScoreEx) : null;
                 }
 
-                s.hidden = shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, percent: leaderboard.percent}))
+                s.hidden = leaderboard?.acc ? shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, acc: leaderboard.acc})) : false;
 
-                const playHistory = await getPlayerSongScoreHistory(leaderboard);
-                const history = playHistory && playHistory.length ? playHistory[0] : null;
-                s.prevRank = showDiff && history ? history.rank : null;
-                s.prevPp = showDiff && history ? history.pp : null;
-                s.prevScore = showDiff && history ? history.score : null;
-                s.prevTimeset = showDiff && history ? history.timeset : null;
-                s.prevPercent = showDiff && history ? history.percent : null;
+                const history = leaderboard?.history?.[0];
+                if (showDiff && (useCurrentScoreAsPrev || history)) {
+                    s.prevRank = useCurrentScoreAsPrev ? leaderboard.rank : history.rank;
+                    s.prevPp = useCurrentScoreAsPrev ? leaderboard.pp : history.pp;
+                    s.prevScore = useCurrentScoreAsPrev ? leaderboard.score : history.score;
+                    s.prevTimeset = dateFromString(useCurrentScoreAsPrev ? leaderboard.timeset : history.timeset);
+                    s.prevAcc = getAccFromScore({
+                        score: useCurrentScoreAsPrev ? leaderboard.score : history.score,
+                        uScore: useCurrentScoreAsPrev ? leaderboard.uScore : history.uScore,
+                        maxScoreEx,
+                    });
+                }
             } catch (e) {} // swallow error
         }
 
         return s;
-    }));
+    }))
+      .then(async parsedScores => {
+          await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
+              leaderboardId: s.leaderboardId,
+              rank         : s.rank,
+          })));
 
-    await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
-        leaderboardId: s.leaderboardId,
-        rank         : s.rank,
-    })));
+          return parsedScores
+      })
+      .then(parsedScores => {
+          if (songEnhanceEnabled && !autoTransformEnabled)
+              parsedScores
+                .filter(s => null !== s.tr)
+                .forEach(s => {
+                    const score = s.tr.querySelector('.score');
+                    if(!score) return;
 
-    if (songEnhanceEnabled)
-        parsedScores
-            .filter(s => null !== s.tr)
-            .forEach(s => {
-                const score = s.tr.querySelector('.score');
-                if(!score) return;
+                    score.innerHTML = "";
 
-                score.innerHTML = "";
-
-                new SongScore({
-                    target: score,
-                    props: {song: s, showWhatIfPp}
-                })
-            });
+                    new SongScore({
+                        target: score,
+                        props: {song: s, showWhatIfPp}
+                    })
+                });
+      });
 
     const header = document.querySelector('.content .column h5').closest('.box');
     if (header) {
@@ -377,7 +398,7 @@ async function setupProfile() {
     const mainColumn = mainUl.closest('.column');
     if (mainColumn) {
         if (isPlayerDataAvailable) {
-            let ssplCountryRank = data?.users?.[profileId]?.ssplCountryRank;
+            let ssplCountryRank = playerInfo?.ssplCountryRank;
             const country = await getActiveCountry();
             ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
             const rankLi = mainColumn.querySelector('ul li:first-of-type');
@@ -433,7 +454,7 @@ async function setupProfile() {
             new Profile({
                 target: ul,
                 props: {
-                    profile: data.users?.[profileId] ?? null,
+                    profile: playerInfo,
                 }
             });
             mainColumn.closest('.columns').appendChild(additionalProfile);
@@ -504,10 +525,10 @@ async function setupProfile() {
 }
 
 async function setupCountryRanking(diffOffset = 6) {
-    log.info("Setup country ranking");
-
     const country = getRankingCountry();
     if (!country) return; // not a country leaderboard page
+
+    log.info("Setup country ranking");
 
     if(!(await isCurrentCountryRankingPage())) {
         const rankingTable = document.querySelector('table.ranking.global');
@@ -621,24 +642,50 @@ async function setupPlayerAvatar() {
 async function setupTwitch() {
     await twitch.processTokenIfAvailable();
     await twitch.createTwitchUsersCache();
-
-    eventBus.on('player-twitch-linked', async ({nodeId, playerId, twitchLogin}) => {
-        if (nodeId !== nodeSync.getId()) {
-            await twitch.updateTwitchUser(playerId, twitchLogin);
-        }
-    })
 }
 
 async function setupGlobalEventsListeners() {
-    // update scores done on other node
-    eventBus.on('player-score-updated', async ({nodeId, playerId, leaderboardId, ...data}) => {
-        if (nodeId === nodeSync.getId() || !playerId || !leaderboardId) return;
+    const reloadPage = () => window.location.reload();
 
-        const playerScores = await getScoresByPlayerId(playerId);
-        if (!playerScores || !playerScores[leaderboardId]) return;
+    // reload page when data was imported
+    eventBus.on('data-imported', reloadPage);
 
-        playerScores[leaderboardId] = {...playerScores[leaderboardId], ...data};
-    })
+    eventBus.on('reload-browser-cmd', reloadPage);
+
+    eventBus.on('player-twitch-linked', async ({playerId}) => {
+        await twitch.updateVideosForPlayerId(playerId);
+    });
+
+    eventBus.on('active-players-updated', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushPlayersCache();
+        flushPlayersHistoryCache();
+    });
+
+    eventBus.on('player-scores-updated', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushPlayersCache();
+        flushScoresCache();
+    });
+
+    eventBus.on('rankeds-changed', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushRankedsCache();
+        flushRankedsChangesCache();
+    });
+
+    eventBus.on('sspl-country-ranks-cache-updated', ({nodeId}) => {
+        if(nodeId === nodeSync.getId()) return;
+
+        // flush cache if downloaded on another node
+        flushSsplCountryRanksCache();
+    });
 }
 
 async function setupDelayed() {
@@ -694,11 +741,14 @@ async function init() {
             return;
         }
 
-        // fetch cache
-        const data = await getCacheAndConvertIfNeeded();
+        new Message({
+            target: document.body,
+        });
 
-        // reload page when data was imported
-        eventBus.on('data-imported', () => window.location.reload());
+        await initDatabase();
+
+        // pre-warm config cache
+        const config = await getConfig();
 
         await Promise.allSettled(
             [

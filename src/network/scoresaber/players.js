@@ -1,157 +1,102 @@
 import {substituteVars} from "../../utils/format";
 import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
-import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch} from "../../utils/js";
-import {PLAYER_INFO_URL, USER_PROFILE_URL, USERS_URL} from "./consts";
+import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} from "../../utils/js";
+import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
-import {getCacheAndConvertIfNeeded, setCache} from "../../store";
 import {
-    getActiveCountryPlayers,
+    flushPlayersCache, flushPlayersHistoryCache, flushScoresCache,
     getManuallyAddedPlayersIds,
-    getPlayerInfo, getPlayerInfoFromPlayers,
-    getPlayerRankedsScorePagesToUpdate, getPlayers, getPlayerScorePagesToUpdate, getPlayerScores, getScoresByPlayerId
+    getPlayerInfo,
+    getPlayerRankedsScorePagesToUpdate,
+    getPlayerScorePagesToUpdate,
+    getScoresByPlayerId,
+    updateSongScore,
 } from "../../scoresaber/players";
-import {dateFromString, timestampFromString, toSSDate} from "../../utils/date";
+import {dateFromString, toSSTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
 import {getMainPlayerId} from "../../plugin-config";
-import {refreshSongCountryRanksCache} from "../../song";
+import {updateSongCountryRanks} from "../../song";
+import {parseSsFloat} from '../../scoresaber/other';
+import keyValueRepository from '../../db/repository/key-value'
+import {db} from '../../db/db'
+import tempConfig from '../../temp'
+import players from '../../db/repository/players'
+import scores from '../../db/repository/scores'
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
-export const getActivePlayersLastUpdate = async (force = false) => (await getCacheAndConvertIfNeeded(force))?.activePlayersLastUpdate ?? null;
+export const getActivePlayersLastUpdate = async (refreshCache = false) => keyValueRepository().get('activePlayersLastUpdate', refreshCache)
+// TODO: get it from DB
 export const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
-export const convertPlayerInfo = info => {
-    const {
-        playerName,
-        playerId,
-        role,
-        badges,
-        permissions,
-        banned,
-        history,
-        ...playerInfo
-    } = info.playerInfo;
+export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId: playerId})).then(info => {
+    const {playerInfo: {playerId: id, playerName: name, avatar, rank, countryRank, pp, country, history, inactive, banned}} = info;
+    const weeklyDiff =  history ? (history.length >= 7 ? history[6] - history[0] : 0) : null;
+    return {
+        avatar,
+        country,
+        countryRank,
+        id,
+        inactive: !!inactive || !!banned,
+        name,
+        pp,
+        rank,
+        url: substituteVars(USER_PROFILE_URL, {userId: id}),
+        weeklyDiff,
+    };
+});
+export const fetchSsCountryRankPage = async (country, page = 1) =>
+  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+    .map(a => {
+        const tr = a.closest("tr");
+        const id = getFirstRegexpMatch(/\/(\d+)$/, a.href)
 
-    playerInfo.inactive = !!(playerInfo.inactive);
-
-    return Object.assign(
-        {
-            id: playerId,
-            name: playerName,
-            playerId,
-            playerName,
-            url: substituteVars(USER_PROFILE_URL, {
-                userId: playerId
-            }),
-            recentPlay: null,
-
-            userHistory: {},
-            scores: {}
-        },
-        playerInfo,
-        {stats: info.scoreStats}
-    );
-};
-export const fetchPlayerInfo = async userId => fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId})).then(info => {
-    const history = info?.playerInfo?.history.split(',').reverse();
-    info.playerInfo.weeklyDiff =  history ? (history.length >= 7 ? history[6] - history[0] : 0) : null;
-    return info;
-})
-
-const updatePlayerInfo = async (info, players) => {
-    const player = getPlayerInfoFromPlayers(players, info.playerInfo.playerId);
-
-    const {recentPlay, scores, userHistory} = player ? player : {recentPlay: null, userHistory: {}, scores: {}};
-
-    if (!info.scoreStats || !player) {
-        const playerInfo = await fetchPlayerInfo(info.playerInfo.playerId);
-        if (info.playerInfo.avatar) playerInfo.playerInfo.avatar = info.playerInfo.avatar;
-
-        return Object.assign({}, players[info.playerInfo.playerId] ?? {}, convertPlayerInfo(playerInfo), {
-            profileLastUpdated: new Date(),
-            recentPlay,
-            scores,
-            userHistory
-        });
-    }
-
-    return Object.assign({}, player ?? {}, info.playerInfo, info.scoreStats);
+        return {
+            avatar: tr.querySelector('td.picture img').src,
+            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
+            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+            id,
+            inactive: false,
+            name: a.querySelector('.songTop.pp').innerText,
+            pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue').innerText),
+            rank: null,
+            url: substituteVars(USER_PROFILE_URL, {userId: id}),
+            weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
+        }
+    });
+export const fetchSsCountryRanking = async (country, count = 50) => {
+    return (await Promise.all(
+      new Array(Math.ceil(count / PLAYERS_PER_PAGE)).fill(null)
+        .map(async (_, idx) => fetchSsCountryRankPage(country, idx + 1)),
+    ))
+      .reduce((cum, rankPage) => cum.concat(rankPage), [])
+      .slice(0, count);
 }
-export const updateActivePlayers = async (persist = true) => {
-    const data = await getCacheAndConvertIfNeeded();
-
-    const country = await getActiveCountry();
-
-    const previousCountryPlayersIds = (await getActiveCountryPlayers(country)).map(p => p.id);
-
-    // set all cached country players as inactive
-    if (data.users)
-        Object.keys(data.users).map(userId => {
-            if (data.users?.[userId]?.ssplCountryRank) {
-                data.users[userId].inactive = true;
-                data.users[userId].ssplCountryRank = null;
-            }
-        })
-
-    const page = 1;
-
+export const fetchCountryRanking = async (country, withMain = true, count = 50) => {
+    country = country ?? await getActiveCountry();
     const mainPlayerId = await getMainPlayerId();
+    const ssCountryRanking = country ? await fetchSsCountryRanking(country, count) : [];
+    const ssCountryRankingContainsMainPlayerId = ssCountryRanking.filter(p => mainPlayerId && p.id === mainPlayerId).length > 0;
+    const additionalPlayersIds = getAdditionalPlayers(country).concat(withMain && mainPlayerId && !ssCountryRankingContainsMainPlayerId ? [mainPlayerId] : []);
 
-    const countryPlayers =
-      Object.values(convertArrayToObjectByKey(
-        (await Promise.all(
-          (country
-              ? [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
-              : []
-          )
-            .map(a => {
-                  const tr = a.closest("tr");
+    return ssCountryRanking.concat(await Promise.all(additionalPlayersIds.map(async playerId => fetchPlayerInfo(playerId))))
+      .filter(player => !player.inactive)
+      .sort((a, b) => b.pp - a.pp)
+      .map((player, idx) => ({...player, ssplCountryRank: country ? {[country]: idx + 1} : null}))
+      .slice(0, count);
+}
 
-                  return {
-                      playerInfo: {
-                          id                : getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                          name              : a.querySelector('.songTop.pp').innerText,
-                          playerId          : getFirstRegexpMatch(/\/(\d+)$/, a.href),
-                          playerName        : a.querySelector('.songTop.pp').innerText,
-                          avatar            : tr.querySelector('td.picture img').src,
-                          countryRank       : parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
-                          pp                : parseFloat(getFirstRegexpMatch(/^\s*([0-9,.]+)\s*$/, tr.querySelector('td.pp .scoreTop.ppValue').innerText).replace(/[^0-9.]/, '')),
-                          country           : getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
-                          inactive          : false,
-                          weeklyDiff        : parseInt(tr.querySelector('td.diff').innerText, 10),
-                          profileLastUpdated: new Date()
-                      },
-                      scoreStats: {}
-                  }
-              }
-            )
-            .concat(getAdditionalPlayers(country).concat(mainPlayerId ? [mainPlayerId] : []).map(playerId => ({
-                playerInfo: {
-                    playerId,
-                    inactive: false
-                }
-            })))
-            .map(async info => updatePlayerInfo(info, data?.users))
-        )),
-        'id'
-      ))
-            .sort((a, b) => b.pp - a.pp)
-            .map((u, idx) => ({...u, ssplCountryRank: {[country]: idx + 1}}))
-            .slice(0, 50);
-
+export const updateActivePlayers = async () => {
+    const country = await getActiveCountry();
+    const countryPlayers = country ? await fetchCountryRanking(country, tempConfig.COUNTRY_PLAYERS_QTY) : [];
     const countryPlayersIds = countryPlayers.map(player => player.id);
 
     const manuallyAddedPlayers = await Promise.all(
-        (await getManuallyAddedPlayersIds(country))
-            .filter(playerId => !countryPlayersIds.includes(playerId))
-            .map(playerId => updatePlayerInfo({
-                playerInfo: {
-                    playerId,
-                    inactive: false
-                }
-            }, data?.users))
+      (await getManuallyAddedPlayersIds(country, !country))
+        .filter(playerId => !countryPlayersIds.includes(playerId))
+        .map(async playerId => fetchPlayerInfo(playerId))
     );
 
     const allPlayers = {
@@ -159,140 +104,187 @@ export const updateActivePlayers = async (persist = true) => {
         ...convertArrayToObjectByKey(manuallyAddedPlayers, 'id')
     }
 
-    data.activePlayersLastUpdate = new Date().toISOString();
+    await db.runInTransaction(['players', 'players-history'], async tx => {
+        let cursor = await tx.objectStore('players').openCursor();
+        while (cursor) {
+            const dbPlayer = cursor.value;
+            const {lastUpdated, recentPlay} = dbPlayer;
 
-    data.users = {
-        ...data.users,
-        ...allPlayers
-    }
+            const fetchedPlayer = allPlayers[dbPlayer.id] ? allPlayers[dbPlayer.id] : {inactive: true, ssplCountryRank: null};
+            const {inactive, ssplCountryRank} = fetchedPlayer;
+
+            const player = {
+                ...dbPlayer,
+                ...fetchedPlayer,
+                inactive,
+                lastUpdated: lastUpdated ?? null,
+                recentPlay: recentPlay ?? null,
+                ssplCountryRank: ssplCountryRank ?? null,
+                profileLastUpdated: new Date(),
+            };
+
+            fetchedPlayer.processed = true;
+
+            await cursor.update(player);
+
+            cursor = await cursor.continue();
+        }
+
+        Object.values(allPlayers).filter(p => !p.processed).forEach(player => {
+            const {lastUpdated, recentPlay, ssplCountryRank} = player;
+
+            tx.objectStore('players').put({
+                ...player,
+                lastUpdated: lastUpdated ?? null,
+                recentPlay: recentPlay ?? null,
+                ssplCountryRank: ssplCountryRank ?? null,
+                profileLastUpdated: new Date(),
+            })
+        });
+
+        // remove all today's history
+        const timestamp = new Date(toSSTimestamp(new Date()));
+        cursor = await tx.objectStore('players-history').index('players-history-timestamp').openCursor(timestamp);
+        while (cursor) {
+            await cursor.delete();
+
+            cursor = await cursor.continue();
+        }
+
+        // update today's history
+        Object.values(allPlayers).forEach(player => {
+            const {countryRank, id, pp, ssplCountryRank} = player;
+
+            tx.objectStore('players-history').put({
+                countryRank,
+                playerId: id,
+                pp,
+                ssplCountryRank,
+                timestamp
+            });
+        });
+    });
+
+    // clear all players cache
+    flushPlayersCache();
+    flushPlayersHistoryCache();
 
     if (country) {
-        const removedPlayers = previousCountryPlayersIds.filter(playerId => !countryPlayersIds.includes(playerId));
-        const newPlayers = countryPlayersIds.filter(playerId => !previousCountryPlayersIds.includes(playerId));
-        const changedPlayers = newPlayers.concat(removedPlayers);
-
-        const players = await getPlayers();
-        const leaderboardIds = [...new Set(
-            Object.values(players ?? {})
-                .filter(player => player && player.id && changedPlayers.includes(player.id))
-                .map(player => Object.keys(player.scores))
-                .filter(s => s && s.length)
-                .reduce((cum, ids) => cum.concat(ids), [])
-        )];
-        await refreshSongCountryRanksCache(leaderboardIds);
+        await updateSongCountryRanks();
     }
 
-    if (persist) {
-        await setCache(data);
-    }
+    await keyValueRepository().set(new Date(), 'activePlayersLastUpdate');
 
     eventBus.publish('active-players-updated', {nodeId: nodeSync.getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
 
     return Object.values(allPlayers);
 }
 
-export const getPlayerWithUpdatedScores = async (playerId, progressCallback = null) => {
+export const updatePlayerScores = async (playerId, emitEvents = true, progressCallback = null) => {
     let player = await getPlayerInfo(playerId);
     if (!player) return null;
 
-    // clone player data
-    player = {...player};
-
-    const {rank, pp, countryRank, ssplCountryRank} = player;
-    player.userHistory = Object.assign({}, player.userHistory ?? {}, {[toSSDate(new Date())]: {rank, pp, countryRank, ssplCountryRank}})
-
     const playerLastUpdated = dateFromString(player.lastUpdated ?? null);
+
     let newScores = await fetchAllNewScores(
-        player,
-        playerLastUpdated,
-        (info) => progressCallback ? progressCallback(info) : null
+      player,
+      playerLastUpdated,
+      info => progressCallback ? progressCallback(info) : null
     );
 
-    let leaderboardIdsToRefresh = newScores && newScores.scores ? Object.keys(newScores.scores) : [];
+    let scoresToSave = [], leaderboardsIds = [];
 
-    if(newScores && newScores.scores) {
-        const prevScores = player.scores ?? {};
-        Object.keys(newScores.scores).map(leaderboardId => {
-            const prevScore = prevScores[leaderboardId] ? prevScores[leaderboardId] : null;
-            if(prevScore) {
-                if (!newScores.scores[leaderboardId].history)
-                    newScores.scores[leaderboardId].history = prevScore?.history && prevScore.history.length ? prevScore.history.filter(h => h.timestamp) : [];
+    if(!isEmpty(newScores?.scores ?? {})) {
+        const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
 
-                const {pp, rank, score, uScore, timeset} = prevScore;
-                if (timeset && score && uScore && (newScores?.scores?.[leaderboardId]?.score && newScores?.scores?.[leaderboardId]?.score !== score))
-                    newScores.scores[leaderboardId].history.push(
-                        {pp, rank, score, uScore, timestamp: timestampFromString(timeset)}
-                    )
+        // update rankeds scores if needed
+        if (!isEmpty(playerScores) && playerLastUpdated) {
+            // fetch all player pages that need to be re-fetched
+            // {pageIdx: [leaderboardId, leaderboardId...]}
+            const playerRankedsScoresPagesToUpdate = await getPlayerRankedsScorePagesToUpdate({...playerScores, ...newScores.scores}, playerLastUpdated);
 
-                    newScores.scores[leaderboardId].history = newScores.scores[leaderboardId].history.slice(0,3);
-            }
-        })
+            let idxProgress = 0;
+            let updatedPlayerScores = {};
+            for (const page in playerRankedsScoresPagesToUpdate) {
+                const progressInfo = {
+                    id: player.id,
+                    name: `${player.name}`,
+                    page: idxProgress + 1,
+                    total: null
+                };
 
-        player = {
-            ...player,
-            previousLastUpdated: dateFromString(player.lastUpdated ? player.lastUpdated : null),
-            lastUpdated: new Date().toISOString(),
-            recentPlay: newScores.lastUpdated,
-            scores: {...prevScores, ...newScores.scores}
-        };
-    } else {
-        player.lastUpdated = new Date().toISOString();
-    }
+                if (progressCallback) progressCallback(progressInfo);
 
-    // update ranked scores if needed
-    if (player.scores && playerLastUpdated) {
-        // fetch all player pages that need to be re-fetched
-        // {pageIdx: [leaderboardId, leaderboardId...]}
-        const playerScorePagesToUpdate = await getPlayerRankedsScorePagesToUpdate(player.scores, playerLastUpdated);
-
-        let idxProgress = 0;
-        let updatedPlayerScores = {};
-        for (const page in playerScorePagesToUpdate) {
-            const progressInfo = {
-                id: player.id,
-                name: `${player.name}`,
-                page: idxProgress + 1,
-                total: null
-            };
-
-            if (progressCallback) progressCallback(progressInfo);
-
-            const scores = convertArrayToObjectByKey(
-                await fetchRecentScores(
+                const scores = convertArrayToObjectByKey(
+                  await fetchRecentScores(
                     player.id,
                     page,
                     (time) => progressCallback ? progressCallback(Object.assign({}, progressInfo, {wait: time})) : null,
-                    ...playerScorePagesToUpdate[page]
-                ),
-                'leaderboardId'
-            );
-            updatedPlayerScores = {...updatedPlayerScores, ...scores};
+                    ...playerRankedsScoresPagesToUpdate[page]
+                  ),
+                  'leaderboardId'
+                );
+                updatedPlayerScores = {...updatedPlayerScores, ...scores};
 
-            idxProgress++;
+                idxProgress++;
+            }
+
+            newScores.scores = {...newScores.scores, ...updatedPlayerScores};
         }
 
-        player.scores = {...player.scores, ...updatedPlayerScores};
+        leaderboardsIds = newScores && newScores.scores ? Object.keys(newScores.scores) : [];
 
-        leaderboardIdsToRefresh = leaderboardIdsToRefresh.concat(Object.keys(updatedPlayerScores));
+        await db.runInTransaction(['scores', 'players', 'key-value'], async tx => {
+            const playersStore = tx.objectStore('players')
+            player = await playersStore.get(playerId);
+            player.lastUpdated = new Date();
+            player.recentPlay = newScores.recentPlay;
+            await playersStore.put(player);
+
+            scoresToSave = leaderboardsIds.map(leaderboardId => {
+                const newScore = newScores.scores[leaderboardId];
+                newScore.id = newScore.playerId + '_' + leaderboardId;
+
+                const prevScore = playerScores[leaderboardId] ? playerScores[leaderboardId] : null;
+                if(prevScore) {
+                    const prevHistory = prevScore?.history?.length ? prevScore.history.filter(h => h.timestamp) : [];
+
+                    const {pp, rank, score, uScore, timeset} = prevScore;
+                    if (timeset?.getTime() && score && uScore && (newScores?.scores?.[leaderboardId]?.score && newScores?.scores?.[leaderboardId]?.score !== score))
+                        newScore.history = prevHistory
+                          .concat([{pp, rank, score, uScore, timestamp: timeset.getTime()}])
+                          .slice(0, 3);
+                }
+
+                return newScore;
+            });
+
+            const scoresStore = tx.objectStore('scores');
+            await Promise.all(scoresToSave.map(score => scoresStore.put(score)));
+
+
+            const keyValueStore = tx.objectStore('key-value');
+            await keyValueStore.put(new Date(), 'lastUpdated');
+        });
+    } else {
+        await db.runInTransaction(['players', 'key-value'], async tx => {
+            const playersStore = tx.objectStore('players')
+            player = await playersStore.get(playerId);
+            player.lastUpdated = new Date();
+            await playersStore.put(player);
+
+            const keyValueStore = tx.objectStore('key-value');
+            keyValueStore.put(new Date(), 'lastUpdated');
+        });
     }
 
-    await refreshSongCountryRanksCache(leaderboardIdsToRefresh);
+    if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
 
-    return player;
-}
+    flushPlayersCache();
+    flushScoresCache();
 
-export const updatePlayerScores = async (playerId, persist = true, emitEvents = true, progressCallback = null) => {
-    const data = await getCacheAndConvertIfNeeded();
-
-    data.users[playerId] = await getPlayerWithUpdatedScores(playerId, progressCallback);
-    data.lastUpdated = new Date().toISOString();
-
-    if (persist) {
-        await setCache(data);
-    }
-
-    if (emitEvents && data.users[playerId]) {
-        eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), player: data.users[playerId]});
+    if (emitEvents) {
+        eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), playerId, scores: scoresToSave});
     }
 }
 
@@ -308,33 +300,44 @@ const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
     leaderboardIds.forEach(leaderboardId => emitEventForScoreUpdate(eventName, playerId, {leaderboardId}));
 }
 
-export const setRefreshedPlayerScores = async (playerId, scores) => {
-    const data = await getCacheAndConvertIfNeeded();
+export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true) => {
+    let playerScores;
+    if (someFieldsUpdateOnly) {
+        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
 
-    const playerScores = await getScoresByPlayerId(playerId);
-    if (!playerScores) {
-        emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
+        if (!playerScores) {
+            emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
 
-        return false;
+            return false;
+        }
     }
 
-    scores.forEach(s => {
-        if (!s.leaderboardId) return;
+    const updatedScores = scores
+      .map(s => {
+          if (!s.leaderboardId) return;
 
-        if (!playerScores[s.leaderboardId]) {
-            emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
+          s.id = playerId + '_' + s.leaderboardId;
+          s.playerId = playerId;
 
-            return;
-        }
+          const currentScore = playerScores[s.leaderboardId] ?? null;
 
-        if (!s.timeset) delete s.timeset;
+          if (someFieldsUpdateOnly && !currentScore) {
+              emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
 
-        playerScores[s.leaderboardId] = {...playerScores[s.leaderboardId], ...s, lastUpdated: new Date()};
+              return null;
+          }
 
-        emitEventForScoreUpdate('player-score-updated', playerId, playerScores[s.leaderboardId]);
-    })
+          const updatedScore = {...currentScore ?? {}, ...s, lastUpdated: new Date()};
 
-    await setCache(data);
+          emitEventForScoreUpdate('player-score-updated', playerId, updatedScore);
+
+          return updatedScore;
+      })
+      .filter(s => s?.timeset); // filter out scores without timeset field set
+
+    await Promise.all(updatedScores.map(s => updateSongScore(s)));
+
+    flushScoresCache();
 
     return true;
 }
@@ -363,15 +366,18 @@ export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
     }
 }
 
-export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
+export const refreshPlayerScoreRank = async (playerId, leaderboardIds, lastScoreTimeset = null) => {
     let pages = [];
     let playerScoresPages = null;
 
     try {
         emitEventForScoresUpdate('player-score-update-start', playerId, leaderboardIds);
 
-        const playerInfo = await getPlayerInfo(playerId);
-        if (!playerInfo || !playerInfo.scores) throw 'Player not found';
+        const playerInfo = await getPlayerInfo(playerId, true);
+        if (!playerInfo) throw 'Player not found';
+
+        const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+        if (!playerScores) throw 'Player scores not found';
 
         const cachedRecentPlay = dateFromString(playerInfo.recentPlay);
         if (!lastScoreTimeset || !cachedRecentPlay || cachedRecentPlay < lastScoreTimeset) {
@@ -380,7 +386,7 @@ export const refreshPlayerScores = async (playerId, leaderboardIds, lastScoreTim
 
         const pagesInProgress = playersPagesInProgress[playerId] ?? [];
 
-        playerScoresPages = getPlayerScorePagesToUpdate(playerInfo.scores, leaderboardIds, true);
+        playerScoresPages = getPlayerScorePagesToUpdate(playerScores, leaderboardIds, true);
 
         pages = Object.keys(playerScoresPages).filter(p => !pagesInProgress.includes(p));
 

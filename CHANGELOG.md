@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+0.9.9
+- [*] rewriting of the data layer
+- [+] add best/avg rank in country leaderboards to the player profile, thx Rocker
+
 0.9.8.8 / 0.9.8.7
 - [!] the percentage on the leaderboard page is not changed if the score is with modifiers and a percentage is available
 

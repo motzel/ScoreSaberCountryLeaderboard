@@ -63,6 +63,9 @@ export default {
             replays: 'Replays watched by others',
             role: 'Role',
             rankedPlayCount: 'Ranked play count',
+            countryRank: 'Rank in country leaderboards',
+            best: 'Best',
+            avg: 'Avg.',
             totalRankedScore: 'Total ranked score',
             avgRankedAccuracy: 'Average ranked accuracy',
             medianRankedAccuracy: 'Median ranked accuracy',
@@ -201,7 +204,7 @@ export default {
     refresh: {
         lastDownload: 'Downloaded:',
         rankedsDownload: 'Downloading current rankeds',
-        countryPlayersDownload: 'Downloading the top 50 ${country}...',
+        countryPlayersDownload: 'Downloading active players',
         waiting: '[Waiting ${seconds}s]',
         error: 'Download error. Try again.',
         btnDisabledBgDlInProgress: 'Refreshing disabled. Background downloading in progress...',
@@ -270,11 +273,22 @@ export default {
         ok: 'OK',
         save: 'Save',
         cancel: 'Cancel',
+        close: 'Close',
         options: 'Options',
         search: 'Search',
         nothingSelected: 'Nothing selected',
         to: 'to',
         noData: 'No data',
         downloadError: 'Download error',
+    },
+    import: {
+        selectJsonFile: 'Select the JSON file containing the data export',
+        oldVerNotSupported: 'Importing a file from an older version of the plugin is not supported',
+        incorrectFile: 'Invalid export file',
+        incorrectJsonFile: 'Invalid JSON file'
+    },
+    db: {
+        conversionMessage: 'Database conversion',
+        conversionSecondaryMessage: 'Please wait, this should not take more than half a minute...',
     }
 }

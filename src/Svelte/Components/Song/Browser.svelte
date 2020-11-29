@@ -5,7 +5,6 @@
     import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
     import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
     import {delay} from "../../../network/fetch";
-    import {getCacheAndConvertIfNeeded, setCache} from "../../../store";
     import {
         addToDate,
         dateFromString,
@@ -16,28 +15,27 @@
     import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
     import debounce from '../../../utils/debounce';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
     import {
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
-        getRankedScoresByPlayerId, getPlayers,
-        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer
+        getRankedScoresByPlayerId,
+        getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer,
     } from "../../../scoresaber/players";
     import {
-        extractDiffAndType,
+        getAccFromScore,
         getHumanDiffInfo,
         getSongDiffInfo,
-        getSongMaxScoreWithDiffAndType
+        getSongMaxScore,
     } from "../../../song";
     import {generateCsv, downloadCsv} from '../../../utils/csv';
     import {downloadJson} from '../../../utils/json';
     import {round} from "../../../utils/format";
     import memoize from '../../../utils/memoize';
-    import {getConfig, getMainPlayerId} from "../../../plugin-config";
-    import beatSaverSvg from "../../../resource/svg/beatsaver.svg";
+    import {getConfig, getMainPlayerId, setConfig} from "../../../plugin-config";
     import {getActiveCountry} from "../../../scoresaber/country";
     import {_, trans} from "../../stores/i18n";
+    import twitch from '../../../services/twitch';
 
     import Song from "./Song.svelte";
     import Pager from "../Common/Pager.svelte";
@@ -55,7 +53,8 @@
     import Card from "./Card.svelte";
     import Icons from "./Icons.svelte";
     import ScoreRank from "../Common/ScoreRank.svelte";
-    import {refreshPlayerScores} from "../../../network/scoresaber/players";
+    import {refreshPlayerScoreRank} from "../../../network/scoresaber/players";
+    import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
 
     export let playerId;
     export let snipedIds = [];
@@ -341,20 +340,44 @@
         forceFiltersChanged();
     }
 
-    const generateRefreshTag = async (force = false) => {
-        const data = await getCacheAndConvertIfNeeded(force);
+    const getCurrentlySelectedPlayersIds = () => [playerId].concat(snipedIds);
+    const getPlayersScores = async (refreshCache = false) => {
+        const playersIds = getCurrentlySelectedPlayersIds();
 
-        const playerIds = [playerId].concat(snipedIds);
+        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId, refreshCache)));
 
-        const newRefreshTag = playerIds.reduce((tag, pId) => tag + pId + ':' + (data.users && data.users[pId] && data.users[pId].recentPlay ? timestampFromString(data.users[pId].recentPlay) : 'null'), '')
+        return playersIds.reduce((cum, playerId, idx) => {
+            cum[playerId] = convertArrayToObjectByKey(scores[idx], 'leaderboardId');
+            return cum;
+        }, {});
+    }
+    const getPlayersInfosForCurrentlySelected = async (refreshCache = false, withScores = true) => {
+        const playersIds = getCurrentlySelectedPlayersIds();
+
+        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId, refreshCache)));
+
+        if (withScores) {
+            const playersScores = await getPlayersScores(refreshCache);
+
+            return playersInfos.map(playerInfo => ({...playerInfo, scores: playersScores[playerInfo.id] ? playersScores[playerInfo.id] : {}}));
+        } else {
+            return playersInfos;
+        }
+    }
+
+    const generateRefreshTag = async () => {
+        const playerInfos = await getPlayersInfosForCurrentlySelected();
+        const playerTwitchProfile = await twitch.getProfileByPlayerId(playerId);
+        const playerTwitchUpdated = playerTwitchProfile && playerTwitchProfile.lastUpdated ? timestampFromString
+        (playerTwitchProfile.lastUpdated) : '';
+
+        const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '') + ':' + playerTwitchUpdated;
 
         if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
     }
 
     const generateSortTypes = async _ => {
         let types = [];
-
-        const data = (await getCacheAndConvertIfNeeded());
 
         if (allFilters.songType.id === 'sniper_mode')
             types.push({
@@ -374,17 +397,18 @@
                 enabled: true
             });
 
-        const userIds = [playerId].concat(snipedIds);
-        if (data && data.users) {
-            userIds.forEach((pId, idx) => {
-                const name = data.users[pId] ? data.users[pId].name : null;
+        const playersIds = getCurrentlySelectedPlayersIds();
+        const playersInfos = await getPlayersInfosForCurrentlySelected(false, false);
+        if (playersInfos.length) {
+            playersInfos.forEach((playerInfo, idx) => {
+                const name = playerInfo ? playerInfo.name : null;
                 if (name) {
                     const newFields = [];
                     [
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'timeset', 'field'),
                             field  : "timeset",
-                            enabled: pId !== playerId || allFilters.songType.id !== 'rankeds_unplayed'
+                            enabled: playerInfo.id !== playerId || allFilters.songType.id !== 'rankeds_unplayed'
                         },
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'diffPp', 'field'),
@@ -419,7 +443,7 @@
                     })
 
                     if (newFields.length) {
-                        if (userIds.length > 1) types.push({label: name, type: 'label'})
+                        if (playersIds.length > 1) types.push({label: name, type: 'label'})
                         types = types.concat(newFields);
                     }
                 }
@@ -486,9 +510,8 @@
     const getAllScoresByType = async (playerId, rankedOnly = true) => {
         return rankedOnly ? await getRankedScoresByPlayerId(playerId) : await getScoresByPlayerId();
     }
-    const getCachedAllScoresByType = memoize(getAllScoresByType);
     const getMinStars = async (playerId, boundary = minPpPerMap, maxAcc = 95) => {
-        const playerPpScores = (await getCachedAllScoresByType(playerId, true))
+        const playerPpScores = (await getAllScoresByType(playerId, true))
           .sort((a, b) => b.pp - a.pp)
           .map(s => s.pp);
 
@@ -497,9 +520,6 @@
         return onePpBoundary / PP_PER_STAR / ppFromScore(maxAcc);
     }
     const getCachedMinStars = memoize(getMinStars);
-
-    const getMaxScoreExFromPlayersScores = async leaderboardId => Object.values((await getCacheAndConvertIfNeeded()).users).reduce((maxScore, player) => !maxScore && player && player.scores && player.scores[leaderboardId] && player.scores[leaderboardId].maxScoreEx ? player.scores[leaderboardId].maxScoreEx : maxScore, null)
-    const getCachedMaxScoreExFromPlayersScores = memoize(getMaxScoreExFromPlayersScores);
 
     let calculating = true;
 
@@ -511,7 +531,7 @@
 
     let viewType = strings.viewTypes[0];
 
-    let users = [];
+    let players = [];
 
     let isPlayerFromCurrentCountry = false;
 
@@ -546,16 +566,7 @@
         }
 
         allRankeds = await getRankedSongs();
-        maxStars = (await Promise.all(
-          Object.values(allRankeds)
-            .map(async r => {
-                allRankeds[r.leaderboardId].maxScoreEx = await getCachedMaxScoreExFromPlayersScores(r.leaderboardId);
-
-                return r.stars
-            })
-        ))
-
-          .reduce((max, stars) => max = stars > max ? stars : max, 0);
+        maxStars = Object.values(allRankeds).map(r => r.stars).reduce((max, stars) => stars > max ? stars : max, 0);
 
         allFilters.starsFilter = Object.assign({}, allFilters.starsFilter, {to: maxStars});
 
@@ -583,9 +594,9 @@
 
         await generateSortTypes();
 
-        users = (await getAllActivePlayers(country))
+        players = (await getAllActivePlayers(country))
           .reduce((cum, player) => {
-              if (player && player.scores) {
+              if (player) {
                   let {id, name, avatar} = player;
 
                   cum.push({id, label: name, avatar});
@@ -596,23 +607,29 @@
           .filter(u => u.id !== playerId)
         ;
 
-        const forceRefresh = async (nodeId, player) => {
-            // return if not relevant for current dataset
-            if (!player || !player.id || !playerId || ![playerId].concat(snipedIds).includes(player.id)) return;
-
-            await generateRefreshTag(nodeId !== nodeSync.getId());
-        }
-
         await updateViewUpdatesConfig();
 
-        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({nodeId, player}) => await forceRefresh(nodeId, player));
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({playerId}) => {
+            // return if not relevant for current dataset
+            if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
+
+            await generateRefreshTag();
+        });
         const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);
+
+        const twitchVideosUpdated = eventBus.on('player-twitch-videos-updated', async ({playerId}) => {
+            // return if not relevant for current dataset
+            if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
+
+            await generateRefreshTag();
+        });
 
         initialized = true;
 
         return () => {
             playerScoresUpdatedUnsubscriber();
             configChangedUnsubscriber();
+            twitchVideosUpdated();
         }
     });
 
@@ -660,7 +677,6 @@
         return songName.toLowerCase().includes(name.toLowerCase());
     }
     const songIsUnranked = song => !song.stars;
-    // const noPlayerScore = r => !r?.user?.acc;
 
     // post-filters
     const bestSeriesGivesAtLeastMinPpDiff = (song, minPpDiff = 1) => song.bestDiffPp && song.bestDiffPp > minPpDiff;
@@ -669,7 +685,7 @@
     const playerIsNotTheBest = (leaderboardId, series, playerHasScore = false) => (!getSeriesSong(leaderboardId, series) || !getSeriesSong(leaderboardId, series).best) && (!playerHasScore || !!getSeriesSong(leaderboardId, series))
     const countryRankPassesCondition = (leaderboardId, series, rankToCompare, rankCondition = '>=') => {
         const songScore = getSeriesSong(leaderboardId, series);
-        if (!songScore || !songScore.countryRank) return false;
+        if (!songScore || !songScore.countryRank) return true;
 
         const rank = songScore.countryRank;
 
@@ -729,20 +745,19 @@
                 const series = allSeries[seriesKey];
 
                 if (series.scores[song.leaderboardId] && song.maxScoreEx) {
-                    const scoreMult = series.scores[song.leaderboardId].scoreMult ? series.scores[song.leaderboardId].scoreMult : 1;
-                    const prevScoreMult = series.scores[song.leaderboardId].prevScoreMult ? series.scores[song.leaderboardId].prevScoreMult : 1;
+                    const maxScoreEx = song.maxScoreEx;
 
-                    series.scores[song.leaderboardId].acc = series.scores[song.leaderboardId].score / song.maxScoreEx / scoreMult * 100;
-                    series.scores[song.leaderboardId].prevAcc = series.scores[song.leaderboardId].prevScore ? series.scores[song.leaderboardId].prevScore / song.maxScoreEx / prevScoreMult * 100 : null;
+                    series.scores[song.leaderboardId].acc = getAccFromScore({...series.scores[song.leaderboardId], maxScoreEx});
+                    series.scores[song.leaderboardId].prevAcc = getAccFromScore({maxScoreEx, score: series.scores[song.leaderboardId].prevScore, uScore: series.scores[song.leaderboardId].prevUScore});
                 }
             }
         }
 
         async function findTwitchVideo(playerId, timeset, songLength) {
-            const data = await getCacheAndConvertIfNeeded();
-            if (data && data.twitch && data.twitch.users && data.twitch.users[playerId] && data.twitch.users[playerId].videos) {
+            const playerTwitchProfile = await twitch.getProfileByPlayerId(playerId)
+            if (playerTwitchProfile && playerTwitchProfile.videos) {
                 const songStarted = addToDate(timeset, -songLength * 1000)
-                const video = data.twitch.users[playerId].videos
+                const video = playerTwitchProfile.videos
                   .map(v => Object.assign({}, v, {
                       created_at: dateFromString(v.created_at),
                       ended_at  : addToDate(dateFromString(v.created_at), durationToMillis(v.duration))
@@ -761,7 +776,7 @@
             if (!song.maxScoreEx || !song.bpm) {
                 try {
                     // try to get max score from cache
-                    const songInfo = await getSongDiffInfo(song.id, song.diff, true);
+                    const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
                     if (songInfo) {
                         song.maxScoreEx = songInfo.maxScore;
                         song.bpm = songInfo.bpm;
@@ -777,7 +792,7 @@
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
-                            promise: getSongDiffInfo(song.id, song.diff, false),
+                            promise: getSongDiffInfo(song.hash, song.diffInfo, false),
                             song,
                             current
                         })
@@ -793,36 +808,34 @@
 
         // wait for resolve all song diff info promises
         if (promisesToResolve.length)
-            Promise.allSettled(promisesToResolve.map(arr => arr.promise)).then(all => {
-                all.forEach(async (result, idx) => {
-                    if (result.status === 'fulfilled') {
-                        const songInfo = result.value;
-                        const song = promisesToResolve[idx].song;
+            Promise.allSettled(promisesToResolve.map(arr => arr.promise))
+             .then(all => Promise.all(all.map(async (result, idx) => {
+                     if (result.status === 'fulfilled') {
+                         const songInfo = result.value;
+                         const song = promisesToResolve[idx].song;
 
-                        if (songInfo) {
-                            song.maxScoreEx = songInfo.maxScore;
-                            song.bpm = songInfo.bpm;
-                            song.njs = songInfo.njs;
-                            song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
-                            song.length = songInfo.length;
-                            song.key = songInfo.key;
+                         if (songInfo) {
+                             song.maxScoreEx = songInfo.maxScore;
+                             song.bpm = songInfo.bpm;
+                             song.njs = songInfo.njs;
+                             song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
+                             song.length = songInfo.length;
+                             song.key = songInfo.key;
 
-                            if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
-                                const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
-                                if (video) song.video = video;
-                            }
+                             if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
+                                 const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
+                                 if (video) song.video = video;
+                             }
 
-                            updateAccFromMaxScore(song, songPage.series);
-                        }
-                    }
-                })
-
-                return all;
-            }).then(_ => {
-                if (promisesToResolve.length && promisesToResolve[0].current === currentPage) {
-                    completeFetchingNewPage(songPage)
-                }
-            });
+                             updateAccFromMaxScore(song, songPage.series);
+                         }
+                     }
+             })))
+             .then(_ => {
+                 if (promisesToResolve.length && promisesToResolve[0].current === currentPage) {
+                     completeFetchingNewPage(songPage)
+                 }
+             });
 
         try {
             const leaderboardIdsToRefresh = songPage.series && songPage.series.length
@@ -844,7 +857,7 @@
 
             if (leaderboardIdsToRefresh.length) {
                 const playerRecentPlay = new Date(Math.max(songPage.series[0].recentPlay, recentPlay))
-                refreshPlayerScores(songPage.series[0].id, leaderboardIdsToRefresh, playerRecentPlay).then(_ => {});
+                refreshPlayerScoreRank(songPage.series[0].id, leaderboardIdsToRefresh, playerRecentPlay).then(_ => {});
             }
         }
         catch (e) {
@@ -963,10 +976,11 @@
         try {
             const sortedRankeds = {};
 
-            let playerIds = [playerId].concat(snipedIds);
+            const playersInfos = await getPlayersInfosForCurrentlySelected(false, true);
 
-            const playerInfos = (await Promise.all(playerIds.map(async pId => getPlayerInfo(pId))))
-            const playersSeries = await Promise.all(playerInfos
+            const ssplCountryRanksCache = await getSsplCountryRanks();
+
+            const playersSeries = await Promise.all(playersInfos
               .map(async pInfo => {
                   const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
@@ -985,19 +999,20 @@
                         scores     : convertArrayToObjectByKey(
                           Object.values(scores)
                             .map(s => {
-                                const {id, name, songSubName, songAuthorName, levelAuthorName, diff, stars, oldStars, maxScoreEx, playerId, ...score} = s;
+                                const {id, name, songAuthorName, levelAuthorName, diff, maxScoreEx, playerId, ...score} = s;
                                 score.timeset = dateFromString(s.timeset);
 
+                                score.ssplCountryRank = ssplCountryRanksCache[score.leaderboardId] && ssplCountryRanksCache[score.leaderboardId][playerInfo.id]
+                                 ? ssplCountryRanksCache[score.leaderboardId][playerInfo.id]
+                                 : null;
                                 score.countryRank = country && score.ssplCountryRank && score.ssplCountryRank[country]
-                                        ? score.ssplCountryRank[country].rank
-                                        : null;
+                                 ? score.ssplCountryRank[country].rank
+                                 : null;
 
                                 if (score.pp > 0 && !score.weightedPp) {
                                     score.weightedPp = getWeightedPp(sortedRankeds[playerId], s.leaderboardId, true);
                                     s.weightedPp = score.weightedPp; // in order to cache for next iteration
                                 }
-
-                                s.scoreMult = score.uScore ? score.score / score.uScore : 1;
 
                                 return score;
                             }),
@@ -1005,26 +1020,27 @@
                         )
                     }
                   )
-              }))
+              }));
+
             const allPlayedSongs =
               await Promise.all(
-                Object.values(playerInfos.reduce((cum, player) => Object.assign({}, cum, player.scores), {}))
+                Object.values(playersInfos.reduce((cum, player) => Object.assign({}, cum, player.scores), {}))
                   .map(async s => {
-                      const maxScoreEx = s.maxScoreEx ? s.maxScoreEx : await getCachedMaxScoreExFromPlayersScores(s.leaderboardId);
+                      const maxScoreEx = s.maxScoreEx ? s.maxScoreEx : null;
 
                       return {
                           leaderboardId: s.leaderboardId,
-                          id           : s.id,
-                          name         : (s.name + ' ' + s.songSubName).trim(),
+                          hash         : s.hash,
+                          name         : s.name.trim(),
                           songAuthor   : s.songAuthorName,
                           levelAuthor  : s.levelAuthorName,
-                          diff         : extractDiffAndType(s.diff),
+                          diffInfo     : s.diffInfo,
                           stars        : s.stars ? s.stars : null,
                           oldStars     : null,
                           maxScoreEx
                       }
                   })
-              )
+              );
 
             const allPlayedSongsObj = convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId')
             RANKED.forEach(id => {
@@ -1076,8 +1092,7 @@
                           const maxScoreExScore = allPlayedSongsObj[s.leaderboardId]
                           const maxScoreEx = maxScoreExScore && maxScoreExScore.maxScoreEx ? maxScoreExScore.maxScoreEx : null;
 
-                          const scoreMult = series.scores[s.leaderboardId].scoreMult ? series.scores[s.leaderboardId].scoreMult : 1
-                          series.scores[s.leaderboardId].acc = maxScoreEx ? series.scores[s.leaderboardId].score / maxScoreEx / scoreMult * 100 : null;
+                          series.scores[s.leaderboardId].acc = getAccFromScore({...series.scores[s.leaderboardId], maxScoreEx});
 
                           series.scores[s.leaderboardId].diffPp = null;
 
@@ -1093,8 +1108,7 @@
                                   })
                                   series.scores[s.leaderboardId].prevTimeset = new Date(playHistory[0]['timestamp']);
 
-                                  series.scores[s.leaderboardId].prevScoreMult = series.scores[s.leaderboardId].prevScore && series.scores[s.leaderboardId].prevUScore ? series.scores[s.leaderboardId].prevScore / series.scores[s.leaderboardId].prevUScore : 1
-                                  series.scores[s.leaderboardId].prevAcc = maxScoreEx ? series.scores[s.leaderboardId].prevScore / maxScoreEx / series.scores[s.leaderboardId].prevScoreMult * 100 : null;
+                                  series.scores[s.leaderboardId].prevAcc = getAccFromScore({maxScoreEx, score: series.scores[s.leaderboardId].prevScore, uScore: series.scores[s.leaderboardId].prevUScore});
                               }
                           }
 
@@ -1237,13 +1251,13 @@
         const data = await calcPromised;
         const transformedData = await Promise.all(
           data.songs.map(async s => {
-              const diffInfo = getHumanDiffInfo(s.diff);
+              const humanDiffInfo = getHumanDiffInfo(s.diffInfo);
 
               let maxScore = s.maxScoreEx;
               if (!maxScore) {
                   try {
                       // try to get max score from cache
-                      maxScore = await getSongMaxScoreWithDiffAndType(s.id, s.diff, true);
+                      maxScore = await getSongMaxScore(s.hash, s.diffInfo, true);
                   }
                   catch (e) {
                       // swallow error
@@ -1251,7 +1265,7 @@
               }
 
               return Object.assign({}, s, {
-                  difficulty: diffInfo ? diffInfo.name : '',
+                  difficulty: humanDiffInfo ? humanDiffInfo.name : '',
                   maxScore  : maxScore ? maxScore : '',
                   timeset   : getScoreValueByKey(data.series[0], s, 'timeset'),
                   score     : getScoreValueByKey(data.series[0], s, 'score'),
@@ -1269,8 +1283,8 @@
     }
 
     async function exportPlaylist() {
-        const allPlayedSongs = Object.values(Object.values(await getPlayers()).reduce((cum, u) => ({...cum, ...u.scores}), {}));
-        const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.id}));
+        const allPlayedSongs = Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
+        const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
         const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
             playlistTitle      : "SSPL playlist",
@@ -1305,9 +1319,9 @@
     }
 
     async function onAddPlayerToCompare() {
-        if (!users.length) return;
+        if (!players.length) return;
 
-        snipedIds = [...snipedIds, users.filter(u => !snipedIds.includes(u.id))[0].id];
+        snipedIds = [...snipedIds, players.filter(u => !snipedIds.includes(u.id))[0].id];
 
         await generateSortTypes();
 
@@ -1315,12 +1329,11 @@
     }
 
     async function onSaveComparision() {
-        const data = await getCacheAndConvertIfNeeded();
-        const songBrowserConfig = await getConfig('songBrowser');
-        if (songBrowserConfig) {
-            songBrowserConfig.compareTo = snipedIds;
+        const config = await getConfig();
+        if (config.songBrowser) {
+            config.songBrowser.compareTo = snipedIds;
 
-            await setCache(data);
+            await setConfig(config);
 
             comparisionModified = false;
         }
@@ -1358,7 +1371,7 @@
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters, refreshTag) : null;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
-    $: comparePossible = users.length && snipedIds.length < 3;
+    $: comparePossible = players.length && snipedIds.length < 3;
     $: {
         restorePage(refreshTag)
     }
@@ -1443,9 +1456,9 @@
             <div class="columns card-view is-multiline">
                 {#each songsPage.songs as song (song.leaderboardId)}
                     <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
-                        <Card leaderboardId={song.leaderboardId} hash={song.id} padding="1em" iconSize="0.875em"
+                        <Card leaderboardId={song.leaderboardId} hash={song.hash} padding="1em" iconSize="0.875em"
                               songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
-                              diffInfo={song.diff}
+                              diffInfo={song.diffInfo}
                               stars={selectedSongCols.find(c=>c.key==='stars') ? song.stars : (song.stars ? 0 : null)}
                               maxPp={selectedSongCols.find(c=>c.key==='maxPp') ? song.maxPp : null}
                               duration={selectedSongCols.find(c=>c.key==='length') ? song.length : null}
@@ -1467,7 +1480,7 @@
                                             {#if songsPage.series.length > 1}
                                                 <div class="player-name">
                                                 {#if sIdx > 0}
-                                                    <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)}></Select>
+                                                    <Select items={players} value={players.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)}></Select>
                                                     <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onPlayerRemove(sIdx)}></i>
                                                 {:else}
                                                     <strong>{series.name}</strong>
@@ -1531,7 +1544,7 @@
                                     <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
 
                                     {#if selectedAdditionalCols.length > 0}
-                                    <Icons hash={song.id} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
+                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                     {/if}
                                 </div>
                             </div>
@@ -1557,7 +1570,7 @@
                             {#if viewType.id === 'compact'}
                                 <th class="left down player-sel">
                                     {#if sIdx > 0}
-                                        <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
+                                        <Select items={players} value={players.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
                                         <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onPlayerRemove(sIdx)}></i>
                                     {:else}
                                         {series.name}
@@ -1568,7 +1581,7 @@
                                     <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
                                         class="series left player-sel">
                                         {#if sIdx > 0}
-                                            <Select items={users} value={users.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
+                                            <Select items={players} value={players.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
                                             <i class="fas fa-times player-remove" title="Usuń z porównania" on:click={() => onPlayerRemove(sIdx)}></i>
                                         {:else}
                                             {series.name}
@@ -1605,14 +1618,14 @@
                         {/if}
 
                         <td class="diff">
-                            <Difficulty diff={song.diff} useShortName={true} reverseColors={true}/>
+                            <Difficulty diff={song.diffInfo} useShortName={true} reverseColors={true}/>
                         </td>
 
                         <td class="song">
                             <div class="flex-start flex-justify-between">
                                 <Song song={song}>
                                     <figure>
-                                        <img src="/imports/images/songs/{song.id}.png"/>
+                                        <img src="/imports/images/songs/{song.hash}.png"/>
                                         <div class="songinfo">
                                             <span class="name">{song.name}</span>
                                             <div class="author">{song.songAuthor} <small>{song.levelAuthor}</small>
@@ -1714,34 +1727,8 @@
 
                         {#each selectedAdditionalCols as col,idx (col.key)}
                             <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
-                                {#if song.key && song.key.length}
-                                    {#if shownIcons.includes('bsr')}
-                                        <Button iconFa="fas fa-exclamation" title={$_.songBrowser.icons.bsrTooltip}
-                                                on:click={copyToClipboard('!bsr ' + song.key)}/>
-                                    {/if}
-                                    {#if shownIcons.includes('bs')}
-                                        <a href="https://beatsaver.com/beatmap/{song.key}" target="_blank">
-                                            <Button icon={beatSaverSvg} title={$_.songBrowser.icons.beatSaverTooltip}/>
-                                        </a>
-                                    {/if}
-
-                                    {#if shownIcons.includes('oneclick')}
-                                        <a href="beatsaver://{song.key}">
-                                            <Button iconFa="far fa-hand-pointer" title={$_.songBrowser.icons.oneclick}/>
-                                        </a>
-                                    {/if}
-
-                                    {#if shownIcons.includes('preview')}
-                                        <a href="https://skystudioapps.com/bs-viewer/?id={song.key}" target="_blank">
-                                            <Button iconFa="fa fa-play-circle" title={$_.songBrowser.icons.preview}/>
-                                        </a>
-                                    {/if}
-                                {/if}
-
-                                {#if song.video && song.video.url && shownIcons.includes('twitch')}
-                                    <a class="video" href="{song.video.url}" target="_blank">
-                                        <Button iconFa="fab fa-twitch" type="twitch" title={$_.songBrowser.icons.twitchTooltip}/>
-                                    </a>
+                                {#if col.key === 'icons' && song.hash && song.hash.length}
+                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                 {/if}
                             </td>
                         {/each}
