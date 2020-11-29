@@ -337,7 +337,7 @@ export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdat
 
     await Promise.all(updatedScores.map(s => updateSongScore(s)));
 
-    // TODO: clear cache? or maybe refresh in event handler?
+    flushScoresCache();
 
     return true;
 }

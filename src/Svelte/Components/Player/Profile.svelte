@@ -83,7 +83,6 @@
 
         if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
 
-        // TODO: refresh when changed
         await refreshSsplCountryRanksCache();
 
         // TODO: reload profile page for now, try to do it to be more dynamic

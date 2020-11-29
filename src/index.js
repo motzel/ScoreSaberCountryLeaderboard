@@ -125,7 +125,6 @@ async function setupLeaderboard() {
         { passive: true }
     );
 
-    // TODO: dont show when no user data is available
     const config = await getConfig('songLeaderboard');
     const mainPlayerId = await getMainPlayerId();
     if (mainPlayerId && !!config.showWhatIfPp) {

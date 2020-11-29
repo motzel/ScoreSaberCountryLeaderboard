@@ -154,39 +154,13 @@ export const getPlayerSongScore = async (player, leaderboardId) => getSongScoreB
 export const getSongScoreByPlayerId = async (playerId, leaderboardId) => scoresRepository().get(playerId + '_' + leaderboardId);
 export const updateSongScore = async score => scoresRepository().set(score);
 
-// TODO: look at song.js::getLeaderboard() lines 153/173
-export const getPlayerSongScoreHistory = async (playerScore, maxSongScore = null) => {
+export const getPlayerSongScoreHistory = async (playerScore) => {
     if (!playerScore || !playerScore.history) return null;
-
-    if (!maxSongScore) {
-        const songInfo = playerScore.id ? await getSongByHash(playerScore.hash) : null;
-        const songCharacteristics = songInfo?.metadata?.characteristics;
-
-        const diffInfo = findDiffInfo(
-            songCharacteristics,
-            playerScore.diff
-        );
-        maxSongScore =
-            diffInfo?.length && diffInfo?.notes
-                ? getMaxScore(diffInfo.notes)
-                : 0;
-    }
 
     return playerScore.history
         .filter(h => h.score && h.score !== playerScore.score)
         .sort((a, b) => b.score - a.score)
-        .map(h => Object.assign(
-            {},
-            h,
-            {
-                timeset: new Date(h.timestamp),
-                percent: maxSongScore
-                    ? h.score / maxSongScore / (h.uScore ? h.score / h.uScore : 1)
-                    : (playerScore.maxScoreEx
-                        ? h.score / playerScore.maxScoreEx / (h.uScore ? h.score / h.uScore : 1)
-                        : null)
-            }
-        ));
+        .map(h => ({...h, timeset: new Date(h.timestamp)}));
 }
 
 const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {

@@ -134,7 +134,6 @@ const castFields = (value, repositoryItem) => {
 const getInLineKeysRepositories = () => repositories.filter(r => !r.repository().hasOutOfLineKey());
 const getOutOfLineKeysRepositories = () => repositories.filter(r => r.repository().hasOutOfLineKey());
 
-// TODO: translate it!
 export function importDataHandler(e, onError = null, onImportCompleted = null) {
 	const file = e.target.files[0];
 	if (!file) {
