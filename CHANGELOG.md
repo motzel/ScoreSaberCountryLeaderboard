@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.2
+- [!] hotfix - chart switching 
+
 0.9.9.1
 - [!] hotfix - database conversion did not work in firefox
 

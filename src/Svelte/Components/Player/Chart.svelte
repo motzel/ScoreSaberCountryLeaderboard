@@ -134,6 +134,8 @@
             });
         }
 
+        if (chart) chart.destroy();
+
         chart = new Chart(
                 document.getElementById("rankChart"),
                 {
@@ -195,6 +197,8 @@
 
     function setupAccChart(canvas, chartData) {
         if (!canvas || !chartData || !chartData.length) return;
+
+        if (chart) chart.destroy();
 
         chart = new Chart(
                 document.getElementById("rankChart"),
