@@ -7,8 +7,8 @@
     import Select from "../Common/Select.svelte";
 
     import {getConfig} from '../../../plugin-config';
-    import {RANKED, UNRANKED} from '../../../scoresaber/rankeds';
-    import {diffColors, getAccFromScore} from '../../../song';
+    import {getAccFromRankedScore, getRankedsNotesCache, RANKED, UNRANKED} from '../../../scoresaber/rankeds';
+    import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
     import {timestampFromString} from "../../../utils/date";
@@ -69,6 +69,8 @@
 
     let initialized = false;
 
+    let rankedsNotesCache = null;
+
     const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
 
     onMount(async () => {
@@ -85,6 +87,10 @@
 
         await refreshSsplCountryRanksCache();
 
+        rankedsNotesCache = await getRankedsNotesCache();
+
+        const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+
         // TODO: reload profile page for now, try to do it to be more dynamic
         const dataRefreshed = eventBus.on('data-refreshed', () => window.location.reload());
         const ssplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => refreshSsplCountryRanksCache());
@@ -94,6 +100,7 @@
         return () => {
             dataRefreshed();
             ssplCountryRanksCacheUpdated();
+            rankedsNotesCacheUnsubscriber();
         }
     })
 
@@ -124,7 +131,7 @@
         stats = scores.reduce((cum, s) => {
             if (!s.maxScoreEx) return cum;
 
-            s.acc = getAccFromScore(s);
+            s.acc = getAccFromRankedScore(s, rankedsNotesCache);
 
             cum.totalScore += s.uScore ? s.uScore : s.score;
             cum.totalAcc += s.acc;
@@ -162,7 +169,7 @@
 
     $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - timestampFromString(s.timeset) <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
 
-    $: stats = getPlayerStats(filteredScores, country, ssplCountryRanksCache, initialized);
+    $: stats = getPlayerStats(filteredScores, country, ssplCountryRanksCache, rankedsNotesCache, initialized);
 
     $: {
         translateAllStrings($_);

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.5
+- [+] The acc chart and acc badges now using real acc instead of incorrect one displayed on the SS page, thx Rocker
+
 0.9.9.4
 - [!] rankeds played before they became rankeds were not downloaded again if during updating player had no other scores to download
 

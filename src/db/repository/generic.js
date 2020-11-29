@@ -35,7 +35,7 @@ export default (storeName, inlineKeyName = undefined) => {
 
     if (refreshCache) repositoryCache.forget(cacheKey);
 
-    return repositoryCache.get(cacheKey, async () => db.get(storeName, key));
+    return repositoryCache.get(cacheKey, async () => db.get(storeName, key), false);
   };
 
   const getFromIndex = async (indexName, query, refreshCache = false) => {
@@ -43,7 +43,7 @@ export default (storeName, inlineKeyName = undefined) => {
 
     if (refreshCache) repositoryCache.forget(cacheKey);
 
-    return repositoryCache.get(cacheKey, async () => db.getFromIndex(storeName, indexName, query));
+    return repositoryCache.get(cacheKey, async () => db.getFromIndex(storeName, indexName, query), false);
   };
 
   const getAll = async(query = undefined, count = undefined, refreshCache = false) => {
@@ -71,7 +71,7 @@ export default (storeName, inlineKeyName = undefined) => {
       await db.put(storeName, value, inlineKeyName ? undefined : key);
     }
 
-    return repositoryCache.set(getCacheKeyFor(inlineKeyName ? value[inlineKeyName] : key), value);
+    return repositoryCache.set(getCacheKeyFor(inlineKeyName ? value[inlineKeyName] : key), value, false);
   }
 
   const del = async key => {

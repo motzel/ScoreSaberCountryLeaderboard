@@ -1,12 +1,12 @@
 <script>
-    import {getRankedSongs} from "../../../scoresaber/rankeds";
+    import {getAccFromRankedScore, getRankedsNotesCache, getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerHistory, getScoresByPlayerId} from "../../../scoresaber/players";
     import {dateFromString, toSSTimestamp} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
+    import eventBus from '../../../utils/broadcast-channel-pubsub'
     import Button from "../Common/Button.svelte";
-    import {getAccFromScore} from '../../../song'
 
     export let profileId = null;
     export let history = null;
@@ -18,8 +18,18 @@
     let chart = null;
     let type = 'rank';
 
-    onMount(() => {
+    let rankedsNotesCache = null;
+
+    onMount(async () => {
         canvas = document.getElementById('rankChart');
+
+        rankedsNotesCache = await getRankedsNotesCache();
+
+        const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+
+        return () => {
+            rankedsNotesCacheUnsubscriber();
+        }
     });
 
     async function calcAccChartData(profileId, rankeds) {
@@ -34,7 +44,7 @@
         chartData = Object.values(playerScores)
                 .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId])
                 .map(s => {
-                    const acc = getAccFromScore(s)
+                    const acc = getAccFromRankedScore(s, rankedsNotesCache);
 
                     return {
                         x: rankeds[s.leaderboardId].stars,
@@ -323,7 +333,7 @@
 
     $: allRankeds = getRankedSongs();
     $: {
-        calcAccChartData(profileId, allRankeds);
+        rankedsNotesCache, calcAccChartData(profileId, allRankeds);
     }
 
     $: {

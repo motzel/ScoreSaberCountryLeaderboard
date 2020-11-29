@@ -7,48 +7,56 @@ export default (name, fetchTimeout = 5000) => {
   let cache = {};
   let keysInProgress = {};
 
-  const set = (key, value) => {
+  const set = (key, value, dispatchEvents = true) => {
     cache[key] = value;
 
-    eventBus.publish('cache-key-set-' + name, {nodeId: nodeSync.getId(), key});
+    if (dispatchEvents) eventBus.publish('cache-key-set-' + name, {nodeId: nodeSync.getId(), key});
 
     return value;
   };
 
-  const get = async (key, fetchFunc) => {
+  const get = async (key, fetchFunc, waitForPreviousFetchPromiseInProgress = true) => {
     if (cache.hasOwnProperty(key)) return cache[key];
 
-    if(keysInProgress[key]) {
-      return await Promise.race([
-        delayedFetch(fetchTimeout, fetchFunc), // timeout
-        new Promise(resolve => {
-          eventBus.on('cache-key-set-' + name, ({nodeId, key:keyAvailable}) => {
-            if (nodeId !== nodeSync.getId()) return;
+    if (waitForPreviousFetchPromiseInProgress) {
+      if (keysInProgress[key]) {
+        return await Promise.race([
+          delayedFetch(fetchTimeout, fetchFunc), // timeout
+          new Promise(resolve => {
+            eventBus.on('cache-key-set-' + name, ({nodeId, key: keyAvailable}) => {
+              if (nodeId !== nodeSync.getId()) return;
 
-            if (key === keyAvailable) {
-              resolve(cache[key] ?? null);
-            }
+              if (key === keyAvailable) {
+                resolve(cache[key] ?? null);
+              }
+            })
           })
-        })
-      ]);
-    }
+        ]);
+      }
 
-    keysInProgress[key] = fetchFunc;
+      keysInProgress[key] = fetchFunc;
+    }
 
     const value = await fetchFunc();
 
     delete keysInProgress[key];
 
-    return set(key, value);
+    return set(key, value, waitForPreviousFetchPromiseInProgress);
   };
 
   const has = key => cache[key] !== undefined;
 
   const getKeys = () => Object.keys(cache);
 
-  const forget = key => delete cache[key];
+  const forget = key => {
+    delete cache[key];
+    delete keysInProgress[key];
+  }
 
-  const flush = () => cache = {};
+  const flush = () => {
+    cache = {};
+    keysInProgress = {};
+  }
 
   return {
     has,

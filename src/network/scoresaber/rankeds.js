@@ -6,8 +6,8 @@ import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../multinode-sync";
 import {
-  flushRankedsCache, flushRankedsChangesCache,
-  getRankedSongs,
+  flushRankedsCache, flushRankedsChangesCache, getRankedsNotesCache,
+  getRankedSongs, setRankedsNotesCache,
   setRankedSongsLastUpdated,
   storeRankeds,
   storeRankedsChanges,
@@ -56,18 +56,19 @@ export async function updateRankeds() {
   );
 
   // find differences between old and new ranked songs
+  const newRankeds = arrayDifference(
+    Object.keys(fetchedRankedSongs),
+    Object.keys(oldRankedSongs),
+  ).map(leaderboardId => ({
+    leaderboardId: parseInt(leaderboardId, 10),
+    oldStars: null,
+    stars: fetchedRankedSongs[leaderboardId].stars,
+    timestamp: Date.now(),
+  }));
+
   const changed =
-    // concat new rankeds...
-    arrayDifference(
-      Object.keys(fetchedRankedSongs),
-      Object.keys(oldRankedSongs),
-    ).map(leaderboardId => ({
-      leaderboardId: parseInt(leaderboardId, 10),
-      oldStars: null,
-      stars: fetchedRankedSongs[leaderboardId].stars,
-      timestamp: Date.now()
-    }))
-      // ... with changed rankeds
+    // concat new rankeds with changed rankeds
+    newRankeds
       .concat(
         Object.values(oldRankedSongs)
           .filter((s) => s.stars !== fetchedRankedSongs?.[s.leaderboardId]?.stars)
@@ -100,6 +101,22 @@ export async function updateRankeds() {
 
     flushRankedsCache();
     flushRankedsChangesCache();
+
+    if (newRankeds.length) {
+      const newHashes = newRankeds.map(r => fetchedRankedSongs?.[r?.leaderboardId]?.hash?.toLowerCase()).filter(hash => hash);
+      const rankedsNotesCache = await getRankedsNotesCache();
+
+      // set empty notes cache for newly downloaded rankeds in order to be downloaded
+      let shouldNotesCacheBeSaved = false;
+      newHashes.forEach(hash => {
+        if (rankedsNotesCache[hash]) return;
+
+        rankedsNotesCache[hash] = null;
+        shouldNotesCacheBeSaved = true;
+      });
+
+      if (shouldNotesCacheBeSaved) await setRankedsNotesCache(rankedsNotesCache);
+    }
 
     if (changed.length) {
       eventBus.publish('rankeds-changed', {nodeId: nodeSync.getId(), changed, allRankeds: fetchedRankedSongs});

@@ -1,8 +1,15 @@
-import {fetchApiPage} from "./fetch";
+import {fetchApiPage, NotFoundError} from "./fetch";
 import {substituteVars} from "../utils/format";
 import {default as queue} from "./queue";
 import log from '../utils/logger';
 import songsRepository from "../db/repository/songs";
+import {
+    getRankedsNotesCache,
+    getRankedsNotesSongCacheFromCharacteristics,
+    setRankedsNotesCache,
+} from '../scoresaber/rankeds'
+import eventBus from '../utils/broadcast-channel-pubsub'
+import nodeSync from './multinode-sync'
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
@@ -25,6 +32,10 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
 
         return cacheSongInfo(songInfo);
     } catch (err) {
+        if (err instanceof NotFoundError) {
+            // TODO: cache it and do not try again
+        }
+
         log.warn(`Error fetching Beat Saver song by hash "${hash}"`);
         return null;
     }
@@ -63,4 +74,29 @@ async function cacheSongInfo(songInfo) {
     await songsRepository().set(songInfo);
 
     return songInfo;
+}
+
+export const fetchRankedsFromBs = async rankedsHashesToFetch => {
+    if (!rankedsHashesToFetch || !rankedsHashesToFetch.length) return;
+
+    const currentRankedsCache = await getRankedsNotesCache();
+
+    const songInfos = await Promise.allSettled(rankedsHashesToFetch.map(hash => getSongByHash(hash)));
+
+    if (songInfos && songInfos.length) {
+        songInfos.forEach(value => {
+            if (value.status !== 'fulfilled' || !value.value.hash) return;
+
+            const songCharacteristics = value?.value?.metadata?.characteristics ?? null;
+
+            currentRankedsCache[value.value.hash.toLowerCase()] = getRankedsNotesSongCacheFromCharacteristics(songCharacteristics);
+        });
+
+        await setRankedsNotesCache(currentRankedsCache);
+
+        eventBus.publish('rankeds-notes-cache-updated', {
+            nodeId: nodeSync.getId(),
+            rankedsNotesCache: currentRankedsCache,
+        });
+    }
 }
