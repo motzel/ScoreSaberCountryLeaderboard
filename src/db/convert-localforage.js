@@ -9,12 +9,12 @@ import {setCurrentLang, trans} from "../Svelte/stores/i18n"
 const getActiveCountry = cache => cache?.config?.users?.country ?? null;
 const getPlayers = cache => cache?.users ?? null;
 const getPlayerGroups = cache => cache?.groups ?? null;
-const getMainPlayerId = cache => cache?.config?.main  ?? null;
+const getMainPlayerId = cache => cache?.config?.users?.main  ?? null;
 
 const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 
-const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
+const isCountryPlayer = (u, country) => country && u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || (country && u.country.toLowerCase() === country.toLowerCase()));
 
 const getFriendsIds = (cache, withMain = false) => {
   const groups = getPlayerGroups(cache) ?? {};
@@ -31,7 +31,7 @@ const getActiveCountryPlayers = (cache, country, withMain = true) => {
   const mainPlayerId = withMain ? getMainPlayerId(cache) : null;
   return Object.values(players).filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isCountryPlayer(p, country))
 }
-const getActiveCountryPlayersIds = (cache, country, withMain = true) => (getActiveCountryPlayers(cache, country, withMain)).filter(p => !!p.id).map(p => p.id);
+const getActiveCountryPlayersIds = (cache, country, withMain = false) => (getActiveCountryPlayers(cache, country, withMain)).filter(p => !!p.id).map(p => p.id);
 const getManuallyAddedPlayersIds = (cache, country, withMain = false) => {
   const friendsIds = getFriendsIds(cache, withMain);
 
@@ -39,7 +39,7 @@ const getManuallyAddedPlayersIds = (cache, country, withMain = false) => {
 
   return friendsIds.filter(playerId => !isCountryPlayer(players?.[playerId] ?? null, country));
 }
-const getAllActivePlayersIds = (cache, country) => arrayUnique((getActiveCountryPlayersIds(cache, country)).concat(getManuallyAddedPlayersIds(cache, country)));
+const getAllActivePlayersIds = (cache, country) => arrayUnique((getActiveCountryPlayersIds(cache, country, country ? true : false)).concat(getManuallyAddedPlayersIds(cache, country, country ? false : true)));
 
 export const convertFromLocalForage = async (cache, transaction) => {
   setCurrentLang(cache?.config?.others?.language ?? 'en');

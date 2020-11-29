@@ -10,10 +10,8 @@ import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
 import {arrayUnique, convertArrayToObjectByKey, isEmpty} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
-import {findDiffInfo, getMaxScore} from "../song";
-import {getSongByHash} from "../network/beatsaver";
 
-export const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || u.country.toLowerCase() === country.toLowerCase());
+export const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || (country && u.country.toLowerCase() === country.toLowerCase()));
 
 export const getActiveCountryPlayers = async (country, withMain = true, refreshCache = false) => {
     const players = await getPlayers(refreshCache) ?? {};

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.1
+- [!] hotfix - database conversion did not work in firefox
+
 0.9.9
 - [*] rewriting of the data layer
 - [+] add best/avg rank in country leaderboards to the player profile, thx Rocker
