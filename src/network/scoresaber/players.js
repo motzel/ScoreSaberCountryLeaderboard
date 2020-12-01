@@ -89,12 +89,13 @@ export const fetchCountryRanking = async (country, withMain = true, count = 50) 
 }
 
 export const updateActivePlayers = async () => {
+    const mainPlayerId = await getMainPlayerId();
     const country = await getActiveCountry();
     const countryPlayers = country ? await fetchCountryRanking(country, tempConfig.COUNTRY_PLAYERS_QTY) : [];
     const countryPlayersIds = countryPlayers.map(player => player.id);
 
     const manuallyAddedPlayers = await Promise.all(
-      (await getManuallyAddedPlayersIds(country, !country))
+      (await getManuallyAddedPlayersIds(country, !countryPlayersIds.includes(mainPlayerId)))
         .filter(playerId => !countryPlayersIds.includes(playerId))
         .map(async playerId => fetchPlayerInfo(playerId))
     );

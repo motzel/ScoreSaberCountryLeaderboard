@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.3
+- [!] player data (e.g. pp chart) were not downloaded if the country mode was selected and the player was not in the top 50, thx Velheor
+
 0.9.9.2
 - [!] hotfix - chart switching 
 
