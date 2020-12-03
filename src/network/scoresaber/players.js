@@ -25,6 +25,7 @@ import {db} from '../../db/db'
 import tempConfig from '../../temp'
 import players from '../../db/repository/players'
 import scores from '../../db/repository/scores'
+import {getRankedsChangesSince} from '../../scoresaber/rankeds'
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
@@ -193,46 +194,48 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
       info => progressCallback ? progressCallback(info) : null
     );
 
-    let scoresToSave = [], leaderboardsIds = [];
+    let scoresToSave = [], leaderboardsIds = [], playerScores = {};
 
-    if(!isEmpty(newScores?.scores ?? {})) {
-        const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+    const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
-        // update rankeds scores if needed
-        if (!isEmpty(playerScores) && playerLastUpdated) {
-            // fetch all player pages that need to be re-fetched
-            // {pageIdx: [leaderboardId, leaderboardId...]}
-            const playerRankedsScoresPagesToUpdate = await getPlayerRankedsScorePagesToUpdate({...playerScores, ...newScores.scores}, playerLastUpdated);
+    // update rankeds scores if needed
+    if (!isEmpty(songsChangedAfterPreviousUpdate)) {
+        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
 
-            let idxProgress = 0;
-            let updatedPlayerScores = {};
-            for (const page in playerRankedsScoresPagesToUpdate) {
-                const progressInfo = {
-                    id: player.id,
-                    name: `${player.name}`,
-                    page: idxProgress + 1,
-                    total: null
-                };
+        // fetch all player pages that need to be re-fetched
+        // {pageIdx: [leaderboardId, leaderboardId...]}
+        const playerRankedsScoresPagesToUpdate = await getPlayerRankedsScorePagesToUpdate({...playerScores, ...newScores.scores}, playerLastUpdated);
 
-                if (progressCallback) progressCallback(progressInfo);
+        let idxProgress = 0;
+        let updatedPlayerScores = {};
+        for (const page in playerRankedsScoresPagesToUpdate) {
+            const progressInfo = {
+                id: player.id,
+                name: `${player.name}`,
+                page: idxProgress + 1,
+                total: null
+            };
 
-                const scores = convertArrayToObjectByKey(
-                  await fetchRecentScores(
-                    player.id,
-                    page,
-                    (time) => progressCallback ? progressCallback(Object.assign({}, progressInfo, {wait: time})) : null,
-                    ...playerRankedsScoresPagesToUpdate[page]
-                  ),
-                  'leaderboardId'
-                );
-                updatedPlayerScores = {...updatedPlayerScores, ...scores};
+            if (progressCallback) progressCallback(progressInfo);
 
-                idxProgress++;
-            }
+            const scores = convertArrayToObjectByKey(
+              await fetchRecentScores(
+                player.id,
+                page,
+                (time) => progressCallback ? progressCallback(Object.assign({}, progressInfo, {wait: time})) : null,
+                ...playerRankedsScoresPagesToUpdate[page]
+              ),
+              'leaderboardId'
+            );
+            updatedPlayerScores = {...updatedPlayerScores, ...scores};
 
-            newScores.scores = {...newScores.scores, ...updatedPlayerScores};
+            idxProgress++;
         }
 
+        newScores.scores = {...newScores.scores, ...updatedPlayerScores};
+    }
+
+    if(!isEmpty(newScores?.scores ?? {})) {
         leaderboardsIds = newScores && newScores.scores ? Object.keys(newScores.scores) : [];
 
         await db.runInTransaction(['scores', 'players', 'key-value'], async tx => {
