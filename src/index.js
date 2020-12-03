@@ -49,6 +49,7 @@ import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
 import nodeSync from './network/multinode-sync'
 import {flushRankedsCache, flushRankedsChangesCache} from './scoresaber/rankeds'
 import {flushSsplCountryRanksCache} from './scoresaber/sspl-cache'
+import {setupDataFixes} from './db/fix-data'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -746,6 +747,8 @@ async function init() {
         });
 
         await initDatabase();
+
+        await setupDataFixes();
 
         // pre-warm config cache
         const config = await getConfig();
