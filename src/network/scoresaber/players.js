@@ -198,10 +198,12 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
 
     const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
+    if (Object.keys(newScores.scores).length) {
+        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+    }
+
     // update rankeds scores if needed
     if (!isEmpty(songsChangedAfterPreviousUpdate)) {
-        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
-
         // fetch all player pages that need to be re-fetched
         // {pageIdx: [leaderboardId, leaderboardId...]}
         const playerRankedsScoresPagesToUpdate = await getPlayerRankedsScorePagesToUpdate({...playerScores, ...newScores.scores}, playerLastUpdated);

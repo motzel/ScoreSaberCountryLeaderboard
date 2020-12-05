@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.6
+- [!] fix song history bug, thx Drakonno
+
 0.9.9.5
 - [+] The acc chart and acc badges now using real acc instead of incorrect one displayed on the SS page, thx Rocker
 
