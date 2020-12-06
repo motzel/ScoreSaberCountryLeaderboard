@@ -171,9 +171,7 @@ export const updateActivePlayers = async () => {
     flushPlayersCache();
     flushPlayersHistoryCache();
 
-    if (country) {
-        await updateSongCountryRanks();
-    }
+    await updateSongCountryRanks();
 
     await keyValueRepository().set(new Date(), 'activePlayersLastUpdate');
 
@@ -284,10 +282,10 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
         });
     }
 
-    if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
-
     flushPlayersCache();
     flushScoresCache();
+
+    if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
 
     if (emitEvents) {
         eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), playerId, scores: scoresToSave});

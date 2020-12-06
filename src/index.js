@@ -191,7 +191,7 @@ async function setupLeaderboard() {
             if (scores) {
                 let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
                 if (leaderboardId) {
-                    const leaderboardScores = await getSongScores(leaderboardId, 1);
+                    const leaderboardScores = await getSongScores(leaderboardId);
                     if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
                 }
 

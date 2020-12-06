@@ -91,6 +91,8 @@ export function findDiffInfo(characteristics, ssDiff) {
 
 export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const country = await getActiveCountry();
+  if (!country) return {};
+
   const countryPlayersIds = await getActiveCountryPlayersIds(country, true, true);
 
   const ssplCountryRanks = await getSsplCountryRanks();
@@ -118,7 +120,6 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
     ;
   });
 
-
   await setSsplCountryRanks(ssplCountryRanks);
 
   flushSsplCountryRanksCache();
@@ -128,7 +129,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   return ssplCountryRanks;
 }
 
-export const getSongScores = async (leaderboardId, count = undefined, refreshCache = false) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, count, refreshCache);
+export const getSongScores = async (leaderboardId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId, refreshCache);
 
 export function getAccFromScore(score, maxSongScore) {
     const scoreMult = score.uScore && score.score ? score.score / score.uScore : 1
@@ -157,7 +158,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country', r
     }
     if (!players || !players.length) return [];
 
-    const songScores = await getSongScores(leaderboardId, undefined, refreshCache);
+    const songScores = await getSongScores(leaderboardId, refreshCache);
     if (!songScores) return [];
 
     const playersIds = players.map(player => player.id);
