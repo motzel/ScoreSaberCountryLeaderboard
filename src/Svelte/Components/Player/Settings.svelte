@@ -330,16 +330,11 @@
         }
     }
 
-    onMount(async () => {
+    const refreshConfig = async () => {
         country = await getActiveCountry();
-
-        dataAvailable = await isDataAvailable();
 
         config = await getConfig();
         mainPlayerId = config && config.users && config.users.main ? config.users.main : null;
-        playerInfo = await getPlayerInfo(profileId);
-
-        await refreshPlayerStatus();
 
         const defaultSongType = strings.songTypes.find(s => s.id === config.songBrowser.defaultType);
         if (defaultSongType) values.songTypes = defaultSongType;
@@ -384,7 +379,17 @@
 
         filterSortTypes();
 
+        await refreshPlayerStatus();
+
         await refreshTwitchProfile()
+    }
+
+    onMount(async () => {
+        dataAvailable = await isDataAvailable();
+
+        await refreshConfig();
+
+        playerInfo = await getPlayerInfo(profileId);
 
         initialized = true;
 
@@ -396,13 +401,11 @@
             }
         })
 
-        // TODO: reload profile page for now, try to do it to be more dynamic
-        const unsubscriberConfigChanged = eventBus.on('config-changed', () => window.location.reload());
+        const unsubscriberConfigChanged = eventBus.on('config-changed', () => refreshConfig());
 
         const twitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
             if(playerId === profileId) await refreshTwitchProfile();
         });
-
 
         return () => {
             unsubscriberScoresUpdated();
