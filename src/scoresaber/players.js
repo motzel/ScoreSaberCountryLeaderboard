@@ -13,12 +13,12 @@ import {getMainPlayerId} from "../plugin-config";
 
 export const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || (country && u.country.toLowerCase() === country.toLowerCase()));
 
-export const getActiveCountryPlayers = async (country, withMain = true, refreshCache = false) => {
-    const players = await getPlayers(refreshCache) ?? {};
+export const getActiveCountryPlayers = async (country, withMain = true) => {
+    const players = await getPlayers() ?? {};
     const mainPlayerId = withMain ? await getMainPlayerId() : null;
     return players.filter(p => (p && p.id && mainPlayerId && p.id === mainPlayerId) || isCountryPlayer(p, country))
 }
-export const getActiveCountryPlayersIds = async (country, withMain = true, refreshCache = false) => (await getActiveCountryPlayers(country, withMain, refreshCache)).filter(p => !!p.id).map(p => p.id);
+export const getActiveCountryPlayersIds = async (country, withMain = true) => (await getActiveCountryPlayers(country, withMain)).filter(p => !!p.id).map(p => p.id);
 
 export const filterPlayersByIdsList = (playerIds, players) => players.filter(player => playerIds.includes(player.id));
 
@@ -37,8 +37,8 @@ export const isDataAvailable = async () => !isEmpty(await getPlayers());
 export const flushPlayersCache = () => playersRepository().flushCache();
 export const flushPlayersHistoryCache = () => playersHistoryRepository().flushCache();
 export const updatePlayer = async playerInfo => playersRepository().set(playerInfo);
-export const getPlayers = async (refreshCache = false) => playersRepository().getAll(refreshCache);
-export const getPlayerInfo = async (playerId, refreshCache = false) => await playersRepository().get(playerId, refreshCache) ?? null;
+export const getPlayers = async () => playersRepository().getAll();
+export const getPlayerInfo = async (playerId) => await playersRepository().get(playerId) ?? null;
 export const getPlayerHistory = async playerId => await playersHistoryRepository().getAllFromIndex('players-history-playerId', playerId) ?? null;
 export const getAllPlayersHistory = async (sinceDate, toDate) => await playersHistoryRepository().getAllFromIndex('players-history-timestamp', IDBKeyRange.bound(sinceDate, toDate)) ?? [];
 export const getPlayerInfoFromPlayers = (players, playerId) => players?.[playerId] ? players[playerId] : null;
@@ -58,8 +58,8 @@ export const removeAllPlayerData = async playerId => {
     );
 };
 
-export const getPlayerGroups = async (groupName, refreshCache = false) => {
-    const groups = await groupsRepository().getAllFromIndex('groups-name', groupName, refreshCache);
+export const getPlayerGroups = async (groupName) => {
+    const groups = await groupsRepository().getAllFromIndex('groups-name', groupName);
 
     return groups && groups.length
       ? Object.values(
@@ -94,8 +94,8 @@ export const removePlayerFromGroup = async (playerId, removeData = true, groupNa
     await removeAllPlayerData(playerId);
 }
 
-export const getFriendsIds = async (withMain = false, refreshCache = false) => {
-    const groups = await getPlayerGroups(undefined, refreshCache) ?? [];
+export const getFriendsIds = async (withMain = false) => {
+    const groups = await getPlayerGroups(undefined) ?? [];
 
     return arrayUnique(
       groups
@@ -105,21 +105,21 @@ export const getFriendsIds = async (withMain = false, refreshCache = false) => {
     );
 }
 
-export const getFriends = async (country, withMain = false, refreshCache = false) => filterPlayersByIdsList(await getFriendsIds(withMain, refreshCache), await getPlayers(refreshCache));
+export const getFriends = async (country, withMain = false) => filterPlayersByIdsList(await getFriendsIds(withMain), await getPlayers());
 
-export const getManuallyAddedPlayersIds = async (country, withMain = false, refreshCache = false) => {
-    const friendsIds = await getFriendsIds(withMain, refreshCache);
+export const getManuallyAddedPlayersIds = async (country, withMain = false) => {
+    const friendsIds = await getFriendsIds(withMain);
 
-    const players = convertArrayToObjectByKey(await getPlayers(refreshCache), 'id');
+    const players = convertArrayToObjectByKey(await getPlayers(), 'id');
 
     return friendsIds.filter(playerId => !isCountryPlayer(players?.[playerId] ?? null, country));
 }
 
 export const getManuallyAddedPlayers = async (country, withMain = false) => filterPlayersByIdsList(await getManuallyAddedPlayersIds(country, withMain), await getPlayers());
 
-export const getAllActivePlayersIds = async (country, refreshCache = false) => arrayUnique((await getActiveCountryPlayersIds(country, true, refreshCache)).concat(await getManuallyAddedPlayersIds(country, false, refreshCache)));
+export const getAllActivePlayersIds = async (country) => arrayUnique((await getActiveCountryPlayersIds(country, true)).concat(await getManuallyAddedPlayersIds(country, false)));
 
-export const getAllActivePlayers = async (country, refreshCache = false) => filterPlayersByIdsList(await getAllActivePlayersIds(country, refreshCache), await getPlayers(refreshCache));
+export const getAllActivePlayers = async (country) => filterPlayersByIdsList(await getAllActivePlayersIds(country), await getPlayers());
 
 export const getPlayerProfileUrl = (playerId, recentPlaysPage = false) => substituteVars(USER_PROFILE_URL + (recentPlaysPage ? '?sort=2' : ''), {userId: playerId})
 
@@ -134,12 +134,12 @@ export const getPlayerScores = player => player?.scores ? player.scores : null;
 
 export const flushScoresCache = () => scoresRepository().flushCache();
 export const getAllScores = async () => scoresRepository().getAll();
-export const getScoresByPlayerId = async (playerId, refreshCache = false) => scoresRepository().getAllFromIndex('scores-playerId', playerId, refreshCache);
-export const getAllScoresSince = async (sinceDate, refreshCache = false) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined, refreshCache);
-export const getAllScoresWithPpOver = async (minPp, refreshCache = false) => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined, refreshCache);
+export const getScoresByPlayerId = async (playerId) => scoresRepository().getAllFromIndex('scores-playerId', playerId);
+export const getAllScoresSince = async (sinceDate) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
+export const getAllScoresWithPpOver = async (minPp) => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined);
 
-export const getRankedScoresByPlayerId = async (playerId, refreshCache = false) => {
-    const scores = await getScoresByPlayerId(playerId, refreshCache);
+export const getRankedScoresByPlayerId = async (playerId) => {
+    const scores = await getScoresByPlayerId(playerId);
     const rankedMaps = await getRankedSongs();
     return scores
         ? Object.values(scores)

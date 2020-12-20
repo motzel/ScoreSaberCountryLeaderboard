@@ -3,7 +3,7 @@ import {getPlayers} from './scoresaber/players'
 
 const THEME_KEY = 'sspl_theme';
 
-export const lastUpdated = async (refreshCache = true) => keyValueRepository().get('lastUpdated', refreshCache);
+export const lastUpdated = async () => keyValueRepository().get('lastUpdated');
 
 export const isAnyData = async () => (await getPlayers() ?? []).length;
 

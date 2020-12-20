@@ -4,7 +4,7 @@ import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} fr
 import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import {
-    flushPlayersCache, flushPlayersHistoryCache, flushScoresCache,
+    flushPlayersCache, flushScoresCache,
     getManuallyAddedPlayersIds,
     getPlayerInfo,
     getPlayerRankedsScorePagesToUpdate,
@@ -26,10 +26,12 @@ import tempConfig from '../../temp'
 import players from '../../db/repository/players'
 import scores from '../../db/repository/scores'
 import {getRankedsChangesSince} from '../../scoresaber/rankeds'
+import playersRepository from '../../db/repository/players';
+import playersHistoryRepository from '../../db/repository/players-history';
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
-export const getActivePlayersLastUpdate = async (refreshCache = false) => keyValueRepository().get('activePlayersLastUpdate', refreshCache)
+export const getActivePlayersLastUpdate = async () => keyValueRepository().get('activePlayersLastUpdate')
 // TODO: get it from DB
 export const getAdditionalPlayers = (country) => ADDITIONAL_COUNTRY_PLAYERS_IDS[country] ?? [];
 export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_API, substituteVars(PLAYER_INFO_URL, {userId: playerId})).then(info => {
@@ -106,8 +108,12 @@ export const updateActivePlayers = async () => {
         ...convertArrayToObjectByKey(manuallyAddedPlayers, 'id')
     }
 
+    const playersCacheToUpdate = [];
+    const playersHistoryCacheToUpdate = [];
+
     await db.runInTransaction(['players', 'players-history'], async tx => {
-        let cursor = await tx.objectStore('players').openCursor();
+        const playersStore = tx.objectStore('players')
+        let cursor = await playersStore.openCursor();
         while (cursor) {
             const dbPlayer = cursor.value;
             const {lastUpdated, recentPlay} = dbPlayer;
@@ -129,47 +135,61 @@ export const updateActivePlayers = async () => {
 
             await cursor.update(player);
 
+            playersCacheToUpdate.push(player);
+
             cursor = await cursor.continue();
         }
 
-        Object.values(allPlayers).filter(p => !p.processed).forEach(player => {
+        const playersNotProcessedYet = Object.values(allPlayers).filter(p => !p.processed);
+        for (let player of playersNotProcessedYet) {
             const {lastUpdated, recentPlay, ssplCountryRank} = player;
 
-            tx.objectStore('players').put({
+            const playerData = {
                 ...player,
                 lastUpdated: lastUpdated ?? null,
                 recentPlay: recentPlay ?? null,
                 ssplCountryRank: ssplCountryRank ?? null,
                 profileLastUpdated: new Date(),
-            })
-        });
+            }
+
+            await playersStore.put(playerData)
+
+            playersCacheToUpdate.push(playerData);
+        }
 
         // remove all today's history
         const timestamp = new Date(toSSTimestamp(new Date()));
-        cursor = await tx.objectStore('players-history').index('players-history-timestamp').openCursor(timestamp);
+        const playersHistoryStore = tx.objectStore('players-history')
+        cursor = await playersHistoryStore.index('players-history-timestamp').openCursor(timestamp);
         while (cursor) {
             await cursor.delete();
+
+            await playersHistoryRepository().forgetObject(cursor.value);
 
             cursor = await cursor.continue();
         }
 
         // update today's history
-        Object.values(allPlayers).forEach(player => {
+        for(let player of Object.values(allPlayers)) {
             const {countryRank, id, pp, ssplCountryRank} = player;
 
-            tx.objectStore('players-history').put({
+            const playerHistory = {
                 countryRank,
                 playerId: id,
                 pp,
                 ssplCountryRank,
-                timestamp
-            });
-        });
+                timestamp,
+            }
+
+            playerHistory[playersHistoryRepository().getKeyName()] = await playersHistoryStore.put(playerHistory);
+
+            playersHistoryCacheToUpdate.push(playerHistory);
+        }
     });
 
-    // clear all players cache
-    flushPlayersCache();
-    flushPlayersHistoryCache();
+    // update cache
+    playersRepository().addToCache(playersCacheToUpdate);
+    playersHistoryRepository().addToCache(playersHistoryCacheToUpdate);
 
     await updateSongCountryRanks();
 

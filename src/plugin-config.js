@@ -3,8 +3,8 @@ import {ADDITIONAL_COUNTRY_PLAYERS_IDS} from './network/scoresaber/players'
 
 const STORE_CONFIG_KEY = 'config';
 
-export const getConfig = async (key = null, refreshCache = false) => {
-  let config = await keyValueRepository().get(STORE_CONFIG_KEY, refreshCache);
+export const getConfig = async (key = null) => {
+  let config = await keyValueRepository().get(STORE_CONFIG_KEY);
 
   // return default configuration
   if (!config) config = {
@@ -39,7 +39,7 @@ export const getMainPlayerId = async () => {
   return usersConfig && usersConfig.main ? usersConfig.main : null;
 }
 
-export const isBackgroundDownloadEnabled = async (refreshCache = false) => {
-  const config = await getConfig('others', refreshCache);
+export const isBackgroundDownloadEnabled = async () => {
+  const config = await getConfig('others');
   return !!config.bgDownload;
 }

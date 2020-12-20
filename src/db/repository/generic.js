@@ -11,7 +11,8 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
   const resolvePromiseOrWaitForPending = makePendingPromisePool();
 
-  const hasOutOfLineKey = () => inlineKeyName === undefined;
+  const getKeyName = () => inlineKeyName;
+  const hasOutOfLineKey = () => getKeyName() === undefined;
   const getObjKey = (obj, outOfLineKey = undefined) => hasOutOfLineKey() ? outOfLineKey : obj[inlineKeyName] ?? outOfLineKey;
 
   let repositoryCache = cache(storeName, getObjKey);
@@ -34,6 +35,17 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
   const flushCache = () => {
     repositoryCache.flush();
     flushDataAvailabilityStatus();
+  }
+
+  const forgetCacheKey = key => repositoryCache.forget(key);
+
+  const forgetObject = async obj => {
+    if (hasOutOfLineKey()) throw 'forgetObject function is not available in repositories with out-of-line keys';
+
+    const key = getObjKey(obj);
+    if (!key) throw `Object does not contain ${inlineKeyName} field which is repository key`;
+
+    forgetCacheKey(key);
   }
 
   const getStoreName = () => storeName;
@@ -125,7 +137,7 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
     if (!isAllDataAvailable() && !isIndexDataAvailable(cacheKey)) {
       const data = await getFromDb();
 
-      repositoryCache.mergeAll(convertArrayToObjectByKey(data, inlineKeyName));
+      repositoryCache.merge(convertArrayToObjectByKey(data, inlineKeyName));
 
       setDataAvailabilityStatus(cacheKey);
 
@@ -167,5 +179,13 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
   const openCursor = async (mode = 'readonly') => db.transaction(storeName, mode).store.openCursor();
 
-  return {getStoreName, hasOutOfLineKey, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, flushCache, getCachedKeys};
+  const addToCache = data => {
+    if (hasOutOfLineKey()) throw `getAllFromIndex() is not available for stores with out-of-line key`;
+
+    repositoryCache.merge(convertArrayToObjectByKey(data, inlineKeyName));
+  }
+
+  const getCache = () => repositoryCache;
+
+  return {getStoreName, hasOutOfLineKey, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, getKeyName, forgetCacheKey, forgetObject, flushCache, getCachedKeys, addToCache, getCache};
 };

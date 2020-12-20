@@ -46,9 +46,6 @@ import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsInt} from "./scoresaber/other";
 import {formatNumber, round} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
-import nodeSync from './network/multinode-sync'
-import {flushRankedsCache, flushRankedsChangesCache} from './scoresaber/rankeds'
-import {flushSsplCountryRanksCache} from './scoresaber/sspl-cache'
 import {setupDataFixes} from './db/fix-data'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
@@ -655,37 +652,6 @@ async function setupGlobalEventsListeners() {
 
     eventBus.on('player-twitch-linked', async ({playerId}) => {
         await twitch.updateVideosForPlayerId(playerId);
-    });
-
-    eventBus.on('active-players-updated', ({nodeId}) => {
-        if(nodeId === nodeSync.getId()) return;
-
-        // flush cache if downloaded on another node
-        flushPlayersCache();
-        flushPlayersHistoryCache();
-    });
-
-    eventBus.on('player-scores-updated', ({nodeId}) => {
-        if(nodeId === nodeSync.getId()) return;
-
-        // flush cache if downloaded on another node
-        flushPlayersCache();
-        flushScoresCache();
-    });
-
-    eventBus.on('rankeds-changed', ({nodeId}) => {
-        if(nodeId === nodeSync.getId()) return;
-
-        // flush cache if downloaded on another node
-        flushRankedsCache();
-        flushRankedsChangesCache();
-    });
-
-    eventBus.on('sspl-country-ranks-cache-updated', ({nodeId}) => {
-        if(nodeId === nodeSync.getId()) return;
-
-        // flush cache if downloaded on another node
-        flushSsplCountryRanksCache();
     });
 }
 

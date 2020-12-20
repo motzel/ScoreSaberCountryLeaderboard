@@ -7,7 +7,7 @@ export default (name, getObjKey) => {
   // update data cached on another node
   eventBus.on('cache-key-set-' + name, ({nodeId, key, value}) => nodeId !== nodeSync.getId() ? set(key, value, false) : null);
   eventBus.on('cache-all-set' + name, ({nodeId, data}) => nodeId !== nodeSync.getId() ? setAll(data, false) : null);
-  eventBus.on('cache-merge-' + name, ({nodeId, data}) => nodeId !== nodeSync.getId() ? mergeAll(data, false) : null);
+  eventBus.on('cache-merge-' + name, ({nodeId, data}) => nodeId !== nodeSync.getId() ? merge(data, false) : null);
   eventBus.on('cache-key-forget-' + name, ({nodeId, key}) => nodeId !== nodeSync.getId() ? forget(key, false) : null);
   eventBus.on('cache-flush-' + name, ({nodeId}) => nodeId !== nodeSync.getId() ? flush(false) : null);
 
@@ -20,14 +20,18 @@ export default (name, getObjKey) => {
   };
 
   const setAll = (data, emitEvent = true) => {
+    cache = data;
+
     if (emitEvent) eventBus.publish('cache-all-set-' + name, {nodeId: nodeSync.getId(), data});
 
-    return cache = data;
+    return cache;
   }
-  const mergeAll = (data, emitEvent = true) => {
+  const merge = (data, emitEvent = true) => {
+    cache = {...cache, ...data}
+
     if (emitEvent) eventBus.publish('cache-merge-' + name, {nodeId: nodeSync.getId(), data});
 
-    return cache = {...cache, ...data};
+    return cache;
   }
 
   const get = async (key, fetchFunc) => {
@@ -58,8 +62,11 @@ export default (name, getObjKey) => {
   const getKeys = () => Object.keys(cache);
 
   const forget = (key, emitEvent = true) => {
+    delete cache[key];
+
     if (emitEvent) eventBus.publish('cache-key-forget-' + name, {nodeId: nodeSync.getId(), key});
-    return delete cache[key];
+
+    return cache;
   }
 
   const forgetByFilter = (filterFunc, emitEvent = true) => {
@@ -76,9 +83,11 @@ export default (name, getObjKey) => {
   }
 
   const flush = (emitEvent = true) => {
+    cache = {};
+
     if (emitEvent) eventBus.publish('cache-flush-' + name, {nodeId: nodeSync.getId()});
 
-    return cache = {};
+    return cache;
   }
 
   return {
@@ -88,7 +97,7 @@ export default (name, getObjKey) => {
     getAll,
     set,
     setAll,
-    mergeAll,
+    merge,
     getKeys,
     forget,
     forgetByFilter,

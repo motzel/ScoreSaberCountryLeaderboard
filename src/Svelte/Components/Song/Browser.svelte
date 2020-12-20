@@ -341,23 +341,23 @@
     }
 
     const getCurrentlySelectedPlayersIds = () => [playerId].concat(snipedIds);
-    const getPlayersScores = async (refreshCache = false) => {
+    const getPlayersScores = async () => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId, refreshCache)));
+        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId)));
 
         return playersIds.reduce((cum, playerId, idx) => {
             cum[playerId] = convertArrayToObjectByKey(scores[idx], 'leaderboardId');
             return cum;
         }, {});
     }
-    const getPlayersInfosForCurrentlySelected = async (refreshCache = false, withScores = true) => {
+    const getPlayersInfosForCurrentlySelected = async (withScores = true) => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId, refreshCache)));
+        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId)));
 
         if (withScores) {
-            const playersScores = await getPlayersScores(refreshCache);
+            const playersScores = await getPlayersScores();
 
             return playersInfos.map(playerInfo => ({...playerInfo, scores: playersScores[playerInfo.id] ? playersScores[playerInfo.id] : {}}));
         } else {
@@ -398,7 +398,7 @@
             });
 
         const playersIds = getCurrentlySelectedPlayersIds();
-        const playersInfos = await getPlayersInfosForCurrentlySelected(false, false);
+        const playersInfos = await getPlayersInfosForCurrentlySelected(false);
         if (playersInfos.length) {
             playersInfos.forEach((playerInfo, idx) => {
                 const name = playerInfo ? playerInfo.name : null;
@@ -976,7 +976,7 @@
         try {
             const sortedRankeds = {};
 
-            const playersInfos = await getPlayersInfosForCurrentlySelected(false, true);
+            const playersInfos = await getPlayersInfosForCurrentlySelected(true);
 
             const ssplCountryRanksCache = await getSsplCountryRanks();
 
