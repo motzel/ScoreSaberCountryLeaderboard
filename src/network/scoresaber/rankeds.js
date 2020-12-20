@@ -99,9 +99,6 @@ export async function updateRankeds() {
       await setRankedSongsLastUpdated(new Date());
     });
 
-    flushRankedsCache();
-    flushRankedsChangesCache();
-
     if (newRankeds.length) {
       const newHashes = newRankeds.map(r => fetchedRankedSongs?.[r?.leaderboardId]?.hash?.toLowerCase()).filter(hash => hash);
       const rankedsNotesCache = await getRankedsNotesCache();
