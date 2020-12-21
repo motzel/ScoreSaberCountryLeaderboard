@@ -28,6 +28,7 @@ import scores from '../../db/repository/scores'
 import {getRankedsChangesSince} from '../../scoresaber/rankeds'
 import playersRepository from '../../db/repository/players';
 import playersHistoryRepository from '../../db/repository/players-history';
+import scoresRepository from '../../db/repository/scores';
 
 export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
 
@@ -217,7 +218,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
     const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
     if (Object.keys(newScores.scores).length) {
-        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');
     }
 
     // update rankeds scores if needed
@@ -255,6 +256,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
         newScores.scores = {...newScores.scores, ...updatedPlayerScores};
     }
 
+    let playersCacheToUpdate = [];
     if(!isEmpty(newScores?.scores ?? {})) {
         leaderboardsIds = newScores && newScores.scores ? Object.keys(newScores.scores) : [];
 
@@ -264,6 +266,8 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             player.lastUpdated = new Date();
             player.recentPlay = newScores.recentPlay;
             await playersStore.put(player);
+
+            playersCacheToUpdate.push(player);
 
             scoresToSave = leaderboardsIds.map(leaderboardId => {
                 const newScore = newScores.scores[leaderboardId];
@@ -286,7 +290,6 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             const scoresStore = tx.objectStore('scores');
             await Promise.all(scoresToSave.map(score => scoresStore.put(score)));
 
-
             const keyValueStore = tx.objectStore('key-value');
             await keyValueStore.put(new Date(), 'lastUpdated');
         });
@@ -297,13 +300,17 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             player.lastUpdated = new Date();
             await playersStore.put(player);
 
+            playersCacheToUpdate.push(player);
+
             const keyValueStore = tx.objectStore('key-value');
             keyValueStore.put(new Date(), 'lastUpdated');
         });
     }
 
-    flushPlayersCache();
-    flushScoresCache();
+    // update cache
+    playersRepository().addToCache(playersCacheToUpdate);
+    scoresRepository().addToCache(scoresToSave);
+    keyValueRepository().setCache(new Date(), 'lastUpdated');
 
     if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
 
@@ -327,7 +334,7 @@ const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
 export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true) => {
     let playerScores;
     if (someFieldsUpdateOnly) {
-        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');
 
         if (!playerScores) {
             emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
@@ -400,7 +407,7 @@ export const refreshPlayerScoreRank = async (playerId, leaderboardIds, lastScore
         const playerInfo = await getPlayerInfo(playerId, true);
         if (!playerInfo) throw 'Player not found';
 
-        const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId, true) ?? [], 'leaderboardId');
+        const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');
         if (!playerScores) throw 'Player scores not found';
 
         const cachedRecentPlay = dateFromString(playerInfo.recentPlay);

@@ -93,7 +93,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const country = await getActiveCountry();
   if (!country) return {};
 
-  const countryPlayersIds = await getActiveCountryPlayersIds(country, true, true);
+  const countryPlayersIds = await getActiveCountryPlayersIds(country, true);
 
   const ssplCountryRanks = await getSsplCountryRanks();
   const shouldProcessAllLeaderboards = isEmpty(ssplCountryRanks) || !onlyLeaderboardsIds;

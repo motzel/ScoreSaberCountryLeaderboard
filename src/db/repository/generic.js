@@ -179,13 +179,23 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
   const openCursor = async (mode = 'readonly') => db.transaction(storeName, mode).store.openCursor();
 
+  const setCache = (value, key) => {
+    if (hasOutOfLineKey()) {
+      if (!key) throw `setCache() needs a key for stores (${storeName}) with out-of-line keys`;
+    } else {
+      key = getObjKey(value);
+    }
+
+
+    repositoryCache.set(value, key);
+  }
   const addToCache = data => {
-    if (hasOutOfLineKey()) throw `getAllFromIndex() is not available for stores with out-of-line key`;
+    if (hasOutOfLineKey()) throw `addToCache() is not available for stores (${storeName}) with out-of-line key`;
 
     repositoryCache.merge(convertArrayToObjectByKey(data, inlineKeyName));
   }
 
   const getCache = () => repositoryCache;
 
-  return {getStoreName, hasOutOfLineKey, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, getKeyName, forgetCacheKey, forgetObject, flushCache, getCachedKeys, addToCache, getCache};
+  return {getStoreName, hasOutOfLineKey, getAllKeys, get, getFromIndex, getAll, getAllFromIndex, set, delete: del, deleteObject, openCursor, getKeyName, forgetCacheKey, forgetObject, flushCache, getCachedKeys, setCache, addToCache, getCache};
 };
