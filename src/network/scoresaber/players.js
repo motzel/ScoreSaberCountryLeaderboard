@@ -257,7 +257,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
 
     let playersCacheToUpdate = [];
     if(!isEmpty(newScores?.scores ?? {})) {
-        leaderboardsIds = newScores && newScores.scores ? Object.keys(newScores.scores) : [];
+        leaderboardsIds = newScores && newScores.scores ? Object.values(newScores.scores).map(score => score.leaderboardId) : [];
 
         await db.runInTransaction(['scores', 'players', 'key-value'], async tx => {
             const playersStore = tx.objectStore('players')
