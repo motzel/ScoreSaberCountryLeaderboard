@@ -371,7 +371,7 @@
         const playerTwitchUpdated = playerTwitchProfile && playerTwitchProfile.lastUpdated ? timestampFromString
         (playerTwitchProfile.lastUpdated) : '';
 
-        const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '') + ':' + playerTwitchUpdated;
+        const newRefreshTag = playerInfos.map(playerInfo => playerInfo.id + ':' + (playerInfo.recentPlay ? timestampFromString(playerInfo.recentPlay) : 'null')).join(':') + ':' + playerTwitchUpdated;
 
         if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
     }
