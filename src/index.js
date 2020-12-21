@@ -36,7 +36,6 @@ import initDatabase from './db/db';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    flushPlayersCache, flushPlayersHistoryCache, flushScoresCache,
     getPlayerInfo,
     getPlayerProfileUrl,
     getScoresByPlayerId,

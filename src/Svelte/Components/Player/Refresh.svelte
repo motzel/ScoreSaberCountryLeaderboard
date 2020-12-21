@@ -17,7 +17,7 @@
     import {dateFromString} from "../../../utils/date";
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import {flushPlayersCache, getPlayerLastUpdated} from "../../../scoresaber/players";
+    import {getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
     import nodeSync from '../../../network/multinode-sync';
 

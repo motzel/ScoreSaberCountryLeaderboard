@@ -4,7 +4,6 @@ import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} fr
 import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
 import queue from "../queue";
 import {
-    flushPlayersCache, flushScoresCache,
     getManuallyAddedPlayersIds,
     getPlayerInfo,
     getPlayerRankedsScorePagesToUpdate,
@@ -367,8 +366,6 @@ export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdat
       .filter(s => s?.timeset); // filter out scores without timeset field set
 
     await Promise.all(updatedScores.map(s => updateSongScore(s)));
-
-    flushScoresCache();
 
     return true;
 }

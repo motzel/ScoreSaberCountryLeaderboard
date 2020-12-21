@@ -6,7 +6,7 @@ import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../multinode-sync";
 import {
-  flushRankedsCache, flushRankedsChangesCache, getRankedsNotesCache,
+  getRankedsNotesCache,
   getRankedSongs, setRankedsNotesCache,
   setRankedSongsLastUpdated,
   storeRankeds,

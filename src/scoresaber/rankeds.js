@@ -7,8 +7,6 @@ import songsRepository from '../db/repository/songs'
 
 const RANKEDS_NOTES_CACHE_KEY = 'rankedsNotes';
 
-export const flushRankedsCache = () => rankedsRepository().flushCache();
-export const flushRankedsChangesCache = () => rankedsChangesRepository().flushCache();
 export const storeRanked = async ranked => rankedsRepository().set(ranked);
 export const storeRankeds = async rankeds => Promise.all(rankeds.map(async ranked => storeRanked(ranked)));
 export const getRankedSongs = async () => convertArrayToObjectByKey(await rankedsRepository().getAll() ?? {}, 'leaderboardId');

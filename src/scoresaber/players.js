@@ -34,8 +34,6 @@ export const getCountryRanking = async (country) => {
 
 export const isDataAvailable = async () => !isEmpty(await getPlayers());
 
-export const flushPlayersCache = () => playersRepository().flushCache();
-export const flushPlayersHistoryCache = () => playersHistoryRepository().flushCache();
 export const updatePlayer = async playerInfo => playersRepository().set(playerInfo);
 export const getPlayers = async () => playersRepository().getAll();
 export const getPlayerInfo = async (playerId) => await playersRepository().get(playerId) ?? null;
@@ -132,7 +130,6 @@ export const getPlayerAvatarUrl = async playerId => {
 
 export const getPlayerScores = player => player?.scores ? player.scores : null;
 
-export const flushScoresCache = () => scoresRepository().flushCache();
 export const getAllScores = async () => scoresRepository().getAll();
 export const getScoresByPlayerId = async (playerId) => scoresRepository().getAllFromIndex('scores-playerId', playerId);
 export const getAllScoresSince = async (sinceDate) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
