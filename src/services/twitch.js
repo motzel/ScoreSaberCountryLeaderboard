@@ -96,7 +96,7 @@ const createTwitchUsersCache = async () => {
     })
 }
 
-const getProfileByPlayerId = async (playerId, refreshCache = false) => await twitchRepository().get(playerId, refreshCache) ?? null;
+const getProfileByPlayerId = async (playerId) => await twitchRepository().get(playerId) ?? null;
 const storeProfile = async twitchProfile => twitchRepository().set(twitchProfile);
 
 const updateVideosForPlayerId = async playerId => {

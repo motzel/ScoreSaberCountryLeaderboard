@@ -341,23 +341,23 @@
     }
 
     const getCurrentlySelectedPlayersIds = () => [playerId].concat(snipedIds);
-    const getPlayersScores = async (refreshCache = false) => {
+    const getPlayersScores = async () => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId, refreshCache)));
+        const scores = await Promise.all(playersIds.map(async playerId => getScoresByPlayerId(playerId)));
 
         return playersIds.reduce((cum, playerId, idx) => {
             cum[playerId] = convertArrayToObjectByKey(scores[idx], 'leaderboardId');
             return cum;
         }, {});
     }
-    const getPlayersInfosForCurrentlySelected = async (refreshCache = false, withScores = true) => {
+    const getPlayersInfosForCurrentlySelected = async (withScores = true) => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId, refreshCache)));
+        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId)));
 
         if (withScores) {
-            const playersScores = await getPlayersScores(refreshCache);
+            const playersScores = await getPlayersScores();
 
             return playersInfos.map(playerInfo => ({...playerInfo, scores: playersScores[playerInfo.id] ? playersScores[playerInfo.id] : {}}));
         } else {
@@ -371,7 +371,7 @@
         const playerTwitchUpdated = playerTwitchProfile && playerTwitchProfile.lastUpdated ? timestampFromString
         (playerTwitchProfile.lastUpdated) : '';
 
-        const newRefreshTag = playerInfos.reduce((tag, playerInfo) => tag + playerInfo.id + ':' + (playerInfo && playerInfos.recentPlay ? timestampFromString(playerInfos.recentPlay) : 'null'), '') + ':' + playerTwitchUpdated;
+        const newRefreshTag = playerInfos.map(playerInfo => playerInfo.id + ':' + (playerInfo.recentPlay ? timestampFromString(playerInfo.recentPlay) : 'null')).join(':') + ':' + playerTwitchUpdated;
 
         if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
     }
@@ -398,7 +398,7 @@
             });
 
         const playersIds = getCurrentlySelectedPlayersIds();
-        const playersInfos = await getPlayersInfosForCurrentlySelected(false, false);
+        const playersInfos = await getPlayersInfosForCurrentlySelected(false);
         if (playersInfos.length) {
             playersInfos.forEach((playerInfo, idx) => {
                 const name = playerInfo ? playerInfo.name : null;
@@ -596,7 +596,7 @@
 
         players = (await getAllActivePlayers(country))
           .reduce((cum, player) => {
-              if (player) {
+              if (player && player.name) {
                   let {id, name, avatar} = player;
 
                   cum.push({id, label: name, avatar});
@@ -976,7 +976,7 @@
         try {
             const sortedRankeds = {};
 
-            const playersInfos = await getPlayersInfosForCurrentlySelected(false, true);
+            const playersInfos = await getPlayersInfosForCurrentlySelected(true);
 
             const ssplCountryRanksCache = await getSsplCountryRanks();
 

@@ -5,6 +5,11 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.7
+- [*] db cache rewrite
+- [!] fix country rank bug, thx Drakonno
+- [!] fix adding player to friends
+
 0.9.9.6
 - [!] fix song history bug, thx Drakonno
 

@@ -41,7 +41,7 @@
         const DIFF_DAYS = 7;
         const timestampDiffAgo = toSSTimestamp(daysAgo(DIFF_DAYS));
         const dbFetchTimestamp = toSSTimestamp(daysAgo(DIFF_DAYS + DB_FETCH_DIFF));
-        const playersHistory = (await getAllPlayersHistory(IDBKeyRange.bound(new Date(dbFetchTimestamp), new Date(timestampDiffAgo))))
+        const playersHistory = (await getAllPlayersHistory(new Date(dbFetchTimestamp), new Date(timestampDiffAgo)))
          .reduce((cum, item) => {
              if (!cum[item.playerId]) cum[item.playerId] = {};
 

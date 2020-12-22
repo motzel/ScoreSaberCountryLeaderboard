@@ -6,7 +6,7 @@ import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../multinode-sync";
 import {
-  flushRankedsCache, flushRankedsChangesCache, getRankedsNotesCache,
+  getRankedsNotesCache,
   getRankedSongs, setRankedsNotesCache,
   setRankedSongsLastUpdated,
   storeRankeds,
@@ -98,9 +98,6 @@ export async function updateRankeds() {
       await storeRankedsChanges(changed);
       await setRankedSongsLastUpdated(new Date());
     });
-
-    flushRankedsCache();
-    flushRankedsChangesCache();
 
     if (newRankeds.length) {
       const newHashes = newRankeds.map(r => fetchedRankedSongs?.[r?.leaderboardId]?.hash?.toLowerCase()).filter(hash => hash);
