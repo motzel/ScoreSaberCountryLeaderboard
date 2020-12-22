@@ -24,7 +24,7 @@ export const filterPlayersByIdsList = (playerIds, players) => players.filter(pla
 
 export const getAllPlayersRanking = async country => {
     const players = await getAllActivePlayers(country);
-    return players ? Object.values(players).sort((a,b) => b.pp - a.pp) : null;
+    return players ? Object.values(players).filter(player => player.name).sort((a,b) => b.pp - a.pp) : null;
 }
 
 export const getCountryRanking = async (country) => {
@@ -77,7 +77,7 @@ export const addPlayerToGroup = async (playerId, groupName = 'Default') => {
       .some(g => g.playerId === playerId);
     if (isPlayerAlreadyAdded) return;
 
-    return groupsRepository().set({groupName, playerId});
+    return groupsRepository().set({name: groupName, playerId});
 }
 
 export const removePlayerFromGroup = async (playerId, removeData = true, groupName = 'Default') => {

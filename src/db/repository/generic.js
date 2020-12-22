@@ -149,9 +149,10 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
   const set = async (value, key) => {
     const tx = db.getCurrentTransaction();
+    const txStores = tx ? [...tx.objectStoreNames] : null;
 
     let putKey;
-    if (tx) {
+    if (tx && txStores.includes(storeName)) {
       putKey = await tx.objectStore(storeName).put(value, inlineKeyName ? undefined : key);
     } else {
       putKey = await db.put(storeName, value, inlineKeyName ? undefined : key)

@@ -58,7 +58,7 @@
                 break;
         }
 
-        playersFilter = players ? players.map(player => player.id).filter(s => s) : [];
+        playersFilter = players ? players.filter(player => player.name).map(player => player.id).filter(s => s) : [];
 
         refreshTag = leaderboardType;
     }

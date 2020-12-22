@@ -159,7 +159,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
     const songScores = await getSongScores(leaderboardId);
     if (!songScores) return [];
 
-    const playersIds = players.map(player => player.id);
+    const playersIds = players.filter(player => player.name).map(player => player.id);
 
     const filteredScores = songScores.filter(s => playersIds.includes(s.playerId));
     if (!filteredScores.length) return [];

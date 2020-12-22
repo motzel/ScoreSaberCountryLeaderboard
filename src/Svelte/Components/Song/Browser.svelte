@@ -596,7 +596,7 @@
 
         players = (await getAllActivePlayers(country))
           .reduce((cum, player) => {
-              if (player) {
+              if (player && player.name) {
                   let {id, name, avatar} = player;
 
                   cum.push({id, label: name, avatar});
