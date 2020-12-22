@@ -387,9 +387,9 @@
     onMount(async () => {
         dataAvailable = await isDataAvailable();
 
-        await refreshConfig();
-
         playerInfo = await getPlayerInfo(profileId);
+
+        await refreshConfig();
 
         initialized = true;
 
@@ -579,9 +579,7 @@
     {#if showTwitchUserBtn && twitchProfile}
         <TwitchProfileLink {profileId} twitchLogin={twitchProfile ? twitchProfile.login : null} noLabel={!!twitchProfile} />
     {/if}
-    </div>
 
-    <div class="buttons flex-center flex-column">
     {#if playerInfo}
         {#if showTwitchLinkBtn}
             <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}

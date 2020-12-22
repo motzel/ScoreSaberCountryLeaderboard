@@ -1,7 +1,6 @@
 <script>
     import {_} from '../../stores/i18n';
     import {hoverable} from '../../Actions/hoverable';
-    import ProfileLine from './ProfileLine.svelte';
     import MiniRanking from "../Country/MiniRanking.svelte";
     import {onMount} from "svelte";
     import {getActiveCountry} from "../../../scoresaber/country";
@@ -59,9 +58,6 @@
 {#if stats && stats.length}
     <ul>
         {#each stats as stat}
-            {#if stat.type}
-                {#if stat.type === 'rank'}
-
                     <li use:hoverable on:hover={onHover} on:unhover={onUnhover}>
                         {#if isPlayerFromCurrentCountry}
                         <div bind:this={countryRankingEl} class="country-ranking">
@@ -107,14 +103,6 @@
                         {/if}
                         </span>
                     </li>
-                {:else if stat.type === 'number'}
-                    <ProfileLine {...stat}/>
-                {:else}
-                    <li><strong>{stat.label}:</strong> {stat.value}</li>
-                {/if}
-            {:else}
-                <li><strong>{stat.label}:</strong> {stat.value}</li>
-            {/if}
         {/each}
     </ul>
 {/if}

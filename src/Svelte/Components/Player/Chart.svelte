@@ -326,7 +326,7 @@
 
             case 'rank':
             default:
-                setupRankChart(canvas, history && history.length ? history.split(',') : null);
+                setupRankChart(canvas, history && history.length ? history : null);
                 break;
         }
     }

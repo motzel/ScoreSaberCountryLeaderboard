@@ -132,6 +132,7 @@ export const getPlayerScores = player => player?.scores ? player.scores : null;
 
 export const getAllScores = async () => scoresRepository().getAll();
 export const getScoresByPlayerId = async (playerId) => scoresRepository().getAllFromIndex('scores-playerId', playerId);
+export const isPlayerDataAvailable = async (playerId) => !!(await scoresRepository().getFromIndex('scores-playerId', playerId));
 export const getAllScoresSince = async (sinceDate) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
 export const getAllScoresWithPpOver = async (minPp) => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined);
 

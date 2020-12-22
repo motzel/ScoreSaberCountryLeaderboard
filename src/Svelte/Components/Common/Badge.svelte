@@ -1,19 +1,29 @@
 <script>
     import Value from "./Value.svelte";
 
-    export let name;
+    export let label;
+    export let fluid = false;
     export let value = 0;
     export let color = "var(--textColor)";
     export let bgColor = "var(--background)"
     export let title;
     export let zero = "0";
     export let digits = 2;
+    export let type = "number";
+    export let suffix = "";
+    export let onlyLabel = false;
 </script>
 
-<span class="badge" style="--color:{color}; --background-color:{bgColor}" title={title}>
-    <span class="name">{name}</span>
-    <span class="spacer"></span>
-    <span class="value"><Value value={value} {zero} {digits} /></span>
+<span class="badge" class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title}>
+    <span class="label"><slot name="label">{label}</slot></span>
+    {#if !onlyLabel}
+        <span class="spacer"></span>
+        <span class="value">
+            <slot name="value">
+                {#if type === 'number'}<Value value={value} {zero} {digits} {suffix} />{:else}{value}{/if}
+            </slot>
+        </span>
+    {/if}
 </span>
 
 <style>
@@ -43,11 +53,23 @@
         border-left: 1px solid var(--color, #eee);
     }
 
-    .badge span.name {
+    .badge span.label {
         font-weight: 500;
+        color: inherit;
+        margin: 0;
     }
 
     .badge span.value {
         font-weight: 300;
+    }
+
+    .badge.fluid span {
+        width: auto;
+    }
+    .badge.fluid span.label {
+        padding: 0 .5em;
+    }
+    .badge.fluid span.value {
+        padding: 0 .5em;
     }
 </style>

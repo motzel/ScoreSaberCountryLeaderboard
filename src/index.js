@@ -1,17 +1,11 @@
 import Profile from './Svelte/Components/Player/Profile.svelte';
-import ProfileStats from './Svelte/Components/Player/ProfileStats.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import SongIcons from './Svelte/Components/Song/Icons.svelte';
 import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
-import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
-import Refresh from './Svelte/Components/Player/Refresh.svelte';
-import SongBrowser from './Svelte/Components/Song/Browser.svelte';
-import Button from './Svelte/Components/Common/Button.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
-import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
 import Chart from './Svelte/Components/Player/Chart.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
@@ -21,11 +15,8 @@ import tempConfig from './temp';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
-    getAccFromScore,
-    getDiffAndTypeFromOnlyDiffName,
     getSongMaxScore, getSongScores,
 } from "./song";
-import {shouldBeHidden} from "./eastereggs";
 
 import twitch from './services/twitch';
 import {getConfig, getMainPlayerId} from "./plugin-config";
@@ -36,14 +27,11 @@ import initDatabase from './db/db';
 import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    getPlayerInfo,
     getPlayerProfileUrl,
-    getScoresByPlayerId,
+    isPlayerDataAvailable,
 } from "./scoresaber/players";
-import {dateFromString} from "./utils/date";
-import {setRefreshedPlayerScores} from "./network/scoresaber/players";
 import {parseSsInt} from "./scoresaber/other";
-import {formatNumber, round} from "./utils/format";
+import {formatNumber} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 
@@ -219,44 +207,11 @@ async function setupLeaderboard() {
     log.info("Setup leaderboard page / Done")
 }
 
-async function setupChart() {
-    log.info("Setup chart");
-
-    const chart = document.getElementById('rankChart');
-    if(!chart) return;
-
-    const box = chart.closest('.box');
-    if(!box) return;
-
-    chart.closest('section').remove();
-
-    const profileConfig = await getConfig('profile');
-    if (profileConfig && !profileConfig.showChart) return;
-
-    const profileId = getProfileId();
-    if(profileId) {
-        new Chart({
-            target: box,
-            props: {
-                profileId,
-                history: getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML),
-            }
-        });
-    }
-
-    log.info("Setup chart / Done")
-}
-
 async function setupProfile() {
     log.info("Setup profile page");
 
     const profileId = getProfileId();
     if (!profileId) return;
-
-    const playerInfo = await getPlayerInfo(profileId);
-
-    const playerScores = await getScoresByPlayerId(profileId);
-    const isPlayerDataAvailable = playerScores && Object.keys(playerScores).length;
 
     // redirect to recent plays if auto-transform is enabled or transforming was requested
     const url = new URL(window.location.href);
@@ -264,7 +219,7 @@ async function setupProfile() {
 
     const songBrowserConfig = await getConfig('songBrowser');
     const urlHasTransformParam = urlParams.has('transform');
-    const autoTransformEnabled = isPlayerDataAvailable && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
+    const autoTransformEnabled = await isPlayerDataAvailable(profileId) && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
     const isRecentPlaysPage = urlParams.get('sort') === '2';
 
     if (autoTransformEnabled && !isRecentPlaysPage) {
@@ -275,16 +230,6 @@ async function setupProfile() {
         urlParams.delete('transform');
         url.search = urlParams.toString();
         history.replaceState(null, '', url.toString());
-    }
-
-    // setup chart when ready
-    if (document.readyState == 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setupChart()
-        })
-    } else {
-        // DOM is ready
-        setupChart();
     }
 
     const profileConfig = await getConfig('profile');
@@ -299,6 +244,7 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
+    /*
     const ssConfig = await getConfig('ssSong');
     const showDiff = !!ssConfig?.showDiff;
     const showWhatIfPp = !!ssConfig?.showWhatIfPp;
@@ -379,7 +325,6 @@ async function setupProfile() {
                     })
                 });
       });
-
     const header = document.querySelector('.content .column h5').closest('.box');
     if (header) {
         const refreshDiv = document.createElement('div');
@@ -390,10 +335,42 @@ async function setupProfile() {
             props: {profileId}
         })
     }
+     */
+
+    /*
+    let profileStats = [];
 
     const mainUl = document.querySelector('.content .column ul');
     const mainColumn = mainUl.closest('.column');
     if (mainColumn) {
+        profileStats =
+          [
+              {key: 'Player ranking', label: trans('profile.stats.ranking'), type: 'rank', value: parseSsInt(document.querySelector('.content .column ul li:first-of-type a:first-of-type').innerText ?? ""), countryRank: parseSsInt(document.querySelector('.content .column ul li:first-of-type a[href^="/global?country="]').innerText ?? "")}
+          ].concat(
+            [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
+              .map(li => {
+                  const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:?\s*<\/strong>\s*(.*)$/);
+                  if (!matches) return null;
+
+                  const mapping = [
+                      {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true},
+                      {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true},
+                      {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true},
+                      {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replays'), number: true},
+                      {key: 'Role', label: trans('profile.stats.role'), number: false},
+                      {key: 'Inactive Account', label: trans('profile.stats.inactiveAccount'), number: false},
+                  ];
+
+                  const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
+                    ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
+                    : matches[2];
+
+                  const item = mapping.find(m => m.key === matches[1]);
+                  return item ? {...item, value} : {label: matches[1], value};
+              })
+              .filter(s => s)
+          );
+
         if (isPlayerDataAvailable) {
             let ssplCountryRank = playerInfo?.ssplCountryRank;
             const country = await getActiveCountry();
@@ -407,9 +384,9 @@ async function setupProfile() {
                     const originalRank = parseSsInt(rankA.innerText);
                     const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
                     if (originalGlobalRank && originalRank && originalCountry) {
-                        const pageStats =
+                        profileStats =
                             [
-                                {label: trans('profile.stats.ranking'), type: 'rank', value: originalGlobalRank, originalCountry: originalCountry, ssplCountryRank, originalRank}
+                                {key: 'Player ranking', label: trans('profile.stats.ranking'), type: 'rank', value: originalGlobalRank, originalCountry: originalCountry, ssplCountryRank, originalRank}
                             ].concat(
                                 [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
                                     .map(li => {
@@ -437,7 +414,7 @@ async function setupProfile() {
                         mainUl.innerHTML = '';
                         new ProfileStats({
                             target: mainColumn,
-                            props: {profileId, stats: pageStats}
+                            props: {profileId, stats: profileStats}
                         })
                     }
                 }
@@ -517,6 +494,61 @@ async function setupProfile() {
             })
         }
     }
+     */
+
+    const container = document.querySelector('.section .container');
+    const profileDiv = document.createElement('div');
+    profileDiv.classList.add('sspl-page');
+    profileDiv.style.marginTop = "-1rem";
+    container.prepend(profileDiv);
+
+    const column = container.querySelector('.content .column:not(.avatar)');
+    const playerA = column.querySelector('.title a');
+    const props = {
+        profileId,
+        name: playerA?.innerText?.trim() ?? null,
+        steamUrl: playerA?.href ?? null,
+        avatarUrl: document.querySelector('.column.avatar img')?.src ?? null,
+        country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, document.querySelector('.content .column .title img').src)?.toLowerCase() ?? null,
+        pageScores: parseSsUserScores(document),
+        ssBadges: [...document.querySelectorAll('.column.avatar center img')].map(img => ({
+            src: img.src,
+            title: img.title,
+        })),
+        chartHistory: (getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML) ?? '').split(',').map(i => parseInt(i, 10)),
+        ssStats: convertArrayToObjectByKey([
+              {key: 'Player ranking', label: trans('profile.stats.ranking'), type: 'rank', value: parseSsInt(document.querySelector('.content .column ul li:first-of-type a:first-of-type').innerText ?? ""), countryRank: parseSsInt(document.querySelector('.content .column ul li:first-of-type a[href^="/global?country="]').innerText ?? ""),},
+          ].concat(
+          [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
+            .map(li => {
+                const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:?\s*<\/strong>\s*(.*)$/);
+                if (!matches) return null;
+
+                const mapping = [
+                    {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true,},
+                    {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true, colorVar: 'selected',},
+                    {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true, colorVar: 'selected',},
+                    {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replaysShort'), title: trans('profile.stats.replays'), number: true, colorVar: 'dimmed',},
+                    {key: 'Role', label: trans('profile.stats.role'), number: false, colorVar: 'dimmed'},
+                    {key: 'Inactive Account', label: trans('profile.stats.inactiveAccount'), number: false, colorVar: 'decrease'},
+                ];
+
+                const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
+                  ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
+                  : matches[2];
+
+                const item = mapping.find(m => m.key === matches[1]);
+                return item ? {...item, value} : {label: matches[1], value};
+            })
+            .filter(s => s)
+        ), 'key')
+    }
+
+    // TODO: remove whole .content when all is ready
+    const originalContent = document.querySelector('.content .box');
+    if (originalContent) originalContent.remove();
+
+    new Profile({target: profileDiv, props})
 
     log.info("Setup profile page / Done")
 }

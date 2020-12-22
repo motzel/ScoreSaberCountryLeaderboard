@@ -1,8 +1,6 @@
 <script>
     import {onMount} from 'svelte';
-    import ProfileLine from './ProfileLine.svelte';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
-    import Button from '../Common/Button.svelte';
     import Badge from "../Common/Badge.svelte";
     import Select from "../Common/Select.svelte";
 
@@ -13,20 +11,35 @@
     import {_, trans} from '../../stores/i18n';
     import {timestampFromString} from "../../../utils/date";
 
-    import {getScoresByPlayerId} from '../../../scoresaber/players'
+    import {getPlayerInfo, getScoresByPlayerId} from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
     import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
     import Value from '../Common/Value.svelte'
+    import Refresh from './Refresh.svelte'
+    import Settings from './Settings.svelte'
+    import Chart from './Chart.svelte'
 
-    export let profile;
+    export let profileId;
+    export let name;
+    export let country;
+    export let steamUrl;
+    export let avatarUrl;
+    export let ssStats = {};
+    export let ssBadges = [];
+    export let chartHistory = [];
+    export let pageScores = [];
+
+    let playerInfo = null;
+    let rank = null;
+    let countryRanks = [];
+    let pp = null;
 
     let playerScores = null;
 
     let mode = 'pp-stars';
     let showCalc = false;
     let showBadges = true;
-
-    let country;
+    let showChart = false;
 
     const ALL = 365 * 100;
     let strings = {
@@ -65,6 +78,7 @@
         {name: 'A', min: null, max: 80, value: 0, color: diffColors.easy},
     ];
 
+    let activeCountry = null;
     let ssplCountryRanksCache = {};
 
     let initialized = false;
@@ -73,39 +87,135 @@
 
     const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
 
-    onMount(async () => {
-        if (profile) {
-            playerScores = await getScoresByPlayerId(profile.id);
+    function getBasicStats(ssStats, stats) {
+        const basicStats = [];
+        const addSsStat = (name, otherProps) => ssStats && ssStats[name]
+         ? basicStats.push({
+             ...{
+                 label: ssStats[name].label,
+                 title: ssStats[name].title ? ssStats[name].title : '',
+                 value: ssStats[name].value,
+                 digits: ssStats[name].precision,
+                 bgColor: `var(--${ssStats[name].colorVar})`,
+                 type: ssStats[name].type,
+                 fluid: true,
+             }, ...otherProps,
+         })
+         : null;
+        const addSsplStat = (varName, label) => stats && stats[varName]
+         ? basicStats.push({
+             label,
+             value: stats[varName],
+             digits: 0,
+             bgColor: `var(--ppColour)`,
+             fluid: true,
+         })
+         : null;
+
+        addSsStat('Play Count');
+        addSsplStat('playCount', $_.profile.stats.rankedPlayCount);
+        if (playerInfo) {
+            addSsStat('Replays Watched by Others');
+            addSsStat('Total Score');
+        } else {
+            addSsStat('Total Score');
+            addSsStat('Replays Watched by Others');
         }
 
-        country = await getActiveCountry();
+        addSsplStat('totalScore', $_.profile.stats.totalRankedScore);
+        if (ssStats['Inactive Account']) addSsStat('Inactive Account', {onlyLabel: true})
+
+        return basicStats;
+    }
+
+    function getAccStats(stats) {
+        let accStats = [];
+        const addSsplStat = (varName, label, title, color) => stats && stats[varName]
+         ? accStats.push({
+             label,
+             value: stats[varName],
+             title: title,
+             digits: 2,
+             bgColor: `var(--${color})`,
+             fluid: true,
+             suffix: '%',
+         })
+         : null;
+        addSsplStat('avgAcc', $_.profile.stats.avgRankedAccuracyShort, $_.profile.stats.avgRankedAccuracy, 'selected');
+        addSsplStat('medianAcc', $_.profile.stats.medianRankedAccuracyShort, $_.profile.stats.medianRankedAccuracy, 'ppColour');
+        addSsplStat('stdDeviation', $_.profile.stats.stdDeviationRankedAccuracyShort, $_.profile.stats.stdDeviationRankedAccuracy, 'decrease');
+
+        return accStats;
+    }
+
+    onMount(async () => {
+        if (ssStats && ssStats['Player ranking']) rank = ssStats['Player ranking'].value;
+        if (ssStats && ssStats['Performance Points']) pp = ssStats['Performance Points'].value;
+
+        if (!playerInfo && profileId) {
+            playerInfo = await getPlayerInfo(profileId);
+        }
 
         const profileConfig = await getConfig('profile');
-        if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
+        showChart = profileConfig && profileConfig.showChart && chartHistory && chartHistory.length;
 
-        if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
+        if (country && ssStats['Player ranking']) countryRanks = countryRanks.concat([{
+            rank: ssStats['Player ranking'].countryRank,
+            country,
+            type: 'country',
+        }]);
 
-        await refreshSsplCountryRanksCache();
+        if (playerInfo) {
+            playerScores = await getScoresByPlayerId(playerInfo.id);
 
-        rankedsNotesCache = await getRankedsNotesCache();
+            if (!name) name = playerInfo.name;
+            if (rank === null || rank === undefined) rank = playerInfo.rank;
+            if (!pp) pp = playerInfo.pp;
 
-        const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+            activeCountry = await getActiveCountry();
 
-        // TODO: reload profile page for now, try to do it to be more dynamic
-        const dataRefreshed = eventBus.on('data-refreshed', () => window.location.reload());
-        const ssplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => refreshSsplCountryRanksCache());
+            const ssplCountryRank = playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
+            if (ssplCountryRank) countryRanks =
+             activeCountry === country
+              ? [{
+                  rank: ssplCountryRank,
+                  subRank: ssStats && ssStats['Player ranking'] ? ssStats['Player ranking'].countryRank : null,
+                  country: activeCountry,
+                  type: 'active-country',
+              }]
+              : countryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
+
+            const profileConfig = await getConfig('profile');
+            if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
+
+            if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
+
+            await refreshSsplCountryRanksCache();
+
+            rankedsNotesCache = await getRankedsNotesCache();
+
+            const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+
+            // TODO: reload profile page for now, try to do it to be more dynamic
+            const dataRefreshed = eventBus.on('data-refreshed', () => window.location.reload());
+            const ssplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => refreshSsplCountryRanksCache());
+
+            initialized = true;
+
+            return () => {
+                dataRefreshed();
+                ssplCountryRanksCacheUpdated();
+                rankedsNotesCacheUnsubscriber();
+            }
+        }
 
         initialized = true;
-
-        return () => {
-            dataRefreshed();
-            ssplCountryRanksCacheUpdated();
-            rankedsNotesCacheUnsubscriber();
-        }
     })
 
     function getPlayerStats(scores, country) {
-        if (!initialized) return;
+        if (!initialized || !scores || !scores.length) return;
+
+        if (country) country = country.toLowerCase();
 
         badgesDef.forEach(badge => {
             badge.value = 0;
@@ -169,67 +279,181 @@
 
     $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - timestampFromString(s.timeset) <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
 
-    $: stats = getPlayerStats(filteredScores, country, ssplCountryRanksCache, rankedsNotesCache, initialized);
+    $: stats = getPlayerStats(filteredScores, activeCountry, ssplCountryRanksCache, rankedsNotesCache, initialized)
+
+    $: basicStats = getBasicStats(ssStats, stats);
+    $: accStats = getAccStats(stats);
 
     $: {
         translateAllStrings($_);
     }
 </script>
 
-{#if profile && stats}
-    <ProfileLine label={$_.profile.stats.rankedPlayCount} value={stats.playCount} precision={0}>
-        <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
-    </ProfileLine>
-    {#if country && (stats.bestRank || stats.avgRank)}
-    <ProfileLine label={$_.profile.stats.countryRank} noValue="">
-        {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />),
-        {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
-    </ProfileLine>
-    {/if}
-    <ProfileLine label={$_.profile.stats.totalRankedScore} value={stats.totalScore} precision={0}/>
-    <ProfileLine label={$_.profile.stats.avgRankedAccuracy} value={stats.avgAcc} suffix="%"/>
-    <ProfileLine label={$_.profile.stats.stdDeviationRankedAccuracy} value={stats.stdDeviation} suffix="%"/>
-    <ProfileLine label={$_.profile.stats.medianRankedAccuracy} value={stats.medianAcc} suffix="%"/>
-{/if}
-
-{#if showCalc && allRankedScores && allRankedScores.length}
-    <li class="calc">
-        <div>
-            <ProfilePpCalc scores={allRankedScores} playerId={profile.id} mode={mode}/>
-        </div>
-        <Button iconFa="fas fa-arrows-alt-v" on:click={() => mode = mode === 'pp-stars' ? 'stars-pp' : 'pp-stars'}/>
-    </li>
-{/if}
-
-{#if showBadges && stats && stats.badges}
-    <div class="badges">
-        {#each stats.badges as badge (badge)}
-            <Badge name={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
-        {/each}
+<div>
+    <div class="player-top">
+        <div class="icons"><Settings {profileId} /></div>
+        <div class="refresh"><Refresh {profileId} /></div>
     </div>
-{/if}
+
+    <div class="box has-shadow">
+        {#if playerInfo && accStats && accStats.length}
+            <div class="period">
+                <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
+            </div>
+        {/if}
+
+        <div class="columns">
+            <div class="column is-narrow avatar enlarge">
+                <img src={avatarUrl} class="avatar" />
+
+                {#if ssBadges && ssBadges.length}
+                    {#each ssBadges as ssBadge}
+                        <div><img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title} /></div>
+                    {/each}
+                {/if}
+            </div>
+
+            <div class="column">
+                <h1 class="title is-4">{#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}</h1>
+                <h2 class="title is-5">
+                    <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}"><Value value={rank} prefix="#" digits={0} zero="#0" /></a>
+                    {#each countryRanks as countryRank}
+                        <a href="/global?country={countryRank.country}">
+                        <img src="/imports/images/flags/{countryRank.country}.png">
+                        <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={countryRank.subRank ? ` (#${countryRank.subRank})` : ''} />
+                    </a>
+                    {/each}
+                </h2>
+                <h3 class="title is-6"><Value value={pp} suffix="pp" /></h3>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="badges">
+                            {#each basicStats as stat} <Badge {...stat}/> {/each}
+                        </div>
+
+                        {#if showCalc && allRankedScores && allRankedScores.length}
+                            <div class="content">
+                                <ProfilePpCalc scores={allRankedScores} playerId={playerInfo.id} />
+                            </div>
+                        {/if}
+                    </div>
+                    <div class="column">
+                        {#if accStats && accStats.length}
+                            <div class="badges right">
+                                {#each accStats as stat} <Badge {...stat}/> {/each}
+                            </div>
+                        {/if}
+
+                        {#if stats}
+                            {#if activeCountry && stats.bestRank}
+                                <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
+                                    <slot slot="value">
+                                        {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
+                                        {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
+                                    </slot>
+                                </Badge>
+                            {/if}
+
+                            {#if showBadges && stats.badges}
+                                <div class="badges right">
+                                    {#each stats.badges as badge (badge)}
+                                        <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
+                                    {/each}
+                                </div>
+                            {/if}
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {#if showChart}
+            <div class="chart">
+                <Chart {profileId} history={chartHistory} />
+            </div>
+        {/if}
+    </div>
+</div>
+
 
 <style>
-    :global(li .multi-select) {
-        position: absolute;
-        top: -.5rem;
-        right: 0;
-    }
-
-    li.calc {
+    .player-top {
         display: flex;
+        justify-content: space-between;
         align-items: flex-start;
-        list-style: none;
-        margin-left: -1.25em;
+        margin: 0;
     }
 
-    li.calc > div {
-        margin-right: 1rem;
-        width: 27rem;
+    .icons {
+        font-size: .7rem;
+        padding-left: .25rem;
     }
 
-    .badges {
-        margin-top: .75em;
-        margin-left: -1.25em;
+    .icons :global(.buttons) {
+        margin-bottom: 0;
+        margin-right: .5rem;
+    }
+
+    .icons :global(button) {
+        margin-bottom: 0;
+    }
+
+    .refresh {
+        justify-content: flex-end;
+        padding-right: .25rem;
+    }
+
+    .box {
+        position: relative;
+    }
+
+    .column.avatar {
+        text-align: center;
+    }
+
+    img.avatar {
+        border-radius: 50%;
+        width: 150px;
+        height: 150px;
+    }
+
+    h1.title {
+        margin-bottom: .5rem;
+    }
+
+    h2.title {
+        margin-bottom: .25rem;
+    }
+
+    h2 a {
+        border-right: 1px solid var(--dimmed);
+        padding: 0 .5rem;
+    }
+
+    h2 a:first-of-type {
+        padding-left: 0;
+    }
+
+    h2 a:last-of-type {
+        border-right: none;
+    }
+
+    h2 a img {
+        margin-bottom: 2px;
+    }
+
+    h3.title {
+        color: var(--ppColour) !important;
+    }
+
+    .period {
+        position: absolute;
+        top: 0;
+        right: .25rem;
+    }
+
+    .chart {
+        min-height: 300px;
     }
 </style>
