@@ -13,7 +13,7 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
   const getKeyName = () => inlineKeyName;
   const hasOutOfLineKey = () => getKeyName() === undefined;
-  const getObjKey = (obj, outOfLineKey = undefined) => hasOutOfLineKey() ? outOfLineKey : obj[inlineKeyName] ?? outOfLineKey;
+  const getObjKey = (obj, outOfLineKey = undefined) => (hasOutOfLineKey() ? outOfLineKey : obj?.[inlineKeyName]) ?? outOfLineKey;
 
   let repositoryCache = cache(storeName, getObjKey);
 
@@ -76,15 +76,14 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
     const fullIndexCacheKey = getCacheKeyFor(query, indexName);
 
+    const filterItems = item => (!query || item?.[field] === query) && item !== undefined;
+
     if (refreshCache) {
       removeDataAvailabilityStatus(cacheKey);
       removeDataAvailabilityStatus(fullIndexCacheKey);
 
       repositoryCache.forgetByFilter(filterItems);
     }
-
-    const filterItems = item => (!query || item?.[field] === query) && item !== undefined;
-
 
     const value = repositoryCache.getByFilter(getFromDb, isAllDataAvailable() || isIndexDataAvailable(cacheKey) || isIndexDataAvailable(fullIndexCacheKey) ? filterItems : null);
 
