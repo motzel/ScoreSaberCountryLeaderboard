@@ -29,6 +29,8 @@
     export let chartHistory = [];
     export let pageScores = [];
 
+    const ONE_DAY = 1000 * 60 * 60 * 24
+
     let playerInfo = null;
     let rank = null;
     let countryRanks = [];
@@ -87,9 +89,9 @@
 
     const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
 
-    function getBasicStats(ssStats, stats) {
+    function getBasicStats(ssStats, stats, allScores) {
         const basicStats = [];
-        const addSsStat = (name, otherProps) => ssStats && ssStats[name]
+        const addSsStat = (name, otherProps) => ssStats && ssStats.hasOwnProperty(name)
          ? basicStats.push({
              ...{
                  label: ssStats[name].label,
@@ -102,7 +104,7 @@
              }, ...otherProps,
          })
          : null;
-        const addSsplStat = (varName, label) => stats && stats[varName]
+        const addSsplStat = (varName, label) => stats && stats.hasOwnProperty(varName)
          ? basicStats.push({
              label,
              value: stats[varName],
@@ -112,25 +114,35 @@
          })
          : null;
 
-        addSsStat('Play Count');
-        addSsplStat('playCount', $_.profile.stats.rankedPlayCount);
-        if (playerInfo) {
+        const addPlayCount = allScores => allScores
+         ? addSsStat('Play Count', {value: allScores.length})
+         : addSsStat('Play Count');
+        const addTotalScore = allScores => allScores
+         ? addSsStat('Total Score', {value: allScores.reduce((sum, s) => sum + s.score, 0)})
+         : addSsStat('Total Score');
+
+        addPlayCount(allScores);
+
+        if (playerScores) {
+            addSsplStat('playCount', $_.profile.stats.rankedPlayCount);
             addSsStat('Replays Watched by Others');
-            addSsStat('Total Score');
+            addTotalScore(allScores);
+            addSsplStat('totalScore', $_.profile.stats.totalRankedScore);
         } else {
-            addSsStat('Total Score');
+            addTotalScore();
             addSsStat('Replays Watched by Others');
         }
 
-        addSsplStat('totalScore', $_.profile.stats.totalRankedScore);
         if (ssStats['Inactive Account']) addSsStat('Inactive Account', {onlyLabel: true})
 
         return basicStats;
     }
 
     function getAccStats(stats) {
+        if (!playerScores) return [];
+
         let accStats = [];
-        const addSsplStat = (varName, label, title, color) => stats && stats[varName]
+        const addSsplStat = (varName, label, title, color) => stats && stats.hasOwnProperty(varName)
          ? accStats.push({
              label,
              value: stats[varName],
@@ -215,7 +227,7 @@
     })
 
     function getPlayerStats(scores, country) {
-        if (!initialized || !scores || !scores.length) return;
+        if (!initialized || !scores) return;
 
         if (country) country = country.toLowerCase();
 
@@ -264,7 +276,9 @@
             return cum;
         }, {...stats})
 
-        stats.medianAcc = (scores.sort((a, b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc;
+        stats.medianAcc = scores.length > 1
+         ? (scores.sort((a, b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc
+         : scores[0].acc;
         stats.avgAcc = stats.totalAcc / scores.length;
         stats.stdDeviation = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(stats.avgAcc - s.acc, 2), 0) / scores.length);
         stats.avgRank = stats.totalRank > 0 ? stats.totalRank / scores.length : null;
@@ -275,15 +289,18 @@
         return stats;
     }
 
+    const filterByPeriod = (s, period) => period === ALL || Date.now() - timestampFromString(s.timeset) <= period * ONE_DAY;
+
     $: allRankedScores = playerScores
      ? playerScores.filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
      : [];
 
-    $: filteredScores = allRankedScores.filter(s => values.selectedPeriod.value === ALL || Date.now() - timestampFromString(s.timeset) <= values.selectedPeriod.value * 1000 * 60 * 60 * 24)
+    $: filteredRankedScores = allRankedScores.filter(s => filterByPeriod(s, values.selectedPeriod.value));
+    $: filteredAllScores = playerScores ? playerScores.filter(s => filterByPeriod(s, values.selectedPeriod.value)) : null;
 
-    $: stats = getPlayerStats(filteredScores, activeCountry, ssplCountryRanksCache, rankedsNotesCache, initialized)
+    $: stats = getPlayerStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, rankedsNotesCache, initialized)
 
-    $: basicStats = getBasicStats(ssStats, stats);
+    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores);
     $: accStats = getAccStats(stats);
 
     $: {
@@ -298,7 +315,7 @@
     </div>
 
     <div class="box has-shadow">
-        {#if playerInfo && accStats && accStats.length}
+        {#if playerScores && accStats}
             <div class="period">
                 <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
             </div>
@@ -346,28 +363,34 @@
                         {/if}
                     </div>
                     <div class="column">
-                        {#if accStats && accStats.length}
-                            <div class="badges right">
-                                {#each accStats as stat} <Badge {...stat}/> {/each}
-                            </div>
-                        {/if}
-
-                        {#if stats}
-                            {#if activeCountry && stats.bestRank}
-                                <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
-                                    <slot slot="value">
-                                        {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
-                                        {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
-                                    </slot>
-                                </Badge>
+                        {#if playerScores}
+                            {#if accStats}
+                                <div class="badges right">
+                                    {#each accStats as stat} <Badge {...stat}/> {/each}
+                                </div>
                             {/if}
 
-                            {#if showBadges && stats.badges}
-                                <div class="badges right">
-                                    {#each stats.badges as badge (badge)}
-                                        <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
-                                    {/each}
-                                </div>
+                            {#if stats}
+                                {#if activeCountry}
+                                    <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
+                                        <span slot="value">
+                                            {#if filteredRankedScores && filteredRankedScores.length}
+                                            {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
+                                            {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
+                                            {:else}
+                                                -
+                                            {/if}
+                                        </span>
+                                    </Badge>
+                                {/if}
+
+                                {#if showBadges && stats.badges}
+                                    <div class="badges right">
+                                        {#each stats.badges as badge (badge)}
+                                            <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
+                                        {/each}
+                                    </div>
+                                {/if}
                             {/if}
                         {/if}
                     </div>
