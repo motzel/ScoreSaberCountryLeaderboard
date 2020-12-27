@@ -665,11 +665,6 @@
                     <div class="menu-label">{$_.profile.settings.profile.header}</div>
                     <div>
                         <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
-                            {$_.profile.settings.profile.enlargeAvatar}
-                        </label>
-
-                        <label class="checkbox">
                             <input type="checkbox" bind:checked={config.profile.showChart}>
                             {$_.profile.settings.profile.showChart}
                         </label>

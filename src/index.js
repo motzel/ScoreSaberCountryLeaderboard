@@ -232,14 +232,11 @@ async function setupProfile() {
         history.replaceState(null, '', url.toString());
     }
 
-    const profileConfig = await getConfig('profile');
-    if (profileConfig && profileConfig.enlargeAvatar) {
-        const avatarCol = document.querySelector('.column.avatar');
-        if (avatarCol) avatarCol.classList.add('enlarge')
+    const avatarCol = document.querySelector('.column.avatar');
+    if (avatarCol) avatarCol.classList.add('enlarge')
 
-        const usersConfig = await getConfig('users');
-        if(usersConfig && usersConfig.main && usersConfig.main === profileId) avatarCol.classList.add('main')
-    }
+    const usersConfig = await getConfig('users');
+    if(usersConfig && usersConfig.main && usersConfig.main === profileId) avatarCol.classList.add('main')
 
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');

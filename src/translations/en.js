@@ -18,7 +18,6 @@ export default {
 
             profile: {
                 header: 'Profile',
-                enlargeAvatar: 'Enlarge avatar',
                 showChart: 'Show the chart',
                 showOnePpCalc: 'Show +1PP calculator',
                 showTwitchIcon: 'Show Twitch button',
