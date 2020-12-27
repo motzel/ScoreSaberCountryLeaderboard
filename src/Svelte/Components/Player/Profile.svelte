@@ -156,6 +156,7 @@
             playerInfo = await getPlayerInfo(profileId);
         }
 
+        // TODO: autorefresh when config is changed
         const profileConfig = await getConfig('profile');
         showChart = profileConfig && profileConfig.showChart && chartHistory && chartHistory.length;
 
@@ -185,6 +186,7 @@
               }]
               : countryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
 
+            // TODO: autorefresh when config is changed
             const profileConfig = await getConfig('profile');
             if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
 
@@ -314,17 +316,22 @@
             </div>
 
             <div class="column">
-                <h1 class="title is-4">{#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}</h1>
+                <h1 class="title is-4">
+                    {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
+                    <span class="pp"><Value value={pp} suffix="pp" /></span>
+                </h1>
                 <h2 class="title is-5">
-                    <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}"><Value value={rank} prefix="#" digits={0} zero="#0" /></a>
+                    <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}">
+                        <i class="fas fa-globe-americas"></i>
+                        <Value value={rank} prefix="#" digits={0} zero="#0" />
+                    </a>
                     {#each countryRanks as countryRank}
                         <a href="/global?country={countryRank.country}">
                         <img src="/imports/images/flags/{countryRank.country}.png">
-                        <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={countryRank.subRank ? ` (#${countryRank.subRank})` : ''} />
+                        <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={ countryRank.subRank && countryRank.subRank !== countryRank.rank ? ` (#${countryRank.subRank})` : ''} />
                     </a>
                     {/each}
                 </h2>
-                <h3 class="title is-6"><Value value={pp} suffix="pp" /></h3>
 
                 <div class="columns">
                     <div class="column">
@@ -381,7 +388,7 @@
     .player-top {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: flex-end;
         margin: 0;
     }
 
@@ -419,11 +426,24 @@
     }
 
     h1.title {
-        margin-bottom: .5rem;
+        margin-bottom: .25rem;
+    }
+
+    h1 a {
+        color: var(--textColor)!important;
+    }
+
+    h1 .pp {
+        color: var(--ppColour) !important;
+        font-size: smaller;
+        border-left: 1px solid var(--dimmed);
+        padding-left: .75rem;
+        margin-left: .5rem;
     }
 
     h2.title {
-        margin-bottom: .25rem;
+        display: flex;
+        margin-bottom: 1rem;
     }
 
     h2 a {
@@ -439,12 +459,15 @@
         border-right: none;
     }
 
-    h2 a img {
-        margin-bottom: 2px;
+    h2 a i {
+        color: var(--textColor);
+        font-size: smaller;
+        position: relative;
+        top: -1px;
     }
 
-    h3.title {
-        color: var(--ppColour) !important;
+    h2 a img {
+        margin-bottom: 2px;
     }
 
     .period {
