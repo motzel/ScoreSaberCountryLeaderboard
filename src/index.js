@@ -496,7 +496,6 @@ async function setupProfile() {
     const container = document.querySelector('.section .container');
     const profileDiv = document.createElement('div');
     profileDiv.classList.add('sspl-page');
-    profileDiv.style.marginTop = "-1rem";
     container.prepend(profileDiv);
 
     const column = container.querySelector('.content .column:not(.avatar)');

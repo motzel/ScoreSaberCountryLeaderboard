@@ -129,3 +129,8 @@ body .select select {
   0% {transform: rotateX(0deg)}
   to {transform: rotateX(1turn)}
 }
+
+.sspl-page {
+  margin-top: -1rem;
+  margin-bottom: 1.5rem;
+}

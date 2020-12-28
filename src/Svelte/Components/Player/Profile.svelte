@@ -389,10 +389,14 @@
                             {#if stats}
                                 {#if activeCountry}
                                     <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
-                                        <span slot="value">
+                                        <span class="sspl-ranks" slot="value">
                                             {#if filteredRankedScores && filteredRankedScores.length}
-                                            {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
-                                            {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
+                                            <div>
+                                                {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
+                                            </div>
+                                            <div>
+                                                {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
+                                            </div>
                                             {:else}
                                                 -
                                             {/if}
@@ -525,6 +529,15 @@
 
     h2 a img {
         margin-bottom: 2px;
+    }
+
+    .sspl-ranks {
+        display: inline-flex;
+        flex-wrap: wrap;
+    }
+
+    .sspl-ranks > * {
+        margin-right: .5rem;
     }
 
     .period {
