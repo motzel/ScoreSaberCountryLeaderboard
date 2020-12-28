@@ -324,37 +324,53 @@
         <div class="columns">
             <div class="column is-narrow avatar enlarge">
                 <img src={avatarUrl} class="avatar" />
-
-                {#if ssBadges && ssBadges.length}
-                    {#each ssBadges as ssBadge}
-                        <div><img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title} /></div>
-                    {/each}
-                {/if}
             </div>
 
             <div class="column">
-                <h1 class="title is-4">
-                    {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
-                    <span class="pp"><Value value={pp} suffix="pp" /></span>
-                </h1>
-                <h2 class="title is-5">
-                    <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}">
-                        <i class="fas fa-globe-americas"></i>
-                        <Value value={rank} prefix="#" digits={0} zero="#0" />
-                    </a>
-                    {#each countryRanks as countryRank}
-                        <a href="/global?country={countryRank.country}">
-                        <img src="/imports/images/flags/{countryRank.country}.png">
-                        <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={ countryRank.subRank && countryRank.subRank !== countryRank.rank ? ` (#${countryRank.subRank})` : ''} />
-                    </a>
-                    {/each}
-                </h2>
+                <div class="columns player-name">
+                    <div class="column">
+                        <h1 class="title is-4">
+                            {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
+                            <span class="pp"><Value value={pp} suffix="pp" /></span>
+                        </h1>
+                        <h2 class="title is-5">
+                            <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}">
+                                <i class="fas fa-globe-americas"></i>
+                                <Value value={rank} prefix="#" digits={0} zero="#0" />
+                            </a>
+                            {#each countryRanks as countryRank}
+                                <a href="/global?country={countryRank.country}">
+                                <img src="/imports/images/flags/{countryRank.country}.png">
+                                <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={ countryRank.subRank && countryRank.subRank !== countryRank.rank ? ` (#${countryRank.subRank})` : ''} />
+                            </a>
+                            {/each}
+                        </h2>
+                    </div>
+
+                    {#if playerScores && ssBadges && ssBadges.length}
+                    <div class="column">
+                        <div class="badges ss-badges">
+                            {#each ssBadges as ssBadge}
+                                <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
+                            {/each}
+                        </div>
+                    </div>
+                    {/if}
+                </div>
 
                 <div class="columns">
                     <div class="column">
                         <div class="badges">
                             {#each basicStats as stat} <Badge {...stat}/> {/each}
                         </div>
+
+                        {#if !playerScores && ssBadges && ssBadges.length}
+                            <div class="badges ss-badges">
+                                {#each ssBadges as ssBadge}
+                                    <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
+                                {/each}
+                            </div>
+                        {/if}
 
                         {#if showCalc && allRankedScores && allRankedScores.length}
                             <div class="content">
@@ -446,6 +462,24 @@
         border-radius: 50%;
         width: 150px;
         height: 150px;
+    }
+
+    .player-name {
+        margin-bottom: 0;
+    }
+
+    .player-name .column {
+        padding-bottom: 0;
+    }
+
+    .ss-badges {
+        max-width: 90%;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .ss-badges img {
+        margin-right: .5rem;
+        margin-bottom: .25rem;
     }
 
     h1.title {
