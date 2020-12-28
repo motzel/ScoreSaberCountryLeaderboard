@@ -119,7 +119,12 @@ export const getAllActivePlayersIds = async (country) => arrayUnique((await getA
 
 export const getAllActivePlayers = async (country) => filterPlayersByIdsList(await getAllActivePlayersIds(country), await getPlayers());
 
-export const getPlayerProfileUrl = (playerId, recentPlaysPage = false) => substituteVars(USER_PROFILE_URL + (recentPlaysPage ? '?sort=2' : ''), {userId: playerId})
+export const getPlayerProfileUrl = (playerId, recentPlaysPage = false, transform = false) => substituteVars(
+  USER_PROFILE_URL + '?' +
+  (recentPlaysPage ? '&sort=2' : '') +
+  (transform ? '&transform=true' : ''),
+  {userId: playerId}
+)
 
 export const getPlayerAvatarUrl = async playerId => {
     if (!playerId) return null;

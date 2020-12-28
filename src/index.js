@@ -6,7 +6,6 @@ import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
 import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
-import Chart from './Svelte/Components/Player/Chart.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
 
@@ -34,10 +33,11 @@ import {parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
+import scores from './db/repository/scores'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
-const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
+const getProfileId = () => getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
 const getRankingCountry = () => {
     const match = window.location.href.match(new RegExp('^https://scoresaber.com/global(?:\\?|/1[&?])country=(.{1,3})'));
@@ -214,16 +214,25 @@ async function setupProfile() {
     if (!profileId) return;
 
     // redirect to recent plays if auto-transform is enabled or transforming was requested
-    const url = new URL(window.location.href);
+
+    // fix url search params
+    let urlStr = window.location.href
+    const urlMatches = /(.*)\/u\/(\d+)(.*?)$/.exec(urlStr);
+    if (urlMatches && urlMatches[3] && urlMatches[3].length) {
+        urlStr = urlMatches[1] + '/u/' + urlMatches[2] + (urlMatches[3][0] === '&' ? '?' + urlMatches[3].slice(1) : urlMatches[3]);
+    }
+    const url = new URL(urlStr);
     const urlParams = new URLSearchParams(url.search);
 
     const songBrowserConfig = await getConfig('songBrowser');
     const urlHasTransformParam = urlParams.has('transform');
-    const autoTransformEnabled = await isPlayerDataAvailable(profileId) && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
+    const autoTransform = await isPlayerDataAvailable(profileId) && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
     const isRecentPlaysPage = urlParams.get('sort') === '2';
+    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page'), 10) : 1;
 
-    if (autoTransformEnabled && !isRecentPlaysPage) {
-        window.location.href = getPlayerProfileUrl(profileId, true);
+    if (autoTransform && !isRecentPlaysPage) {
+        window.location.href = getPlayerProfileUrl(profileId, true, urlHasTransformParam);
+        return;
     }
 
     if (urlHasTransformParam) {
@@ -251,7 +260,7 @@ async function setupProfile() {
     const parsedScores = Promise.all(parseSsUserScores(document).map(async s => {
         const leaderboard = playerScores.find(ps => ps.leaderboardId === s.leaderboardId);
 
-        if (songEnhanceEnabled && !autoTransformEnabled) {
+        if (songEnhanceEnabled && !autoTransform) {
             try {
                 const maxSongScore = await getSongMaxScore(
                   leaderboard?.hash ? leaderboard.hash : s.hash,
@@ -307,7 +316,7 @@ async function setupProfile() {
           return parsedScores
       })
       .then(parsedScores => {
-          if (songEnhanceEnabled && !autoTransformEnabled)
+          if (songEnhanceEnabled && !autoTransform)
               parsedScores
                 .filter(s => null !== s.tr)
                 .forEach(s => {
@@ -474,7 +483,7 @@ async function setupProfile() {
                     document.querySelector('.el-group.flex-center').remove();
                 }
             }
-            if (autoTransformEnabled) await transformSongs();
+            if (autoTransform) await transformSongs();
             else transformBtn.$on('click', transformSongs)
         }
 
@@ -507,6 +516,9 @@ async function setupProfile() {
         avatarUrl: document.querySelector('.column.avatar img')?.src ?? null,
         country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, document.querySelector('.content .column .title img').src)?.toLowerCase() ?? null,
         pageScores: parseSsUserScores(document),
+        scoresType: isRecentPlaysPage ? 'recent' : 'top',
+        pageNum,
+        autoTransform,
         ssBadges: [...document.querySelectorAll('.column.avatar center img')].map(img => ({
             src: img.src,
             title: img.title,
