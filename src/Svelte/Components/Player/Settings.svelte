@@ -421,7 +421,8 @@
         config.users.main = profileId;
         await setConfig(config);
 
-        await updatePlayer({id: profileId});
+        const playerInfo = getPlayerInfo(profileId);
+        if (!playerInfo) await updatePlayer({id: profileId});
 
         location.reload();
     }
