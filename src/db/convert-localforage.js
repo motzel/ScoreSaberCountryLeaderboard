@@ -87,7 +87,7 @@ export const convertFromLocalForage = async (cache, transaction) => {
   promises = scores.map(s => store.put(s));
   await Promise.all(promises);
 
-  const rankeds = Object.values(cache.rankedSongs).map(s => {
+  const rankeds = Object.values(cache.rankedSongs ?? {}).map(s => {
     let {diff: diffInfo, difficulty, id: hash, oldStars, firstSeen, ...song} = s;
 
     firstSeen = firstSeen ? new Date(parseInt(firstSeen, 10)) : null;

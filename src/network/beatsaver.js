@@ -85,11 +85,11 @@ export const fetchRankedsFromBs = async rankedsHashesToFetch => {
 
     if (songInfos && songInfos.length) {
         songInfos.forEach(value => {
-            if (value.status !== 'fulfilled' || !value.value.hash) return;
+            if (value?.status !== 'fulfilled' || !value?.value?.hash) return;
 
             const songCharacteristics = value?.value?.metadata?.characteristics ?? null;
 
-            currentRankedsCache[value.value.hash.toLowerCase()] = getRankedsNotesSongCacheFromCharacteristics(songCharacteristics);
+            currentRankedsCache[value?.value?.hash?.toLowerCase()] = getRankedsNotesSongCacheFromCharacteristics(songCharacteristics);
         });
 
         await setRankedsNotesCache(currentRankedsCache);

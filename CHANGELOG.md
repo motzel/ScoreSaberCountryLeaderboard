@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+0.9.9.8
+- [!] fix fresh start, thx Drakonno
+
 0.9.9.7
 - [*] db cache rewrite
 - [!] fix country rank bug, thx Drakonno
