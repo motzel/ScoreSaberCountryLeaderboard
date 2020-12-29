@@ -134,3 +134,8 @@ body .select select {
   margin-top: -1rem;
   margin-bottom: 1.5rem;
 }
+
+.error {
+  font-weight: 500;
+  color: var(--decrease);
+}

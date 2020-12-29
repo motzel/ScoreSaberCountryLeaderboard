@@ -4,7 +4,7 @@
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
     import Pp from '../Common/Pp.svelte';
-    import {GLOBAL_URL, PLAYERS_PER_PAGE, USERS_URL} from "../../../network/scoresaber/consts";
+    import {GLOBAL_URL, PLAYERS_PER_PAGE, PLAYERS_URL} from "../../../network/scoresaber/consts";
     import {getActiveCountryPlayers,} from "../../../scoresaber/players";
     import {formatNumber, substituteVars} from "../../../utils/format";
     import {convertArrayToObjectByKey} from "../../../utils/js";
@@ -41,7 +41,7 @@
                 isPlayerFromActiveCountry = true;
 
                 // active country player
-                await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country: activeCountry}))
+                await fetchHtmlPage(queue.SCORESABER, substituteVars(PLAYERS_URL, {country: activeCountry}))
                         .then(document => {
                             overridePlayersPp = Object.assign(
                                 {},

@@ -1,7 +1,7 @@
 <script>
 	import {onMount} from "svelte";
 	import {substituteVars} from "../../../utils/format";
-	import {USERS_URL} from "../../../network/scoresaber/consts";
+	import {PLAYERS_URL} from "../../../network/scoresaber/consts";
 	import {getActiveCountry} from "../../../scoresaber/country";
 
 	export let country;
@@ -9,7 +9,7 @@
 
 	onMount(async () => {
 		if (!country) country = await getActiveCountry();
-		if (country && country.length && (!url || !url.length)) url = substituteVars(USERS_URL, {page: 1, country});
+		if (country && country.length && (!url || !url.length)) url = substituteVars(PLAYERS_URL, {page: 1, country});
 	})
 </script>
 

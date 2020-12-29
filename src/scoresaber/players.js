@@ -5,7 +5,7 @@ import groupsRepository from "../db/repository/groups";
 import {getAdditionalPlayers} from "../network/scoresaber/players";
 import tempConfig from '../temp';
 import {getRankedsChangesSince, getRankedSongs} from "./rankeds";
-import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, USER_PROFILE_URL} from "../network/scoresaber/consts";
+import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, PLAYER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
 import {arrayUnique, convertArrayToObjectByKey, isEmpty} from "../utils/js";
@@ -119,11 +119,9 @@ export const getAllActivePlayersIds = async (country) => arrayUnique((await getA
 
 export const getAllActivePlayers = async (country) => filterPlayersByIdsList(await getAllActivePlayersIds(country), await getPlayers());
 
-export const getPlayerProfileUrl = (playerId, recentPlaysPage = false, transform = false) => substituteVars(
-  USER_PROFILE_URL + '?' +
-  (recentPlaysPage ? '&sort=2' : '') +
-  (transform ? '&transform=true' : ''),
-  {userId: playerId}
+export const getPlayerProfileUrl = (playerId, recentPlaysPage = false, transform = false, page = 1) => substituteVars(
+  `${PLAYER_PROFILE_URL}?page=${page}&${recentPlaysPage ? 'sort=2' : 'sort=1'}${transform ? '&transform=true' : ''}`,
+  {playerId}
 )
 
 export const getPlayerAvatarUrl = async playerId => {
@@ -138,6 +136,7 @@ export const getPlayerScores = player => player?.scores ? player.scores : null;
 export const getAllScores = async () => scoresRepository().getAll();
 export const getScoresByPlayerId = async (playerId) => scoresRepository().getAllFromIndex('scores-playerId', playerId);
 export const isPlayerDataAvailable = async (playerId) => !!(await scoresRepository().getFromIndex('scores-playerId', playerId));
+export const isAnyPlayerDataAvailable = async () => !!(await scoresRepository().getFromIndex('scores-playerId', ''));
 export const getAllScoresSince = async (sinceDate) => scoresRepository().getAllFromIndex('scores-timeset', sinceDate ? IDBKeyRange.lowerBound(sinceDate) : undefined);
 export const getAllScoresWithPpOver = async (minPp) => scoresRepository().getAllFromIndex('scores-pp', minPp ? IDBKeyRange.lowerBound(minPp) : undefined);
 

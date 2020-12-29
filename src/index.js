@@ -29,7 +29,7 @@ import {
     getPlayerProfileUrl,
     isPlayerDataAvailable,
 } from "./scoresaber/players";
-import {parseSsInt} from "./scoresaber/other";
+import {parseSsFloat, parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
@@ -228,7 +228,7 @@ async function setupProfile() {
     const urlHasTransformParam = urlParams.has('transform');
     const autoTransform = await isPlayerDataAvailable(profileId) && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
     const isRecentPlaysPage = urlParams.get('sort') === '2';
-    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page'), 10) : 1;
+    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page') ?? '1', 10) : 1;
 
     if (autoTransform && !isRecentPlaysPage) {
         window.location.href = getPlayerProfileUrl(profileId, true, urlHasTransformParam);
@@ -250,258 +250,6 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    /*
-    const ssConfig = await getConfig('ssSong');
-    const showDiff = !!ssConfig?.showDiff;
-    const showWhatIfPp = !!ssConfig?.showWhatIfPp;
-
-    const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
-
-    const parsedScores = Promise.all(parseSsUserScores(document).map(async s => {
-        const leaderboard = playerScores.find(ps => ps.leaderboardId === s.leaderboardId);
-
-        if (songEnhanceEnabled && !autoTransform) {
-            try {
-                const maxSongScore = await getSongMaxScore(
-                  leaderboard?.hash ? leaderboard.hash : s.hash,
-                  leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
-                );
-
-                const maxScoreEx = maxSongScore ?? leaderboard?.maxScoreEx;
-
-                const ssScoreDate = dateFromString(s.timeset);
-                const useDownloadedScore = leaderboard?.timeset && ssScoreDate && leaderboard?.timeset?.getTime() === ssScoreDate.getTime();
-                if (useDownloadedScore) {
-                    s = {...s, ...leaderboard, maxScoreEx, percent: maxScoreEx && leaderboard?.score ? leaderboard.score / maxScoreEx : s.percent};
-                }
-
-                s.acc = s.percent ? s.percent * 100 : null;
-
-                const useCurrentScoreAsPrev = (s.pp && leaderboard?.pp && round(leaderboard.pp) < round(s.pp)) ||
-                  (s.score && leaderboard?.score && leaderboard.score < s.score);
-
-                if (!s.acc && s.score && maxScoreEx) {
-                    s.acc = getAccFromScore({score: s.score, maxScoreEx});
-                }
-
-                if(!s.score && s.percent) {
-                    s.score = maxScoreEx ? Math.round(s.percent * maxScoreEx) : null;
-                }
-
-                s.hidden = leaderboard?.acc ? shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, acc: leaderboard.acc})) : false;
-
-                const history = leaderboard?.history?.[0];
-                if (showDiff && (useCurrentScoreAsPrev || history)) {
-                    s.prevRank = useCurrentScoreAsPrev ? leaderboard.rank : history.rank;
-                    s.prevPp = useCurrentScoreAsPrev ? leaderboard.pp : history.pp;
-                    s.prevScore = useCurrentScoreAsPrev ? leaderboard.score : history.score;
-                    s.prevTimeset = dateFromString(useCurrentScoreAsPrev ? leaderboard.timeset : history.timeset);
-                    s.prevAcc = getAccFromScore({
-                        score: useCurrentScoreAsPrev ? leaderboard.score : history.score,
-                        uScore: useCurrentScoreAsPrev ? leaderboard.uScore : history.uScore,
-                        maxScoreEx,
-                    });
-                }
-            } catch (e) {} // swallow error
-        }
-
-        return s;
-    }))
-      .then(async parsedScores => {
-          await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
-              leaderboardId: s.leaderboardId,
-              rank         : s.rank,
-          })));
-
-          return parsedScores
-      })
-      .then(parsedScores => {
-          if (songEnhanceEnabled && !autoTransform)
-              parsedScores
-                .filter(s => null !== s.tr)
-                .forEach(s => {
-                    const score = s.tr.querySelector('.score');
-                    if(!score) return;
-
-                    score.innerHTML = "";
-
-                    new SongScore({
-                        target: score,
-                        props: {song: s, showWhatIfPp}
-                    })
-                });
-      });
-    const header = document.querySelector('.content .column h5').closest('.box');
-    if (header) {
-        const refreshDiv = document.createElement('div');
-        refreshDiv.classList.add('refresh');
-        header.appendChild(refreshDiv);
-        new Refresh({
-            target: refreshDiv,
-            props: {profileId}
-        })
-    }
-     */
-
-    /*
-    let profileStats = [];
-
-    const mainUl = document.querySelector('.content .column ul');
-    const mainColumn = mainUl.closest('.column');
-    if (mainColumn) {
-        profileStats =
-          [
-              {key: 'Player ranking', label: trans('profile.stats.ranking'), type: 'rank', value: parseSsInt(document.querySelector('.content .column ul li:first-of-type a:first-of-type').innerText ?? ""), countryRank: parseSsInt(document.querySelector('.content .column ul li:first-of-type a[href^="/global?country="]').innerText ?? "")}
-          ].concat(
-            [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
-              .map(li => {
-                  const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:?\s*<\/strong>\s*(.*)$/);
-                  if (!matches) return null;
-
-                  const mapping = [
-                      {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true},
-                      {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true},
-                      {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true},
-                      {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replays'), number: true},
-                      {key: 'Role', label: trans('profile.stats.role'), number: false},
-                      {key: 'Inactive Account', label: trans('profile.stats.inactiveAccount'), number: false},
-                  ];
-
-                  const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
-                    ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
-                    : matches[2];
-
-                  const item = mapping.find(m => m.key === matches[1]);
-                  return item ? {...item, value} : {label: matches[1], value};
-              })
-              .filter(s => s)
-          );
-
-        if (isPlayerDataAvailable) {
-            let ssplCountryRank = playerInfo?.ssplCountryRank;
-            const country = await getActiveCountry();
-            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
-            const rankLi = mainColumn.querySelector('ul li:first-of-type');
-            if (rankLi) {
-                const globalRankA = rankLi.querySelector('a:first-of-type');
-                const rankA = rankLi.querySelector('a[href^="/global?country="]');
-                if(globalRankA && rankA) {
-                    const originalGlobalRank = parseSsInt(globalRankA.innerText);
-                    const originalRank = parseSsInt(rankA.innerText);
-                    const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
-                    if (originalGlobalRank && originalRank && originalCountry) {
-                        profileStats =
-                            [
-                                {key: 'Player ranking', label: trans('profile.stats.ranking'), type: 'rank', value: originalGlobalRank, originalCountry: originalCountry, ssplCountryRank, originalRank}
-                            ].concat(
-                                [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
-                                    .map(li => {
-                                        const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:\s*<\/strong>\s*(.*)$/);
-                                        if (!matches) return null;
-
-                                        const mapping = [
-                                            {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true},
-                                            {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true},
-                                            {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true},
-                                            {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replays'), number: true},
-                                            {key: 'Role', label: trans('profile.stats.role'), number: false},
-                                        ];
-
-                                        const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
-                                            ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
-                                            : matches[2];
-
-                                        const item = mapping.find(m => m.key === matches[1]);
-                                        return item ? {...item, value} : {label: matches[1], value};
-                                    })
-                                    .filter(s => s)
-                            );
-
-                        mainUl.innerHTML = '';
-                        new ProfileStats({
-                            target: mainColumn,
-                            props: {profileId, stats: profileStats}
-                        })
-                    }
-                }
-            }
-
-            const additionalProfile = document.createElement('div');
-            additionalProfile.classList.add('column');
-            const ul = document.createElement('ul');
-            ul.style.marginTop = sseInstalled ? '3.375rem' : '2.875rem';
-            additionalProfile.appendChild(ul);
-            new Profile({
-                target: ul,
-                props: {
-                    profile: playerInfo,
-                }
-            });
-            mainColumn.closest('.columns').appendChild(additionalProfile);
-
-            const div = document.createElement('div')
-            div.classList.add('el-group');
-            div.classList.add('flex-center');
-            div.style.marginTop = "1em";
-            div.style.fontSize = "0.875rem";
-            mainColumn.closest('.box').appendChild(div);
-
-            const transformBtn = new Button({
-                target: div,
-                props: {
-                    label: trans('plugin.transformButton'),
-                    iconFa: "fas fa-expand-arrows-alt",
-                    type: 'primary'
-                }
-            })
-            const transformSongs = async () => {
-                if (!isRecentPlaysPage) {
-                    window.location.href = getPlayerProfileUrl(profileId, true) + '&transform=true';
-                    return;
-                }
-
-                const content = mainColumn.closest('.content');
-                const songBox = content.querySelector('.box:nth-child(2)');
-                if (songBox) {
-                    const box = document.createElement('div');
-                    box.classList.add('box');
-                    box.classList.add('has-shadow');
-                    content.insertBefore(box, songBox);
-
-                    new SongBrowser({
-                        target: box,
-                        props: {
-                            playerId: profileId,
-                            country,
-                            recentPlay: parsedScores && parsedScores.length ? dateFromString(parsedScores[0].timeset) : null
-                        }
-                    })
-
-                    songBox.remove();
-                    transformBtn.$destroy();
-
-                    document.querySelector('.el-group.flex-center').remove();
-                }
-            }
-            if (autoTransform) await transformSongs();
-            else transformBtn.$on('click', transformSongs)
-        }
-
-        const avatarColumn = document.querySelector('.column.avatar');
-        if (avatarColumn) {
-            const div = document.createElement('div')
-            div.style.marginTop = "1rem";
-            div.style.fontSize = "0.75rem";
-            avatarColumn.appendChild(div);
-
-            new PlayerSettings({
-                target: div,
-                props: {profileId}
-            })
-        }
-    }
-     */
-
     const container = document.querySelector('.section .container');
     const profileDiv = document.createElement('div');
     profileDiv.classList.add('sspl-page');
@@ -515,9 +263,7 @@ async function setupProfile() {
         steamUrl: playerA?.href ?? null,
         avatarUrl: document.querySelector('.column.avatar img')?.src ?? null,
         country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, document.querySelector('.content .column .title img').src)?.toLowerCase() ?? null,
-        pageScores: parseSsUserScores(document),
-        scoresType: isRecentPlaysPage ? 'recent' : 'top',
-        pageNum,
+        prefetchedScores: {...parseSsUserScores(document), type: isRecentPlaysPage ? 'recent' : 'top'},
         autoTransform,
         ssBadges: [...document.querySelectorAll('.column.avatar center img')].map(img => ({
             src: img.src,
@@ -542,7 +288,7 @@ async function setupProfile() {
                 ];
 
                 const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
-                  ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
+                  ? parseSsFloat(matches[2])
                   : matches[2];
 
                 const item = mapping.find(m => m.key === matches[1]);
@@ -552,8 +298,7 @@ async function setupProfile() {
         ), 'key')
     }
 
-    // TODO: remove whole .content when all is ready
-    const originalContent = document.querySelector('.content .box');
+    const originalContent = document.querySelector('.content');
     if (originalContent) originalContent.remove();
 
     new Profile({target: profileDiv, props})

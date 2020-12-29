@@ -10,6 +10,7 @@
     export let displayMax;
     if (!displayMax) displayMax = 11;
     export let hide = false;
+    export let isLoading = false;
 
     let displayStart = false;
     let displayEnd = false;
@@ -81,7 +82,9 @@
 
         {#each displayedPages as page}
         <li data-page={page}>
-            <a href="#" on:click|preventDefault={() => onPageChanged(page-1)} class={'pagination-link' + (currentPage === page - 1 ? ' is-current' : '')}>{page}</a>
+            <a href="#" on:click|preventDefault={() => onPageChanged(page-1)} class={'pagination-link' + (currentPage === page - 1 ? ' is-current' : '')}>
+                {#if isLoading && currentPage === page - 1}<i class="fas fa-spinner fa-spin"></i>{:else}{page}{/if}
+            </a>
         </li>
         {/each}
 
@@ -92,7 +95,9 @@
             </li>
         {/if}
     </ul>
+    {#if itemsPerPageValues && itemsPerPageValues.length}
     <div class="items-per-page"><select bind:value={itemsPerPage} on:change={onItemsPerPageChanged}>{#each itemsPerPageValues as ipp}<option value={ipp}>{ipp}</option>{/each}</select></div>
+    {/if}
 </nav>
 {/if}
 

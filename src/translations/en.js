@@ -31,12 +31,6 @@ export default {
                 defaultType: 'Default type',
             },
 
-            defaultSongList: {
-                header: 'Default song list',
-                enhance: 'Add scores/accuracy',
-                showDiff: 'Show the differences',
-            },
-
             others: {
                 header: 'Others',
                 bgDownload: 'Background download',
@@ -184,6 +178,10 @@ export default {
         former: 'Former',
         totalPp: 'Total PP for ${name}',
         rankOfDate: 'Rank of ${date}, click to refresh',
+        ssScoreType: {
+            top: 'Top',
+            recent: 'Recent',
+        },
     },
     songLeaderboard: {
         player: 'Player',
@@ -271,7 +269,7 @@ export default {
         sombra: "Sombra's"
     },
     plugin: {
-        transformButton: 'Transform',
+        transformButton: 'Cached',
     },
     common: {
         ok: 'OK',

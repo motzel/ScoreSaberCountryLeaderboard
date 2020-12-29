@@ -4,20 +4,23 @@
     import Badge from "../Common/Badge.svelte";
     import Select from "../Common/Select.svelte";
 
-    import {getConfig} from '../../../plugin-config';
+    import {getConfig, getMainPlayerId} from '../../../plugin-config';
     import {getAccFromRankedScore, getRankedsNotesCache, RANKED, UNRANKED} from '../../../scoresaber/rankeds';
     import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
-    import {timestampFromString} from "../../../utils/date";
+    import {dateFromString, timestampFromString} from "../../../utils/date";
 
-    import {getPlayerInfo, getScoresByPlayerId} from '../../../scoresaber/players'
+    import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId} from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
     import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
     import Value from '../Common/Value.svelte'
     import Refresh from './Refresh.svelte'
     import Settings from './Settings.svelte'
     import Chart from './Chart.svelte'
+    import Browser from '../Song/Browser.svelte'
+    import ScoreSaberProvider from '../Song/Provider/ScoreSaber.svelte'
+    import ScoreSaberPresenter from '../Song/Presenter/ScoreSaber.svelte'
 
     export let profileId;
     export let name;
@@ -27,9 +30,16 @@
     export let ssStats = {};
     export let ssBadges = [];
     export let chartHistory = [];
-    export let pageScores = [];
+    export let prefetchedScores = {};
+    export let autoTransform = false;
 
     const ONE_DAY = 1000 * 60 * 60 * 24
+
+    let transformed = autoTransform;
+
+    let recentPlay = prefetchedScores && prefetchedScores.scores && prefetchedScores.scores.length && prefetchedScores.pageNum === 1 && prefetchedScores.type === 'recent'
+     ? dateFromString(prefetchedScores.scores[0].timeset)
+     : null;
 
     let playerInfo = null;
     let rank = null;
@@ -38,10 +48,15 @@
 
     let playerScores = null;
 
+    let mainPlayerId = null;
+
     let mode = 'pp-stars';
     let showCalc = false;
     let showBadges = true;
     let showChart = false;
+
+    let compareTo = [];
+    let players = [];
 
     const ALL = 365 * 100;
     let strings = {
@@ -161,6 +176,26 @@
     }
 
     onMount(async () => {
+        mainPlayerId = await getMainPlayerId();
+
+        const config = await getConfig('songBrowser');
+        if (config.compareTo && Array.isArray(config.compareTo)) {
+            compareTo = config.compareTo;
+        }
+
+        players = []
+         .concat(profileId ? [{playerId: profileId, name}] : [])
+         .concat(
+          profileId && mainPlayerId && mainPlayerId !== profileId
+           ? [{playerId: mainPlayerId, name: 'Main'}] :
+           [],
+         )
+         .concat(
+          profileId && mainPlayerId && mainPlayerId === profileId
+           ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
+           : [],
+         );
+
         if (ssStats && ssStats['Player ranking']) rank = ssStats['Player ranking'].value;
         if (ssStats && ssStats['Performance Points']) pp = ssStats['Performance Points'].value;
 
@@ -306,6 +341,21 @@
     $: {
         translateAllStrings($_);
     }
+
+    let currentPage = prefetchedScores.pageNum ? prefetchedScores.pageNum - 1 : 0;
+    let scoresType = prefetchedScores.type ? prefetchedScores.type : 'recent';
+    function onScoreBrowse() {
+        if (!players || !players.length) return;
+
+        // update browser url
+        const url = new URL(
+         getPlayerProfileUrl(players[0].playerId, !(scoresType === 'top'), false, currentPage + 1)
+        );
+        history.replaceState(null, '', url.toString());
+    }
+    function onTransformProfile() {
+        transformed = true;
+    }
 </script>
 
 <div>
@@ -378,6 +428,7 @@
                             </div>
                         {/if}
                     </div>
+                    {#if playerScores && playerScores.length}
                     <div class="column">
                         {#if playerScores}
                             {#if accStats}
@@ -414,6 +465,7 @@
                             {/if}
                         {/if}
                     </div>
+                    {/if}
                 </div>
             </div>
         </div>
@@ -423,6 +475,37 @@
                 <Chart {profileId} history={chartHistory} />
             </div>
         {/if}
+    </div>
+
+    <div class="box has-shadow">
+        <div class="content">
+            {#if transformed}
+                <Browser playerId={profileId} {recentPlay} />
+            {:else}
+                <ScoreSaberProvider
+                 {players}
+                 scores={prefetchedScores.scores ? prefetchedScores.scores : []}
+                 pageNum={currentPage + 1}
+                 totalItems={ssStats && ssStats['Play Count'] && ssStats['Play Count'].value ? ssStats['Play Count'].value : 0}
+                 type={scoresType}
+                 let:songs let:series let:totalItems let:isLoading let:error
+                >
+                    <ScoreSaberPresenter
+                     bind:players
+                     {songs}
+                     {series}
+                     {error}
+                     {isLoading}
+                     bind:currentPage
+                     {totalItems}
+                     bind:type={scoresType}
+                     on:browse={onScoreBrowse}
+                     isCached={!!playerScores && !!playerScores.length}
+                     on:transform-profile={onTransformProfile}
+                    />
+                </ScoreSaberProvider>
+            {/if}
+        </div>
     </div>
 </div>
 

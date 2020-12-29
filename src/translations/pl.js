@@ -31,12 +31,6 @@ export default {
                 defaultType: 'Domyślny typ',
             },
 
-            defaultSongList: {
-                header: 'Domyślna lista nut',
-                enhance: 'Dodawaj wynik/dokładność',
-                showDiff: 'Pokazuj różnice',
-            },
-
             others: {
                 header: 'Inne',
                 bgDownload: 'Pobieraj w tle',
@@ -185,6 +179,10 @@ export default {
         former: 'Poprzednio',
         totalPp: 'Razem dla ${name}',
         rankOfDate: 'Pozycja z dnia ${date}, kliknij aby odświeżyć',
+        ssScoreType: {
+            top: 'Najlepsze',
+            recent: 'Ostatnie',
+        },
     },
     songLeaderboard: {
         player: 'Gracz',
@@ -272,7 +270,7 @@ export default {
         sombra: 'Sombra'
     },
     plugin: {
-        transformButton: 'Transformuj',
+        transformButton: 'Cache',
     },
     common: {
         ok: 'OK',

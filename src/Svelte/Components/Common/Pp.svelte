@@ -9,6 +9,6 @@
 </script>
 
 <span class="scoreTop ppValue"><Value value="{pp}" {zero} {withZeroSuffix} prevValue={prevPp} suffix="pp" {...$$restProps} /></span>
-{#if weighted}
+{#if weighted !== null && weighted !== undefined}
 <span class="scoreTop ppWeightedValue">(<Value value="{weighted}" {zero} {withZeroSuffix} suffix="pp" {...$$restProps} />)</span>
 {/if}

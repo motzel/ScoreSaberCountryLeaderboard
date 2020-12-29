@@ -714,26 +714,6 @@
                 </section>
 
                 <section>
-                    <div class="menu-label">{$_.profile.settings.defaultSongList.header}</div>
-                    <div>
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.enhance}>
-                            {$_.profile.settings.defaultSongList.enhance}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.showDiff}>
-                            {$_.profile.settings.defaultSongList.showDiff}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.showWhatIfPp}>
-                            {$_.profile.settings.songLeaderboard.showWhatIfPp}
-                        </label>
-                    </div>
-                </section>
-
-                <section>
                     <div class="menu-label">{$_.profile.settings.others.header}</div>
 
                     <div class="columns">
@@ -816,6 +796,8 @@
 
     footer {
         margin-top: auto;
+        min-height: 3.75rem;
+        align-items: flex-end;
     }
 
     footer .column {
