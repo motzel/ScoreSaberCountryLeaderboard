@@ -3,6 +3,7 @@ import {substituteVars} from "../utils/format";
 import {default as queue} from "./queue";
 import log from '../utils/logger';
 import songsRepository from "../db/repository/songs";
+import cacheRepository from "../db/repository/cache";
 import {
     getRankedsNotesCache,
     getRankedsNotesSongCacheFromCharacteristics,
@@ -15,6 +16,22 @@ const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
 const SONG_BY_KEY_URL = BEATSAVER_API_URL + '/maps/detail/${key}'
 
+const BS_SUSPENSION_KEY = 'bsSuspension';
+
+const addHoursToDate = (hours, date = new Date()) => new Date(date.getTime() + 1000 * 60 * 60 * hours);
+const isSuspended = bsSuspension => !!bsSuspension && bsSuspension.activeTo > new Date() && bsSuspension.started > addHoursToDate(-24);
+const getCurrentSuspension = async () => cacheRepository().get(BS_SUSPENSION_KEY);
+const prolongSuspension = async bsSuspension => {
+    const current = new Date();
+
+    const suspension = isSuspended(bsSuspension) ? bsSuspension : {started: current, activeTo: new Date(), count: 0};
+
+    suspension.activeTo = addHoursToDate(Math.pow(2, suspension.count), suspension.activeTo);
+    suspension.count++;
+
+    return await cacheRepository().set(suspension, BS_SUSPENSION_KEY);
+}
+
 export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false) => {
     hash = hash.toLowerCase();
 
@@ -23,7 +40,11 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
 
     if(cacheOnly) return null;
 
+    let bsSuspension = await getCurrentSuspension();
+
     try {
+        if (isSuspended(bsSuspension)) return null;
+
         const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash}));
         if (!songInfo) {
             log.warn(`Song with ${hash} hash is no longer available at Beat Saver.`);
@@ -32,6 +53,10 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
 
         return cacheSongInfo(songInfo);
     } catch (err) {
+        if (err instanceof TypeError && err.toString().indexOf('Failed to fetch') >= 0) {
+            try {await prolongSuspension(bsSuspension)} catch {}
+        }
+
         if (err instanceof NotFoundError) {
             // TODO: cache it and do not try again
         }
@@ -49,7 +74,11 @@ export const getSongByKey = async (key, forceUpdate = false, cacheOnly = false) 
 
     if(cacheOnly) return null;
 
+    let bsSuspension = await getCurrentSuspension();
+
     try {
+        if (isSuspended(bsSuspension)) return null;
+
         const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_KEY_URL, {key}));
         if (!songInfo) {
             log.warn(`Song with ${key} key is no longer available at Beat Saver.`);
@@ -58,6 +87,10 @@ export const getSongByKey = async (key, forceUpdate = false, cacheOnly = false) 
 
         return cacheSongInfo(songInfo);
     } catch (err) {
+        if (err instanceof TypeError && err.toString().indexOf('Failed to fetch') >= 0) {
+            try {await prolongSuspension(bsSuspension)} catch {}
+        }
+
         log.warn(`Error fetching Beat Saver song by key "${key}"`);
         return null;
     }
@@ -77,7 +110,7 @@ async function cacheSongInfo(songInfo) {
 }
 
 export const fetchRankedsFromBs = async rankedsHashesToFetch => {
-    if (!rankedsHashesToFetch || !rankedsHashesToFetch.length) return;
+    if (!rankedsHashesToFetch || !rankedsHashesToFetch.length || isSuspended(await getCurrentSuspension())) return;
 
     const currentRankedsCache = await getRankedsNotesCache();
 
