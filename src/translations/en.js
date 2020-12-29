@@ -41,6 +41,7 @@ export default {
             others: {
                 header: 'Others',
                 bgDownload: 'Background download',
+                refreshHeader: 'Data refresh',
                 keepView: 'Keep the view',
                 alwaysRefresh: 'Always refresh',
             },

@@ -706,9 +706,16 @@
                         </label>
                     </div>
 
-                    <div class="column is-one-third">
-                        <label class="menu-label">{$_.profile.settings.songLeaderboard.defaultType}</label>
-                        <TypeFilterSelect bind:value={leaderboardType} {country} />
+                    <div class="columns">
+                        <div class="column is-one-third">
+                            <label class="menu-label">{$_.profile.settings.songLeaderboard.defaultType}</label>
+                            <TypeFilterSelect bind:value={leaderboardType} {country} />
+                        </div>
+
+                        <div class="column is-one-third">
+                            <label class="menu-label">{$_.profile.settings.others.refreshHeader}</label>
+                            <Select bind:value={values.viewTypeUpdates} items={strings.viewTypeUpdates} />
+                        </div>
                     </div>
                 </section>
 
@@ -741,10 +748,6 @@
                                 <input type="checkbox" bind:checked={config.others.bgDownload}>
                                 {$_.profile.settings.others.bgDownload}
                             </label>
-                        </div>
-
-                        <div class="column is-one-third">
-                            <Select bind:value={values.viewTypeUpdates} items={strings.viewTypeUpdates} top={true} />
                         </div>
                     </div>
                 </section>

@@ -41,6 +41,7 @@ export default {
             others: {
                 header: 'Inne',
                 bgDownload: 'Pobieraj w tle',
+                refreshHeader: 'Odświeżanie danych',
                 keepView: 'Utrzymuj widok',
                 alwaysRefresh: 'Zawsze odświeżaj',
             },
