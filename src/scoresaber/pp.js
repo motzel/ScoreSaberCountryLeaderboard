@@ -1,5 +1,6 @@
 import {RANKED, UNRANKED} from "./rankeds";
 import {getScoresByPlayerId} from "./players";
+import {convertArrayToObjectByKey} from '../utils/js'
 
 export function calcPp(scores, startIdx = 0) {
     return scores.reduce(
@@ -55,11 +56,11 @@ export function getTotalPp(scores) {
 
 export async function getTotalPlayerPp(playerId, modifiedScores = {}) {
     return getTotalPp(
-        Object.assign(
-            {},
-            await getScoresByPlayerId(playerId),
-            modifiedScores
-        )
+      Object.assign(
+        {},
+        convertArrayToObjectByKey(await getScoresByPlayerId(playerId), 'leaderboardId'),
+        modifiedScores
+      )
     );
 }
 
