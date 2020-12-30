@@ -154,7 +154,7 @@ export default {
             label: 'Compare',
             add: 'Add a player to compare',
             remove: 'Remove from comparision',
-            saveAsDefault: 'Save as default'
+            saveAsDefault: 'Save comparision as default'
         },
         playlist: {
             label: 'Playlist',

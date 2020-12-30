@@ -155,7 +155,7 @@ export default {
             label: 'Porównaj',
             add: 'Dodaj gracza do porównania',
             remove: 'Usuń z porównania',
-            saveAsDefault: 'Zapisz jako domyślne'
+            saveAsDefault: 'Zapisz porównanie jako domyślne'
         },
         playlist: {
             label: 'Playlista',

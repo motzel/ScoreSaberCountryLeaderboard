@@ -7,6 +7,7 @@
   import Select from '../../Common/Select.svelte'
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
   import {getPlayers} from '../../../../scoresaber/players'
+  import {getConfig, getMainPlayerId, setConfig} from '../../../../plugin-config'
 
   const dispatch = createEventDispatcher();
 
@@ -23,6 +24,7 @@
   export let isCached = false;
 
   let allPlayers = null;
+  let mainPlayerId = null;
 
   let initialized = false;
 
@@ -34,6 +36,7 @@
 
   onMount(async () => {
     getAllPlayers();
+    mainPlayerId = await getMainPlayerId();
 
     initialized = true;
   })
@@ -52,20 +55,45 @@
     dispatch('transform-profile');
   }
 
+  let comparisionModified = false;
   function onAddPlayerToComparision() {
     if(!allPlayers || !allPlayers.length || !players || players.length >= MAX_COMPARE_PLAYERS) return;
 
     players = players.concat([allPlayers[0]]);
+
+    comparisionModified = true;
   }
 
   function onRemovePlayerFromComparision(idx) {
     players = players.filter((p, pIdx) => pIdx !== idx);
+
+    comparisionModified = true;
   }
 
   function onPlayerSelected(e, idx) {
     if (!e || !e.detail || !e.detail.value || !players || !players[idx]) return;
 
     players[idx] = {playerId: e.detail.value.playerId, name: e.detail.value.label};
+
+    comparisionModified = true;
+  }
+
+  async function onSaveComparision() {
+    comparisionModified = false;
+
+    if (!players) return;
+
+    const playersIds = players.map(p => p.playerId).slice(1).filter(pId => pId !== mainPlayerId);
+    if (!playersIds.length) return;
+
+    const config = await getConfig()
+    if (!config) return;
+
+    if (!config.songBrowser) config.songBrowser = {};
+
+    config.songBrowser.compareTo = playersIds;
+
+    await setConfig(config);
   }
 </script>
 
@@ -86,6 +114,9 @@
   {#if allPlayers && allPlayers.length}
   <div class="compare">
     <Button iconFa="fas fa-balance-scale" title={$_.songBrowser.compare.add} on:click={onAddPlayerToComparision} />
+    {#if comparisionModified && isCached}
+      <Button iconFa="fas fa-save" type="primary" title={$_.songBrowser.compare.saveAsDefault} on:click={onSaveComparision} />
+    {/if}
   </div>
   {/if}
 </div>

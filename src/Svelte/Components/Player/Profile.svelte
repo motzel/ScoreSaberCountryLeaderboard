@@ -191,10 +191,11 @@
            [],
          )
          .concat(
-          profileId && mainPlayerId && mainPlayerId === profileId
+           compareTo && compareTo.length
            ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
            : [],
-         );
+         )
+         .slice(0, 4);
 
         if (ssStats && ssStats['Player ranking']) rank = ssStats['Player ranking'].value;
         if (ssStats && ssStats['Performance Points']) pp = ssStats['Performance Points'].value;
