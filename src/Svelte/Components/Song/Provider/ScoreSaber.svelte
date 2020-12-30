@@ -17,6 +17,11 @@
   export let totalItems = 0;
   export let type = 'recent';
 
+  let playerId = players && players.length ? players[0].id : null;
+  let lastPageData = scores && scores.length
+   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type, playerId}
+   : null;
+
   let songs = [];
   let series = [];
 
@@ -70,18 +75,16 @@
     playersScores = (await Promise.all(
      players.map(async player => getScoresByPlayerId(player.playerId))
     )).map(playerScores => convertArrayToObjectByKey(playerScores, 'leaderboardId'))
-
-    enhanceScores();
   }
 
   async function processFetched(pageData) {
-    if (!pageData) {
+    if (!pageData || !players || !players.length) {
       songs = [];
       series = [];
       return;
     }
 
-    totalItems = pageData.totalItems;
+    totalItems = pageData.totalItems && !isNaN(pageData.totalItems) ? pageData.totalItems : totalItems;
 
     const pageSongs = pageData.scores.map(s => {
       const {diffInfo, hash, leaderboardId, levelAuthorName:levelAuthor, songDiff:diff, songImg:img, songName: name, songAuthorName:songAuthor} = s;
@@ -110,17 +113,21 @@
     enhanceScores();
   }
 
-  async function fetchPage(players, pageNum, type) {
-    if (!players || !players.length || !initialized) return;
+  async function fetchPage(playerId, pageNum, type) {
+    if (!playerId || !initialized) return;
+
+    // do not fetch again the same data
+    if (lastPageData && lastPageData.pageNum === pageNum && lastPageData.type === type && (lastPageData.playerId === null || lastPageData.playerId === playerId)) return;
 
     isLoading = true;
 
     error = null;
 
     try {
-      const pageData = await fetchSsScores(players[0].playerId, pageNum, type);
+      const pageData = await fetchSsScores(playerId, pageNum, type);
+      if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
-      await processFetched(pageData);
+      lastPageData = pageData;
     }
     catch(err) {
       // TODO: revert to previous page/type on error
@@ -131,23 +138,36 @@
     isLoading = false;
   }
 
+  async function updatePlayerId(players) {
+    await getPlayersScores(players);
+
+    processFetched(lastPageData)
+
+    if (players && players.length && players[0].playerId !== playerId)
+      playerId = players[0].playerId;
+  }
+
   onMount(async () => {
     country = await getActiveCountry();
     await getPlayersScores(players);
     await getSsplCountryRanks();
 
-    if (scores && scores.length) await processFetched({scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type});
+    if(lastPageData) await processFetched(lastPageData);
 
     initialized = true;
   })
 
 
-  $: {
-    getPlayersScores(players);
+  $: if (lastPageData) {
+    processFetched(lastPageData)
   }
 
   $: {
-    fetchPage(players, pageNum, type)
+    updatePlayerId(players);
+  }
+
+  $: {
+    fetchPage(playerId, pageNum, type)
   }
 </script>
 

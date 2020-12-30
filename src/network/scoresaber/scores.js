@@ -38,7 +38,7 @@ export const fetchRecentScores = async (playerId, page = 1, rateLimitCallback = 
 
 export const fetchSsScores = async (playerId, page = 1, type='recent') => ({...parseSsUserScores(
   await fetchHtmlPage(queue.SCORESABER, getPlayerProfileUrl(playerId, !(type === 'top'), false, page))
-), type});
+), type, playerId});
 
 let stopFetchingScores = false;
 eventBus.on('stop-fetching-scores-cmd', () => {stopFetchingScores = true;});

@@ -10,6 +10,8 @@
 
   const dispatch = createEventDispatcher();
 
+  const MAX_COMPARE_PLAYERS = 4;
+
   export let players;
   export let songs = [];
   export let series = [];
@@ -51,7 +53,7 @@
   }
 
   function onAddPlayerToComparision() {
-    if(!allPlayers || !allPlayers.length) return;
+    if(!allPlayers || !allPlayers.length || !players || players.length >= MAX_COMPARE_PLAYERS) return;
 
     players = players.concat([allPlayers[0]]);
   }
