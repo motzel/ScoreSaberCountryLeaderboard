@@ -1,6 +1,7 @@
 <!--suppress JSUnfilteredForInLoop -->
 <script>
     import {onMount} from 'svelte';
+    import { fade } from 'svelte/transition';
     import Progress from '../Common/Progress.svelte';
     import Button from '../Common/Button.svelte';
     import FormattedDate from '../Common/FormattedDate.svelte';
@@ -192,7 +193,7 @@
     }
 </script>
 
-<div class="refresh-widget" class:pulse={isBackgroundDownloadInProgress} class:error={hasBackgroundDownloadError}>
+<div class="refresh-widget" class:pulse={isBackgroundDownloadInProgress} class:error={hasBackgroundDownloadError} transition:fade={{ duration: 1000 }}>
     {#if $state.started}
         <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}

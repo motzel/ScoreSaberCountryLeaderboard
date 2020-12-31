@@ -1,4 +1,5 @@
 <script>
+    import { fade } from 'svelte/transition';
     import Value from "./Value.svelte";
 
     export let label;
@@ -14,7 +15,7 @@
     export let onlyLabel = false;
 </script>
 
-<span class="badge" class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title}>
+<span class="badge" class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title} transition:fade={{ duration: 1000 }}>
     <span class="label"><slot name="label">{label}</slot></span>
     {#if !onlyLabel}
         <span class="spacer"></span>

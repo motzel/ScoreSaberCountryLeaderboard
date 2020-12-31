@@ -1,5 +1,6 @@
 <script>
     import {onMount} from 'svelte';
+    import { fade } from 'svelte/transition';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Badge from "../Common/Badge.svelte";
     import Select from "../Common/Select.svelte";
@@ -138,7 +139,7 @@
 
         addPlayCount(allScores);
 
-        if (playerScores) {
+        if (playerScores && playerScores.length) {
             addSsplStat('playCount', $_.profile.stats.rankedPlayCount);
             addSsStat('Replays Watched by Others');
             addTotalScore(allScores);
@@ -366,7 +367,7 @@
     </div>
 
     <div class="box has-shadow">
-        {#if playerScores && accStats}
+        {#if playerScores && playerScores.length && accStats}
             <div class="period">
                 <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
             </div>
@@ -398,9 +399,9 @@
                         </h2>
                     </div>
 
-                    {#if playerScores && ssBadges && ssBadges.length}
+                    {#if playerScores && playerScores.length && ssBadges && ssBadges.length}
                     <div class="column">
-                        <div class="badges ss-badges">
+                        <div class="badges ss-badges" transition:fade={{ duration: 2000 }}>
                             {#each ssBadges as ssBadge}
                                 <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
                             {/each}
@@ -415,7 +416,7 @@
                             {#each basicStats as stat} <Badge {...stat}/> {/each}
                         </div>
 
-                        {#if !playerScores && ssBadges && ssBadges.length}
+                        {#if (!playerScores || !playerScores.length) && ssBadges && ssBadges.length}
                             <div class="badges ss-badges">
                                 {#each ssBadges as ssBadge}
                                     <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
@@ -429,40 +430,39 @@
                             </div>
                         {/if}
                     </div>
+
                     {#if playerScores && playerScores.length}
                     <div class="column">
-                        {#if playerScores}
-                            {#if accStats}
-                                <div class="badges right">
-                                    {#each accStats as stat} <Badge {...stat}/> {/each}
-                                </div>
+                        {#if accStats}
+                            <div class="badges right">
+                                {#each accStats as stat} <Badge {...stat}/> {/each}
+                            </div>
+                        {/if}
+
+                        {#if stats}
+                            {#if activeCountry}
+                                <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
+                                    <span class="sspl-ranks" slot="value">
+                                        {#if filteredRankedScores && filteredRankedScores.length}
+                                        <div>
+                                            {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
+                                        </div>
+                                        <div>
+                                            {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
+                                        </div>
+                                        {:else}
+                                            -
+                                        {/if}
+                                    </span>
+                                </Badge>
                             {/if}
 
-                            {#if stats}
-                                {#if activeCountry}
-                                    <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
-                                        <span class="sspl-ranks" slot="value">
-                                            {#if filteredRankedScores && filteredRankedScores.length}
-                                            <div>
-                                                {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
-                                            </div>
-                                            <div>
-                                                {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
-                                            </div>
-                                            {:else}
-                                                -
-                                            {/if}
-                                        </span>
-                                    </Badge>
-                                {/if}
-
-                                {#if showBadges && stats.badges}
-                                    <div class="badges right">
-                                        {#each stats.badges as badge (badge)}
-                                            <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
-                                        {/each}
-                                    </div>
-                                {/if}
+                            {#if showBadges && stats.badges}
+                                <div class="badges right">
+                                    {#each stats.badges as badge (badge)}
+                                        <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
+                                    {/each}
+                                </div>
                             {/if}
                         {/if}
                     </div>

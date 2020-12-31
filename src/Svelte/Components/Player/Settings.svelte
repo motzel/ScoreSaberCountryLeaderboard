@@ -1,5 +1,6 @@
 <script>
     import {onMount} from "svelte";
+    import { fade } from 'svelte/transition';
 
     import Button from '../Common/Button.svelte';
     import Select from '../Common/Select.svelte';
@@ -553,7 +554,7 @@
 </script>
 
 {#if initialized && profileId}
-    <div class="buttons flex-center" class:flex-column={!dataAvailable}>
+    <div class="buttons flex-center" class:flex-column={!dataAvailable} transition:fade={{ duration: 1000 }}>
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
