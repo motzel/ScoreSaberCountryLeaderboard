@@ -294,7 +294,7 @@
 
     }
 
-    async function refreshPlayerStatus() {
+    async function refreshPlayerStatus(profileId, country) {
         isActivePlayer = (await getAllActivePlayersIds(country)).includes(profileId);
         isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(country)).includes(profileId);
         isFriend = (await getFriendsIds()).includes(profileId);
@@ -302,7 +302,7 @@
 
     let initialized = false;
 
-    async function refreshTwitchProfile() {
+    async function refreshTwitchProfile(profileId) {
         twitchProfile = await twitch.getProfileByPlayerId(profileId, true);
         twitchToken = await twitch.getCurrentToken();
         const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
@@ -380,9 +380,11 @@
 
         filterSortTypes();
 
-        await refreshPlayerStatus();
+        if (profileId) {
+            await refreshPlayerStatus(profileId, country);
 
-        await refreshTwitchProfile()
+            await refreshTwitchProfile(profileId)
+        }
     }
 
     onMount(async () => {
@@ -394,18 +396,16 @@
 
         initialized = true;
 
-        const profileExists = !!(await getPlayerInfo(profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
-            if (!profileExists && playerId === profileId) {
-                // TODO: reload profile page for now, try to do it to be more dynamic
-                window.location.reload();
+            if (!playerInfo && playerId === profileId) {
+                await updatePlayerInfo(profileId);
             }
         })
 
-        const unsubscriberConfigChanged = eventBus.on('config-changed', () => refreshConfig());
+        const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
 
         const twitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
-            if(playerId === profileId) await refreshTwitchProfile();
+            if(playerId === profileId) await refreshTwitchProfile(profileId);
         });
 
         return () => {
@@ -517,14 +517,14 @@
     async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
         await updatePlayer({id: profileId});
-        await refreshPlayerStatus();
+        await refreshPlayerStatus(profileId, country);
 
         eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
     async function removePlayerFromFriends() {
         await removePlayerFromGroup(profileId, isManuallyAddedPlayer);
-        await refreshPlayerStatus();
+        await refreshPlayerStatus(profileId, country);
 
         if (isManuallyAddedPlayer)
             eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
@@ -546,6 +546,18 @@
 
     function onLocaleChange() {
         setCurrentLocale(values.locale.id);
+    }
+
+    async function updatePlayerInfo(profileId) {
+        dataAvailable = await isDataAvailable();
+        playerInfo = await getPlayerInfo(profileId);
+
+        refreshPlayerStatus(profileId, country);
+        refreshTwitchProfile(profileId);
+    }
+
+    $: if (initialized && profileId) {
+        updatePlayerInfo(profileId);
     }
 
     $: {
