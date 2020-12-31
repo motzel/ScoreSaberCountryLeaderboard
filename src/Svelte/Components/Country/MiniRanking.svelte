@@ -160,13 +160,13 @@
             <tbody>
             {#each ranking as row}
                 <tr>
-                    <td>
+                    <td class="rank">
                         <Rank rank={row.miniRank}/>
                     </td>
-                    <td>
+                    <td class="player">
                         <Player user={row}/>
                     </td>
-                    <td>
+                    <td class="pp">
                         <Pp pp="{row.pp}" zero={formatNumber(0)} prevPp={playerPp} inline={true}/>
                     </td>
                 </tr>
@@ -185,8 +185,26 @@
         padding: .5rem;
         text-align: center;
     }
+    table {
+        width: 100%;
+    }
     table tbody td {
         padding: 0.25em 0.25em;
+        border-bottom: 1px solid var(--dimmed);
+    }
+    td.rank {
+        min-width: 3.75em;
+        text-align: right;
+    }
+    td.player {
+        overflow-x: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        width: 14em;
+    }
+    td.pp {
+        min-width: 10.75em;
+        text-align: left!important;
     }
     .error {
         font-weight: 500;

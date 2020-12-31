@@ -1,6 +1,7 @@
 <script>
     import {onMount} from 'svelte';
-    import { fade } from 'svelte/transition';
+    import {fade} from 'svelte/transition';
+    import {hoverable} from '../../Actions/hoverable';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Badge from "../Common/Badge.svelte";
     import Select from "../Common/Select.svelte";
@@ -12,7 +13,7 @@
     import {_, trans} from '../../stores/i18n';
     import {dateFromString, timestampFromString} from "../../../utils/date";
 
-    import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId} from '../../../scoresaber/players'
+    import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId, isCountryPlayer} from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
     import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
     import Value from '../Common/Value.svelte'
@@ -22,6 +23,7 @@
     import Browser from '../Song/Browser.svelte'
     import ScoreSaberProvider from '../Song/Provider/ScoreSaber.svelte'
     import ScoreSaberPresenter from '../Song/Presenter/ScoreSaber.svelte'
+    import MiniRanking from '../Country/MiniRanking.svelte'
 
     export let profileId;
     export let name;
@@ -98,10 +100,16 @@
 
     let activeCountry = null;
     let ssplCountryRanksCache = {};
+    let isPlayerFromCurrentCountry = false;
 
     let initialized = false;
 
     let rankedsNotesCache = null;
+
+    let countryRankingEl = null;
+    let miniRankingCountry = country;
+    let miniRankingType = "country";
+    let miniRankingCountryRank = null;
 
     const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
 
@@ -192,7 +200,7 @@
            [],
          )
          .concat(
-           compareTo && compareTo.length
+          compareTo && compareTo.length
            ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
            : [],
          )
@@ -223,6 +231,8 @@
             if (!pp) pp = playerInfo.pp;
 
             activeCountry = await getActiveCountry();
+
+            isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
 
             const ssplCountryRank = playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
             if (ssplCountryRank) countryRanks =
@@ -346,17 +356,34 @@
 
     let currentPage = prefetchedScores.pageNum ? prefetchedScores.pageNum - 1 : 0;
     let scoresType = prefetchedScores.type ? prefetchedScores.type : 'recent';
+
     function onScoreBrowse() {
         if (!players || !players.length) return;
 
         // update browser url
         const url = new URL(
-         getPlayerProfileUrl(players[0].playerId, !(scoresType === 'top'), false, currentPage + 1)
+         getPlayerProfileUrl(players[0].playerId, !(scoresType === 'top'), false, currentPage + 1),
         );
         history.replaceState(null, '', url.toString());
     }
+
     function onTransformProfile() {
         transformed = true;
+    }
+
+    function onRankHover(event) {
+        const el = event.detail.target.closest('[data-type]');
+        if (el && ['country', 'active-country', 'global'].includes(el.dataset.type)) {
+            miniRankingCountryRank = el.dataset.rank;
+            miniRankingCountry = el.dataset.country;
+            miniRankingType = el.dataset.type === 'global' ? 'global' : 'country';
+        }
+
+        countryRankingEl.style.display = 'block';
+    }
+
+    function onRankUnhover(event) {
+        countryRankingEl.style.display = 'none';
     }
 </script>
 
@@ -385,17 +412,24 @@
                             {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
                             <span class="pp"><Value value={pp} suffix="pp" /></span>
                         </h1>
-                        <h2 class="title is-5">
-                            <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}">
+                        <h2 class="title is-5 ranks" use:hoverable on:hover={onRankHover} on:unhover={onRankUnhover}>
+                            <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}" data-type="global" data-rank={rank}>
                                 <i class="fas fa-globe-americas"></i>
                                 <Value value={rank} prefix="#" digits={0} zero="#0" />
                             </a>
                             {#each countryRanks as countryRank}
-                                <a href="/global?country={countryRank.country}">
+                            <a href="/global?country={countryRank.country}"
+                               data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
+                            >
                                 <img src="/imports/images/flags/{countryRank.country}.png">
                                 <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={ countryRank.subRank && countryRank.subRank !== countryRank.rank ? ` (#${countryRank.subRank})` : ''} />
                             </a>
                             {/each}
+                            <div bind:this={countryRankingEl} class="mini-ranking">
+                                <MiniRanking country={miniRankingCountry} type={miniRankingType} globalRank={rank}
+                                             countryRank={miniRankingCountryRank}
+                                             playerId={profileId} playerPp={pp} numOfItems={5} />
+                            </div>
                         </h2>
                     </div>
 
@@ -634,5 +668,26 @@
 
     .chart {
         min-height: 300px;
+    }
+
+    .ranks {
+        position: relative;
+    }
+
+    .mini-ranking {
+        display: none;
+        position: absolute;
+        top: 1.5rem;
+        left: 0;
+        z-index: 10;
+        width: 28rem;
+        max-height: 12rem;
+        padding: .25rem;
+        font-size: .875rem;
+        font-weight: normal;
+        color: var(--textColor);
+        background-color: var(--foreground);
+        border: 1px solid var(--textColor);
+        overflow: hidden;
     }
 </style>
