@@ -35,12 +35,6 @@
   const enhanceScores = async () => {
     if (!(songs && series && songs.length && series.length && playersScores)) return;
 
-    // TODO: get it from the config; onMount(), refresh if config changes
-    // const ssConfig = await getConfig('ssSong');
-    // const showDiff = !!ssConfig?.showDiff;
-    // const showWhatIfPp = !!ssConfig?.showWhatIfPp;
-    const showDiff = true;
-
     series = await Promise.all(series.map(async songSeries => await Promise.all(songSeries.map(async (score, idx) => {
       if (!score) return score;
 
@@ -57,7 +51,7 @@
         }
       }
 
-      return cachedScore ? await enhanceScore(score, cachedScore, showDiff) : score;
+      return cachedScore ? await enhanceScore(score, cachedScore) : score;
     }))));
 
     if (series && series.length && players && players.length) {

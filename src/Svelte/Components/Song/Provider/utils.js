@@ -3,7 +3,7 @@ import {dateFromString} from '../../../../utils/date'
 import {shouldBeHidden} from '../../../../eastereggs'
 import {round} from '../../../../utils/format'
 
-export const enhanceScore = async (score, cachedScore, showDiff = true) => {
+export const enhanceScore = async (score, cachedScore) => {
   try {
     const maxSongScore = await getSongMaxScore(
       cachedScore?.hash ? cachedScore.hash : score.hash,
@@ -32,7 +32,7 @@ export const enhanceScore = async (score, cachedScore, showDiff = true) => {
     score.hidden = cachedScore?.acc ? shouldBeHidden(Object.assign({}, cachedScore, {id: cachedScore.playerId, acc: cachedScore.acc})) : false;
 
     const history = ((Array.isArray(cachedScore?.history) && cachedScore.history.length ? cachedScore.history : []).sort((a,b) => b.score - a.score))[0];
-    if (showDiff && (useCurrentScoreAsPrev || history)) {
+    if (useCurrentScoreAsPrev || history) {
       score.prevRank = useCurrentScoreAsPrev ? cachedScore.rank : history.rank;
       score.prevPp = useCurrentScoreAsPrev ? cachedScore.pp : history.pp;
       score.prevScore = useCurrentScoreAsPrev ? cachedScore.score : history.score;
