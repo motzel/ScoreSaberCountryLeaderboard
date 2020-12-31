@@ -113,7 +113,9 @@
 
   {#if allPlayers && allPlayers.length}
   <div class="compare">
+    {#if allPlayers && allPlayers.length && players && players.length < MAX_COMPARE_PLAYERS}
     <Button iconFa="fas fa-balance-scale" title={$_.songBrowser.compare.add} on:click={onAddPlayerToComparision} />
+    {/if}
     {#if comparisionModified && isCached}
       <Button iconFa="fas fa-save" type="primary" title={$_.songBrowser.compare.saveAsDefault} on:click={onSaveComparision} />
     {/if}
