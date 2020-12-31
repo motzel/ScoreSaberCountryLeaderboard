@@ -18,8 +18,6 @@
 
     let currentlyLoadedPage = null;
 
-    console.warn(`currentPage=${currentPage}, total=${totalItems}, itemsPerPage=${itemsPerPage}`)
-
     function dispatchEvent(initial = false)
     {
         let to = (currentPage + 1) * itemsPerPage - 1;
