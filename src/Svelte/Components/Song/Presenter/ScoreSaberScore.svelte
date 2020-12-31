@@ -1,6 +1,8 @@
 <script>
+  import {onMount} from 'svelte'
   import {fly} from 'svelte/transition';
   import {_} from "../../../stores/i18n";
+  import eventBus from '../../../../utils/broadcast-channel-pubsub';
   import {formatNumber} from "../../../../utils/format";
   import WhatIfPp from "../WhatIfPp.svelte";
   import Pp from "../../Common/Pp.svelte";
@@ -9,10 +11,25 @@
   import Difficulty from '../../Common/Difficulty.svelte'
   import Song from '../Song.svelte'
   import FormattedDate from '../../Common/FormattedDate.svelte'
+  import {getConfig} from '../../../../plugin-config'
 
   export let song = null;
   export let series = [];
-  export let showWhatIfPp = true;
+
+  let showWhatIfPp = true;
+  let showDifferences = true;
+
+  async function updateConfig() {
+    const slConfig = await getConfig('songLeaderboard');
+    showWhatIfPp = !!(slConfig && slConfig.showWhatIfPp);
+    showDifferences = !!(slConfig && slConfig.showDiff);
+  }
+
+  onMount(async () => {
+    await updateConfig();
+
+    return eventBus.on('config-changed', updateConfig);
+  });
 </script>
 
 {#if song}
@@ -40,7 +57,6 @@
         </figure>
       </Song>
     </td>
-
     <td class="timeset">
       <FormattedDate date={series[0].timeset} />
     </td>
@@ -49,7 +65,7 @@
       <td class="score" class:main={idx === 0}>
         {#if playerScore}
           {#if playerScore.pp}
-          <Pp pp="{playerScore.pp}" prevPp={idx > 0 ? null : playerScore.prevPp} zero={formatNumber(0)}
+          <Pp pp="{playerScore.pp}" prevPp={idx > 0 || !showDifferences ? null : playerScore.prevPp} zero={formatNumber(0)}
               withZeroSuffix={true} weighted={playerScore.ppWeighted} inline={true}/>
           {/if}
 
@@ -57,7 +73,7 @@
             <div>
               <span class="scoreBottom">
                 {$_.songBrowser.fields.acc}:
-                <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 ? null : playerScore.prevAcc} inline={true}
+                <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 || !showDifferences ? null : playerScore.prevAcc} inline={true}
                        suffix={'%' + (playerScore.mods && playerScore.mods.length ? ' (' + playerScore.mods + ')' : '')} suffixPrev="%"
                 />
               </span>
@@ -68,7 +84,7 @@
             <div>
               <span class="scoreBottom">
                 {$_.songBrowser.fields.score}:
-                <Value value="{playerScore.score}" prevValue={idx > 0 ? null : playerScore.prevScore} inline={true} digits={0}/>
+                <Value value="{playerScore.score}" prevValue={idx > 0 || !showDifferences ? null : playerScore.prevScore} inline={true} digits={0}/>
               </span>
             </div>
           {/if}
