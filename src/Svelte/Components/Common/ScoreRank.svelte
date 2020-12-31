@@ -21,6 +21,7 @@
 	export let showCountryTotal = false;
 	export let disableUpdating = false;
 	export let inline = true;
+	export let cachedRecentPlay = null;
 
 	const REFRESH_TIMEOUT = 10 * 1000;
 
@@ -31,12 +32,16 @@
 	let userCountryRank;
 	let userCountryRankTotal;
 
+	let fadeSsplCountryRank = false;
+
 	const currentRank = tweened(rank, {
 		duration: 500,
 		easing: cubicOut
 	});
 
 	onMount(() => {
+		fadeSsplCountryRank = cachedRecentPlay && timeset && dateFromString(cachedRecentPlay) < dateFromString(timeset);
+
 		if (!disableUpdating) {
 			const scoreUpdatingSubscriber = eventBus.on('player-score-update-start', ({playerId: scorePlayerId, leaderboardId: scoreLeaderboardId}) => {
 				if (scorePlayerId === playerId && scoreLeaderboardId === leaderboardId) {
@@ -112,7 +117,7 @@
 {/if}
 
 {#if country && userCountryRank}
-	<span class="country-rank" style="display:{inline ? 'inline' : 'block'};">
+	<span class="country-rank" style="display:{inline ? 'inline' : 'block'};" class:faded={fadeSsplCountryRank}>
 		<img src="/imports/images/flags/{country}.png"/>
 		<span class="value" title={!showCountryTotal && country && userCountryRank && userCountryRankTotal ? '#' + userCountryRank + ' / ' + userCountryRankTotal : ''}><Value value={userCountryRank} prefix="#" zero="-" digits={0}/>{#if showCountryTotal}<Value value={userCountryRankTotal} prefix="/" zero="-" digits={0}/>{/if}</span>
 	</span>
@@ -122,7 +127,7 @@
 	a {
 		color: var(--textColor) !important;
 	}
-	a.faded {
+	.faded {
 		color: var(--faded) !important;
 	}
 	.value {

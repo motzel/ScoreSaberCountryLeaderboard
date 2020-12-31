@@ -21,6 +21,7 @@
   export let error = null;
   export let type = 'recent'
   export let isCached = false;
+  export let cachedRecentPlay;
   export let beforePageChanged;
 
   let allPlayers = null;
@@ -150,7 +151,7 @@
   <tbody>
 {#each songs as song, idx (song.leaderboardId)}
   <slot {song} {series}>
-    <ScoreSaberScorePresenter {song} series={series[idx]}/>
+    <ScoreSaberScorePresenter {song} series={series[idx]} {cachedRecentPlay} />
   </slot>
 {/each}
   </tbody>

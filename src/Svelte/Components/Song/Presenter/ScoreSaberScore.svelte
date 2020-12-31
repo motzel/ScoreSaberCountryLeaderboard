@@ -15,6 +15,7 @@
 
   export let song = null;
   export let series = [];
+  export let cachedRecentPlay = null;
 
   let showWhatIfPp = true;
   let showDifferences = true;
@@ -40,6 +41,8 @@
                  countryRank={playerScore.ssplCountryRank}
                  country={playerScore.country}
                  disableUpdating={true}
+                 timeset={playerScore.timeset}
+                 {cachedRecentPlay}
                  inline={false}
       />
       {/if}{/each}

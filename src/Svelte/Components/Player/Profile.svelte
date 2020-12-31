@@ -503,6 +503,7 @@
                      {beforePageChanged}
                      on:browse={onScoreBrowse}
                      isCached={!!playerScores && !!playerScores.length}
+                     cachedRecentPlay={playerInfo ? playerInfo.recentPlay : null}
                      on:transform-profile={onTransformProfile}
                     />
                 </ScoreSaberProvider>
