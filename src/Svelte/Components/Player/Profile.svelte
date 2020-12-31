@@ -377,9 +377,9 @@
             miniRankingCountryRank = el.dataset.rank;
             miniRankingCountry = el.dataset.country;
             miniRankingType = el.dataset.type === 'global' ? 'global' : 'country';
-        }
 
-        countryRankingEl.style.display = 'block';
+            countryRankingEl.style.display = 'block';
+        }
     }
 
     function onRankUnhover(event) {
@@ -422,12 +422,14 @@
                                data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
                             >
                                 <img src="/imports/images/flags/{countryRank.country}.png">
-                                <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" suffix={ countryRank.subRank && countryRank.subRank !== countryRank.rank ? ` (#${countryRank.subRank})` : ''} />
+                                <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" />
+                                {#if countryRank.subRank && countryRank.subRank !== countryRank.rank}
+                                <small>(#{ countryRank.subRank })</small>
+                                {/if}
                             </a>
                             {/each}
                             <div bind:this={countryRankingEl} class="mini-ranking">
-                                <MiniRanking country={miniRankingCountry} type={miniRankingType} globalRank={rank}
-                                             countryRank={miniRankingCountryRank}
+                                <MiniRanking country={miniRankingCountry} type={miniRankingType} rank={miniRankingCountryRank}
                                              playerId={profileId} playerPp={pp} numOfItems={5} />
                             </div>
                         </h2>
@@ -672,6 +674,10 @@
 
     .ranks {
         position: relative;
+    }
+
+    .ranks small {
+        font-size: .75em;
     }
 
     .mini-ranking {

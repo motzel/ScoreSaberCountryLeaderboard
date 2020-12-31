@@ -4,19 +4,18 @@
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
     import Pp from '../Common/Pp.svelte';
-    import {GLOBAL_URL, PLAYERS_PER_PAGE, PLAYERS_URL} from "../../../network/scoresaber/consts";
+    import {GLOBAL_URL, PLAYERS_PER_PAGE, COUNTRY_URL} from "../../../network/scoresaber/consts";
     import {getActiveCountryPlayers,} from "../../../scoresaber/players";
     import {formatNumber, substituteVars} from "../../../utils/format";
     import {convertArrayToObjectByKey} from "../../../utils/js";
-    import {delay, fetchHtmlPage} from "../../../network/fetch";
+    import {fetchHtmlPage} from "../../../network/fetch";
     import queue from "../../../network/queue";
     import {getActiveCountry} from "../../../scoresaber/country";
     import {parseSsLeaderboardScores} from '../../../scoresaber/scores'
 
     export let type = "country";
     export let country;
-    export let globalRank;
-    export let countryRank;
+    export let rank;
     export let playerId;
     export let playerPp;
     export let numOfItems = 5;
@@ -24,54 +23,35 @@
     if (numOfItems < 2) numOfItems = 2;
 
     let activeCountry;
-    let isPlayerFromActiveCountry = false;
-    let playersCache = {global: [], activeCountry: [], country: {}};
+    let activeCountryPlayers = null;
+    let playersCache = {global: {}, country: {}};
     let overridePlayersPp = {};
     let players = null;
     let loading = true;
     let error = null;
+
     onMount(async () => {
+        // TODO: update active country & players when change
         activeCountry = await getActiveCountry();
-
-        if (activeCountry) {
-            playersCache.activeCountry = await getActiveCountryPlayers(activeCountry);
-
-            const player = playersCache.activeCountry ? playersCache.activeCountry.find(p => p.id === playerId) : null;
-            if (player) {
-                isPlayerFromActiveCountry = true;
-
-                // active country player
-                await fetchHtmlPage(queue.SCORESABER, substituteVars(PLAYERS_URL, {country: activeCountry}))
-                        .then(document => {
-                            overridePlayersPp = Object.assign(
-                                {},
-                                    overridePlayersPp,
-                                    convertArrayToObjectByKey(
-                                    parseSsLeaderboardScores(document)
-                                            .map(s => ({playerId: s.playerId, pp: s.pp})), 'playerId')
-                            )
-                        })
-                        .catch(_ => {}); // swallow error
-            }
-        }
+        if (activeCountry) activeCountryPlayers = await getActiveCountryPlayers(activeCountry);
     });
 
     function getPage(rank) {
-        return Math.ceil((rank - 1) / PLAYERS_PER_PAGE);
+        return Math.ceil(rank / PLAYERS_PER_PAGE);
     }
 
-    async function fetchRanking(url, rank) {
+    async function fetchRanking(url, rank, country) {
         const playerPage = getPage(rank);
         const firstPlayerRank = rank - (numOfItems - (numOfItems > 2 ? 2 : 1));
         const firstPlayerRankPage = getPage(firstPlayerRank);
-        const lastPlayerRankPage = getPage(rank + 1);
+        const lastPlayerRankPage = getPage(firstPlayerRank + 1);
 
-        const pages = [... new Set([playerPage, firstPlayerRankPage, lastPlayerRankPage])];
+        const pages = [... new Set([playerPage, firstPlayerRankPage === 0 ? 1 : firstPlayerRankPage, lastPlayerRankPage])];
 
         let ranking = [];
         for (const page of pages) {
             ranking = ranking.concat(
-                    await fetchHtmlPage(queue.SCORESABER, substituteVars(url, {page}))
+                    await fetchHtmlPage(queue.SCORESABER, substituteVars(url, {page, country}))
                             .then(document => parseSsLeaderboardScores(document))
                             .then(players => players.map(p => {
                                 const {tr, mods, percent, score, timesetAgo, rank, playerId, playerName, ...player} = p;
@@ -83,52 +63,56 @@
         return ranking.sort((a, b) => b.pp - a.pp);
     }
 
-    function setPlayers(type, overridePlayersPp, country, activeCountry, isPlayerFromActiveCountry, cache) {
+    function setPlayers(type, overridePlayersPp, country, rank, isActiveCountryPlayer) {
         players = null;
         error = null;
 
-        switch(type) {
-            case 'global':
-                if (!(cache && cache.global && cache.global.length)) {
-                    if (!globalRank) return;
+        if (!playersCache.country[country]) playersCache.country[country] = {};
 
-                    loading = true;
-                    players = null;
+        const cache = type === 'global' ? playersCache.global : playersCache.country[country];
+        const url = type === 'global' ? GLOBAL_URL : COUNTRY_URL;
 
-                    fetchRanking(GLOBAL_URL, globalRank)
-                    .then(ranking => {
-                        players = cache.global = ranking;
+        if (!(cache.players && cache.players.length) || (rank && cache.rank !== rank)) {
+            if (!rank) return;
 
-                        loading = false;
-                    })
-                    .catch(e => {
-                        loading = false;
+            loading = true;
+            players = null;
 
-                        error = $_.common.downloadError;
-                    })
-                } else {
-                    players = cache.global;
-                }
+            fetchRanking(url, rank, country)
+             .then(ranking => {
+                 if (type === 'country' && country === activeCountry && activeCountryPlayers && isActiveCountryPlayer) {
+                     const additionalPlayers = activeCountryPlayers.filter(p => p.country.toLowerCase() !== activeCountry);
 
-                return;
+                     overridePlayersPp = Object.assign(
+                      {},
+                      overridePlayersPp,
+                      convertArrayToObjectByKey(additionalPlayers.map(p => ({id: p.id, pp: p.pp})), 'playerId'),
+                     )
 
-            case 'country':
-                if (isPlayerFromActiveCountry && cache.activeCountry) {
-                    players = cache.activeCountry
-                            .map(u => {
-                                if (overridePlayersPp && overridePlayersPp[u.id] && overridePlayersPp[u.id].pp) {
-                                    u.pp = overridePlayersPp[u.id].pp;
-                                }
-                                return u;
-                            })
-                            .sort((a, b) => b.pp - a.pp) // sort it again after override
-                            .map((p, idx) => ({...p, miniRank: idx + 1}));
+                     ranking = ranking.concat(additionalPlayers)
+                      .map(player => {
+                          if (overridePlayersPp[player.id] && overridePlayersPp[player.id].pp) {
+                              player.pp = overridePlayersPp[player.id].pp;
+                          }
 
-                    loading = false;
+                          return player;
+                      })
+                      .sort((a, b) => b.pp - a.pp) // sort it again after override
+                      .map((p, idx) => ({...p, miniRank: idx + 1}));
+                 }
 
-                    return;
-                }
-                break;
+                 players = cache.players = ranking;
+                 cache.rank = rank;
+
+                 loading = false;
+             })
+             .catch(e => {
+                 loading = false;
+
+                 error = $_.common.downloadError;
+             })
+        } else {
+            players = cache.players;
         }
     }
 
@@ -144,8 +128,10 @@
         return players.slice(startIdx, startIdx + numOfItems);
     }
 
+    $: isActiveCountryPlayer = !!(activeCountryPlayers && activeCountryPlayers.find(p => p.id === playerId));
+
     $: {
-        setPlayers(type, overridePlayersPp, country, activeCountry, isPlayerFromActiveCountry, playersCache);
+        setPlayers(type, overridePlayersPp, country, rank, isActiveCountryPlayer);
     }
     $: ranking = getRanking(players);
 </script>

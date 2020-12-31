@@ -1,7 +1,7 @@
 import {substituteVars} from "../../utils/format";
 import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
 import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} from "../../utils/js";
-import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, PLAYER_PROFILE_URL, PLAYERS_URL} from "./consts";
+import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, PLAYER_PROFILE_URL, COUNTRY_URL} from "./consts";
 import queue from "../queue";
 import {
     getManuallyAddedPlayersIds,
@@ -51,7 +51,7 @@ export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_A
     };
 });
 export const fetchSsCountryRankPage = async (country, page = 1) =>
-  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(PLAYERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(COUNTRY_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
     .map(a => {
         const tr = a.closest("tr");
         const id = getFirstRegexpMatch(/\/(\d+)$/, a.href)
