@@ -1,6 +1,7 @@
 <script>
     import {onMount} from 'svelte';
     import {_} from '../../stores/i18n';
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
     import Rank from '../Common/Rank.svelte';
     import Player from '../Common/Player.svelte';
     import Pp from '../Common/Pp.svelte';
@@ -30,10 +31,15 @@
     let loading = true;
     let error = null;
 
-    onMount(async () => {
-        // TODO: update active country & players when change
+    const refreshConfig = async () => {
         activeCountry = await getActiveCountry();
         if (activeCountry) activeCountryPlayers = await getActiveCountryPlayers(activeCountry);
+    };
+
+    onMount(async () => {
+        await refreshConfig()
+
+        return eventBus.on('config-changed', refreshConfig);
     });
 
     function getPage(rank) {
@@ -63,7 +69,7 @@
         return ranking.sort((a, b) => b.pp - a.pp);
     }
 
-    function setPlayers(type, overridePlayersPp, country, rank, isActiveCountryPlayer) {
+    function setPlayers(type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer) {
         players = null;
         error = null;
 
@@ -131,7 +137,7 @@
     $: isActiveCountryPlayer = !!(activeCountryPlayers && activeCountryPlayers.find(p => p.id === playerId));
 
     $: {
-        setPlayers(type, overridePlayersPp, country, rank, isActiveCountryPlayer);
+        setPlayers(type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer);
     }
     $: ranking = getRanking(players);
 </script>
