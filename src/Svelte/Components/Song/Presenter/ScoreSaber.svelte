@@ -18,10 +18,10 @@
   export let series = [];
   export let currentPage = 0;
   export let totalItems = 0;
-  export let isLoading = false;
   export let error = null;
   export let type = 'recent'
   export let isCached = false;
+  export let beforePageChanged;
 
   let allPlayers = null;
   let mainPlayerId = null;
@@ -159,7 +159,7 @@
        itemsPerPage={PLAYS_PER_PAGE}
        {totalItems}
        itemsPerPageValues={null}
-       {isLoading}
+       {beforePageChanged}
        on:page-changed={onPageChanged}
 />
 {#if error}

@@ -489,7 +489,7 @@
                  pageNum={currentPage + 1}
                  totalItems={ssStats && ssStats['Play Count'] && ssStats['Play Count'].value ? ssStats['Play Count'].value : 0}
                  type={scoresType}
-                 let:songs let:series let:totalItems let:isLoading let:error
+                 let:songs let:series let:totalItems let:isLoading let:error let:beforePageChanged
                 >
                     <ScoreSaberPresenter
                      bind:players
@@ -500,6 +500,7 @@
                      bind:currentPage
                      {totalItems}
                      bind:type={scoresType}
+                     {beforePageChanged}
                      on:browse={onScoreBrowse}
                      isCached={!!playerScores && !!playerScores.length}
                      on:transform-profile={onTransformProfile}

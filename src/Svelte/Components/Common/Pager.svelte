@@ -10,11 +10,15 @@
     export let displayMax;
     if (!displayMax) displayMax = 11;
     export let hide = false;
-    export let isLoading = false;
+    export let beforePageChanged;
 
     let displayStart = false;
     let displayEnd = false;
     let prevItemsPerPage = itemsPerPage;
+
+    let currentlyLoadedPage = null;
+
+    console.warn(`currentPage=${currentPage}, total=${totalItems}, itemsPerPage=${itemsPerPage}`)
 
     function dispatchEvent(initial = false)
     {
@@ -28,7 +32,17 @@
         dispatchEvent(true);
     })
 
-    function onPageChanged(page) {
+    async function onPageChanged(page) {
+        if (beforePageChanged) {
+            currentlyLoadedPage = page;
+
+            const shouldContinue = await beforePageChanged(page);
+
+            currentlyLoadedPage = null;
+
+            if (!shouldContinue) return;
+        }
+
         currentPage = page
 
         dispatchEvent(false);
@@ -76,14 +90,16 @@
     <ul class="pagination-list">
         {#if displayStart}
             <li data-page={0}><a href="#" on:click|preventDefault={() => onPageChanged(0)}
-                                 class={'pagination-link' + (currentPage === 0 ? ' is-current' : '')}>{1}</a></li>
+                                 class={'pagination-link' + (currentPage === 0 ? ' is-current' : '')}>
+                {#if currentlyLoadedPage === 0}<i class="fas fa-spinner fa-spin"></i>{:else}{1}{/if}
+            </a></li>
             <li><span class="pagination-ellipsis">…</span></li>
         {/if}
 
         {#each displayedPages as page}
         <li data-page={page}>
             <a href="#" on:click|preventDefault={() => onPageChanged(page-1)} class={'pagination-link' + (currentPage === page - 1 ? ' is-current' : '')}>
-                {#if isLoading && currentPage === page - 1}<i class="fas fa-spinner fa-spin"></i>{:else}{page}{/if}
+                {#if currentlyLoadedPage === page - 1}<i class="fas fa-spinner fa-spin"></i>{:else}{page}{/if}
             </a>
         </li>
         {/each}
@@ -91,8 +107,9 @@
         {#if displayEnd}
             <li><span class="pagination-ellipsis">…</span></li>
             <li data-page={pagesTotal - 1}><a href="#" on:click|preventDefault={() => onPageChanged(pagesTotal - 1)}
-                                              class={'pagination-link' + (currentPage === pagesTotal - 1 ? ' is-current' : '')}>{pagesTotal}</a>
-            </li>
+                                              class={'pagination-link' + (currentPage === pagesTotal - 1 ? ' is-current' : '')}>
+                {#if currentlyLoadedPage === pagesTotal -1}<i class="fas fa-spinner fa-spin"></i>{:else}{pagesTotal}{/if}
+            </a></li>
         {/if}
     </ul>
     {#if itemsPerPageValues && itemsPerPageValues.length}

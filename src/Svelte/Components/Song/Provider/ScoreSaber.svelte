@@ -29,7 +29,6 @@
   let country = null;
 
   let error = null;
-  let isLoading = false;
 
   let initialized = false;
 
@@ -113,29 +112,29 @@
     enhanceScores();
   }
 
-  async function fetchPage(playerId, pageNum, type) {
+  async function fetchPage(playerId, type, pageToLoad) {
     if (!playerId || !initialized) return;
 
-    // do not fetch again the same data
-    if (lastPageData && lastPageData.pageNum === pageNum && lastPageData.type === type && (lastPageData.playerId === null || lastPageData.playerId === playerId)) return;
+    if (!pageToLoad) pageToLoad = pageNum;
 
-    isLoading = true;
+    // do not fetch again the same data
+    if (lastPageData && lastPageData.pageNum === pageToLoad && lastPageData.type === type && (lastPageData.playerId === null || lastPageData.playerId === playerId)) return;
 
     error = null;
 
     try {
-      const pageData = await fetchSsScores(playerId, pageNum, type);
+      const pageData = await fetchSsScores(playerId, pageToLoad, type);
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
       lastPageData = pageData;
     }
     catch(err) {
-      // TODO: revert to previous page/type on error
-
       error = $_.common.downloadError;
+
+      return false;
     }
 
-    isLoading = false;
+    return true;
   }
 
   async function updatePlayerId(players) {
@@ -145,6 +144,11 @@
 
     if (players && players.length && players[0].playerId !== playerId)
       playerId = players[0].playerId;
+  }
+
+  async function beforePageChanged(page) {
+    // page here is indexed from 0, so add 1 for SS page
+    return await fetchPage(playerId, type, page + 1);
   }
 
   onMount(async () => {
@@ -167,8 +171,8 @@
   }
 
   $: {
-    fetchPage(playerId, pageNum, type)
+    fetchPage(playerId, type)
   }
 </script>
 
-<slot {songs} {series} {totalItems} {isLoading} {error}></slot>
+<slot {songs} {series} {totalItems} {error} {beforePageChanged}></slot>
