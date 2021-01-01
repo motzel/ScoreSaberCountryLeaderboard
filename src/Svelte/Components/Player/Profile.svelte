@@ -24,6 +24,7 @@
     import ScoreSaberProvider from '../Song/Provider/ScoreSaber.svelte'
     import ScoreSaberPresenter from '../Song/Presenter/ScoreSaber.svelte'
     import MiniRanking from '../Country/MiniRanking.svelte'
+    import {isEmpty} from '../../../utils/js'
 
     export let profileId;
     export let name;
@@ -101,6 +102,8 @@
     let activeCountry = null;
     let ssplCountryRanksCache = {};
     let isPlayerFromCurrentCountry = false;
+
+    let config = null;
 
     let initialized = false;
 
@@ -184,14 +187,22 @@
         return accStats;
     }
 
-    onMount(async () => {
-        mainPlayerId = await getMainPlayerId();
+    async function refreshConfig() {
+        config = await getConfig();
 
-        const config = await getConfig('songBrowser');
-        if (config.compareTo && Array.isArray(config.compareTo)) {
-            compareTo = config.compareTo;
+        if (config.songBrowser && config.songBrowser.compareTo && Array.isArray(config.songBrowser.compareTo)) {
+            compareTo = config.songBrowser.compareTo;
         }
 
+        showCalc = config && config.profile && config.profile.showOnePpCalc;
+        showBadges = config && config.profile && (config.profile.showBadges === undefined || config.profile.showBadges);
+    }
+
+    function refreshChart(config, chartHistory) {
+        showChart = config && config.profile && config.profile.showChart && chartHistory && chartHistory.length;
+    }
+
+    function setPlayers(profileId, mainPlayerId, name, compareTo) {
         players = []
          .concat(profileId ? [{playerId: profileId, name}] : [])
          .concat(
@@ -205,78 +216,133 @@
            : [],
          )
          .slice(0, 4);
+    }
 
-        if (ssStats && ssStats['Player ranking']) rank = ssStats['Player ranking'].value;
-        if (ssStats && ssStats['Performance Points']) pp = ssStats['Performance Points'].value;
+    function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
+        if (!playerInfo || !activeCountry) return;
 
-        if (!playerInfo && profileId) {
-            playerInfo = await getPlayerInfo(profileId);
-        }
+        let newCountryRanks = [];
 
-        // TODO: autorefresh when config is changed
-        const profileConfig = await getConfig('profile');
-        showChart = profileConfig && profileConfig.showChart && chartHistory && chartHistory.length;
-
-        if (country && ssStats['Player ranking']) countryRanks = countryRanks.concat([{
+        if (country && ssStats['Player ranking']) newCountryRanks = newCountryRanks.concat([{
             rank: ssStats['Player ranking'].countryRank,
             country,
             type: 'country',
         }]);
 
-        if (playerInfo) {
-            playerScores = await getScoresByPlayerId(playerInfo.id);
+        const ssplCountryRank = playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
+        if (ssplCountryRank) newCountryRanks =
+         activeCountry === country
+          ? [{
+              rank: ssplCountryRank,
+              subRank: ssStats && ssStats['Player ranking'] ? ssStats['Player ranking'].countryRank : null,
+              country: activeCountry,
+              type: 'active-country',
+          }]
+          : newCountryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
 
-            if (!name) name = playerInfo.name;
-            if (rank === null || rank === undefined) rank = playerInfo.rank;
-            if (!pp) pp = playerInfo.pp;
+        countryRanks = newCountryRanks;
+    }
 
-            activeCountry = await getActiveCountry();
+    async function updateRankedsNotesCache() {
+        rankedsNotesCache = await getRankedsNotesCache();
+    }
 
-            isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
+    async function updateSsplCountryRanksCache(activeCountry) {
+        if (!activeCountry) return;
 
-            const ssplCountryRank = playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
-            if (ssplCountryRank) countryRanks =
-             activeCountry === country
-              ? [{
-                  rank: ssplCountryRank,
-                  subRank: ssStats && ssStats['Player ranking'] ? ssStats['Player ranking'].countryRank : null,
-                  country: activeCountry,
-                  type: 'active-country',
-              }]
-              : countryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
+        await refreshSsplCountryRanksCache();
+    }
 
-            // TODO: autorefresh when config is changed
-            const profileConfig = await getConfig('profile');
-            if (profileConfig && profileConfig.showOnePpCalc) showCalc = true;
+    async function updatePlayerInfo(profileId) {
+        if (!profileId) return;
 
-            if (profileConfig && (undefined === profileConfig.showBadges || profileConfig.showBadges)) showBadges = true;
+        playerInfo = await getPlayerInfo(profileId);
+        if (!playerInfo) return;
 
-            await refreshSsplCountryRanksCache();
+        name = playerInfo.name;
+        if (rank === null || rank === undefined) rank = playerInfo.rank;
+        if (!pp) pp = playerInfo.pp;
 
-            rankedsNotesCache = await getRankedsNotesCache();
+        updateRankedsNotesCache();
 
-            const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+        if (activeCountry) updateSsplCountryRanksCache(activeCountry);
+    }
 
-            // TODO: reload profile page for now, try to do it to be more dynamic
-            const dataRefreshed = eventBus.on('data-refreshed', () => window.location.reload());
-            const ssplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => refreshSsplCountryRanksCache());
+    async function updatePlayerScores(playerInfo) {
+        if (!playerInfo) return;
 
-            initialized = true;
+        playerScores = await getScoresByPlayerId(playerInfo.id);
+    }
 
-            return () => {
-                dataRefreshed();
-                ssplCountryRanksCacheUpdated();
-                rankedsNotesCacheUnsubscriber();
+    onMount(async () => {
+        mainPlayerId = await getMainPlayerId();
+
+        activeCountry = await getActiveCountry();
+
+        await refreshConfig();
+
+        if (ssStats && ssStats['Player ranking']) rank = ssStats['Player ranking'].value;
+        if (ssStats && ssStats['Performance Points']) pp = ssStats['Performance Points'].value;
+
+        await updatePlayerInfo(profileId);
+
+        const unsubscriberRankedsNotesCache = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+
+        const unsubscriberDataRefreshed = eventBus.on('data-refreshed', () => updatePlayerInfo(profileId));
+        const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
+            if (playerId === profileId) {
+                await updatePlayerInfo(profileId);
             }
-        }
+        })
+        const unsubscriberSsplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => updateSsplCountryRanksCache(activeCountry));
+
+        const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
 
         initialized = true;
+
+        return () => {
+            unsubscriberDataRefreshed();
+            unsubscriberSsplCountryRanksCacheUpdated();
+            unsubscriberRankedsNotesCache();
+            unsubscriberConfigChanged();
+            unsubscriberScoresUpdated();
+        }
     })
 
-    function getPlayerStats(scores, country) {
-        if (!initialized || !scores) return;
+    function getSsplCountryRankStats(scores, country, ssplCountryRanksCache) {
+        if(!initialized || !scores || !scores.length || !country || isEmpty(ssplCountryRanksCache)) return;
+
+        let stats = {
+            bestRank: null,
+            bestRankCnt: 0,
+            avgRank: null,
+            totalRank: 0,
+        };
 
         if (country) country = country.toLowerCase();
+
+        stats = scores.reduce((cum, s) => {
+            const ssplCountryRank = country && ssplCountryRanksCache[s.leaderboardId] && ssplCountryRanksCache[s.leaderboardId][s.playerId] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country];
+            cum.totalRank += ssplCountryRank ? ssplCountryRank.rank : 0;
+
+            if (ssplCountryRank && (cum.bestRank === null || ssplCountryRank.rank <= cum.bestRank)) {
+                if (cum.bestRank === null || ssplCountryRank.rank < cum.bestRank) cum.bestRankCnt = 1; else cum.bestRankCnt += 1;
+
+                cum.bestRank = ssplCountryRank.rank;
+            }
+
+            return cum;
+        }, {...stats});
+
+        stats.avgRank = stats.totalRank > 0 ? stats.totalRank / scores.length : null;
+
+        delete stats.totalRank;
+
+        return stats;
+    }
+
+    function getPlayerStats(scores, rankedsNotesCache) {
+        if (!initialized || !scores) return;
 
         badgesDef.forEach(badge => {
             badge.value = 0;
@@ -290,11 +356,7 @@
             avgAcc: 0,
             playCount: scores.length,
             medianAcc: 0,
-            stdDeviation: 0,
-            bestRank: null,
-            bestRankCnt: 0,
-            avgRank: null,
-            totalRank: 0,
+            stdDeviation: 0
         };
 
         if (!scores || !scores.length) return stats;
@@ -306,15 +368,6 @@
 
             cum.totalScore += s.uScore ? s.uScore : s.score;
             cum.totalAcc += s.acc;
-
-            const ssplCountryRank = country && ssplCountryRanksCache[s.leaderboardId] && ssplCountryRanksCache[s.leaderboardId][s.playerId] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country] && ssplCountryRanksCache[s.leaderboardId][s.playerId][country];
-            cum.totalRank += ssplCountryRank ? ssplCountryRank.rank : 0;
-
-            if (ssplCountryRank && (cum.bestRank === null || ssplCountryRank.rank <= cum.bestRank)) {
-                if (cum.bestRank === null || ssplCountryRank.rank < cum.bestRank) cum.bestRankCnt = 1; else cum.bestRankCnt += 1;
-
-                cum.bestRank = ssplCountryRank.rank;
-            }
 
             cum.badges.forEach(badge => {
                 if ((!badge.min || badge.min <= s.acc) && (!badge.max || badge.max > s.acc)) badge.value++;
@@ -328,10 +381,8 @@
          : scores[0].acc;
         stats.avgAcc = stats.totalAcc / scores.length;
         stats.stdDeviation = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(stats.avgAcc - s.acc, 2), 0) / scores.length);
-        stats.avgRank = stats.totalRank > 0 ? stats.totalRank / scores.length : null;
 
         delete stats.totalAcc;
-        delete stats.totalRank;
 
         return stats;
     }
@@ -345,10 +396,28 @@
     $: filteredRankedScores = allRankedScores.filter(s => filterByPeriod(s, values.selectedPeriod.value));
     $: filteredAllScores = playerScores ? playerScores.filter(s => filterByPeriod(s, values.selectedPeriod.value)) : null;
 
-    $: stats = getPlayerStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, rankedsNotesCache, initialized)
+    $: stats = getPlayerStats(filteredRankedScores, rankedsNotesCache, initialized)
+    $: ssplCountryRankStats = getSsplCountryRankStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, initialized)
 
     $: basicStats = getBasicStats(ssStats, stats, filteredAllScores);
     $: accStats = getAccStats(stats);
+
+    $: isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
+
+    $: {
+        setPlayers(profileId, mainPlayerId, name, compareTo);
+    }
+
+    $: {
+        updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats);
+    }
+
+    $: {
+        updatePlayerScores(playerInfo);
+    }
+    $: {
+        refreshChart(config, chartHistory);
+    }
 
     $: {
         translateAllStrings($_);
@@ -475,31 +544,25 @@
                             </div>
                         {/if}
 
-                        {#if stats}
-                            {#if activeCountry}
-                                <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
-                                    <span class="sspl-ranks" slot="value">
-                                        {#if filteredRankedScores && filteredRankedScores.length}
-                                        <div>
-                                            {$_.profile.stats.best}: <Value value={stats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={stats.bestRankCnt} digits={0} zero="-" />)
-                                        </div>
-                                        <div>
-                                            {$_.profile.stats.avg}: <Value value={stats.avgRank} digits={2} prefix="#" zero="-" />
-                                        </div>
-                                        {:else}
-                                            -
-                                        {/if}
-                                    </span>
-                                </Badge>
-                            {/if}
+                        {#if ssplCountryRankStats}
+                            <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
+                                <span class="sspl-ranks" slot="value">
+                                    <div>
+                                        {$_.profile.stats.best}: <Value value={ssplCountryRankStats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={ssplCountryRankStats.bestRankCnt} digits={0} zero="-" />)
+                                    </div>
+                                    <div>
+                                        {$_.profile.stats.avg}: <Value value={ssplCountryRankStats.avgRank} digits={2} prefix="#" zero="-" />
+                                    </div>
+                                </span>
+                            </Badge>
+                        {/if}
 
-                            {#if showBadges && stats.badges}
-                                <div class="badges right">
-                                    {#each stats.badges as badge (badge)}
-                                        <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
-                                    {/each}
-                                </div>
-                            {/if}
+                        {#if showBadges && stats && stats.badges}
+                            <div class="badges right">
+                                {#each stats.badges as badge (badge)}
+                                    <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
+                                {/each}
+                            </div>
                         {/if}
                     </div>
                     {/if}
