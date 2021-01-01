@@ -144,16 +144,17 @@
         {/if}
       </th>
     {/each}
+    <th class="icons"></th>
   </tr>
   </thead>
   {/if}
 
   <tbody>
-{#each songs as song, idx (song.leaderboardId)}
-  <slot {song} {series}>
-    <ScoreSaberScorePresenter {song} series={series[idx]} {cachedRecentPlay} />
-  </slot>
-{/each}
+  {#each songs as song, idx (song.leaderboardId)}
+    <slot {song} {series}>
+      <ScoreSaberScorePresenter {song} series={series[idx]} {cachedRecentPlay} />
+    </slot>
+  {/each}
   </tbody>
 
 </table>
@@ -201,6 +202,11 @@
 
   th.score.main {
     width: 14rem;
+  }
+
+  th.icons {
+    width: 4rem;
+    padding-right: 0;
   }
 
   .player-header {

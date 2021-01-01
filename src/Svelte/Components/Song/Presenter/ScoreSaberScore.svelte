@@ -12,6 +12,7 @@
   import Song from '../Song.svelte'
   import FormattedDate from '../../Common/FormattedDate.svelte'
   import {getConfig} from '../../../../plugin-config'
+  import Icons from '../Icons.svelte'
 
   export let song = null;
   export let series = [];
@@ -101,6 +102,9 @@
         {/if}
       </td>
     {/each}
+    <td class="icons">
+      <Icons hash={song.hash} twitchUrl={song.video && song.video.url ? song.video.url : null}  />
+    </td>
   </tr>
 {/if}
 
@@ -160,5 +164,11 @@
 
   td.score.main {
     width: 14rem;
+  }
+
+  td.icons {
+    font-size: 0.65rem;
+    width: 4rem;
+    padding-right: 0;
   }
 </style>
