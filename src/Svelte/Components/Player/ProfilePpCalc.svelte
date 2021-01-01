@@ -1,4 +1,5 @@
 <script>
+    import debounce from '../../../utils/debounce';
     import {formatNumber, parseFormattedNumber} from '../../../utils/format';
     import {findRawPp, ppFromScore, PP_PER_STAR, getWhatIfScore} from '../../../scoresaber/pp';
     import {_, trans} from '../../stores/i18n';
@@ -24,6 +25,8 @@
 
     const thresholds = [90, 91, 92, 93, 94, 95];
 
+    const STAR_PERCENT_DEBOUNCE_DELAY = 50;
+
     onMount(async () => {
         const rankeds = await getRankedSongs();
         maxStars = Math.ceil(Object.values(rankeds).reduce((max, r) => r.stars > max ? r.stars : max, 0) + 1);
@@ -43,23 +46,38 @@
         boundaryStr = formatNumber(newDiffPpFromStars > 0 ? newDiffPpFromStars : 0);
     }
 
-    function onBoundaryChange(event) {
-        error = "";
-        const expectedStr = event.target.value.trim()
-        const parsedStr = parseFormattedNumber(expectedStr);
-        rawPp = findRawPp(scores.map(s => s.pp).sort((a, b) => b - a), parsedStr);
+    function calcRawPpFromDiffPpStr(sortedScores, thresholds, diffPp) {
+        diffPp = diffPp ? diffPp : parseFormattedNumber(boundaryStr);
 
+        if (!sortedScores || !thresholds || !thresholds.length || !diffPp || isNaN(diffPp)) return;
+
+        rawPp = findRawPp(sortedScores, diffPp);
         if (!isNaN(rawPp)) {
             stars = getStarsForAcc(rawPp, thresholds[0]);
             percent = thresholds[0];
+        }
+    }
+
+    function onBoundaryChange(event) {
+        error = "";
+        const expectedDiffPpStr = event.target.value.trim()
+        const parsedDiffPp = parseFormattedNumber(expectedDiffPpStr);
+        if (!isNaN(parsedDiffPp)) {
+            calcRawPpFromDiffPpStr(sortedScores, thresholds, parsedDiffPp)
         } else {
             error = trans('profile.onePpParseError', {
                 num1: formatNumber(1),
-                num2: formatNumber(21.1),
-                num3: formatNumber(100.69),
-                expectedStr
+                num2: formatNumber(10.69),
+                str: expectedDiffPpStr
             });
         }
+    }
+
+    const onStarsPercentChange = debounce(() => calcPpFromStars(stars, percent), STAR_PERCENT_DEBOUNCE_DELAY)
+
+    $: sortedScores = scores.map(s => s.pp).sort((a, b) => b - a);
+    $: {
+        calcRawPpFromDiffPpStr(sortedScores, thresholds)
     }
 </script>
 
@@ -96,8 +114,8 @@
         </table>
 
         <div class="stars-pp">
-            <Range bind:value={stars} on:change={() => calcPpFromStars(stars, percent)} min={0.1} max={maxStars} step={0.01} suffix="*" inline={true} />
-            <Range bind:value={percent} on:change={() => calcPpFromStars(stars, percent)} min={70} max={100} step={0.1} suffix="%" inline={true} />
+            <Range bind:value={stars} on:change={onStarsPercentChange} min={0.1} max={maxStars} step={0.01} suffix="*" inline={true} />
+            <Range bind:value={percent} on:change={onStarsPercentChange} min={70} max={100} step={0.1} suffix="%" inline={true} />
         </div>
         {/if}
     {:else}

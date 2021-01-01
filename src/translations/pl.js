@@ -48,7 +48,7 @@ export default {
         removeFromFriends: 'Usuń z Przyjaciół',
         removePlayer: 'Usuń gracza',
         rawNewPlay: 'pp w nowej grze',
-        onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, ${num2} jest, a nawet ${num3}. Ale "${expectedStr}"?',
+        onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, czy ${num2} jest. Ale "${str}"?',
         stats: {
             ranking: 'Ranking',
             pp: 'Punkty',
