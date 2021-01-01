@@ -159,7 +159,7 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
     if (!hasOutOfLineKey() && !getObjKey(value)) value[inlineKeyName] = putKey;
 
-    return repositoryCache.set(getObjKey(value, key), value, false);
+    return repositoryCache.set(getObjKey(value, key), value);
   }
 
   const del = async key => {
