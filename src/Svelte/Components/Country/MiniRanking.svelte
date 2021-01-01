@@ -134,10 +134,26 @@
         return players.slice(startIdx, startIdx + numOfItems);
     }
 
+    function refreshPlayersCacheWithPlayerPp(currentPlayers, type, country, playerId, playerPp) {
+        if (!currentPlayers || !currentPlayers.length || !playerId || !playerPp || !type) return;
+
+        const cache = type === 'global' ? playersCache.global : playersCache.country[country];
+        if (!cache || !cache.players) return;
+
+        const player = currentPlayers.find(player => player.id === playerId);
+        if (player) {
+            player.pp = playerPp
+            players = cache.players = currentPlayers.slice(0);
+        }
+    }
+
     $: isActiveCountryPlayer = !!(activeCountryPlayers && activeCountryPlayers.find(p => p.id === playerId));
 
     $: {
         setPlayers(type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer);
+    }
+    $: {
+        refreshPlayersCacheWithPlayerPp(players, type, country, playerId, playerPp)
     }
     $: ranking = getRanking(players);
 </script>
