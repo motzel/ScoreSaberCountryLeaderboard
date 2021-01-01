@@ -95,27 +95,29 @@
 
     {#if !error.length}
         {#if showDetails}
-        <table>
-            <thead>
-            <tr>
-                {#each thresholds as threshold (threshold)}
-                    <th>{threshold}%</th>
-                {/each}
-            </tr>
-            </thead>
+        <div class="content">
+            <table>
+                <thead>
+                <tr>
+                    {#each thresholds as threshold (threshold)}
+                        <th>{threshold}%</th>
+                    {/each}
+                </tr>
+                </thead>
 
-            <tbody>
-            <tr>
-                {#each thresholds as threshold (threshold)}
-                    <th><Value value={ getStarsForAcc(rawPp, threshold) } suffix="*" /></th>
-                {/each}
-            </tr>
-            </tbody>
-        </table>
+                <tbody>
+                <tr>
+                    {#each thresholds as threshold (threshold)}
+                        <th><Value value={ getStarsForAcc(rawPp, threshold) } suffix="*" /></th>
+                    {/each}
+                </tr>
+                </tbody>
+            </table>
 
-        <div class="stars-pp">
-            <Range bind:value={stars} on:change={onStarsPercentChange} min={0.1} max={maxStars} step={0.01} suffix="*" inline={true} />
-            <Range bind:value={percent} on:change={onStarsPercentChange} min={70} max={100} step={0.1} suffix="%" inline={true} />
+            <div class="stars-pp">
+                <Range bind:value={stars} on:change={onStarsPercentChange} min={0.1} max={maxStars} step={0.01} suffix="*" inline={true} />
+                <Range bind:value={percent} on:change={onStarsPercentChange} min={70} max={100} step={0.1} suffix="%" inline={true} />
+            </div>
         </div>
         {/if}
     {:else}

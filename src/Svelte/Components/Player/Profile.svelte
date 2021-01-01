@@ -12,6 +12,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
     import {dateFromString, timestampFromString} from "../../../utils/date";
+    import twitch from '../../../services/twitch';
 
     import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId, isCountryPlayer} from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
@@ -25,6 +26,7 @@
     import ScoreSaberPresenter from '../Song/Presenter/ScoreSaber.svelte'
     import MiniRanking from '../Country/MiniRanking.svelte'
     import {isEmpty} from '../../../utils/js'
+    import TwitchVideosBadge from './TwitchVideosBadge.svelte'
 
     export let profileId;
     export let name;
@@ -53,6 +55,8 @@
     let playerScores = null;
 
     let mainPlayerId = null;
+
+    let playerTwitchProfile = null;
 
     let mode = 'pp-stars';
     let showCalc = false;
@@ -266,6 +270,10 @@
         updateRankedsNotesCache();
 
         if (activeCountry) updateSsplCountryRanksCache(activeCountry);
+
+        await twitch.updateVideosForPlayerId(profileId);
+
+        playerTwitchProfile = await twitch.getProfileByPlayerId(profileId)
     }
 
     async function refreshPlayerScores(playerInfo) {
@@ -287,7 +295,6 @@
         await updatePlayerInfo(profileId);
 
         const unsubscriberRankedsNotesCache = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
-
         const unsubscriberDataRefreshed = eventBus.on('data-refreshed', () => updatePlayerInfo(profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
             if (playerId === profileId) {
@@ -295,8 +302,12 @@
             }
         })
         const unsubscriberSsplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => updateSsplCountryRanksCache(activeCountry));
-
         const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
+        const unsubscriberTwitchVideosUpdated = eventBus.on('player-twitch-videos-updated', async ({playerId}) => {
+            if (playerId === profileId) {
+                await updatePlayerInfo(profileId);
+            }
+        });
 
         initialized = true;
 
@@ -306,6 +317,7 @@
             unsubscriberRankedsNotesCache();
             unsubscriberConfigChanged();
             unsubscriberScoresUpdated();
+            unsubscriberTwitchVideosUpdated();
         }
     })
 
@@ -529,11 +541,13 @@
                             </div>
                         {/if}
 
-                        {#if showCalc && allRankedScores && allRankedScores.length}
-                            <div class="content">
+                        <div class="badges">
+                            <TwitchVideosBadge {playerTwitchProfile} />
+
+                            {#if showCalc && allRankedScores && allRankedScores.length}
                                 <ProfilePpCalc scores={allRankedScores} playerId={playerInfo.id} />
-                            </div>
-                        {/if}
+                            {/if}
+                        </div>
                     </div>
 
                     {#if playerScores && playerScores.length}

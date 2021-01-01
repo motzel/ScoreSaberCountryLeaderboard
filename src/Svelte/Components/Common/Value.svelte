@@ -3,8 +3,8 @@
 
     export let value = 0;
     export let prevValue = null;
-    export let zero = formatNumber(0);
     export let digits = 2;
+    export let zero = formatNumber(0, Number.isInteger(digits) ? digits : 2);
     export let withSign = false;
     export let prefix = "";
     export let withZeroPrefix = false;

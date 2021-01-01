@@ -77,6 +77,8 @@ export default {
             daysLeft: 'Pozostało dni: ${days}',
             setupPlayerProfile: 'Ustaw profil Twitch',
             userNotFound: 'Użytkownik Twitcha nie znaleziony',
+            vodsBadge: 'Twitch VOD',
+            video: 'Wideo',
         },
     },
     songBrowser: {
