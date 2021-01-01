@@ -57,7 +57,7 @@ table.ranking.songs {max-width: none!important;}
 }
 
 .column.avatar.enlarge {
-  margin-right: 2rem;
+  margin-right: 1rem;
 }
 .column.avatar.enlarge img.is-96x96 {
   width: 150px;
@@ -128,4 +128,14 @@ body .select select {
 @keyframes fa-spin-x {
   0% {transform: rotateX(0deg)}
   to {transform: rotateX(1turn)}
+}
+
+.sspl-page {
+  margin-top: -1rem;
+  margin-bottom: 1.5rem;
+}
+
+.error {
+  font-weight: 500;
+  color: var(--decrease);
 }

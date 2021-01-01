@@ -354,7 +354,7 @@
     const getPlayersInfosForCurrentlySelected = async (withScores = true) => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId)));
+        const playersInfos = (await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId)))).filter(p => p);
 
         if (withScores) {
             const playersScores = await getPlayersScores();
@@ -977,6 +977,7 @@
             const sortedRankeds = {};
 
             const playersInfos = await getPlayersInfosForCurrentlySelected(true);
+            if (!playersInfos.length) return;
 
             const ssplCountryRanksCache = await getSsplCountryRanks();
 

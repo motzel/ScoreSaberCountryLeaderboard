@@ -1,5 +1,6 @@
 <script>
     import {onMount} from "svelte";
+    import { fade } from 'svelte/transition';
 
     import Button from '../Common/Button.svelte';
     import Select from '../Common/Select.svelte';
@@ -293,7 +294,7 @@
 
     }
 
-    async function refreshPlayerStatus() {
+    async function refreshPlayerStatus(profileId, country) {
         isActivePlayer = (await getAllActivePlayersIds(country)).includes(profileId);
         isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(country)).includes(profileId);
         isFriend = (await getFriendsIds()).includes(profileId);
@@ -301,7 +302,7 @@
 
     let initialized = false;
 
-    async function refreshTwitchProfile() {
+    async function refreshTwitchProfile(profileId) {
         twitchProfile = await twitch.getProfileByPlayerId(profileId, true);
         twitchToken = await twitch.getCurrentToken();
         const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
@@ -379,32 +380,32 @@
 
         filterSortTypes();
 
-        await refreshPlayerStatus();
+        if (profileId) {
+            await refreshPlayerStatus(profileId, country);
 
-        await refreshTwitchProfile()
+            await refreshTwitchProfile(profileId)
+        }
     }
 
     onMount(async () => {
         dataAvailable = await isDataAvailable();
 
-        await refreshConfig();
-
         playerInfo = await getPlayerInfo(profileId);
+
+        await refreshConfig();
 
         initialized = true;
 
-        const profileExists = !!(await getPlayerInfo(profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
-            if (!profileExists && playerId === profileId) {
-                // TODO: reload profile page for now, try to do it to be more dynamic
-                window.location.reload();
+            if (!playerInfo && playerId === profileId) {
+                await updatePlayerInfo(profileId);
             }
         })
 
-        const unsubscriberConfigChanged = eventBus.on('config-changed', () => refreshConfig());
+        const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
 
         const twitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
-            if(playerId === profileId) await refreshTwitchProfile();
+            if(playerId === profileId) await refreshTwitchProfile(profileId);
         });
 
         return () => {
@@ -516,14 +517,14 @@
     async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
         await updatePlayer({id: profileId});
-        await refreshPlayerStatus();
+        await refreshPlayerStatus(profileId, country);
 
         eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
     }
 
     async function removePlayerFromFriends() {
         await removePlayerFromGroup(profileId, isManuallyAddedPlayer);
-        await refreshPlayerStatus();
+        await refreshPlayerStatus(profileId, country);
 
         if (isManuallyAddedPlayer)
             eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
@@ -547,13 +548,25 @@
         setCurrentLocale(values.locale.id);
     }
 
+    async function updatePlayerInfo(profileId) {
+        dataAvailable = await isDataAvailable();
+        playerInfo = await getPlayerInfo(profileId);
+
+        refreshPlayerStatus(profileId, country);
+        refreshTwitchProfile(profileId);
+    }
+
+    $: if (initialized && profileId) {
+        updatePlayerInfo(profileId);
+    }
+
     $: {
         translateAllStrings($_);
     }
 </script>
 
 {#if initialized && profileId}
-    <div class="buttons flex-center" class:flex-column={!dataAvailable}>
+    <div class="buttons flex-center" class:flex-column={!dataAvailable} transition:fade={{ duration: 1000 }}>
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
@@ -579,9 +592,7 @@
     {#if showTwitchUserBtn && twitchProfile}
         <TwitchProfileLink {profileId} twitchLogin={twitchProfile ? twitchProfile.login : null} noLabel={!!twitchProfile} />
     {/if}
-    </div>
 
-    <div class="buttons flex-center flex-column">
     {#if playerInfo}
         {#if showTwitchLinkBtn}
             <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
@@ -667,11 +678,6 @@
                     <div class="menu-label">{$_.profile.settings.profile.header}</div>
                     <div>
                         <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
-                            {$_.profile.settings.profile.enlargeAvatar}
-                        </label>
-
-                        <label class="checkbox">
                             <input type="checkbox" bind:checked={config.profile.showChart}>
                             {$_.profile.settings.profile.showChart}
                         </label>
@@ -717,26 +723,6 @@
                             <label class="menu-label">{$_.profile.settings.others.refreshHeader}</label>
                             <Select bind:value={values.viewTypeUpdates} items={strings.viewTypeUpdates} />
                         </div>
-                    </div>
-                </section>
-
-                <section>
-                    <div class="menu-label">{$_.profile.settings.defaultSongList.header}</div>
-                    <div>
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.enhance}>
-                            {$_.profile.settings.defaultSongList.enhance}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.showDiff}>
-                            {$_.profile.settings.defaultSongList.showDiff}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.showWhatIfPp}>
-                            {$_.profile.settings.songLeaderboard.showWhatIfPp}
-                        </label>
                     </div>
                 </section>
 
@@ -823,6 +809,8 @@
 
     footer {
         margin-top: auto;
+        min-height: 3.75rem;
+        align-items: flex-end;
     }
 
     footer .column {

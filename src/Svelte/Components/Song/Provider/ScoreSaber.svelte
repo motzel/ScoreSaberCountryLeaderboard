@@ -1,0 +1,172 @@
+<script>
+  import {onMount} from 'svelte'
+  import {fetchSsScores} from '../../../../network/scoresaber/scores'
+  import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
+  import {_} from '../../../stores/i18n';
+  import {dateFromString} from '../../../../utils/date'
+  import {getScoresByPlayerId} from '../../../../scoresaber/players'
+  import {convertArrayToObjectByKey} from '../../../../utils/js'
+  import {enhanceScore} from './utils'
+  import {setRefreshedPlayerScores} from '../../../../network/scoresaber/players'
+  import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+  import {getActiveCountry} from '../../../../scoresaber/country'
+
+  export let players = [];
+  export let scores = [];
+  export let pageNum = 1;
+  export let totalItems = 0;
+  export let type = 'recent';
+
+  let playerId = players && players.length ? players[0].id : null;
+  let lastPageData = scores && scores.length
+   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type, playerId}
+   : null;
+
+  let songs = [];
+  let series = [];
+
+  let playersScores = {};
+  let country = null;
+
+  let error = null;
+
+  let initialized = false;
+
+  const enhanceScores = async () => {
+    if (!(songs && series && songs.length && series.length && playersScores)) return;
+
+    series = await Promise.all(series.map(async songSeries => await Promise.all(songSeries.map(async (score, idx) => {
+      if (!score) return score;
+
+      const player = players[idx];
+      const cachedScore = playersScores[idx] && playersScores[idx][score.leaderboardId];
+
+      score.acc = score.percent ? score.percent * 100 : null;
+
+      if (country && player && idx === 0) {
+        const ssplCountryRanks = await getSsplCountryRanks();
+        if (ssplCountryRanks && ssplCountryRanks[score.leaderboardId] && ssplCountryRanks[score.leaderboardId][player.playerId]) {
+          score.ssplCountryRank = ssplCountryRanks[score.leaderboardId][player.playerId];
+          score.country = country;
+        }
+      }
+
+      return cachedScore ? await enhanceScore(score, cachedScore) : score;
+    }))));
+
+    if (series && series.length && players && players.length) {
+      const data = series
+       .map(s => s && s[0] ? {leaderboardId: s[0].leaderboardId, rank: s[0].rank} : null)
+       .filter(s => s);
+      setRefreshedPlayerScores(players[0].playerId, data);
+    }
+  }
+
+  const getPlayersScores = async players => {
+    if (!players || !players.length) return;
+
+    playersScores = (await Promise.all(
+     players.map(async player => getScoresByPlayerId(player.playerId))
+    )).map(playerScores => convertArrayToObjectByKey(playerScores, 'leaderboardId'))
+  }
+
+  async function processFetched(pageData) {
+    if (!pageData || !players || !players.length) {
+      songs = [];
+      series = [];
+      return;
+    }
+
+    totalItems = pageData.totalItems && !isNaN(pageData.totalItems) ? pageData.totalItems : totalItems;
+
+    const pageSongs = pageData.scores.map(s => {
+      const {diffInfo, hash, leaderboardId, levelAuthorName:levelAuthor, songDiff:diff, songImg:img, songName: name, songAuthorName:songAuthor} = s;
+
+      return {diffInfo, diff, hash, leaderboardId, levelAuthor, name, songAuthor, img};
+    });
+
+    const pageSeries = pageData.scores.map(s => {
+      const {lastUpdated, leaderboardId, mods, percent, pp, ppWeighted, rank, score, timeset} = s;
+
+      const series = [{leaderboardId, lastUpdated, mods, percent, pp, ppWeighted, rank, score, timeset: dateFromString(timeset)}];
+
+      // get other players data from cache
+      if (players && players.length > 1) {
+        players.slice(1).map((player, idx) => {
+          series.push(playersScores[idx + 1] && playersScores[idx + 1][leaderboardId] ? playersScores[idx + 1][leaderboardId] : null);
+        })
+      }
+
+      return series;
+    });
+
+    songs = pageSongs;
+    series = pageSeries;
+
+    enhanceScores();
+  }
+
+  async function fetchPage(playerId, type, pageToLoad) {
+    if (!playerId || !initialized) return;
+
+    if (!pageToLoad) pageToLoad = pageNum;
+
+    // do not fetch again the same data
+    if (lastPageData && lastPageData.pageNum === pageToLoad && lastPageData.type === type && (lastPageData.playerId === null || lastPageData.playerId === playerId)) return;
+
+    error = null;
+
+    try {
+      const pageData = await fetchSsScores(playerId, pageToLoad, type);
+      if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
+
+      lastPageData = pageData;
+    }
+    catch(err) {
+      error = $_.common.downloadError;
+
+      return false;
+    }
+
+    return true;
+  }
+
+  async function updatePlayerId(players) {
+    await getPlayersScores(players);
+
+    processFetched(lastPageData)
+
+    if (players && players.length && players[0].playerId !== playerId)
+      playerId = players[0].playerId;
+  }
+
+  async function beforePageChanged(page) {
+    // page here is indexed from 0, so add 1 for SS page
+    return await fetchPage(playerId, type, page + 1);
+  }
+
+  onMount(async () => {
+    country = await getActiveCountry();
+    await getPlayersScores(players);
+    await getSsplCountryRanks();
+
+    if(lastPageData) await processFetched(lastPageData);
+
+    initialized = true;
+  })
+
+
+  $: if (lastPageData) {
+    processFetched(lastPageData)
+  }
+
+  $: {
+    updatePlayerId(players);
+  }
+
+  $: {
+    fetchPage(playerId, type)
+  }
+</script>
+
+<slot {songs} {series} {totalItems} {error} {beforePageChanged}></slot>

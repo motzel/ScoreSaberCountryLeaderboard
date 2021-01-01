@@ -1,7 +1,7 @@
 import {substituteVars} from "../../utils/format";
 import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
 import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} from "../../utils/js";
-import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
+import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, PLAYER_PROFILE_URL, COUNTRY_URL} from "./consts";
 import queue from "../queue";
 import {
     getManuallyAddedPlayersIds,
@@ -12,7 +12,7 @@ import {
     updateSongScore,
 } from "../../scoresaber/players";
 import {dateFromString, toSSTimestamp} from "../../utils/date";
-import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
+import {fetchAllNewScores, fetchRecentScores, fetchSsScores} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
@@ -46,12 +46,12 @@ export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_A
         name,
         pp,
         rank,
-        url: substituteVars(USER_PROFILE_URL, {userId: id}),
+        url: substituteVars(PLAYER_PROFILE_URL, {playerId: id}),
         weeklyDiff,
     };
 });
 export const fetchSsCountryRankPage = async (country, page = 1) =>
-  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(COUNTRY_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
     .map(a => {
         const tr = a.closest("tr");
         const id = getFirstRegexpMatch(/\/(\d+)$/, a.href)
@@ -65,7 +65,7 @@ export const fetchSsCountryRankPage = async (country, page = 1) =>
             name: a.querySelector('.songTop.pp').innerText,
             pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue').innerText),
             rank: null,
-            url: substituteVars(USER_PROFILE_URL, {userId: id}),
+            url: substituteVars(PLAYER_PROFILE_URL, {playerId: id}),
             weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
         }
     });
@@ -385,7 +385,7 @@ eventBus.on('player-scores-page-updated', ({playerId, page}) => {
 export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
     try {
         return await Promise.race([
-            fetchSsRecentScores(playerId, page),
+            (async () => (await fetchSsScores(playerId, page))?.scores ?? [])(),
             delay(ssTimeout, null, true)
         ]);
     }
@@ -401,7 +401,7 @@ export const refreshPlayerScoreRank = async (playerId, leaderboardIds, lastScore
     try {
         emitEventForScoresUpdate('player-score-update-start', playerId, leaderboardIds);
 
-        const playerInfo = await getPlayerInfo(playerId, true);
+        const playerInfo = await getPlayerInfo(playerId);
         if (!playerInfo) throw 'Player not found';
 
         const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');

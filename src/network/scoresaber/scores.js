@@ -1,14 +1,15 @@
 import {fetchApiPage, fetchHtmlPage, NotFoundError} from "../fetch";
 import {substituteVars} from "../../utils/format";
-import {SCORES_URL, SS_SCORES_URL} from "./consts";
+import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
 import queue from "../queue";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import {parseSsUserScores} from '../../scoresaber/scores'
 import {extractDiffAndType} from '../../song'
+import {getPlayerProfileUrl} from '../../scoresaber/players'
 
-export const fetchRecentScores = async (userId, page = 1, rateLimitCallback = null, ...leaderboards) =>
-    fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {userId}), page, rateLimitCallback).then((s) =>
+export const fetchRecentScores = async (playerId, page = 1, rateLimitCallback = null, ...leaderboards) =>
+    fetchApiPage(queue.SCORESABER_API, substituteVars(SCORES_URL, {playerId}), page, rateLimitCallback).then((s) =>
         s && s.scores
             ? s.scores
                 .filter(s => !leaderboards.length || leaderboards.includes(s.leaderboardId))
@@ -18,7 +19,7 @@ export const fetchRecentScores = async (userId, page = 1, rateLimitCallback = nu
                     score: s.score,
                     uScore: s.unmodififiedScore,
                     mods: s.mods,
-                    playerId: userId,
+                    playerId,
                     timeset: dateFromString(s.timeSet),
                     pp: s.pp,
                     weight: s.weight,
@@ -35,7 +36,9 @@ export const fetchRecentScores = async (userId, page = 1, rateLimitCallback = nu
             : null
     );
 
-export const fetchSsRecentScores = async (userId, page = 1) => parseSsUserScores(await fetchHtmlPage(queue.SCORESABER, substituteVars(SS_SCORES_URL, {userId, page})));
+export const fetchSsScores = async (playerId, page = 1, type='recent') => ({...parseSsUserScores(
+  await fetchHtmlPage(queue.SCORESABER, getPlayerProfileUrl(playerId, !(type === 'top'), false, page))
+), type, playerId});
 
 let stopFetchingScores = false;
 eventBus.on('stop-fetching-scores-cmd', () => {stopFetchingScores = true;});

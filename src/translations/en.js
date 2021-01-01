@@ -18,7 +18,6 @@ export default {
 
             profile: {
                 header: 'Profile',
-                enlargeAvatar: 'Enlarge avatar',
                 showChart: 'Show the chart',
                 showOnePpCalc: 'Show +1PP calculator',
                 showTwitchIcon: 'Show Twitch button',
@@ -30,12 +29,6 @@ export default {
                 showWhatIfPp: 'Show the "What if you play it like that" button',
                 showBgCover: 'Show background cover',
                 defaultType: 'Default type',
-            },
-
-            defaultSongList: {
-                header: 'Default song list',
-                enhance: 'Add scores/accuracy',
-                showDiff: 'Show the differences',
             },
 
             others: {
@@ -54,15 +47,16 @@ export default {
         removeFromFriends: 'Remove from Friends',
         removePlayer: 'Remove player',
         rawNewPlay: 'raw pp new play',
-        onePpParseError: 'Type in a number, ok? ${num1} is a number, ${num2} is, and even ${num3} is. But "${expectedStr}"?',
-        mapToPp: 'Map of ${stars}* at ${acc}% will give ${rawPp}pp raw and +${pp}pp global',
+        onePpParseError: 'Type in a number, ok? ${num1} is a number or ${num2} is. But "${str}"?',
         stats: {
             ranking: 'Player ranking',
             pp: 'Performance points',
             playCount: 'Play count',
             totalScore: 'Total score',
             replays: 'Replays watched by others',
+            replaysShort: 'Replays',
             role: 'Role',
+            inactiveAccount: 'Inactive account',
             rankedPlayCount: 'Ranked play count',
             countryRank: 'Rank in country leaderboards',
             best: 'Best',
@@ -71,6 +65,9 @@ export default {
             avgRankedAccuracy: 'Average ranked accuracy',
             medianRankedAccuracy: 'Median ranked accuracy',
             stdDeviationRankedAccuracy: 'Std deviation ranked accuracy',
+            avgRankedAccuracyShort: 'Average',
+            medianRankedAccuracyShort: 'Median',
+            stdDeviationRankedAccuracyShort: 'Std deviation',
         },
         twitch: {
             link: 'Link',
@@ -157,7 +154,7 @@ export default {
             label: 'Compare',
             add: 'Add a player to compare',
             remove: 'Remove from comparision',
-            saveAsDefault: 'Save as default'
+            saveAsDefault: 'Save comparision as default'
         },
         playlist: {
             label: 'Playlist',
@@ -181,6 +178,10 @@ export default {
         former: 'Former',
         totalPp: 'Total PP for ${name}',
         rankOfDate: 'Rank of ${date}, click to refresh',
+        ssScoreType: {
+            top: 'Top',
+            recent: 'Recent',
+        },
     },
     songLeaderboard: {
         player: 'Player',
@@ -268,7 +269,7 @@ export default {
         sombra: "Sombra's"
     },
     plugin: {
-        transformButton: 'Transform',
+        transformButton: 'Cached',
     },
     common: {
         ok: 'OK',
