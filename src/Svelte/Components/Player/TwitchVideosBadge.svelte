@@ -29,6 +29,7 @@
       <tr>
         <th class="date">{$_.songBrowser.fields.timesetShort}</th>
         <th>{$_.profile.twitch.video}</th>
+        <th class="duration">{$_.songBrowser.fields.duration}</th>
       </tr>
       </thead>
       <tbody>
@@ -36,6 +37,7 @@
       <tr>
         <td><FormattedDate date={video.created_at} /></td>
         <td><a href={video.url} target="_blank" rel="noopener">{video.title}</a></td>
+        <td class="duration">{video.duration}</td>
       </tr>
       {/each}
       </tbody>
@@ -56,5 +58,13 @@
 
   th.date {
     width: 7em;
+  }
+
+  th.duration {
+    width: 6.1em;
+  }
+
+  td.duration {
+    text-align: center;
   }
 </style>
