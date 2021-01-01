@@ -34,6 +34,7 @@ import {formatNumber} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 import scores from './db/repository/scores'
+import {getSsplCountryRanks} from './scoresaber/sspl-cache'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -485,8 +486,9 @@ async function init() {
 
         await setupDataFixes();
 
-        // pre-warm config cache
-        const config = await getConfig();
+        // pre-warm cache
+        await getConfig();
+        await getSsplCountryRanks();
 
         await Promise.allSettled(
             [

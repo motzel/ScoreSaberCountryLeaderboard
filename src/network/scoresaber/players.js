@@ -330,13 +330,13 @@ const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
     leaderboardIds.forEach(leaderboardId => emitEventForScoreUpdate(eventName, playerId, {leaderboardId}));
 }
 
-export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true) => {
+export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true, emitEvents = true) => {
     let playerScores;
     if (someFieldsUpdateOnly) {
         playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');
 
         if (!playerScores) {
-            emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
+            if (emitEvents) emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
 
             return false;
         }
@@ -352,14 +352,14 @@ export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdat
           const currentScore = playerScores[s.leaderboardId] ?? null;
 
           if (someFieldsUpdateOnly && !currentScore) {
-              emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
+              if (emitEvents) emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
 
               return null;
           }
 
           const updatedScore = {...currentScore ?? {}, ...s, lastUpdated: new Date()};
 
-          emitEventForScoreUpdate('player-score-updated', playerId, updatedScore);
+          if (emitEvents) emitEventForScoreUpdate('player-score-updated', playerId, updatedScore);
 
           return updatedScore;
       })

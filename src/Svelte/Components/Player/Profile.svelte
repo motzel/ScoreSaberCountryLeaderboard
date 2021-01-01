@@ -268,7 +268,7 @@
         if (activeCountry) updateSsplCountryRanksCache(activeCountry);
     }
 
-    async function updatePlayerScores(playerInfo) {
+    async function refreshPlayerScores(playerInfo) {
         if (!playerInfo) return;
 
         playerScores = await getScoresByPlayerId(playerInfo.id);
@@ -413,7 +413,7 @@
     }
 
     $: {
-        updatePlayerScores(playerInfo);
+        refreshPlayerScores(playerInfo);
     }
     $: {
         refreshChart(config, chartHistory);

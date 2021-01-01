@@ -29,19 +29,20 @@
 	let faded = false;
 	let refreshDate = dateFromString(lastUpdated ? lastUpdated : timeset);
 
-	let userCountryRank;
-	let userCountryRankTotal;
-
-	let fadeSsplCountryRank = false;
+	let playerCountryRank;
+	let playerCountryRankTotal;
 
 	const currentRank = tweened(rank, {
 		duration: 500,
 		easing: cubicOut
 	});
 
-	onMount(() => {
-		fadeSsplCountryRank = cachedRecentPlay && timeset && dateFromString(cachedRecentPlay) < dateFromString(timeset);
+	const currentCountryRank = tweened(playerCountryRank, {
+		duration: 500,
+		easing: cubicOut
+	});
 
+	onMount(() => {
 		if (!disableUpdating) {
 			const scoreUpdatingSubscriber = eventBus.on('player-score-update-start', ({playerId: scorePlayerId, leaderboardId: scoreLeaderboardId}) => {
 				if (scorePlayerId === playerId && scoreLeaderboardId === leaderboardId) {
@@ -83,13 +84,19 @@
 		await refreshPlayerScoreRank(playerId, [leaderboardId], recentPlay);
 	}
 
+	$: fadeSsplCountryRank = cachedRecentPlay && timeset && dateFromString(cachedRecentPlay) < dateFromString(timeset);
+
 	$: {
 		currentRank.set(rank);
 	}
 
+	$: {
+		currentCountryRank.set(playerCountryRank);
+	}
+
 	$: if (country && countryRank && countryRank[country]) {
-		userCountryRank = countryRank[country].rank;
-		userCountryRankTotal = countryRank[country].total;
+		playerCountryRank = countryRank[country].rank;
+		playerCountryRankTotal = countryRank[country].total;
 	}
 
 	$: if(refreshDate) {
@@ -99,7 +106,7 @@
 	}
 </script>
 
-{#if !$currentRank && !(country && userCountryRank)}
+{#if !$currentRank && !(country && $currentCountryRank)}
 	<span>-</span>
 {/if}
 
@@ -116,10 +123,10 @@
 	{/if}
 {/if}
 
-{#if country && userCountryRank}
+{#if country && $currentCountryRank}
 	<span class="country-rank" style="display:{inline ? 'inline' : 'block'};" class:faded={fadeSsplCountryRank}>
 		<img src="/imports/images/flags/{country}.png"/>
-		<span class="value" title={!showCountryTotal && country && userCountryRank && userCountryRankTotal ? '#' + userCountryRank + ' / ' + userCountryRankTotal : ''}><Value value={userCountryRank} prefix="#" zero="-" digits={0}/>{#if showCountryTotal}<Value value={userCountryRankTotal} prefix="/" zero="-" digits={0}/>{/if}</span>
+		<span class="value" title={!showCountryTotal && country && $currentCountryRank && playerCountryRankTotal ? '#' + $currentCountryRank + ' / ' + playerCountryRankTotal : ''}><Value value={$currentCountryRank} prefix="#" zero="-" digits={0}/>{#if showCountryTotal}<Value value={playerCountryRankTotal} prefix="/" zero="-" digits={0}/>{/if}</span>
 	</span>
 {/if}
 

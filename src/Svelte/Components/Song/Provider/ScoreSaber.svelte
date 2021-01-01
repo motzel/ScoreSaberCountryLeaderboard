@@ -1,5 +1,6 @@
 <script>
   import {onMount} from 'svelte'
+  import eventBus from '../../../../utils/broadcast-channel-pubsub';
   import {fetchSsScores} from '../../../../network/scoresaber/scores'
   import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
   import {_} from '../../../stores/i18n';
@@ -58,7 +59,7 @@
       const data = series
        .map(s => s && s[0] ? {leaderboardId: s[0].leaderboardId, rank: s[0].rank} : null)
        .filter(s => s);
-      setRefreshedPlayerScores(players[0].playerId, data);
+      setRefreshedPlayerScores(players[0].playerId, data, true, false);
     }
   }
 
@@ -152,7 +153,26 @@
 
     if(lastPageData) await processFetched(lastPageData);
 
+    const updatePlayerScoresAndProcess = async () => {
+      await getPlayersScores(players);
+      await processFetched(lastPageData);
+    }
+    const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
+      await updatePlayerScoresAndProcess();
+    });
+    const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
+      const currentlyShownPlayers = (players ? players : []).map(player => player.playerId);
+      if (!currentlyShownPlayers.includes(playerId)) return;
+
+      await updatePlayerScoresAndProcess();
+    })
+
     initialized = true;
+
+    return () => {
+      unsubscriberScoresUpdated();
+      unsubscriberDataRefreshed();
+    }
   })
 
 
