@@ -602,6 +602,7 @@
                  pageNum={currentPage + 1}
                  totalItems={ssStats && ssStats['Play Count'] && ssStats['Play Count'].value ? ssStats['Play Count'].value : 0}
                  type={scoresType}
+                 {playerTwitchProfile}
                  let:songs let:series let:totalItems let:isLoading let:error let:beforePageChanged
                 >
                     <ScoreSaberPresenter

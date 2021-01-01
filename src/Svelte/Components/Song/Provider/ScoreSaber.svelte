@@ -7,16 +7,18 @@
   import {dateFromString} from '../../../../utils/date'
   import {getScoresByPlayerId} from '../../../../scoresaber/players'
   import {convertArrayToObjectByKey} from '../../../../utils/js'
-  import {enhanceScore} from './utils'
+  import {enhanceScore, findTwitchVideo} from './utils'
   import {setRefreshedPlayerScores} from '../../../../network/scoresaber/players'
   import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
   import {getActiveCountry} from '../../../../scoresaber/country'
+  import {getSongDiffInfo} from '../../../../song'
 
   export let players = [];
   export let scores = [];
   export let pageNum = 1;
   export let totalItems = 0;
   export let type = 'recent';
+  export let playerTwitchProfile = null;
 
   let playerId = players && players.length ? players[0].id : null;
   let lastPageData = scores && scores.length
@@ -36,13 +38,22 @@
   const enhanceScores = async () => {
     if (!(songs && series && songs.length && series.length && playersScores)) return;
 
-    series = await Promise.all(series.map(async songSeries => await Promise.all(songSeries.map(async (score, idx) => {
+    series = await Promise.all(series.map(async (songSeries, songIdx) => await Promise.all(songSeries.map(async (score, idx) => {
       if (!score) return score;
 
       const player = players[idx];
       const cachedScore = playersScores[idx] && playersScores[idx][score.leaderboardId];
 
       score.acc = score.percent ? score.percent * 100 : null;
+
+      const song = songs[songIdx];
+      if (playerTwitchProfile && song && song.diffInfo && song.hash && score.timeset && idx === 0) {
+        const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
+        if (songInfo && songInfo.length) {
+          const video = await findTwitchVideo(playerTwitchProfile, dateFromString(score.timeset), songInfo.length);
+          if (video) song.video = video;
+        }
+      }
 
       if (country && player && idx === 0) {
         const ssplCountryRanks = await getSsplCountryRanks();
@@ -61,6 +72,8 @@
        .filter(s => s);
       setRefreshedPlayerScores(players[0].playerId, data, true, false);
     }
+
+    songs = songs;
   }
 
   const getPlayersScores = async players => {
@@ -71,7 +84,7 @@
     )).map(playerScores => convertArrayToObjectByKey(playerScores, 'leaderboardId'))
   }
 
-  async function processFetched(pageData) {
+  function processFetched(pageData) {
     if (!pageData || !players || !players.length) {
       songs = [];
       series = [];
@@ -151,11 +164,11 @@
     await getPlayersScores(players);
     await getSsplCountryRanks();
 
-    if(lastPageData) await processFetched(lastPageData);
+    if(lastPageData) processFetched(lastPageData);
 
     const updatePlayerScoresAndProcess = async () => {
       await getPlayersScores(players);
-      await processFetched(lastPageData);
+      processFetched(lastPageData);
     }
     const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
       await updatePlayerScoresAndProcess();
@@ -177,7 +190,7 @@
 
 
   $: if (lastPageData) {
-    processFetched(lastPageData)
+    processFetched(lastPageData, playerTwitchProfile)
   }
 
   $: {

@@ -1,5 +1,5 @@
 import {getAccFromScore, getDiffAndTypeFromOnlyDiffName, getSongMaxScore} from '../../../../song'
-import {dateFromString} from '../../../../utils/date'
+import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../../../../utils/date'
 import {shouldBeHidden} from '../../../../eastereggs'
 import {round} from '../../../../utils/format'
 
@@ -46,4 +46,18 @@ export const enhanceScore = async (score, cachedScore) => {
   } catch (e) {} // swallow error
 
   return score;
+}
+
+export async function findTwitchVideo(playerTwitchProfile, timeset, songLength) {
+  if (!playerTwitchProfile || !playerTwitchProfile.videos || !timeset || !songLength) return null;
+
+  const songStarted = addToDate(timeset, -songLength * 1000)
+  const video = playerTwitchProfile.videos
+    .map(v => Object.assign({}, v, {
+      created_at: dateFromString(v.created_at),
+      ended_at: addToDate(dateFromString(v.created_at), durationToMillis(v.duration)),
+    }))
+    .find(v => v.created_at <= songStarted && songStarted < v.ended_at);
+
+  return video ? Object.assign({}, video, {url: video.url + '?t=' + millisToDuration(songStarted - video.created_at)}) : null;
 }
