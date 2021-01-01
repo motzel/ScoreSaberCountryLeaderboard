@@ -9,8 +9,8 @@ import Flag from './Svelte/Components/Common/Flag.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
 
+import header from '../header.json';
 import log from './utils/logger';
-import tempConfig from './temp';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
@@ -440,6 +440,23 @@ async function setupGlobalEventsListeners() {
     });
 }
 
+function addVersionInfoToFooter() {
+    const footer = document.querySelector('footer .content');
+    if (!footer) return;
+
+    const p = document.createElement('p');
+    p.innerText = header.name;
+
+    const a = document.createElement('a');
+    a.href = header.updateURL;
+    a.innerText = ' v' + header.version;
+
+    p.append(a);
+    p.innerHTML +=  ' by ' + header.author;
+
+    footer.append(p);
+}
+
 async function setupDelayed() {
     initialized = true;
 
@@ -452,6 +469,7 @@ async function setupDelayed() {
     }
 
     await initDownloadManager();
+    addVersionInfoToFooter();
 }
 
 function rafAsync() {
