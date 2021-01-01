@@ -442,9 +442,6 @@ async function setupGlobalEventsListeners() {
 async function setupDelayed() {
     initialized = true;
 
-    // wait for SSE or given timeout
-    await waitForSSEInit(tempConfig.SSE_CHECK_DELAY);
-
     if (isLeaderboardPage()) {
         await setupLeaderboard();
     }
@@ -468,18 +465,6 @@ function checkElement(selector) {
     } else {
         return Promise.resolve(true);
     }
-}
-
-let sseInstalled = false;
-async function waitForSSEInit(timeout) {
-    log.info("Waiting for SSE initialization");
-
-    return new Promise(function(resolve, reject) {
-        // whatever comes first
-        checkElement('#all_scores_tab').then(el => {sseInstalled = true; resolve(el)})
-        checkElement('#user_compare').then(el => {sseInstalled = true; resolve(el)})
-        setTimeout(() => resolve(null), timeout);
-    });
 }
 
 let initialized = false;
