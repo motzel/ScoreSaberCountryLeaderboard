@@ -23,15 +23,14 @@ import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import initDatabase from './db/db';
-import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
+import {setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
     getPlayerProfileUrl,
     isPlayerDataAvailable,
 } from "./scoresaber/players";
-import {parseSsFloat, parseSsInt} from "./scoresaber/other";
 import {formatNumber} from "./utils/format";
-import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
+import {parseSsLeaderboardScores, parseSsProfilePage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 import scores from './db/repository/scores'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
@@ -252,51 +251,16 @@ async function setupProfile() {
     if(tbl) tbl.classList.add('sspl');
 
     const container = document.querySelector('.section .container');
+    if (!container) return;
+
     const profileDiv = document.createElement('div');
     profileDiv.classList.add('sspl-page');
     container.prepend(profileDiv);
 
-    const column = container.querySelector('.content .column:not(.avatar)');
-    const playerA = column.querySelector('.title a');
     const props = {
         profileId,
-        name: playerA?.innerText?.trim() ?? null,
-        steamUrl: playerA?.href ?? null,
-        avatarUrl: document.querySelector('.column.avatar img')?.src ?? null,
-        country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, document.querySelector('.content .column .title img').src)?.toLowerCase() ?? null,
-        prefetchedScores: {...parseSsUserScores(document), type: isRecentPlaysPage ? 'recent' : 'top', pageNum, playerId: profileId},
+        profilePage: {...parseSsProfilePage(document), type: isRecentPlaysPage ? 'recent' : 'top', pageNum, playerId: profileId},
         autoTransform,
-        ssBadges: [...document.querySelectorAll('.column.avatar center img')].map(img => ({
-            src: img.src,
-            title: img.title,
-        })),
-        chartHistory: (getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML) ?? '').split(',').map(i => parseInt(i, 10)),
-        ssStats: convertArrayToObjectByKey([
-              {key: 'Player ranking', label: trans('profile.stats.ranking'), type: 'rank', value: parseSsInt(document.querySelector('.content .column ul li:first-of-type a:first-of-type').innerText ?? ""), countryRank: parseSsInt(document.querySelector('.content .column ul li:first-of-type a[href^="/global?country="]').innerText ?? ""),},
-          ].concat(
-          [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
-            .map(li => {
-                const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:?\s*<\/strong>\s*(.*)$/);
-                if (!matches) return null;
-
-                const mapping = [
-                    {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true,},
-                    {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true, colorVar: 'selected',},
-                    {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true, colorVar: 'selected',},
-                    {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replaysShort'), title: trans('profile.stats.replays'), number: true, colorVar: 'dimmed',},
-                    {key: 'Role', label: trans('profile.stats.role'), number: false, colorVar: 'dimmed'},
-                    {key: 'Inactive Account', label: trans('profile.stats.inactiveAccount'), number: false, colorVar: 'decrease'},
-                ];
-
-                const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
-                  ? parseSsFloat(matches[2])
-                  : matches[2];
-
-                const item = mapping.find(m => m.key === matches[1]);
-                return item ? {...item, value} : {label: matches[1], value};
-            })
-            .filter(s => s)
-        ), 'key')
     }
 
     const originalContent = document.querySelector('.content');

@@ -4,7 +4,7 @@ import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
 import queue from "../queue";
 import eventBus from "../../utils/broadcast-channel-pubsub";
-import {parseSsUserScores} from '../../scoresaber/scores'
+import {parseSsProfilePage} from '../../scoresaber/scores'
 import {extractDiffAndType} from '../../song'
 import {getPlayerProfileUrl} from '../../scoresaber/players'
 
@@ -36,7 +36,7 @@ export const fetchRecentScores = async (playerId, page = 1, rateLimitCallback = 
             : null
     );
 
-export const fetchSsScores = async (playerId, page = 1, type='recent') => ({...parseSsUserScores(
+export const fetchSsScores = async (playerId, page = 1, type='recent') => ({...parseSsProfilePage(
   await fetchHtmlPage(queue.SCORESABER, getPlayerProfileUrl(playerId, !(type === 'top'), false, page))
 ), type, playerId});
 

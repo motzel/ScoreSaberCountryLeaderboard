@@ -29,23 +29,25 @@
     import TwitchVideosBadge from './TwitchVideosBadge.svelte'
 
     export let profileId;
-    export let name;
-    export let country;
-    export let steamUrl;
-    export let avatarUrl;
-    export let ssStats = {};
-    export let ssBadges = [];
-    export let chartHistory = [];
-    export let prefetchedScores = {};
+    export let profilePage = {};
     export let autoTransform = false;
 
     const ONE_DAY = 1000 * 60 * 60 * 24
 
     let transformed = autoTransform;
 
-    let recentPlay = prefetchedScores && prefetchedScores.scores && prefetchedScores.scores.length && prefetchedScores.pageNum === 1 && prefetchedScores.type === 'recent'
-     ? dateFromString(prefetchedScores.scores[0].timeset)
+    let name = profilePage && profilePage.name ? profilePage.name : '';
+    let steamUrl = profilePage && profilePage.steamUrl ? profilePage.steamUrl : null;
+    let avatarUrl = profilePage && profilePage.avatarUrl ? profilePage.avatarUrl : null;
+    let country = profilePage && profilePage.country ? profilePage.country : null;
+
+    let recentPlay = profilePage && profilePage.scores && profilePage.scores.length && profilePage.pageNum === 1 && profilePage.type === 'recent'
+     ? dateFromString(profilePage.scores[0].timeset)
      : null;
+
+    let chartHistory = profilePage && profilePage.chartHistory && profilePage.chartHistory.length ? profilePage.chartHistory : null;
+    let ssBadges = profilePage && profilePage.ssBadges && profilePage.ssBadges.length ? profilePage.ssBadges : null;
+    let ssStats = profilePage && profilePage.stats ? profilePage.stats : {}
 
     let playerInfo = null;
     let rank = null;
@@ -122,19 +124,22 @@
 
     function getBasicStats(ssStats, stats, allScores) {
         const basicStats = [];
-        const addSsStat = (name, otherProps) => ssStats && ssStats.hasOwnProperty(name)
-         ? basicStats.push({
-             ...{
-                 label: ssStats[name].label,
-                 title: ssStats[name].title ? ssStats[name].title : '',
-                 value: ssStats[name].value,
-                 digits: ssStats[name].precision,
-                 bgColor: `var(--${ssStats[name].colorVar})`,
-                 type: ssStats[name].type,
-                 fluid: true,
-             }, ...otherProps,
-         })
-         : null;
+
+        const addStdStat = (name, label, color, title = null, overriderValue = null, type = 'number', otherProps = {}) =>
+         ssStats && ssStats.hasOwnProperty(name)
+          ? basicStats.push({
+              ...{
+                  label,
+                  title,
+                  value: overriderValue ? overriderValue : ssStats[name],
+                  digits: 0,
+                  bgColor: `var(--${color})`,
+                  type,
+                  fluid: true,
+              }, ...otherProps,
+          })
+          : null;
+
         const addSsplStat = (varName, label) => stats && stats.hasOwnProperty(varName)
          ? basicStats.push({
              label,
@@ -145,26 +150,26 @@
          })
          : null;
 
-        const addPlayCount = allScores => allScores
-         ? addSsStat('Play Count', {value: allScores.length})
-         : addSsStat('Play Count');
-        const addTotalScore = allScores => allScores
-         ? addSsStat('Total Score', {value: allScores.reduce((sum, s) => sum + s.score, 0)})
-         : addSsStat('Total Score');
+        const addTotalScore = allScores => addStdStat('totalScore', $_.profile.stats.totalScore, 'selected', null, allScores ? allScores.reduce((sum, s) => sum + s.score, 0) : null);
 
-        addPlayCount(allScores);
+        addStdStat('playCount', $_.profile.stats.playCount, 'selected', null, allScores ? allScores.length : null);
 
         if (playerScores && playerScores.length) {
             addSsplStat('playCount', $_.profile.stats.rankedPlayCount);
-            addSsStat('Replays Watched by Others');
+            addStdStat('replays', $_.profile.stats.replaysShort, 'dimmed', $_.profile.stats.replays);
             addTotalScore(allScores);
             addSsplStat('totalScore', $_.profile.stats.totalRankedScore);
         } else {
             addTotalScore();
-            addSsStat('Replays Watched by Others');
+            addStdStat('replays', $_.profile.stats.replaysShort, 'dimmed', $_.profile.stats.replays);
         }
 
-        if (ssStats['Inactive Account']) addSsStat('Inactive Account', {onlyLabel: true})
+        addStdStat('role', $_.profile.stats.role, 'dimmed', null, null, 'text')
+
+        if (ssStats.inactiveAccount) addStdStat('inactiveAccount', $_.profile.stats.inactiveAccount, 'dimmed', null, null, null, {onlyLabel: true})
+
+        if (ssStats && ssStats.rank) rank = ssStats.rank;
+        if (ssStats && ssStats.pp) pp = ssStats.pp;
 
         return basicStats;
     }
@@ -223,22 +228,20 @@
     }
 
     function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
-        if (!playerInfo || !activeCountry) return;
-
         let newCountryRanks = [];
 
-        if (country && ssStats['Player ranking']) newCountryRanks = newCountryRanks.concat([{
-            rank: ssStats['Player ranking'].countryRank,
+        if (country && ssStats && ssStats.countryRank) newCountryRanks = newCountryRanks.concat([{
+            rank: ssStats.countryRank,
             country,
             type: 'country',
         }]);
 
-        const ssplCountryRank = playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
+        const ssplCountryRank = playerInfo && activeCountry && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (playerInfo && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
         if (ssplCountryRank) newCountryRanks =
          activeCountry === country
           ? [{
               rank: ssplCountryRank,
-              subRank: ssStats && ssStats['Player ranking'] ? ssStats['Player ranking'].countryRank : null,
+              subRank: ssStats && ssStats.countryRank ? ssStats.countryRank : null,
               country: activeCountry,
               type: 'active-country',
           }]
@@ -289,8 +292,8 @@
 
         await refreshConfig();
 
-        if (ssStats && ssStats['Player ranking']) rank = ssStats['Player ranking'].value;
-        if (ssStats && ssStats['Performance Points']) pp = ssStats['Performance Points'].value;
+        if (ssStats && ssStats.rank) rank = ssStats.rank;
+        if (ssStats && ssStats.pp) pp = ssStats.pp;
 
         await updatePlayerInfo(profileId);
 
@@ -311,6 +314,16 @@
         const unsubscriberRecentPlayUpdated = eventBus.on('recent-play-updated', ({playerId, recentPlay: newRecentPlay}) => {
             if (playerId === profileId) recentPlay = newRecentPlay;
         });
+        const unsubscriberPlayerStatsUpdated = eventBus.on('player-profile-page-parsed', ({playerId, profilePage}) => {
+            if (playerId === profileId) {
+                if (profilePage && profilePage.name) name = profilePage.name;
+                if (profilePage && profilePage.steamUrl) steamUrl = profilePage.steamUrl;
+                if (profilePage && profilePage.avatarUrl) avatarUrl = profilePage.avatarUrl;
+                if (profilePage && profilePage.chartHistory && profilePage.chartHistory.length) chartHistory = profilePage.chartHistory;
+                if (profilePage && profilePage.ssBadges && profilePage.ssBadges.length) ssBadges = profilePage.ssBadges;
+                if (profilePage && profilePage.stats) ssStats = profilePage.stats;
+            }
+        });
 
         initialized = true;
 
@@ -322,6 +335,7 @@
             unsubscriberScoresUpdated();
             unsubscriberTwitchVideosUpdated();
             unsubscriberRecentPlayUpdated();
+            unsubscriberPlayerStatsUpdated();
         }
     })
 
@@ -439,8 +453,8 @@
         translateAllStrings($_);
     }
 
-    let currentPage = prefetchedScores.pageNum ? prefetchedScores.pageNum - 1 : 0;
-    let scoresType = prefetchedScores.type ? prefetchedScores.type : 'recent';
+    let currentPage = profilePage && profilePage.pageNum ? profilePage.pageNum - 1 : 0;
+    let scoresType = profilePage && profilePage.type ? profilePage.type : 'recent';
 
     function onScoreBrowse() {
         if (!players || !players.length) return;
@@ -602,10 +616,10 @@
             {:else}
                 <ScoreSaberProvider
                  {players}
-                 playerId={prefetchedScores.playerId ? prefetchedScores.playerId : null}
-                 scores={prefetchedScores.scores ? prefetchedScores.scores : []}
+                 playerId={profilePage && profilePage.playerId ? profilePage.playerId : null}
+                 scores={profilePage && profilePage.scores ? profilePage.scores : []}
                  pageNum={currentPage + 1}
-                 totalItems={ssStats && ssStats['Play Count'] && ssStats['Play Count'].value ? ssStats['Play Count'].value : 0}
+                 totalItems={ssStats && ssStats.playCount ? ssStats.playCount : 0}
                  type={scoresType}
                  pauseLoading={false}
                  {playerTwitchProfile}

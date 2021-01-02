@@ -150,6 +150,10 @@
         eventBus.publish('recent-play-updated', {nodeId: nodeSync.getId(), playerId, recentPlay: newRecentPlay});
       }
 
+      if (pageData) {
+        eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync.getId(), playerId, profilePage: pageData});
+      }
+
       newRecentPlay = newRecentPlay ? newRecentPlay : recentPlay;
       lastPageData = {...pageData, recentPlay: newRecentPlay};
       recentPlay = newRecentPlay;
