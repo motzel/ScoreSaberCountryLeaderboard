@@ -11,7 +11,7 @@
     import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
-    import {dateFromString, timestampFromString} from "../../../utils/date";
+    import {addToDate, dateFromString, timestampFromString} from "../../../utils/date";
     import twitch from '../../../services/twitch';
 
     import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId, isCountryPlayer} from '../../../scoresaber/players'
@@ -25,8 +25,10 @@
     import ScoreSaberProvider from '../Song/Provider/ScoreSaber.svelte'
     import ScoreSaberPresenter from '../Song/Presenter/ScoreSaber.svelte'
     import MiniRanking from '../Country/MiniRanking.svelte'
-    import {isEmpty} from '../../../utils/js'
+    import {isDateObject, isEmpty} from '../../../utils/js'
     import TwitchVideosBadge from './TwitchVideosBadge.svelte'
+    import {fetchSsProfilePage} from '../../../network/scoresaber/scores'
+    import nodeSync from '../../../network/multinode-sync'
 
     export let profileId;
     export let profilePage = {};
@@ -285,6 +287,39 @@
         playerScores = await getScoresByPlayerId(playerInfo.id);
     }
 
+    async function refreshProfile(playerId) {
+        try {
+            const pageData = await fetchSsProfilePage(playerId);
+            if (!pageData || !pageData.scores) throw 'Download error';
+
+            recentPlay = pageData.scores.length && pageData.scores[0].timeset && isDateObject(pageData.scores[0].timeset)
+             ? pageData.scores[0].timeset
+             : addToDate(new Date(), -ONE_DAY); // no scores at all - schedule as if player is not playing rn
+
+            eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync.getId(), playerId, profilePage: pageData});
+        }
+        catch {} // swallow error
+
+        scheduleProfileRefresh(playerId);
+    }
+
+    function scheduleProfileRefresh(playerId) {
+        if (!playerId) return;
+
+        const ONE_MIUTE = 1000 * 60;
+        const TEN_SECS = 1000 * 10;
+
+        const nextUpdateIn = !recentPlay
+         ? TEN_SECS
+         : (
+          recentPlay > addToDate(new Date(), -10 * ONE_MIUTE)
+           ? ONE_MIUTE
+           : 5 * ONE_MIUTE
+         );
+
+        setTimeout(() => refreshProfile(playerId), nextUpdateIn);
+    }
+
     onMount(async () => {
         mainPlayerId = await getMainPlayerId();
 
@@ -316,10 +351,15 @@
         });
         const unsubscriberPlayerStatsUpdated = eventBus.on('player-profile-page-parsed', ({playerId, profilePage}) => {
             if (playerId === profileId) {
+                const chartHistoryFingerprint = history => history.reduce((cum, item) => cum + ':' + item, '');
+
                 if (profilePage && profilePage.name) name = profilePage.name;
                 if (profilePage && profilePage.steamUrl) steamUrl = profilePage.steamUrl;
                 if (profilePage && profilePage.avatarUrl) avatarUrl = profilePage.avatarUrl;
-                if (profilePage && profilePage.chartHistory && profilePage.chartHistory.length) chartHistory = profilePage.chartHistory;
+                if (profilePage && profilePage.chartHistory && profilePage.chartHistory.length) {
+                    if (!chartHistory || chartHistoryFingerprint(chartHistory) !== chartHistoryFingerprint(profilePage.chartHistory))
+                        chartHistory = profilePage.chartHistory;
+                }
                 if (profilePage && profilePage.ssBadges && profilePage.ssBadges.length) ssBadges = profilePage.ssBadges;
                 if (profilePage && profilePage.stats) ssStats = profilePage.stats;
             }
@@ -433,6 +473,10 @@
     $: accStats = getAccStats(stats);
 
     $: isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
+
+    $: {
+        scheduleProfileRefresh(profileId)
+    }
 
     $: {
         setPlayers(profileId, mainPlayerId, name, compareTo);
