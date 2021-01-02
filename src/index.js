@@ -264,7 +264,7 @@ async function setupProfile() {
         steamUrl: playerA?.href ?? null,
         avatarUrl: document.querySelector('.column.avatar img')?.src ?? null,
         country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, document.querySelector('.content .column .title img').src)?.toLowerCase() ?? null,
-        prefetchedScores: {...parseSsUserScores(document), type: isRecentPlaysPage ? 'recent' : 'top', pageNum},
+        prefetchedScores: {...parseSsUserScores(document), type: isRecentPlaysPage ? 'recent' : 'top', pageNum, playerId: profileId},
         autoTransform,
         ssBadges: [...document.querySelectorAll('.column.avatar center img')].map(img => ({
             src: img.src,

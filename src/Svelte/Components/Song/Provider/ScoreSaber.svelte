@@ -13,6 +13,7 @@
   import {getActiveCountry} from '../../../../scoresaber/country'
   import {getSongDiffInfo} from '../../../../song'
 
+  export let playerId = null;
   export let players = [];
   export let scores = [];
   export let pageNum = 1;
@@ -21,9 +22,8 @@
   export let playerTwitchProfile = null;
   export let pauseLoading = false;
 
-  let playerId = players && players.length ? players[0].id : null;
   let lastPageData = scores && scores.length
-   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type, playerId}
+   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type, playerId,}
    : null;
 
   let songs = [];
@@ -147,6 +147,8 @@
   }
 
   async function updatePlayerId(players) {
+    playerId = players && players.length ? players[0].id : playerId;
+
     await getPlayersScores(players);
 
     processFetched(lastPageData)

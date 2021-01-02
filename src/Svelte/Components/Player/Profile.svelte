@@ -598,6 +598,7 @@
             {:else}
                 <ScoreSaberProvider
                  {players}
+                 playerId={prefetchedScores.playerId ? prefetchedScores.playerId : null}
                  scores={prefetchedScores.scores ? prefetchedScores.scores : []}
                  pageNum={currentPage + 1}
                  totalItems={ssStats && ssStats['Play Count'] && ssStats['Play Count'].value ? ssStats['Play Count'].value : 0}
