@@ -17,6 +17,8 @@ const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
 const SONG_BY_KEY_URL = BEATSAVER_API_URL + '/maps/detail/${key}'
 
 const BS_SUSPENSION_KEY = 'bsSuspension';
+const BS_NOT_FOUND_KEY = 'bs404';
+const BS_NOT_FOUND_HOURS_BETWEEN_COUNTS = 1;
 
 const addHoursToDate = (hours, date = new Date()) => new Date(date.getTime() + 1000 * 60 * 60 * hours);
 const isSuspended = bsSuspension => !!bsSuspension && bsSuspension.activeTo > new Date() && bsSuspension.started > addHoursToDate(-24);
@@ -32,6 +34,27 @@ const prolongSuspension = async bsSuspension => {
     return await cacheRepository().set(suspension, BS_SUSPENSION_KEY);
 }
 
+const get404Hashes = async () => cacheRepository().get(BS_NOT_FOUND_KEY);
+const set404Hashes = async hashes => cacheRepository().set(hashes, BS_NOT_FOUND_KEY);
+const isHashUnavailable = async hash => {
+    const songs404 = await get404Hashes();
+    return songs404 && songs404[hash] && songs404[hash].count >= 3;
+}
+const setHashNotFound = async hash => {
+    const songs404 = await get404Hashes() ?? {};
+
+    const item = songs404[hash] ?? {firstTry: new Date(), recentTry: null, count: 0};
+
+    if (!item.recentTry || addHoursToDate(BS_NOT_FOUND_HOURS_BETWEEN_COUNTS, item.recentTry) < new Date()) {
+        item.recentTry = new Date();
+        item.count++;
+
+        songs404[hash] = item;
+
+        await set404Hashes(songs404);
+    }
+}
+
 export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false) => {
     hash = hash.toLowerCase();
 
@@ -43,7 +66,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
     let bsSuspension = await getCurrentSuspension();
 
     try {
-        if (isSuspended(bsSuspension)) return null;
+        if (isSuspended(bsSuspension) || await isHashUnavailable(hash)) return null;
 
         const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash}));
         if (!songInfo) {
@@ -58,10 +81,11 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
         }
 
         if (err instanceof NotFoundError) {
-            // TODO: cache it and do not try again
+            setHashNotFound(hash);
         }
 
         log.warn(`Error fetching Beat Saver song by hash "${hash}"`);
+
         return null;
     }
 };
