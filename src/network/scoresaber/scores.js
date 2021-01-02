@@ -36,7 +36,7 @@ export const fetchRecentScores = async (playerId, page = 1, rateLimitCallback = 
             : null
     );
 
-export const fetchSsScores = async (playerId, page = 1, type='recent') => ({...parseSsProfilePage(
+export const fetchSsProfilePage = async (playerId, page = 1, type='recent') => ({...parseSsProfilePage(
   await fetchHtmlPage(queue.SCORESABER, getPlayerProfileUrl(playerId, !(type === 'top'), false, page))
 ), type, playerId});
 

@@ -5,7 +5,7 @@
   import {onMount} from 'svelte'
   import eventBus from '../../../../utils/broadcast-channel-pubsub';
   import nodeSync from '../../../../network/multinode-sync';
-  import {fetchSsScores} from '../../../../network/scoresaber/scores'
+  import {fetchSsProfilePage} from '../../../../network/scoresaber/scores'
   import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
   import {_} from '../../../stores/i18n';
   import {dateFromString} from '../../../../utils/date'
@@ -140,7 +140,7 @@
     error = null;
 
     try {
-      const pageData = await fetchSsScores(playerId, pageToLoad, typeToLoad);
+      const pageData = await fetchSsProfilePage(playerId, pageToLoad, typeToLoad);
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
       let newRecentPlay = null;

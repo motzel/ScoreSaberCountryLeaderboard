@@ -11,6 +11,7 @@ import {
 } from '../scoresaber/rankeds'
 import eventBus from '../utils/broadcast-channel-pubsub'
 import nodeSync from './multinode-sync'
+import {addToDate} from '../utils/date'
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
@@ -20,7 +21,7 @@ const BS_SUSPENSION_KEY = 'bsSuspension';
 const BS_NOT_FOUND_KEY = 'bs404';
 const BS_NOT_FOUND_HOURS_BETWEEN_COUNTS = 1;
 
-const addHoursToDate = (hours, date = new Date()) => new Date(date.getTime() + 1000 * 60 * 60 * hours);
+const addHoursToDate = (hours, date = new Date()) => addToDate(date, 1000 * 60 * 60 * hours);
 const isSuspended = bsSuspension => !!bsSuspension && bsSuspension.activeTo > new Date() && bsSuspension.started > addHoursToDate(-24);
 const getCurrentSuspension = async () => cacheRepository().get(BS_SUSPENSION_KEY);
 const prolongSuspension = async bsSuspension => {

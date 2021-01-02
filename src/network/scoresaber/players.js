@@ -12,7 +12,7 @@ import {
     updateSongScore,
 } from "../../scoresaber/players";
 import {dateFromString, toSSTimestamp} from "../../utils/date";
-import {fetchAllNewScores, fetchRecentScores, fetchSsScores} from "./scores";
+import {fetchAllNewScores, fetchRecentScores, fetchSsProfilePage} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../network/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
@@ -385,7 +385,7 @@ eventBus.on('player-scores-page-updated', ({playerId, page}) => {
 export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
     try {
         return await Promise.race([
-            (async () => (await fetchSsScores(playerId, page))?.scores ?? [])(),
+            (async () => (await fetchSsProfilePage(playerId, page))?.scores ?? [])(),
             delay(ssTimeout, null, true)
         ]);
     }
