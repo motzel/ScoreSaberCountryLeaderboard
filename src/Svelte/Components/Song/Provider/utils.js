@@ -15,7 +15,7 @@ export const enhanceScore = async (score, cachedScore) => {
     const ssScoreDate = dateFromString(score.timeset);
     const useDownloadedScore = cachedScore?.timeset && ssScoreDate && cachedScore?.timeset?.getTime() === ssScoreDate.getTime();
     if (useDownloadedScore) {
-      score = {...score, ...cachedScore, maxScoreEx, percent: maxScoreEx && cachedScore?.score ? cachedScore.score / maxScoreEx : score.percent};
+      score = {...score, ...cachedScore, maxScoreEx, percent: maxScoreEx && cachedScore?.score ? cachedScore.score / maxScoreEx : score.percent, rank: score.rank};
     }
 
     const useCurrentScoreAsPrev = (score.pp && cachedScore?.pp && round(cachedScore.pp) < round(score.pp)) ||

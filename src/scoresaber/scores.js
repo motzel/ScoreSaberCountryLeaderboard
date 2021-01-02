@@ -1,6 +1,7 @@
 import {parseSsFloat, parseSsInt} from './other'
 import {getFirstRegexpMatch} from '../utils/js'
 import {getDiffAndTypeFromOnlyDiffName} from '../song'
+import {dateFromString} from '../utils/date'
 
 export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.ranking tbody tr')].map(tr => {
   let ret = {tr};
@@ -95,7 +96,8 @@ export const parseSsUserScores = doc => ({
       ret.levelAuthorName = songMapper ? songMapper.innerText : null;
 
       const songDate = tr.querySelector('th.song span.songBottom.time');
-      ret.timeset = songDate ? songDate.title : null;
+      ret.timeset = songDate ? dateFromString(songDate.title) : null;
+      ret.timesetStr = songDate ? songDate.title : null;
 
       const pp = tr.querySelector('th.score .scoreTop.ppValue');
       if (pp) ret.pp = parseFloat(pp.innerText.replace(/[^0-9.]/g, ''));

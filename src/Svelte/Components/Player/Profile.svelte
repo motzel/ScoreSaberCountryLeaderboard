@@ -308,6 +308,9 @@
                 await updatePlayerInfo(profileId);
             }
         });
+        const unsubscriberRecentPlayUpdated = eventBus.on('recent-play-updated', ({playerId, recentPlay: newRecentPlay}) => {
+            if (playerId === profileId) recentPlay = newRecentPlay;
+        });
 
         initialized = true;
 
@@ -318,6 +321,7 @@
             unsubscriberConfigChanged();
             unsubscriberScoresUpdated();
             unsubscriberTwitchVideosUpdated();
+            unsubscriberRecentPlayUpdated();
         }
     })
 
@@ -605,6 +609,7 @@
                  type={scoresType}
                  pauseLoading={false}
                  {playerTwitchProfile}
+                 {recentPlay}
                  let:songs let:series let:totalItems let:isLoading let:error let:beforePageChanged let:isPaused
                 >
                     <ScoreSaberPresenter

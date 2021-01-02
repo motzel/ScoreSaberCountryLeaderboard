@@ -1,12 +1,16 @@
 <script>
+  import {createEventDispatcher} from 'svelte';
+  const dispatch = createEventDispatcher();
+
   import {onMount} from 'svelte'
   import eventBus from '../../../../utils/broadcast-channel-pubsub';
+  import nodeSync from '../../../../network/multinode-sync';
   import {fetchSsScores} from '../../../../network/scoresaber/scores'
   import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
   import {_} from '../../../stores/i18n';
   import {dateFromString} from '../../../../utils/date'
   import {getScoresByPlayerId} from '../../../../scoresaber/players'
-  import {convertArrayToObjectByKey} from '../../../../utils/js'
+  import {convertArrayToObjectByKey, isDateObject} from '../../../../utils/js'
   import {enhanceScore, findTwitchVideo} from './utils'
   import {setRefreshedPlayerScores} from '../../../../network/scoresaber/players'
   import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
@@ -21,9 +25,10 @@
   export let type = 'recent';
   export let playerTwitchProfile = null;
   export let pauseLoading = false;
+  export let recentPlay = null;
 
   let lastPageData = scores && scores.length
-   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type, playerId,}
+   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), type, playerId, recentPlay}
    : null;
 
   let songs = [];
@@ -69,11 +74,12 @@
 
     if (series && series.length && players && players.length) {
       const data = series
-       .map(s => s && s[0] ? {leaderboardId: s[0].leaderboardId, rank: s[0].rank} : null)
+       .map(s => s && s[0] && s[0].rank ? {leaderboardId: s[0].leaderboardId, rank: s[0].rank} : null)
        .filter(s => s);
       setRefreshedPlayerScores(players[0].playerId, data, true, false);
     }
 
+    // force refresh songs
     songs = songs;
   }
 
@@ -121,21 +127,36 @@
     enhanceScores();
   }
 
-  async function fetchPage(playerId, type, pageToLoad) {
+  async function fetchPage(playerId, typeToLoad, pageToLoad) {
     if (!playerId || !initialized || pauseLoading) return;
 
     if (!pageToLoad) pageToLoad = pageNum;
 
     // do not fetch again the same data
-    if (lastPageData && lastPageData.pageNum === pageToLoad && lastPageData.type === type && (lastPageData.playerId === null || lastPageData.playerId === playerId)) return;
+    if (!!lastPageData && lastPageData.pageNum === pageToLoad && lastPageData.type === typeToLoad && lastPageData.playerId
+     === playerId && ((lastPageData.recentPlay === recentPlay) || (!!lastPageData.recentPlay && !!recentPlay && (lastPageData.recentPlay >= recentPlay)))
+    ) return;
 
     error = null;
 
     try {
-      const pageData = await fetchSsScores(playerId, pageToLoad, type);
+      const pageData = await fetchSsScores(playerId, pageToLoad, typeToLoad);
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
-      lastPageData = pageData;
+      let newRecentPlay = null;
+      if (pageData && pageData.type === 'recent' && pageData.pageNum === 1 && pageData.scores && pageData.scores.length && pageData.scores[0].timeset && isDateObject(pageData.scores[0].timeset)) {
+        newRecentPlay = pageData.scores[0].timeset;
+
+        eventBus.publish('recent-play-updated', {nodeId: nodeSync.getId(), playerId, recentPlay: newRecentPlay});
+      }
+
+      newRecentPlay = newRecentPlay ? newRecentPlay : recentPlay;
+      lastPageData = {...pageData, recentPlay: newRecentPlay};
+      recentPlay = newRecentPlay;
+      pageNum = pageToLoad;
+      type = typeToLoad;
+
+      dispatch('scores-page-loaded', lastPageData);
     }
     catch(err) {
       error = $_.common.downloadError;
@@ -201,7 +222,7 @@
   }
 
   $: {
-    fetchPage(playerId, type, undefined, initialized, pauseLoading)
+    fetchPage(playerId, type, undefined, recentPlay, initialized, pauseLoading)
   }
 </script>
 
