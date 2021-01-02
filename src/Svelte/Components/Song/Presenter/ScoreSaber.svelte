@@ -21,6 +21,7 @@
   export let error = null;
   export let type = 'recent'
   export let isCached = false;
+  export let isPaused = false;
   export let cachedRecentPlay;
   export let beforePageChanged;
 
@@ -165,6 +166,7 @@
        itemsPerPageValues={null}
        {beforePageChanged}
        on:page-changed={onPageChanged}
+       hide={isPaused}
 />
 {#if error}
   <div class="error has-text-centered">{error}</div>

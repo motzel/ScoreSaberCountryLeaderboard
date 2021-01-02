@@ -19,6 +19,7 @@
   export let totalItems = 0;
   export let type = 'recent';
   export let playerTwitchProfile = null;
+  export let pauseLoading = false;
 
   let playerId = players && players.length ? players[0].id : null;
   let lastPageData = scores && scores.length
@@ -121,7 +122,7 @@
   }
 
   async function fetchPage(playerId, type, pageToLoad) {
-    if (!playerId || !initialized) return;
+    if (!playerId || !initialized || pauseLoading) return;
 
     if (!pageToLoad) pageToLoad = pageNum;
 
@@ -198,8 +199,8 @@
   }
 
   $: {
-    fetchPage(playerId, type)
+    fetchPage(playerId, type, undefined, initialized, pauseLoading)
   }
 </script>
 
-<slot {songs} {series} {totalItems} {error} {beforePageChanged}></slot>
+<slot {songs} {series} {totalItems} {error} isPaused={pauseLoading} {beforePageChanged}></slot>
