@@ -92,44 +92,6 @@ async function setupLeaderboard() {
 
           return cum;
       }, {});
-    const scores = [...document.querySelectorAll('table.ranking tbody tr')].map(tr => {
-        let ret = {lastUpdated: new Date()};
-
-        const parseValue = selector => parseSsFloat(tr.querySelector(selector)?.innerText ?? '') ?? null
-
-        ret.avatarUrl = tr.querySelector('.picture img')?.src ?? null;
-
-        const rank = tr.querySelector('td.rank');
-        if (rank) {
-            const rankMatch = parseSsInt(rank.innerText);
-            ret.rank = rankMatch ?? null;
-        } else {
-            ret.rank = null;
-        }
-
-        const player = tr.querySelector('.player a');
-        if (player) {
-            ret.country = getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, player.querySelector('img')?.src ?? '') ?? null;
-            ret.name = player.querySelector('span.songTop.pp')?.innerText ?? null;
-            ret.playerId = getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, player.href ?? '') ?? null;
-        } else {
-            ret.country = null;
-            ret.playerId = null;
-            ret.name = null;
-        }
-
-        ret.score = parseValue('td.score');
-
-        ret.timesetStr = tr.querySelector('td.timeset')?.innerText ?? null;
-        ret.mods = tr.querySelector('td.mods')?.innerText?.replace('-','').split(',').filter(m => m && m.length) ?? [];
-
-        ret.pp = parseValue('td.pp .scoreTop.ppValue');
-
-        ret.acc = parseValue('td.percentage');
-        ret.acc = ret.acc ? ret.acc / 100 : null;
-
-        return ret;
-    });
     const props = {
         leaderboardId,
         currentDiff: currentDiffHuman?.toLowerCase()?.replace('+', 'Plus') ?? null,
@@ -140,7 +102,7 @@ async function setupLeaderboard() {
         pageNum: parseInt(document.querySelector('.pagination .pagination-list li a.is-current')?.innerText ?? '0', 10),
         pageQty: parseInt(document.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10),
         totalItems: song?.scores ?? 0,
-        scores
+        scores: parseSsLeaderboardScores(document),
     }
     console.warn(props)
 
@@ -199,7 +161,7 @@ async function setupLeaderboard() {
 
                     const percentage = s.tr.querySelector('td.percentage center');
                     if (percentage && s.score && maxScore && maxScore > 0) {
-                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.mods !== '-' && s.percent ? s.percent * 100 : s.score * 100 / maxScore) + '%';
+                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.mods !== '-' && s.acc ? s.acc * 100 : s.score * 100 / maxScore) + '%';
                     }
 
                     if (s.pp !== null) {

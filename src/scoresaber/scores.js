@@ -5,43 +5,36 @@ import {dateFromString} from '../utils/date'
 import {trans} from '../Svelte/stores/i18n'
 
 export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.ranking tbody tr')].map(tr => {
-  let ret = {tr};
+  let ret = {lastUpdated: new Date()};
 
-  const picture = tr.querySelector('td.picture img');
-  ret.picture = picture ? picture.src : null;
+  const parseValue = selector => parseSsFloat(tr.querySelector(selector)?.innerText ?? '') ?? null
 
-  const rank = tr.querySelector('td.rank');
-  ret.rank = rank ? parseSsInt(rank.innerText) : null;
+  ret.picture = tr.querySelector('.picture img')?.src ?? null;
 
-  const player = tr.querySelector('td.player a');
+  ret.rank = parseSsInt(tr.querySelector('td.rank')?.innerText ?? '') ?? null;
+
+  const player = tr.querySelector('.player a');
   if (player) {
-    ret.playerId = getFirstRegexpMatch(/(\d+)$/, player.href);
-
-    const img = player.querySelector('img');
-    ret.country = img ? getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, img.src) : null;
-
-    const name = player.querySelector('.songTop.pp');
-    ret.playerName = name ? name.innerText.trim() : null;
+    ret.country = getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, player.querySelector('img')?.src ?? '') ?? null;
+    ret.playerName = player.querySelector('span.songTop.pp')?.innerText ?? null;
+    ret.playerId = getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, player.href ?? '') ?? null;
   } else {
+    ret.country = null;
     ret.playerId = null;
     ret.playerName = null;
-    ret.country = null;
   }
 
-  const score = tr.querySelector('td.score');
-  ret.score = score ? parseSsInt(score.innerText) : null;
+  ret.score = parseValue('td.score');
 
-  const timeset = tr.querySelector('td.timeset');
-  ret.timesetAgo = timeset ? timeset.innerText.trim() : null;
+  ret.timesetAgo = tr.querySelector('td.timeset')?.innerText?.trim() ?? null;
 
-  const mods = tr.querySelector('td.mods center');
-  ret.mods = mods ? mods.innerText.trim() : null;
+  ret.mods = tr.querySelector('td.mods')?.innerText?.replace('-','').split(',').filter(m => m && m.length) ?? null;
+  ret.mods = ret.mods && ret.mods.length ? ret.mods.join(',') : null;
 
-  const percent = tr.querySelector('td.percentage center');
-  ret.percent = percent && percent.innerText.trim() !== '-' ? parseFloat(percent.innerText.replace(/[^0-9.]/g, '')) / 100 : null;
+  ret.pp = parseValue('td.pp .scoreTop.ppValue');
 
-  const pp = tr.querySelector('td.pp .scoreTop.ppValue');
-  ret.pp = pp ? parseSsFloat(pp.innerText) : null;
+  ret.acc = parseValue('td.percentage');
+  ret.acc = ret.acc ? ret.acc / 100 : null;
 
   return ret;
 });
