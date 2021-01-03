@@ -14,6 +14,7 @@ import log from './utils/logger';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
+    getDiffAndTypeFromOnlyDiffName,
     getSongMaxScore, getSongScores,
 } from "./song";
 
@@ -34,6 +35,9 @@ import {parseSsLeaderboardScores, parseSsProfilePage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 import scores from './db/repository/scores'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
+import {parseSsFloat, parseSsInt} from './scoresaber/other'
+import {dateFromString} from './utils/date'
+import {fetchSsCountryRankPage} from './network/scoresaber/players'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -45,93 +49,18 @@ const getRankingCountry = () => {
 }
 const isCurrentCountryRankingPage = async () => getRankingCountry() === (await getActiveCountry());
 
-function assert(el) {
-    if (null === el) throw new Error('Assertion failed');
-
-    return el;
-}
-
-function getBySelector(sel, el = null) {
-    return assert((el ?? document).querySelector(sel));
-}
-
-async function setupPlTable() {
-    let scoreTableNode = getBySelector('.ranking table.global');
-    const leaderboardId = getLeaderboardId();
-    if (!leaderboardId) return null;
-
-    let tblContainer = document.createElement('div');
-    tblContainer["id"] = "sspl";
-    tblContainer.style["display"] = "none";
-    scoreTableNode.parentNode.appendChild(tblContainer);
-
-    new SongLeaderboard({
-        target: tblContainer,
-        props: {leaderboardId, country: await getActiveCountry()}
-    });
-}
-
 async function setupLeaderboard() {
     log.info("Setup leaderboard page");
+
+    const container = document.querySelector('.section .container');
+    if (!container) return;
 
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
-    await setupPlTable();
-
-    const tabs = getBySelector('.tabs > ul');
-    tabs.appendChild(
-        generate_tab(
-            'pl_tab',
-            null === document.querySelector('.filter_tab')
-        )
-    );
-
-    document.addEventListener(
-        'click',
-        function (e) {
-            let clickedTab = e.target.closest('.filter_tab');
-            if (!clickedTab) return;
-
-            const box = assert(e.target.closest('.box'));
-
-            const sspl = getBySelector('#sspl', box);
-            const originalTable = getBySelector('table.ranking', box);
-            if (clickedTab.classList.contains('sspl')) {
-                originalTable.style.display = 'none';
-                sspl.style.display = '';
-                getBySelector('.pagination').style.display = 'none';
-            } else {
-                originalTable.style.display = '';
-                sspl.style.display = 'none';
-                getBySelector('.pagination').style.display = '';
-            }
-        },
-        { passive: true }
-    );
-
-    const config = await getConfig('songLeaderboard');
-    const mainPlayerId = await getMainPlayerId();
-    if (mainPlayerId && !!config.showWhatIfPp) {
-        [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
-            const pp = parseFloat(
-                span.innerText.replace(/\s/, '').replace(',', '.')
-            );
-            if (pp && pp > 0.0 + Number.EPSILON) {
-                new WhatIfpp({
-                    target: span.parentNode,
-                    props: {
-                        leaderboardId,
-                        pp
-                    }
-                });
-            }
-        });
-    }
-
-    const songInfoBox = document.querySelector('.column.is-one-third-desktop .box:first-of-type');
-
-    const songInfoData = [
+    const diffs = [...document.querySelectorAll('.tabs ul li a') ?? []].map(a => ({name: a.innerText, id: parseInt(getFirstRegexpMatch(/leaderboard\/(\d+)$/, a.href), 10), color: a.querySelector('span')?.style?.color}));
+    const currentDiffHuman = document.querySelector('.tabs li.is-active a span')?.innerText ?? null;
+    const song = [
         {id: 'hash', label: 'ID', value: null},
         {id: 'scores', label: 'Scores', value: null},
         {id: 'status', label: 'Status', value: null},
@@ -139,17 +68,97 @@ async function setupLeaderboard() {
         {id: 'noteCount', label: 'Note Count', value: null},
         {id: 'bpm', label: 'BPM', value: null},
         {id: 'stars', label: 'Star Difficulty', value: null},
+        {id: 'levelAuthor', label: 'Mapped by', value: null},
     ]
-        .map(sid => ({...sid, value: document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
-        .reduce((cum, sid) => {
-            let value = Array.isArray(sid.value) ? sid.value[1] : null;
-            if (value && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseFloat(value.replace(/[^0-9\.]/, ''));
-            if (value) cum[sid.id] = value;
+      .map(sid => ({...sid, value: document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
+      .concat([{id: 'name', value: [null, document.querySelector('.column.is-one-third-desktop .box:first-of-type .title a')?.innerText]}])
+      .reduce((cum, sid) => {
+          let value = Array.isArray(sid.value) ? sid.value[1] : null;
+          if (value !== null && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseSsFloat(value);
+          if (value && sid.id === 'name') {
+              const songAuthorMatch = value.match(/^(.*?)\s-\s(.*)$/);
+              if (songAuthorMatch) {
+                  value = songAuthorMatch[2];
+                  cum.songAuthor = songAuthorMatch[1];
+              } else {
+                  cum.songAuthor = '';
+              }
+          }
+          if (value && sid.id === 'levelAuthor') {
+              const el = document.createElement('div'); el.innerHTML = value;
+              value = el.innerText;
+          }
+          if (value !== null) cum[sid.id] = value;
 
-            return cum;
-        }, {})
-    const difficulty = document.querySelector('.tabs.is-centered li.is-active a span');
-    songInfoData.difficulty =  difficulty ? difficulty.innerText.toLowerCase().replace('+', 'Plus') : null;
+          return cum;
+      }, {});
+    const scores = [...document.querySelectorAll('table.ranking tbody tr')].map(tr => {
+        let ret = {lastUpdated: new Date()};
+
+        const parseValue = selector => parseSsFloat(tr.querySelector(selector)?.innerText ?? '') ?? null
+
+        ret.avatarUrl = tr.querySelector('.picture img')?.src ?? null;
+
+        const rank = tr.querySelector('td.rank');
+        if (rank) {
+            const rankMatch = parseSsInt(rank.innerText);
+            ret.rank = rankMatch ?? null;
+        } else {
+            ret.rank = null;
+        }
+
+        const player = tr.querySelector('.player a');
+        if (player) {
+            ret.country = getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, player.querySelector('img')?.src ?? '') ?? null;
+            ret.name = player.querySelector('span.songTop.pp')?.innerText ?? null;
+            ret.playerId = getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, player.href ?? '') ?? null;
+        } else {
+            ret.country = null;
+            ret.playerId = null;
+            ret.name = null;
+        }
+
+        ret.score = parseValue('td.score');
+
+        ret.timesetStr = tr.querySelector('td.timeset')?.innerText ?? null;
+        ret.mods = tr.querySelector('td.mods')?.innerText?.replace('-','').split(',').filter(m => m && m.length) ?? [];
+
+        ret.pp = parseValue('td.pp .scoreTop.ppValue');
+
+        ret.acc = parseValue('td.percentage');
+        ret.acc = ret.acc ? ret.acc / 100 : null;
+
+        return ret;
+    });
+    const props = {
+        leaderboardId,
+        currentDiff: currentDiffHuman?.toLowerCase()?.replace('+', 'Plus') ?? null,
+        currentDiffHuman,
+        diffs,
+        song,
+        diffChart: (getFirstRegexpMatch(/'difficulty',\s*([0-9.,\s]+)\s*\]/, document.body.innerHTML) ?? '').split(',').map(i => parseFloat(i)).filter(i => i),
+        pageNum: parseInt(document.querySelector('.pagination .pagination-list li a.is-current')?.innerText ?? '0', 10),
+        pageQty: parseInt(document.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10),
+        totalItems: song?.scores ?? 0,
+        scores
+    }
+    console.warn(props)
+
+    const profileDiv = document.createElement('div');
+    profileDiv.classList.add('sspl-page');
+    container.prepend(profileDiv);
+
+    // TODO: remove comments
+    // const originalContent = document.querySelector('.content');
+    // if (originalContent) originalContent.remove();
+
+    return;
+
+    new SongLeaderboard({
+        target: tblContainer,
+        props: {leaderboardId, country: await getActiveCountry()}
+    });
+
     if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
         const newSongBox = document.createElement('div');
         newSongBox.style.marginBottom = '1.5rem';
@@ -313,32 +322,6 @@ async function setupCountryRanking(diffOffset = 6) {
     new CountryDashboard({target: newCont, props: {country: await getActiveCountry(), overridePlayersPp: actualPlayersPp}});
 
     log.info("Setup country ranking / Done")
-}
-
-function generate_tab(css_id, has_offset) {
-    const tabClass = 'filter_tab sspl ' + (has_offset ? ' offset_tab' : '');
-
-    const li = document.createElement('li');
-    li.id = css_id;
-    tabClass.split(' ').filter(cls => cls.length).map(cls => li.classList.add(cls));
-
-    const a = document.createElement('a');
-    a.classList.add('has-text-info');
-
-    const img = document.createElement('img');
-    img.classList.add('bloodtrail');
-    img.src = require('./resource/img/bloodtrail.png').default;
-    a.appendChild(img);
-    li.appendChild(a);
-
-    a.addEventListener('click', () => {
-        document
-            .querySelectorAll('.tabs > ul .filter_tab')
-            .forEach((x) => x.classList.remove('is-active'));
-        assert(document.getElementById(css_id)).classList.add('is-active');
-    });
-
-    return li;
 }
 
 function setupStyles() {
