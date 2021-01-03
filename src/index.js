@@ -3,23 +3,22 @@ import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
 import SongIcons from './Svelte/Components/Song/Icons.svelte';
 import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
-import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
+import Leaderboard from './Svelte/Components/Leaderboard/Leaderboard.svelte';
 
 import header from '../header.json';
 import log from './utils/logger';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import {
-    getDiffAndTypeFromOnlyDiffName,
     getSongMaxScore, getSongScores,
 } from "./song";
 
 import twitch from './services/twitch';
-import {getConfig, getMainPlayerId} from "./plugin-config";
+import {getConfig} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
@@ -31,13 +30,9 @@ import {
     isPlayerDataAvailable,
 } from "./scoresaber/players";
 import {formatNumber} from "./utils/format";
-import {parseSsLeaderboardScores, parseSsProfilePage} from './scoresaber/scores'
+import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
-import scores from './db/repository/scores'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
-import {parseSsFloat, parseSsInt} from './scoresaber/other'
-import {dateFromString} from './utils/date'
-import {fetchSsCountryRankPage} from './network/scoresaber/players'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -58,53 +53,10 @@ async function setupLeaderboard() {
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
-    const diffs = [...document.querySelectorAll('.tabs ul li a') ?? []].map(a => ({name: a.innerText, id: parseInt(getFirstRegexpMatch(/leaderboard\/(\d+)$/, a.href), 10), color: a.querySelector('span')?.style?.color}));
-    const currentDiffHuman = document.querySelector('.tabs li.is-active a span')?.innerText ?? null;
-    const song = [
-        {id: 'hash', label: 'ID', value: null},
-        {id: 'scores', label: 'Scores', value: null},
-        {id: 'status', label: 'Status', value: null},
-        {id: 'totalScores', label: 'Total Scores', value: null},
-        {id: 'noteCount', label: 'Note Count', value: null},
-        {id: 'bpm', label: 'BPM', value: null},
-        {id: 'stars', label: 'Star Difficulty', value: null},
-        {id: 'levelAuthor', label: 'Mapped by', value: null},
-    ]
-      .map(sid => ({...sid, value: document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
-      .concat([{id: 'name', value: [null, document.querySelector('.column.is-one-third-desktop .box:first-of-type .title a')?.innerText]}])
-      .reduce((cum, sid) => {
-          let value = Array.isArray(sid.value) ? sid.value[1] : null;
-          if (value !== null && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseSsFloat(value);
-          if (value && sid.id === 'name') {
-              const songAuthorMatch = value.match(/^(.*?)\s-\s(.*)$/);
-              if (songAuthorMatch) {
-                  value = songAuthorMatch[2];
-                  cum.songAuthor = songAuthorMatch[1];
-              } else {
-                  cum.songAuthor = '';
-              }
-          }
-          if (value && sid.id === 'levelAuthor') {
-              const el = document.createElement('div'); el.innerHTML = value;
-              value = el.innerText;
-          }
-          if (value !== null) cum[sid.id] = value;
-
-          return cum;
-      }, {});
     const props = {
         leaderboardId,
-        currentDiff: currentDiffHuman?.toLowerCase()?.replace('+', 'Plus') ?? null,
-        currentDiffHuman,
-        diffs,
-        song,
-        diffChart: (getFirstRegexpMatch(/'difficulty',\s*([0-9.,\s]+)\s*\]/, document.body.innerHTML) ?? '').split(',').map(i => parseFloat(i)).filter(i => i),
-        pageNum: parseInt(document.querySelector('.pagination .pagination-list li a.is-current')?.innerText ?? '0', 10),
-        pageQty: parseInt(document.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10),
-        totalItems: song?.scores ?? 0,
-        scores: parseSsLeaderboardScores(document),
+        leaderboardPage: parseSsSongLeaderboardPage(document)
     }
-    console.warn(props)
 
     const profileDiv = document.createElement('div');
     profileDiv.classList.add('sspl-page');
@@ -113,6 +65,8 @@ async function setupLeaderboard() {
     // TODO: remove comments
     // const originalContent = document.querySelector('.content');
     // if (originalContent) originalContent.remove();
+
+    new Leaderboard({target: profileDiv, props});
 
     return;
 
@@ -129,13 +83,6 @@ async function setupLeaderboard() {
         const songCard = new SongCard({
             target: newSongBox,
             props: {...songInfoData, leaderboardId}
-        });
-        songCard.$on('initialized', e => {
-            if (e.detail) songInfoBox.remove()
-            else {
-                newSongBox.remove();
-                new SongIcons({target: songInfoBox, props: {hash: songInfoData.hash}});
-            }
         });
 
         const ssConfig = await getConfig('ssSong');

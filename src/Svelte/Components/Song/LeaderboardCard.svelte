@@ -16,6 +16,7 @@
     const dispatch = createEventDispatcher();
 
     export let leaderboardId;
+    export let songInfo;
     export let hash;
     export let scores;
     export let totalScores;
@@ -29,7 +30,6 @@
 
     let showBgCover = true;
 
-    let songInfo;
     let diffInfo;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
@@ -44,13 +44,13 @@
             if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
         }
 
-        songInfo = await getSongDiffInfo(hash, diffInfo);
-        if (songInfo) {
-            songInfo.nps = songInfo.length ? songInfo.notes / songInfo.length : '?';
+        if (hash && hash.length && diffInfo) {
+            const bsSongInfo = await getSongDiffInfo(hash, diffInfo);
+            if (bsSongInfo) songInfo = bsSongInfo;
+        }
 
-            dispatch('initialized', true);
-        } else {
-            dispatch('initialized', false);
+        if (songInfo && songInfo.length && songInfo.notes) {
+            songInfo.nps = songInfo.length ? songInfo.notes / songInfo.length : null;
         }
     });
 </script>
@@ -61,50 +61,72 @@
             <div class="song-card"
                  style="--background-image: url(/imports/images/songs/{showBgCover && hash && hash.length ? hash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
                 <header>
-                    <h1 class="title is-4">{songInfo.metadata.songName} {songInfo.metadata.songSubName}</h1>
+                    <h1 class="title is-4">{songInfo.metadata.songName} {songInfo.metadata.songSubName ? songInfo.metadata.songSubName : ''}</h1>
                     <h2 class="title is-5">
                         {songInfo.metadata.songAuthorName}
                         <small>{songInfo.metadata.levelAuthorName}</small></h2>
                     <h3 class="title is-6" class:unranked={status && status !== 'Ranked'}>
-                        {status}
-                        <Value value={stars} digits={2} zero="" suffix="★"/>
-                        <span class="diff"><Difficulty diff={diffInfo} reverseColors={true}/></span>
+                        {#if status}{status}{/if}
+                        {#if stars}<Value value={stars} digits={2} zero="" suffix="★"/>{/if}
+                        {#if diffInfo}<span class="diff"><Difficulty diff={diffInfo} reverseColors={true}/></span>{/if}
+                        {#if songInfo.length}
                         <span class="time">
                             <i class="fas fa-clock"></i> <Duration value={songInfo.length}/>
                         </span>
+                        {/if}
                     </h3>
                 </header>
 
                 <main>
                     <slot name="main">
-                        <div><i class="fas fa-align-justify"></i> {$_.songCard.scores}: <strong>
-                            <Value value={scores} digits={0}/>
-                        </strong>{#if scores !== totalScores}&nbsp;/ <strong>
-                            <Value value={totalScores} digits={0}/>
-                        </strong>{/if}</div>
+                        {#if scores || totalScores}
+
+                        <div>
+                            {#if scores} <i class="fas fa-align-justify"></i> {$_.songCard.scores}: <strong><Value value={scores} digits={0}/></strong> {/if}
+                            {#if scores !== totalScores}&nbsp;/ <strong><Value value={totalScores} digits={0}/></strong>{/if}
+                        </div>
+                        {/if}
+
+                        {#if songInfo.notes || noteCount}
                         <div><i class="fas fa-music"></i> {$_.songCard.notes}: <strong>
                             <Value value={songInfo.notes || noteCount} digits={0}/>
                         </strong></div>
+                        {/if}
+
+                        {#if songInfo.bpm || bpm}
                         <div><i class="fas fa-drum"></i> {$_.songBrowser.fields.bpm}: <strong>
                             <Value value={songInfo.bpm || bpm} digits={0}/>
                         </strong></div>
+                        {/if}
+
+                        {#if songInfo.njs}
                         <div><i class="fas fa-tachometer-alt"></i> {$_.songBrowser.fields.njs}: <strong>
                             <Value value={songInfo.njs} digits={0}/>
                         </strong></div>
+                        {/if}
+
+                        {#if songInfo.nps}
                         <div><i class="fas fa-fire"></i> {$_.songBrowser.fields.nps}: <strong>
                             <Value value={songInfo.nps} digits={2}/>
                         </strong></div>
+                        {/if}
+
+                        {#if songInfo.bombs}
                         <div><i class="fas fa-bomb"></i> {$_.songCard.bombs}: <strong>
                             <Value value={songInfo.bombs} digits={0} zero="0"/>
                         </strong></div>
+                        {/if}
+
+                        {#if songInfo.obstacles}
                         <div><i class="fas fa-skull"></i> {$_.songCard.obstacles}: <strong>
                             <Value value={songInfo.obstacles} digits={0} zero="0"/>
                         </strong></div>
+                        {/if}
                     </slot>
                 </main>
 
                 <footer>
-                    <Icons {hash}/>
+                    {#if hash} <Icons {hash}/> {/if}
                 </footer>
             </div>
         </div>

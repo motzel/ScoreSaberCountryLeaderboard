@@ -169,3 +169,51 @@ export const parseSsProfilePage = doc => ({
       return ret;
     }),
 });
+
+export const parseSsSongLeaderboardPage = doc => {
+  const diffs = [...doc.querySelectorAll('.tabs ul li a') ?? []].map(a => ({name: a.innerText, id: parseInt(getFirstRegexpMatch(/leaderboard\/(\d+)$/, a.href), 10), color: a.querySelector('span')?.style?.color}));
+  const currentDiffHuman = doc.querySelector('.tabs li.is-active a span')?.innerText ?? null;
+  const song = [
+    {id: 'hash', label: 'ID', value: null},
+    {id: 'scores', label: 'Scores', value: null},
+    {id: 'status', label: 'Status', value: null},
+    {id: 'totalScores', label: 'Total Scores', value: null},
+    {id: 'noteCount', label: 'Note Count', value: null},
+    {id: 'bpm', label: 'BPM', value: null},
+    {id: 'stars', label: 'Star Difficulty', value: null},
+    {id: 'levelAuthorName', label: 'Mapped by', value: null},
+  ]
+    .map(sid => ({...sid, value: doc.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
+    .concat([{id: 'songName', value: [null, doc.querySelector('.column.is-one-third-desktop .box:first-of-type .title a')?.innerText]}])
+    .reduce((cum, sid) => {
+      let value = Array.isArray(sid.value) ? sid.value[1] : null;
+      if (value !== null && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseSsFloat(value);
+      if (value && sid.id === 'songName') {
+        const songAuthorMatch = value.match(/^(.*?)\s-\s(.*)$/);
+        if (songAuthorMatch) {
+          value = songAuthorMatch[2];
+          cum.songAuthorName = songAuthorMatch[1];
+        } else {
+          cum.songAuthorName = '';
+        }
+      }
+      if (value && sid.id === 'levelAuthorName') {
+        const el = doc.createElement('div'); el.innerHTML = value;
+        value = el.innerText;
+      }
+      if (value !== null) cum[sid.id] = value;
+
+      return cum;
+    }, {});
+  return {
+    currentDiff: currentDiffHuman?.toLowerCase()?.replace('+', 'Plus') ?? null,
+    currentDiffHuman,
+    diffs,
+    song,
+    diffChart: (getFirstRegexpMatch(/'difficulty',\s*([0-9.,\s]+)\s*\]/, doc.body.innerHTML) ?? '').split(',').map(i => parseFloat(i)).filter(i => i),
+    pageNum: parseInt(doc.querySelector('.pagination .pagination-list li a.is-current')?.innerText ?? '0', 10),
+    pageQty: parseInt(doc.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10),
+    totalItems: song?.scores ?? 0,
+    scores: parseSsLeaderboardScores(doc),
+  }
+};

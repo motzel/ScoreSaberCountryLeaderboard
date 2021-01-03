@@ -1544,7 +1544,7 @@
                                 <div class="card-icons">
                                     <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
 
-                                    {#if selectedAdditionalCols.length > 0}
+                                    {#if selectedAdditionalCols.length > 0 && song}
                                     <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                     {/if}
                                 </div>
