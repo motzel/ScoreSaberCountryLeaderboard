@@ -183,11 +183,10 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
     if (hasOutOfLineKey()) {
       if (!key) throw `setCache() needs a key for stores (${storeName}) with out-of-line keys`;
     } else {
-      key = getObjKey(value);
+      key = getObjKey(value, key);
     }
 
-
-    repositoryCache.set(value, key);
+    repositoryCache.set(key, value);
   }
   const addToCache = data => {
     if (hasOutOfLineKey()) throw `addToCache() is not available for stores (${storeName}) with out-of-line key`;

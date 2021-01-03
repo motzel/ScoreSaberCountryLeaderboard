@@ -113,7 +113,7 @@
             const playerLastUpdated = await getPlayerLastUpdated(profileId);
             if (playerLastUpdated) $lastUpdatedState = dateFromString(playerLastUpdated);
         } else {
-            getAnyLastUpdated(true).then(d => $lastUpdatedState = dateFromString(d));
+            $lastUpdatedState = dateFromString(await getAnyLastUpdated());
         }
     }
 
