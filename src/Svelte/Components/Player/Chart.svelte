@@ -20,26 +20,57 @@
 
     let rankedsNotesCache = null;
 
+    let userHistory = null;
+    let playerScores = null;
+
     onMount(async () => {
         canvas = document.getElementById('rankChart');
 
-        rankedsNotesCache = await getRankedsNotesCache();
+        await refreshRankedSongs();
+        await refreshRankedsNotesCache();
 
+        const rankedSongsUnsubscriber = eventBus.on('rankeds-changed', async () => await refreshRankedSongs());
         const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
+        const activePlayersUpdatedUnsubscriber = eventBus.on('active-players-updated', async ({allPlayers}) => {
+            if (profileId && allPlayers && allPlayers[profileId]) await refreshUserHistory(profileId);
+        });
+        const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async({playerId}) => {
+            if (profileId !== playerId) return;
+
+            await refreshPlayerScores(profileId)
+        });
+
+        const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async () => await refreshPlayerScores(profileId));
 
         return () => {
+            rankedSongsUnsubscriber();
             rankedsNotesCacheUnsubscriber();
+            activePlayersUpdatedUnsubscriber();
+            playerScoresUpdatedUnsubscriber();
+            dataRefreshedUnsubscriber();
         }
     });
 
-    async function calcAccChartData(profileId, rankeds) {
+    async function refreshRankedsNotesCache() {
+        rankedsNotesCache = await getRankedsNotesCache();
+    }
+
+    async function refreshUserHistory(profileId) {
+        userHistory = await getPlayerHistory(profileId);
+    }
+
+    async function refreshRankedSongs() {
+        allRankeds = await getRankedSongs();
+    }
+
+    async function refreshPlayerScores(profileId) {
         if (!profileId) return;
 
-        rankeds = await rankeds;
-        if (!rankeds) return;
+        playerScores = await getScoresByPlayerId(profileId);
+    }
 
-        const playerScores = await getScoresByPlayerId(profileId);
-        if (!playerScores) return;
+    async function calcAccChartData(playerScores, rankeds, rankedsNotesCache) {
+        if (!playerScores || !rankeds || !rankedsNotesCache) return;
 
         chartData = Object.values(playerScores)
                 .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId])
@@ -59,13 +90,13 @@
         ;
     }
 
-    async function setupRankChart(canvas, chartData) {
+    async function setupRankChart(canvas, chartData, userHistory) {
         if (!canvas || !chartData || !chartData.length) return;
 
         const daysAgo = Array(50).fill(0).map((v, i) => i).reverse();
 
         let ppData = [];
-        const userHistory = await getPlayerHistory(profileId);
+
         if (userHistory) {
             const historyData = userHistory.reduce((cum, historyItem) => {
                 const historyDate = toSSTimestamp(dateFromString(historyItem.timestamp));
@@ -326,18 +357,25 @@
 
             case 'rank':
             default:
-                setupRankChart(canvas, history && history.length ? history : null);
+                setupRankChart(canvas, history && history.length ? history : null, userHistory);
                 break;
         }
     }
 
-    $: allRankeds = getRankedSongs();
     $: {
-        rankedsNotesCache, calcAccChartData(profileId, allRankeds);
+        refreshPlayerScores(profileId)
     }
 
     $: {
-        setupChart(type, canvas, chartData, history)
+        refreshUserHistory(profileId)
+    }
+
+    $: {
+        calcAccChartData(playerScores, allRankeds, rankedsNotesCache);
+    }
+
+    $: {
+        setupChart(type, canvas, chartData, history, userHistory)
     }
 </script>
 
