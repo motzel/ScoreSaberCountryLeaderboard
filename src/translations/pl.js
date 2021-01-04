@@ -199,6 +199,7 @@ export default {
             country: 'Tylko kraj',
             manually_added: 'Przyjaciele',
         },
+        difficultyGraph: 'Difficulty graph',
     },
     songCard: {
         scores: 'Wyniki',

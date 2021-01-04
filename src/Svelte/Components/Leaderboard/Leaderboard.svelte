@@ -1,13 +1,16 @@
 <script>
   import Card from '../Song/LeaderboardCard.svelte'
+  import Chart from '../Song/Chart.svelte'
 
   export let leaderboardId;
   export let leaderboardPage = {};
 
-  const getSongProp = name => leaderboardPage && leaderboardPage.song && leaderboardPage.song[name] ? leaderboardPage.song [name]: null;
-  const difficulty = leaderboardPage && leaderboardPage.currentDiff ? leaderboardPage.currentDiff : null;
+  const getProp = prop => leaderboardPage && leaderboardPage[prop] ? leaderboardPage[prop] : null;
 
-  const song = leaderboardPage && leaderboardPage.song ? leaderboardPage.song : null;
+  const difficulty = getProp('currentDiff');
+  const chartData = getProp('diffChart');
+  const song = getProp('song');
+
   const songInfo = song ? {metadata: song} : null;
 </script>
 
@@ -20,9 +23,17 @@
 
   <div class="column is-one-third-desktop">
     <Card {leaderboardId} {difficulty} {songInfo} {...song} />
+
+    {#if chartData && chartData.length}
+    <div class="box has-shadow chart">
+      <Chart data={chartData} />
+    </div>
+    {/if}
   </div>
 </div>
 
 <style>
-
+  .chart {
+    margin-top: 1.5rem;
+  }
 </style>

@@ -198,6 +198,7 @@ export default {
             country: 'Country only',
             manually_added: 'Friends',
         },
+        difficultyGraph: 'Difficulty graph',
     },
     songCard: {
         scores: 'Scores',
