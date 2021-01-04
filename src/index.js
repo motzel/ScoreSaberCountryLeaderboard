@@ -1,7 +1,6 @@
 import Profile from './Svelte/Components/Player/Profile.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
-import SongIcons from './Svelte/Components/Song/Icons.svelte';
 import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
@@ -62,33 +61,14 @@ async function setupLeaderboard() {
     profileDiv.classList.add('sspl-page');
     container.prepend(profileDiv);
 
-    // TODO: remove comments
-    // const originalContent = document.querySelector('.content');
-    // if (originalContent) originalContent.remove();
+    const originalContent = document.querySelector('.content');
+    if (originalContent) originalContent.remove();
 
     new Leaderboard({target: profileDiv, props});
 
-    return;
-
-    new SongLeaderboard({
-        target: tblContainer,
-        props: {leaderboardId, country: await getActiveCountry()}
-    });
-
+    // TODO: enhance scores in Leaderboard\Provider\ScoreScaber.svelte
+    /*
     if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
-        const newSongBox = document.createElement('div');
-        newSongBox.style.marginBottom = '1.5rem';
-        songInfoBox.parentNode.insertBefore(newSongBox, songInfoBox);
-
-        const songCard = new SongCard({
-            target: newSongBox,
-            props: {...songInfoData, leaderboardId}
-        });
-
-        const ssConfig = await getConfig('ssSong');
-        const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
-
-        if (songEnhanceEnabled) {
             const scores = parseSsLeaderboardScores(document);
             if (scores) {
                 let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
@@ -119,8 +99,8 @@ async function setupLeaderboard() {
                     }
                 });
             }
-        }
     }
+     */
 
     log.info("Setup leaderboard page / Done")
 }

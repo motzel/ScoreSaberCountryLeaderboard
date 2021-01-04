@@ -668,14 +668,13 @@
                  pauseLoading={false}
                  {playerTwitchProfile}
                  {recentPlay}
-                 let:songs let:series let:totalItems let:isLoading let:error let:beforePageChanged let:isPaused
+                 let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
                 >
                     <ScoreSaberPresenter
                      bind:players
                      {songs}
                      {series}
                      {error}
-                     {isLoading}
                      bind:currentPage
                      {totalItems}
                      bind:type={scoresType}

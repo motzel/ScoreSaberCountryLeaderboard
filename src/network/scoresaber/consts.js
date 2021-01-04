@@ -5,6 +5,7 @@ export const PLAYER_INFO_URL = SCORESABER_API_URL + '/player/${userId}/full';
 export const GLOBAL_URL = SCORESABER_URL + '/global/${page}';
 export const COUNTRY_URL = SCORESABER_URL + '/global/${page}?country=${country}';
 export const PLAYER_PROFILE_URL = SCORESABER_URL + '/u/${playerId}';
+export const SONG_LEADERBOARD_URL = SCORESABER_URL + '/leaderboard/${leaderboardId}?page=${page}'
 export const SCORES_URL = SCORESABER_API_URL + '/player/${playerId}/scores/recent/${page}';
 
 export const SCORES_PER_PAGE = 12; // song leaderboard

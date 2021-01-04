@@ -3,6 +3,10 @@ import {getFirstRegexpMatch} from '../utils/js'
 import {getDiffAndTypeFromOnlyDiffName} from '../song'
 import {dateFromString} from '../utils/date'
 import {trans} from '../Svelte/stores/i18n'
+import {substituteVars} from '../utils/format'
+import {SONG_LEADERBOARD_URL} from '../network/scoresaber/consts'
+
+export const getSongLeaderboardUrl = (leaderboardId, page = 1) => substituteVars(SONG_LEADERBOARD_URL, {leaderboardId, page})
 
 export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.ranking tbody tr')].map(tr => {
   let ret = {lastUpdated: new Date()};
@@ -28,7 +32,7 @@ export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.r
 
   ret.timesetAgo = tr.querySelector('td.timeset')?.innerText?.trim() ?? null;
 
-  ret.mods = tr.querySelector('td.mods')?.innerText?.replace('-','').split(',').filter(m => m && m.length) ?? null;
+  ret.mods = tr.querySelector('td.mods')?.innerText?.replace('-','').split(',').filter(m => m && m.trim().length) ?? null;
   ret.mods = ret.mods && ret.mods.length ? ret.mods.join(',') : null;
 
   ret.pp = parseValue('td.pp .scoreTop.ppValue');
