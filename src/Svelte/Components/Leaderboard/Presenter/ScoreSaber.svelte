@@ -54,7 +54,7 @@
      </thead>
 
      <tbody>
-     {#each data as score}
+     {#each data as score (score.playerId)}
        <slot {score}>
          <ScoreSaberScorePresenter {score}/>
        </slot>

@@ -35,7 +35,7 @@
 </script>
 
 {#if song}
-  <tr in:fly={{ x: 200, duration: 500 }}>
+  <tr in:fly={{ x: 50, duration: 500 }}>
     <td class="rank">
     {#each series as playerScore, idx}{#if idx === 0}
       <ScoreRank rank={playerScore.rank}

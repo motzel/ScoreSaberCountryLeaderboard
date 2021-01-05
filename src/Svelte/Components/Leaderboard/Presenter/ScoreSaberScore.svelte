@@ -1,6 +1,6 @@
 <script>
   import {onMount} from 'svelte'
-  import {fly} from 'svelte/transition';
+  import {fade, fly} from 'svelte/transition';
   import {_} from "../../../stores/i18n";
   import eventBus from '../../../../utils/broadcast-channel-pubsub';
   import {formatNumber} from '../../../../utils/format'
@@ -31,7 +31,7 @@
 </script>
 
 {#if score}
-  <tr in:fly={{ x: 200, duration: 500 }}>
+  <tr in:fly={{ x: 50, duration: 500 }}>
 
     <td class="picture">
       <Avatar playerId={score.playerId} url={score.picture} />
