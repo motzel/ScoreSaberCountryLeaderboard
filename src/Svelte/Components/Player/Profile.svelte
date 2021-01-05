@@ -364,6 +364,9 @@
                 if (profilePage && profilePage.stats) ssStats = profilePage.stats;
             }
         });
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', ({playerId}) => {
+            mainPlayerId = playerId;
+        });
 
         initialized = true;
 
@@ -376,6 +379,7 @@
             unsubscriberTwitchVideosUpdated();
             unsubscriberRecentPlayUpdated();
             unsubscriberPlayerStatsUpdated();
+            unsubscriberMainPlayerChanged();
         }
     })
 

@@ -59,42 +59,6 @@ async function setupLeaderboard() {
 
     new Leaderboard({target: profileDiv, props});
 
-    // TODO: enhance scores in Leaderboard\Provider\ScoreScaber.svelte
-    /*
-    if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
-            const scores = parseSsLeaderboardScores(document);
-            if (scores) {
-                let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
-                if (leaderboardId) {
-                    const leaderboardScores = await getSongScores(leaderboardId);
-                    if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
-                }
-
-                const maxScore = await getSongMaxScore(songInfoData.hash, diffInfo);
-                scores.forEach(s => {
-                    if (s.score) {
-                        const score = s.tr.querySelector('td.score');
-                        if (score) {
-                            score.innerHTML = formatNumber(s.score, 0);
-                        }
-                    }
-
-                    const percentage = s.tr.querySelector('td.percentage center');
-                    if (percentage && s.score && maxScore && maxScore > 0) {
-                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.mods !== '-' && s.acc ? s.acc * 100 : s.score * 100 / maxScore) + '%';
-                    }
-
-                    if (s.pp !== null) {
-                        const pp = s.tr.querySelector('td.pp .scoreTop.ppValue');
-                        if (pp) {
-                            pp.innerHTML = formatNumber(s.pp);
-                        }
-                    }
-                });
-            }
-    }
-     */
-
     log.info("Setup leaderboard page / Done")
 }
 
@@ -299,20 +263,6 @@ async function setupDelayed() {
 
     await initDownloadManager();
     addVersionInfoToFooter();
-}
-
-function rafAsync() {
-    return new Promise(resolve => {
-        requestAnimationFrame(resolve); //faster than set time out
-    });
-}
-
-function checkElement(selector) {
-    if (document.querySelector(selector) === null) {
-        return rafAsync().then(() => checkElement(selector));
-    } else {
-        return Promise.resolve(true);
-    }
 }
 
 let initialized = false;

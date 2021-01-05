@@ -6,6 +6,7 @@
   import Chart from '../Song/Chart.svelte'
   import ScoreSaberProvider from './Provider/ScoreSaber.svelte'
   import ScoreSaberPresenter from './Presenter/ScoreSaber.svelte'
+  import {getLeaderboardMaxScore} from '../../../song'
 
   export let leaderboardId;
   export let leaderboardPage = {};
@@ -20,6 +21,17 @@
   let totalItems = 0;
 
   let songInfo = null;
+
+  let hash = null;
+  let maxScore = null;
+
+  let initialized = false;
+
+  async function refreshMaxScore(leaderboardId, hash, difficulty) {
+    if (!leaderboardId || !hash || !difficulty) return;
+
+    maxScore = await getLeaderboardMaxScore(leaderboardId, hash, difficulty);
+  }
 
   function refreshLeaderboardPage(leaderboardPage) {
     const getProp = (prop, defaultValue = null) => leaderboardPage && leaderboardPage[prop] ? leaderboardPage[prop] : defaultValue;
@@ -36,6 +48,10 @@
       totalItems = getProp('totalItems', 0);
 
       songInfo = song ? {metadata: song} : null;
+
+      hash = song && song.hash ? song.hash : null;
+
+      initialized = true;
     }
 
     type = 'live';
@@ -66,8 +82,13 @@
   $: {
     refreshLeaderboardPage(leaderboardPage)
   }
+
+  $: {
+    refreshMaxScore(leaderboardId, hash, difficulty);
+  }
 </script>
 
+{#if initialized}
 <div class="columns">
   <div class="column">
     <div class="box has-shadow">
@@ -77,6 +98,7 @@
        scores={leaderboardPage && leaderboardPage.scores ? leaderboardPage.scores : []}
        pageNum={currentPage + 1}
        {totalItems}
+       {maxScore}
        pauseLoading={false}
        on:leaderboard-page-loaded={onLeaderboardPageLoaded}
        let:data let:diffs let:totalItems let:error let:beforePageChanged let:isPaused
@@ -107,6 +129,7 @@
     {/if}
   </div>
 </div>
+{/if}
 
 <style>
   .chart {

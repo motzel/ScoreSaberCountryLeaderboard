@@ -38,7 +38,6 @@ export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.r
   ret.pp = parseValue('td.pp .scoreTop.ppValue');
 
   ret.acc = parseValue('td.percentage');
-  ret.acc = ret.acc ? ret.acc / 100 : null;
 
   return ret;
 });
@@ -146,26 +145,26 @@ export const parseSsProfilePage = doc => ({
       ret.timesetStr = songDate ? songDate.title : null;
 
       const pp = tr.querySelector('th.score .scoreTop.ppValue');
-      if (pp) ret.pp = parseFloat(pp.innerText.replace(/[^0-9.]/g, ''));
+      if (pp) ret.pp = parseSsFloat(pp.innerText) ?? null;
 
       const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
       const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
-      ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
+      ret.ppWeighted = ppWeightedMatch ? parseSsFloat(ppWeightedMatch) : null;
 
       const scoreInfo = tr.querySelector('th.score .scoreBottom');
       const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
       if (scoreInfoMatch) {
         switch (scoreInfoMatch[1]) {
           case "score":
-            ret.percent = null;
+            ret.acc = null;
             ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-            ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
+            ret.score = parseSsFloat(scoreInfoMatch[2]);
             break;
 
           case "accuracy":
             ret.score = null;
             ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-            ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
+            ret.acc = parseSsFloat(scoreInfoMatch[2]);
             break;
         }
       }

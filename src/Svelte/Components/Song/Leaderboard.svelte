@@ -44,7 +44,6 @@
     async function refreshLeaderboard() {
         if (!leaderboardId || !leaderboardType || (leaderboardType === 'country' && !country)) return;
 
-        console.warn("Song\Leaderboard::refreshLeaderbaord()", leaderboardId, country, leaderboardType)
         leaderboard = await getLeaderboard(leaderboardId, country, leaderboardType);
     }
 

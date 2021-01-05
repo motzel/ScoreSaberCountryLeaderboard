@@ -88,7 +88,8 @@
             <div>
               <span class="scoreBottom">
                 {$_.songBrowser.fields.score}:
-                <Value value="{playerScore.score}" prevValue={idx > 0 || !showDifferences ? null : playerScore.prevScore} inline={true} digits={0}/>
+                <Value value="{playerScore.score}" prevValue={idx > 0 || !showDifferences ? null : playerScore.prevScore}
+                       inline={true} digits={0} prefix={playerScore.scoreApproximate ? '~' : ''}/>
               </span>
             </div>
           {/if}

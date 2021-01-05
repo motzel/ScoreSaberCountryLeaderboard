@@ -50,8 +50,6 @@
       const player = players[idx];
       const cachedScore = playersScores[idx] && playersScores[idx][score.leaderboardId];
 
-      score.acc = score.percent ? score.percent * 100 : null;
-
       const song = songs[songIdx];
       if (playerTwitchProfile && song && song.diffInfo && song.hash && score.timeset && idx === 0) {
         const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
@@ -69,7 +67,7 @@
         }
       }
 
-      return cachedScore ? await enhanceScore(score, cachedScore) : score;
+      return await enhanceScore(score, cachedScore);
     }))));
 
     if (series && series.length && players && players.length) {
@@ -107,9 +105,9 @@
     });
 
     const pageSeries = pageData.scores.map(s => {
-      const {lastUpdated, leaderboardId, mods, percent, pp, ppWeighted, rank, score, timeset} = s;
+      const {lastUpdated, leaderboardId, mods, acc, pp, ppWeighted, rank, score, timeset, hash, diffInfo} = s;
 
-      const series = [{leaderboardId, lastUpdated, mods, percent, pp, ppWeighted, rank, score, timeset: dateFromString(timeset)}];
+      const series = [{leaderboardId, lastUpdated, mods, acc, pp, ppWeighted, rank, score, hash, diffInfo, timeset: dateFromString(timeset)}];
 
       // get other players data from cache
       if (players && players.length > 1) {
@@ -172,6 +170,7 @@
   }
 
   async function updatePlayerId(players) {
+    if ((!players || !players.length) && !playerId) return;
     playerId = players && players.length ? players[0].id : playerId;
 
     await getPlayersScores(players);

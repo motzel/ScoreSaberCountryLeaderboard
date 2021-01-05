@@ -2,13 +2,13 @@
   import {onMount, createEventDispatcher} from 'svelte'
   const dispatch = createEventDispatcher();
 
+  import eventBus from '../../../../utils/broadcast-channel-pubsub';
   import {fetchSsSongLeaderboardPage} from '../../../../network/scoresaber/scores'
   import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
   import {_} from '../../../stores/i18n';
-  import {dateFromString} from '../../../../utils/date'
-  import {getScoresByPlayerId} from '../../../../scoresaber/players'
   import {convertArrayToObjectByKey} from '../../../../utils/js'
-  import {setRefreshedPlayerScores} from '../../../../network/scoresaber/players'
+  import {enhanceScore} from '../../Song/Provider/utils'
+  import {getSongScores} from '../../../../song'
 
   export let leaderboardId = null;
   export let scores = [];
@@ -16,6 +16,7 @@
   export let pageNum = 1;
   export let totalItems = 0;
   export let pauseLoading = false;
+  export let maxScore;
 
   let lastPageData = scores && scores.length
    ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), leaderboardId}
@@ -30,38 +31,24 @@
   let initialized = false;
 
   const enhanceScores = async () => {
-    if (!(songs && series && songs.length && series.length && playersScores)) return;
+    if (!(leaderboardId && data && data.length && playersScores)) return;
 
-    series = await Promise.all(series.map(async (songSeries, songIdx) => await Promise.all(songSeries.map(async (score, idx) => {
-      if (!score) return score;
+    data = await Promise.all(data.map(async score => {
+      if (!score || !score.playerId) return score;
 
-      const player = players[idx];
-      const cachedScore = playersScores[idx] && playersScores[idx][score.leaderboardId];
+      const cachedScore = playersScores[score.playerId] ? playersScores[score.playerId] : null;
 
-      score.acc = score.percent ? score.percent * 100 : null;
-
-      const song = songs[songIdx];
-
-      return cachedScore ? await enhanceScore(score, cachedScore) : score;
-    }))));
-
-    if (series && series.length && players && players.length) {
-      const data = series
-       .map(s => s && s[0] && s[0].rank ? {leaderboardId: s[0].leaderboardId, rank: s[0].rank} : null)
-       .filter(s => s);
-      setRefreshedPlayerScores(players[0].playerId, data, true, false);
-    }
-
-    // force refresh songs
-    songs = songs;
+      return await enhanceScore(score, cachedScore, maxScore);
+    }));
   }
 
-  const getPlayersScores = async players => {
-    if (!players || !players.length) return;
+  async function refreshPlayersScores(leaderboardId) {
+    if (!leaderboardId) return;
 
-    playersScores = (await Promise.all(
-     players.map(async player => getScoresByPlayerId(player.playerId))
-    )).map(playerScores => convertArrayToObjectByKey(playerScores, 'leaderboardId'))
+    const leaderboard = await getSongScores(leaderboardId);
+    playersScores = leaderboard && leaderboard.length ? convertArrayToObjectByKey(leaderboard, 'playerId') : {};
+
+    enhanceScores();
   }
 
   function processFetched(pageData) {
@@ -72,11 +59,9 @@
 
     totalItems = pageData.totalItems && !isNaN(pageData.totalItems) ? pageData.totalItems : totalItems;
 
+    data = pageData.scores.map(score => ({...score, leaderboardId}));
 
-    data = pageData.scores;
-
-    // TODO
-    // enhanceScores();
+    enhanceScores();
   }
 
   async function fetchPage(leaderboardId, pageToLoad) {
@@ -113,11 +98,24 @@
   }
 
   onMount(async () => {
+    await refreshPlayersScores(leaderboardId);
+
     if(lastPageData) processFetched(lastPageData);
 
-    initialized = true;
-  })
+    const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
+      refreshPlayersScores();
+    });
+    const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async () => {
+      await refreshPlayersScores();
+    });
 
+    initialized = true;
+
+    return () => {
+      unsubscriberDataRefreshed();
+      unsubscriberScoresUpdated();
+    }
+  })
 
   $: if (lastPageData) {
     processFetched(lastPageData)
@@ -125,6 +123,10 @@
 
   $: {
     fetchPage(leaderboardId, undefined, initialized, pauseLoading)
+  }
+
+  $: {
+    refreshPlayersScores(leaderboardId)
   }
 </script>
 

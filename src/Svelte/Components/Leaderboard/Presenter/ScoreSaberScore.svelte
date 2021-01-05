@@ -11,6 +11,7 @@
   import Avatar from '../../Common/Avatar.svelte'
   import Rank from '../../Common/Rank.svelte'
   import Player from '../../Common/Player.svelte'
+  import FormattedDate from '../../Common/FormattedDate.svelte'
 
   export let score = {};
 
@@ -46,22 +47,24 @@
     </td>
 
     <td class="score">
-      <Value value="{score.score}" prevValue={!showDifferences ? null : score.prevScore} inline={true} digits={0}/>
+      <Value value="{score.score}" prevValue={!showDifferences ? null : score.prevScore} digits={0}/>
     </td>
 
-    <td class="timeset">{score.timesetAgo}</td>
+    <td class="timeset">
+      <div>{score.timesetAgo}</div>
+      {#if score.prevScore}<div><small><FormattedDate date={score.prevTimeset} noDate="&nbsp;" /></small></div>{/if}
+    </td>
 
     <td class="mods">{score.mods ? score.mods : '-'}</td>
 
     <td class="percentage">
-      <Value value={score.acc ? score.acc * 100 : null} withZeroSuffix={false}
+      <Value value={score.acc} withZeroSuffix={false}
              prevValue={!showDifferences ? null : score.prevAcc}
-             inline={true} suffix="%" zero="-" />
+             suffix="%" zero="-" />
     </td>
 
     <td class="pp">
-      <Pp pp="{score.pp}" prevPp={!showDifferences ? null : score.prevPp} zero={formatNumber(0)}
-          withZeroSuffix={true} inline={true}/>
+      <Pp pp="{score.pp}" prevPp={!showDifferences ? null : score.prevPp} zero={formatNumber(0)} withZeroSuffix={true} />
      {#if showWhatIfPp}
        <WhatIfPp leaderboardId={score.leaderboardId} pp={score.pp}/>
      {/if}
@@ -81,6 +84,11 @@
 
   td.score, td.pp {
     width: 6rem;
+  }
+
+  td.timeset small {
+    display: block;
+    color: var(--faded);
   }
 
   td.mods, td.percentage, td.pp {
