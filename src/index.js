@@ -1,7 +1,5 @@
 import Profile from './Svelte/Components/Player/Profile.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
-import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
-import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
@@ -12,10 +10,6 @@ import header from '../header.json';
 import log from './utils/logger';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
-import {
-    getSongMaxScore, getSongScores,
-} from "./song";
-
 import twitch from './services/twitch';
 import {getConfig} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
@@ -28,7 +22,6 @@ import {
     getPlayerProfileUrl,
     isPlayerDataAvailable,
 } from "./scoresaber/players";
-import {formatNumber} from "./utils/format";
 import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'

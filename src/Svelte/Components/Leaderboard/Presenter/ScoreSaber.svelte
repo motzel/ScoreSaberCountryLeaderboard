@@ -7,6 +7,7 @@
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
   import Pager from '../../Common/Pager.svelte'
   import Button from '../../Common/Button.svelte'
+  import Leaderboard from '../../Song/Leaderboard.svelte'
 
   const dispatch = createEventDispatcher();
 
@@ -21,6 +22,7 @@
   export let bgLeft = "0rem";
   export let bgTop = "0rem";
   export let showBgCover = true;
+  export let type = 'live';
 
   let mainPlayerId = null;
 
@@ -33,11 +35,13 @@
   }
 
   function onCached() {
-    console.warn('onCached')
+    type = 'cached';
   }
 
   function onDiffChange(diffId) {
     dispatch('diff-change', {leaderboardId: diffId, page: 0})
+
+    type = 'live';
   }
 </script>
 
@@ -48,10 +52,10 @@
     <div class="switch-types">
       {#if diffs && diffs.length}
         {#each diffs as diff (diff.id)}
-          <Button label={diff.name} color="#dbdbdb" bgColor={diff.color} on:click={() => onDiffChange(diff.id)} notSelected={diff.id !== leaderboardId}/>
+          <Button label={diff.name} color="#dbdbdb" bgColor={diff.color} on:click={() => onDiffChange(diff.id)} notSelected={diff.id !== leaderboardId || type !== 'live'}/>
         {/each}
       {/if}
-      {#if mainPlayerId}<Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onCached} notSelected={true}/>{/if}
+      {#if mainPlayerId}<Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onCached} notSelected={type !== 'cached'}/>{/if}
     </div>
 
     <div class="right"></div>
@@ -59,12 +63,15 @@
 {/if}
 
 <div class="content">
- {#if data && data.length}
+{#if type === 'cached'}
+  <Leaderboard leaderboardId={leaderboardId} tableOnly={true} showBgCover={false} />
+{:else}
+  {#if data && data.length}
    <table class="ranking songs sspl">
      <thead>
      <tr>
        <th class="picture"></th>
-       <th class="rank">{$_.songBrowser.fields.rank}</th>
+       <th class="rank">{$_.songBrowser.fields.rankShort}</th>
        <th class="player">{$_.songLeaderboard.player}</th>
        <th class="score">{$_.songBrowser.fields.score}</th>
        <th class="timeset">{$_.songBrowser.fields.timesetShort}</th>
@@ -82,22 +89,23 @@
      {/each}
      </tbody>
    </table>
- {:else}
+  {:else}
    <p>{$_.common.noData}</p>
- {/if}
-</div>
+  {/if}
 
-<Pager bind:currentPage
+  <Pager bind:currentPage
        itemsPerPage={SCORES_PER_PAGE}
        {totalItems}
        itemsPerPageValues={null}
        {beforePageChanged}
        on:page-changed={onPageChanged}
        hide={isPaused}
-/>
-{#if error}
+  />
+  {#if error}
   <div class="error has-text-centered">{error}</div>
+  {/if}
 {/if}
+</div>
 
 <style>
   .header {

@@ -1,6 +1,6 @@
 <script>
   import {onMount} from 'svelte'
-  import {fade, fly} from 'svelte/transition';
+  import {fly} from 'svelte/transition';
   import {_} from "../../../stores/i18n";
   import eventBus from '../../../../utils/broadcast-channel-pubsub';
   import {formatNumber} from '../../../../utils/format'

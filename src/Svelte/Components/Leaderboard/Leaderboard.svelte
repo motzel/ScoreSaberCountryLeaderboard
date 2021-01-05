@@ -9,6 +9,7 @@
 
   export let leaderboardId;
   export let leaderboardPage = {};
+  export let type = 'live';
 
   let difficulty = null;
   let diffs = null;
@@ -36,6 +37,8 @@
 
       songInfo = song ? {metadata: song} : null;
     }
+
+    type = 'live';
   }
 
   function onDiffChange(event) {
@@ -80,6 +83,7 @@
       >
         <ScoreSaberPresenter
          {leaderboardId}
+         bind:type
          {data}
          {diffs}
          {error}
