@@ -2,11 +2,11 @@
   import {createEventDispatcher, onMount} from 'svelte';
   import {_} from '../../../stores/i18n'
   import {SCORES_PER_PAGE} from '../../../../network/scoresaber/consts'
+  import {getMainPlayerId} from '../../../../plugin-config'
 
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
   import Pager from '../../Common/Pager.svelte'
-  import {getMainPlayerId} from '../../../../plugin-config'
-
+  import Button from '../../Common/Button.svelte'
 
   const dispatch = createEventDispatcher();
 
@@ -31,13 +31,34 @@
   function onPageChanged() {
     dispatch('browse', {currentPage});
   }
+
+  function onCached() {
+    console.warn('onCached')
+  }
+
+  function onDiffChange(diffId) {
+    dispatch('diff-change', {leaderboardId: diffId, page: 0})
+  }
 </script>
 
-<div class="content">
-  {#if (diffs && (diffs.length > 1 || (diffs.length === 1 && diffs[0].id !== leaderboardId))) || mainPlayerId }
-  TODO: difficulties buttons {JSON.stringify(diffs)} + CACHED leaderbaord
-  {/if}
+{#if (diffs && (diffs.length > 1 || (diffs.length === 1 && diffs[0].id !== leaderboardId))) || mainPlayerId }
+  <div class="header">
+    <div class="left"></div>
 
+    <div class="switch-types">
+      {#if diffs && diffs.length}
+        {#each diffs as diff (diff.id)}
+          <Button label={diff.name} color="#dbdbdb" bgColor={diff.color} on:click={() => onDiffChange(diff.id)} notSelected={diff.id !== leaderboardId}/>
+        {/each}
+      {/if}
+      {#if mainPlayerId}<Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onCached} notSelected={true}/>{/if}
+    </div>
+
+    <div class="right"></div>
+  </div>
+{/if}
+
+<div class="content">
  {#if data && data.length}
    <table class="ranking songs sspl">
      <thead>
@@ -79,6 +100,23 @@
 {/if}
 
 <style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .switch-types {
+    display: flex;
+    font-size: .75rem;
+    text-align: center;
+  }
+
+  :global(.switch-types button) {
+    font-weight: 500;
+    margin-right: .125rem!important;
+  }
+
   th {
     padding: .5rem !important;
     text-align: center!important;

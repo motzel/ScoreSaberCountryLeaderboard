@@ -1,8 +1,7 @@
 <script>
-  import {createEventDispatcher} from 'svelte';
+  import {onMount, createEventDispatcher} from 'svelte'
   const dispatch = createEventDispatcher();
 
-  import {onMount} from 'svelte'
   import {fetchSsSongLeaderboardPage} from '../../../../network/scoresaber/scores'
   import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
   import {_} from '../../../stores/i18n';
@@ -92,13 +91,12 @@
 
     try {
       const pageData = await fetchSsSongLeaderboardPage(leaderboardId, pageToLoad);
-      console.warn('pageData', pageData)
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
       lastPageData = pageData;
       pageNum = pageToLoad;
 
-      dispatch('scores-page-loaded', lastPageData);
+      dispatch('leaderboard-page-loaded', lastPageData);
     }
     catch(err) {
       error = $_.common.downloadError;

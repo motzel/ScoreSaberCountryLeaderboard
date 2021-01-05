@@ -1,34 +1,67 @@
 <script>
+  import {onMount} from 'svelte'
+  import {getSongLeaderboardUrl} from '../../../scoresaber/scores'
+
   import Card from '../Song/LeaderboardCard.svelte'
   import Chart from '../Song/Chart.svelte'
   import ScoreSaberProvider from './Provider/ScoreSaber.svelte'
   import ScoreSaberPresenter from './Presenter/ScoreSaber.svelte'
-  import {getSongLeaderboardUrl} from '../../../scoresaber/scores'
 
   export let leaderboardId;
   export let leaderboardPage = {};
 
-  const getProp = (prop, defaultValue = null) => leaderboardPage && leaderboardPage[prop] ? leaderboardPage[prop] : defaultValue;
+  let difficulty = null;
+  let diffs = null;
+  let chartData = null;
+  let song = null;
 
-  const difficulty = getProp('currentDiff');
-  const diffs = getProp('diffs');
-  const chartData = getProp('diffChart');
-  const song = getProp('song');
+  let currentPage = 0;
+  let totalItems = 0;
 
-  let currentPage = leaderboardPage && leaderboardPage.pageNum ? leaderboardPage.pageNum - 1 : 0;
-  let totalItems = getProp('totalItems', 0);
+  let songInfo = null;
 
-  const songInfo = song ? {metadata: song} : null;
+  function refreshLeaderboardPage(leaderboardPage) {
+    const getProp = (prop, defaultValue = null) => leaderboardPage && leaderboardPage[prop] ? leaderboardPage[prop] : defaultValue;
 
-  function onScoreBrowse() {
+    const newDifficulty = getProp('currentDiff');
+
+    if (difficulty !== newDifficulty) {
+      difficulty = newDifficulty;
+      diffs = getProp('diffs');
+      chartData = getProp('diffChart');
+      song = getProp('song');
+
+      currentPage = leaderboardPage && leaderboardPage.pageNum ? leaderboardPage.pageNum - 1 : 0;
+      totalItems = getProp('totalItems', 0);
+
+      songInfo = song ? {metadata: song} : null;
+    }
+  }
+
+  function onDiffChange(event) {
+    if (!event || !event.detail || !event.detail.leaderboardId) return;
+
+    leaderboardId = event.detail.leaderboardId;
+    currentPage = event.detail.page ? event.detail.page : 0;
+  }
+
+  function onLeaderboardPageLoaded(event) {
+    if (!event || !event.detail) return;
+
+    leaderboardPage = event.detail;
+
     if (!leaderboardId) return;
 
     // update browser url
     const url = new URL(
-     getSongLeaderboardUrl(leaderboardId, currentPage + 1)
+     getSongLeaderboardUrl(leaderboardId, event.detail.pageNum)
     );
 
     history.replaceState(null, '', url.toString());
+  }
+
+  $: {
+    refreshLeaderboardPage(leaderboardPage)
   }
 </script>
 
@@ -42,6 +75,7 @@
        pageNum={currentPage + 1}
        {totalItems}
        pauseLoading={false}
+       on:leaderboard-page-loaded={onLeaderboardPageLoaded}
        let:data let:diffs let:totalItems let:error let:beforePageChanged let:isPaused
       >
         <ScoreSaberPresenter
@@ -52,7 +86,7 @@
          bind:currentPage
          {totalItems}
          {beforePageChanged}
-         on:browse={onScoreBrowse}
+         on:diff-change={onDiffChange}
          {isPaused}
         />
       </ScoreSaberProvider>
@@ -63,9 +97,9 @@
     <Card {leaderboardId} {difficulty} {songInfo} {...song} />
 
     {#if chartData && chartData.length}
-    <div class="box has-shadow chart">
-      <Chart data={chartData} />
-    </div>
+      <div class="box has-shadow chart">
+        <Chart data={chartData} />
+      </div>
     {/if}
   </div>
 </div>

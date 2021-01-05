@@ -1,17 +1,14 @@
 <script>
-    import {onMount} from 'svelte';
-    import {extractDiffAndType, getSongDiffInfo, getSongScores} from "../../../song";
+    import {onMount, createEventDispatcher} from 'svelte';
+    import {getSongDiffInfo, getSongScores} from "../../../song";
     import {getConfig} from "../../../plugin-config";
+    import eventBus from '../../../utils/broadcast-channel-pubsub'
+    import {_} from '../../stores/i18n';
 
     import Icons from "./Icons.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
     import Duration from "../Common/Duration.svelte";
-
-    import {createEventDispatcher} from 'svelte';
-    import {getAllActivePlayers, getPlayerSongScore} from "../../../scoresaber/players";
-    import {_} from '../../stores/i18n';
-    import {getActiveCountry} from "../../../scoresaber/country";
 
     const dispatch = createEventDispatcher();
 
@@ -33,17 +30,19 @@
     let diffInfo;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
-    onMount(async () => {
+    async function refreshConfig() {
         const config = await getConfig('songBrowser');
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
         showBgCover = config.showBgCover !== false;
+    }
 
-        diffInfo = {diff: difficulty, type: 'Standard'};
-        if (leaderboardId) {
-            const leaderboardScores = await getSongScores(leaderboardId);
-            if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
+    function refreshDifficulty(difficulty) {
+        if (difficulty) {
+            diffInfo = {diff: difficulty, type: 'Standard'};
         }
+    }
 
+    async function refreshSongInfo(hash, diffInfo) {
         if (hash && hash.length && diffInfo) {
             const bsSongInfo = await getSongDiffInfo(hash, diffInfo);
             if (bsSongInfo) songInfo = bsSongInfo;
@@ -52,7 +51,32 @@
         if (songInfo && songInfo.length && songInfo.notes) {
             songInfo.nps = songInfo.length ? songInfo.notes / songInfo.length : null;
         }
+    }
+
+    async function refreshLeaderboard(leaderboardId) {
+        if (leaderboardId) {
+            const leaderboardScores = await getSongScores(leaderboardId);
+            if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
+        }
+    }
+
+    onMount(async () => {
+        await refreshConfig();
+
+        return eventBus.on('config-changed', refreshConfig);
     });
+
+    $: {
+        refreshDifficulty(difficulty);
+    }
+
+    $: {
+        refreshLeaderboard(leaderboardId);
+    }
+
+    $: {
+        refreshSongInfo(hash, diffInfo);
+    }
 </script>
 
 {#if songInfo}

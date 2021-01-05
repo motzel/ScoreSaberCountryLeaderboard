@@ -272,7 +272,7 @@ export default {
         sombra: "Sombra's"
     },
     plugin: {
-        transformButton: 'Cached',
+        cachedButton: 'Cached',
     },
     common: {
         ok: 'OK',
