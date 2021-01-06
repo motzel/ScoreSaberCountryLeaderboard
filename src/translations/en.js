@@ -273,6 +273,7 @@ export default {
     },
     plugin: {
         cachedButton: 'Cached',
+        liveButton: 'Live',
     },
     common: {
         ok: 'OK',

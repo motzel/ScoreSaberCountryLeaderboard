@@ -9,10 +9,10 @@ import {shouldBeHidden} from '../../../../../eastereggs'
 import {round} from '../../../../../utils/format'
 import en from '../../../../../translations/en'
 
-export const enhanceScore = async (score, cachedScore, maxScore) => {
+export const enhanceScore = async (score, cachedScore, maxScore, waitForMaxScore = false) => {
   let enhancedScore = {};
   try {
-    const maxScoreEx = maxScore ?? (score.leaderboardId && score.hash && score.diffInfo ? await getLeaderboardMaxScore(score.leaderboardId, score.hash, score.diffInfo.diff) : cachedScore?.maxScoreEx);
+    const maxScoreEx = maxScore ?? (!waitForMaxScore && score.leaderboardId && score.hash && score.diffInfo ? await getLeaderboardMaxScore(score.leaderboardId, score.hash, score.diffInfo.diff) : cachedScore?.maxScoreEx);
 
     const ssScoreDate = dateFromString(score.timeset);
     const useDownloadedScore = cachedScore?.timeset && ssScoreDate && cachedScore?.timeset?.getTime() === ssScoreDate.getTime();

@@ -28,6 +28,7 @@
 
   let error = null;
 
+  let isLoading = false;
   let initialized = false;
 
   const enhanceScores = async () => {
@@ -38,7 +39,7 @@
 
       const cachedScore = playersScores[score.playerId] ? playersScores[score.playerId] : null;
 
-      return await enhanceScore(score, cachedScore, maxScore);
+      return await enhanceScore(score, cachedScore, maxScore, true);
     }));
   }
 
@@ -47,8 +48,6 @@
 
     const leaderboard = await getSongScores(leaderboardId);
     playersScores = leaderboard && leaderboard.length ? convertArrayToObjectByKey(leaderboard, 'playerId') : {};
-
-    enhanceScores();
   }
 
   function processFetched(pageData) {
@@ -75,15 +74,21 @@
     error = null;
 
     try {
+      isLoading = true;
+
       const pageData = await fetchSsSongLeaderboardPage(leaderboardId, pageToLoad);
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
       lastPageData = {...pageData, pageNum: pageToLoad};
       pageNum = pageToLoad;
 
+      isLoading = false;
+
       dispatch('leaderboard-page-loaded', lastPageData);
     }
     catch(err) {
+      isLoading = false;
+
       error = $_.common.downloadError;
 
       return false;
@@ -130,6 +135,10 @@
   $: {
     refreshPlayersScores(leaderboardId)
   }
+
+  $: {
+    enhanceScores(playersScores, maxScore);
+  }
 </script>
 
-<slot {data} {diffs} {totalItems} {error} isPaused={pauseLoading} {beforeChanged}></slot>
+<slot {data} {diffs} {totalItems} {error} {isLoading} isPaused={pauseLoading} {beforeChanged}></slot>

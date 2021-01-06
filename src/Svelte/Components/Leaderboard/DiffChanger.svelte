@@ -54,8 +54,9 @@
          label={diff.name} color="#dbdbdb" bgColor={diff.color} on:click={() => onDiffChange(diff.id, 'live')}
                  notSelected={diff.id !== leaderboardId || type !== 'live'}/>
       {/each}
+
+       {#if mainPlayerId}<Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={() => onDiffChange(leaderboardId, 'cached')} notSelected={type !== 'cached'}/>{/if}
      {/if}
-     {#if mainPlayerId}<Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={() => onDiffChange(leaderboardId, 'cached')} notSelected={type !== 'cached'}/>{/if}
     </div>
 
     <div class="right"></div>

@@ -104,24 +104,24 @@
   <div class="switch-types">
     <Button iconFa="fa fa-clock" type={type === 'recent' ? 'primary' : 'default'}
             label={$_.songBrowser.ssScoreType.recent}
-            on:click={() => onTypeChange('recent')} disabled={type === 'recent'} />
+            on:click={() => onTypeChange('recent')} notSelected={type !== 'recent'} />
     <Button iconFa="fa fa-cubes" type={type === 'top' ? 'primary' : 'default'} label={$_.songBrowser.ssScoreType.top}
-            on:click={() => onTypeChange('top')} disabled={type === 'top'} />
+            on:click={() => onTypeChange('top')} notSelected={type !== 'top'} />
     {#if isCached}
-    <Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onTransform} />
+    <Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onTransform} notSelected={true} />
     {/if}
   </div>
 
-  {#if allPlayers && allPlayers.length}
   <div class="compare">
-    {#if allPlayers && allPlayers.length && players && players.length < MAX_COMPARE_PLAYERS}
+  {#if allPlayers && allPlayers.length}
+    {#if players && players.length < MAX_COMPARE_PLAYERS}
     <Button iconFa="fas fa-balance-scale" title={$_.songBrowser.compare.add} on:click={onAddPlayerToComparision} />
     {/if}
     {#if comparisionModified && isCached}
       <Button iconFa="fas fa-save" type="primary" title={$_.songBrowser.compare.saveAsDefault} on:click={onSaveComparision} />
     {/if}
-  </div>
   {/if}
+  </div>
 </div>
 
 <table class="ranking songs sspl">
@@ -156,7 +156,6 @@
     </slot>
   {/each}
   </tbody>
-
 </table>
 
 <Pager bind:currentPage
@@ -173,8 +172,14 @@
 
 <style>
   .switch-types {
+    display: flex;
     font-size: .75rem;
     text-align: center;
+  }
+
+  :global(.switch-types button) {
+    font-weight: 500;
+    margin-right: .125rem!important;
   }
 
   th {

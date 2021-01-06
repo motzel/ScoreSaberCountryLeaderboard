@@ -2,6 +2,7 @@
   import {onMount, createEventDispatcher} from 'svelte'
   const dispatch = createEventDispatcher();
 
+  import {_} from "../../stores/i18n";
   import {getLeaderboardMaxScore} from '../../../song'
 
   import ScoreSaberProvider from './Provider/ScoreSaber.svelte'
@@ -11,6 +12,7 @@
   export let leaderboardId;
   export let leaderboardPage = {};
   export let type = 'live';
+  export let onlySelectedDiff = false;
 
   let difficulty = null;
   let diffs = null;
@@ -36,7 +38,9 @@
 
     if (difficulty !== newDifficulty) {
       difficulty = newDifficulty;
-      diffs = getProp('diffs');
+      diffs = getProp('diffs', [])
+       .filter(diff => !onlySelectedDiff || diff.id === leaderboardId)
+       .map(diff => onlySelectedDiff ? {...diff, name: $_.plugin.liveButton} : diff);
 
       currentPage = leaderboardPage && leaderboardPage.pageNum ? leaderboardPage.pageNum - 1 : 0;
       totalItems = getProp('totalItems', 0);
@@ -71,7 +75,9 @@
   }
 
   onMount(async () => {
-    if (leaderboardId && isEmpty(leaderboardPage)) initialized = true;
+    if (leaderboardId && isEmpty(leaderboardPage)) {
+      initialized = true;
+    }
   })
 
   $: {
@@ -93,7 +99,7 @@
     {maxScore}
     pauseLoading={false}
     on:leaderboard-page-loaded={onLeaderboardPageLoaded}
-    let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused
+    let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused let:isLoading
   >
     <ScoreSaberPresenter
       {leaderboardId}
@@ -103,6 +109,8 @@
       {error}
       {currentPage}
       {totalItems}
+      {onlySelectedDiff}
+      {isLoading}
       {beforeChanged}
       on:diff-change={onDiffChange}
       on:browse={onBrowse}

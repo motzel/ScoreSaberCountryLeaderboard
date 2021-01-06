@@ -13,6 +13,8 @@
   import FormattedDate from '../../../Common/FormattedDate.svelte'
   import {getConfig} from '../../../../../plugin-config'
   import Icons from '../../../Song/Icons.svelte'
+  import Leaderboard from '../../../Leaderboard/Leaderboard.svelte'
+  import Button from '../../../Common/Button.svelte'
 
   export let song = null;
   export let series = [];
@@ -20,6 +22,8 @@
 
   let showWhatIfPp = true;
   let showDifferences = true;
+
+  let showLeaderboard = false;
 
   async function updateConfig() {
     const slConfig = await getConfig('songLeaderboard');
@@ -49,7 +53,7 @@
       {/if}{/each}
     </td>
     <td class="diff"><Difficulty diff={song.diffInfo} useShortName={true} reverseColors={true}/></td>
-    <td class="song">
+    <td class="song"><div>
       <Song song={song}>
         <figure>
           <img src="/imports/images/songs/{song.hash}.png"/>
@@ -60,7 +64,9 @@
           </div>
         </figure>
       </Song>
-    </td>
+
+      <Button type="text" iconFa={showLeaderboard ? "fas fa-chevron-down" : "fas fa-chevron-right"} on:click={() => showLeaderboard = !showLeaderboard} />
+    </div></td>
     <td class="timeset">
       <FormattedDate date={series[0].timeset} />
     </td>
@@ -109,6 +115,13 @@
     </td>
     {/if}
   </tr>
+  {#if showLeaderboard}
+    <tr class="details">
+      <td colspan="7">
+        <Leaderboard leaderboardId={song.leaderboardId} onlySelectedDiff={true} />
+      </td>
+    </tr>
+  {/if}
 {/if}
 
 <style>
@@ -124,6 +137,15 @@
   td.diff {
     width: 1.5rem;
     padding: 0;
+  }
+
+  td.song > div {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  tr.details:hover {
+    background-color: inherit!important;
   }
 
   td.song figure {

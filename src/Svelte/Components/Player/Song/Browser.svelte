@@ -1623,7 +1623,7 @@
                         </td>
 
                         <td class="song">
-                            <div class="flex-start flex-justify-between">
+                            <div>
                                 <Song song={song}>
                                     <figure>
                                         <img src="/imports/images/songs/{song.hash}.png"/>
@@ -2033,6 +2033,11 @@
     th.left.middle, td.left.middle {
         border-left-style: dotted;
         border-left-width: 1px;
+    }
+
+    tbody td.song > div {
+        display: flex;
+        justify-content: space-between;
     }
 
     tbody td.song figure {

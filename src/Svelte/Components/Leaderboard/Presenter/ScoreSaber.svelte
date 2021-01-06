@@ -23,6 +23,7 @@
   export let bgTop = "0rem";
   export let showBgCover = true;
   export let type = 'live';
+  export let isLoading = false;
 
   function onPageChanged(event) {
     dispatch('browse', {currentPage: event.detail.currentPage});
@@ -70,7 +71,11 @@
      {/each}
      </tbody>
    </table>
-  {:else}
+  {:else if isLoading}
+    <div class="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+  {:else if !error}
    <p>{$_.common.noData}</p>
   {/if}
 
@@ -89,6 +94,11 @@
 </div>
 
 <style>
+  .loading {
+    text-align: center;
+    font-size: 3rem;
+  }
+
   th {
     padding: .5rem !important;
     text-align: center!important;
