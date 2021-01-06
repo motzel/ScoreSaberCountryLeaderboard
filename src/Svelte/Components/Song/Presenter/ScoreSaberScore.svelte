@@ -166,7 +166,11 @@
   }
 
   td.score.main {
-    width: 14rem;
+    width: 14.5rem;
+  }
+
+  :global(td.score.main .what-if) {
+    right: .5rem;
   }
 
   td.icons {

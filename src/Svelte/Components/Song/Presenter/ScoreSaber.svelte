@@ -202,7 +202,7 @@
   }
 
   th.score.main {
-    width: 14rem;
+    width: 14.5rem;
   }
 
   th.icons {
