@@ -7,7 +7,7 @@
   import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
   import {_} from '../../../stores/i18n';
   import {convertArrayToObjectByKey} from '../../../../utils/js'
-  import {enhanceScore} from '../../Song/Provider/utils'
+  import {enhanceScore} from '../../Player/Song/Provider/utils'
   import {getSongScores} from '../../../../song'
 
   export let leaderboardId = null;
@@ -78,7 +78,7 @@
       const pageData = await fetchSsSongLeaderboardPage(leaderboardId, pageToLoad);
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
-      lastPageData = pageData;
+      lastPageData = {...pageData, pageNum: pageToLoad};
       pageNum = pageToLoad;
 
       dispatch('leaderboard-page-loaded', lastPageData);

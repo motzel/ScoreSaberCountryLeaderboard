@@ -1,13 +1,13 @@
 <script>
   import {createEventDispatcher, onMount} from 'svelte';
-  import {_} from '../../../stores/i18n'
-  import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
-  import Pager from '../../Common/Pager.svelte'
-  import Button from '../../Common/Button.svelte'
-  import Select from '../../Common/Select.svelte'
+  import {_} from '../../../../stores/i18n'
+  import {PLAYS_PER_PAGE} from '../../../../../network/scoresaber/consts'
+  import Pager from '../../../Common/Pager.svelte'
+  import Button from '../../../Common/Button.svelte'
+  import Select from '../../../Common/Select.svelte'
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
-  import {getPlayers} from '../../../../scoresaber/players'
-  import {getConfig, getMainPlayerId, setConfig} from '../../../../plugin-config'
+  import {getPlayers} from '../../../../../scoresaber/players'
+  import {getConfig, getMainPlayerId, setConfig} from '../../../../../plugin-config'
 
   const dispatch = createEventDispatcher();
 

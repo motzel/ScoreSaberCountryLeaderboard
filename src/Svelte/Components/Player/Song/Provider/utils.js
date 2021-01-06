@@ -3,10 +3,11 @@ import {
   getDiffAndTypeFromOnlyDiffName,
   getLeaderboardMaxScore,
   getSongMaxScore,
-} from '../../../../song'
-import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../../../../utils/date'
-import {shouldBeHidden} from '../../../../eastereggs'
-import {round} from '../../../../utils/format'
+} from '../../../../../song'
+import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../../../../../utils/date'
+import {shouldBeHidden} from '../../../../../eastereggs'
+import {round} from '../../../../../utils/format'
+import en from '../../../../../translations/en'
 
 export const enhanceScore = async (score, cachedScore, maxScore) => {
   let enhancedScore = {};
@@ -17,11 +18,11 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
     const useDownloadedScore = cachedScore?.timeset && ssScoreDate && cachedScore?.timeset?.getTime() === ssScoreDate.getTime();
     if (useDownloadedScore) {
       enhancedScore = {...score, ...cachedScore, maxScoreEx, rank: score.rank};
-
-      if (maxScoreEx && cachedScore.score && (!cachedScore?.mods?.length || cachedScore?.mods === "-")) enhancedScore.acc = cachedScore.score * 100 / maxScoreEx;
     } else {
       enhancedScore = {...score};
     }
+
+    if (maxScoreEx && enhancedScore.score && (!enhancedScore?.mods?.length || enhancedScore?.mods === "-")) enhancedScore.acc = enhancedScore.score * 100 / maxScoreEx;
 
     const useCurrentScoreAsPrev = (score.pp && cachedScore?.pp && round(cachedScore.pp) < round(score.pp)) ||
       (score.score && cachedScore?.score && cachedScore.score < score.score);

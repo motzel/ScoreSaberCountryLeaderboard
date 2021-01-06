@@ -6,7 +6,7 @@
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
   import Pager from '../../Common/Pager.svelte'
 
-  import Leaderboard from '../../Song/Leaderboard.svelte'
+  import Leaderboard from '../LeaderboardCached.svelte'
   import DiffChanger from '../DiffChanger.svelte'
 
   const dispatch = createEventDispatcher();

@@ -19,7 +19,7 @@
     import Song from "../Song/Song.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
-    import Leaderboard from "../Song/Leaderboard.svelte";
+    import Leaderboard from "../Leaderboard/LeaderboardCached.svelte";
     import {convertArrayToObjectByKey} from '../../../utils/js'
 
     export let country;

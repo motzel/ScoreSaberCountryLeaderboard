@@ -11,7 +11,7 @@
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
-    import WhatIfPp from './WhatIfPp.svelte';
+    import WhatIfPp from '../Song/WhatIfPp.svelte';
 
     import Refresh from '../Player/Refresh.svelte';
 

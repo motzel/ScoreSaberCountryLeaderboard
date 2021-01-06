@@ -5,7 +5,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub'
     import {_} from '../../stores/i18n';
 
-    import Icons from "./Icons.svelte";
+    import Icons from "../Song/Icons.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
     import Duration from "../Common/Duration.svelte";

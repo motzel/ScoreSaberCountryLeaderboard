@@ -1,10 +1,10 @@
-import Profile from './Svelte/Components/Player/Profile.svelte';
+import Profile from './Svelte/Components/Player/ProfilePage.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
-import Leaderboard from './Svelte/Components/Leaderboard/Leaderboard.svelte';
+import LeaderboardPage from './Svelte/Components/Leaderboard/LeaderboardPage.svelte';
 
 import header from '../header.json';
 import log from './utils/logger';
@@ -45,9 +45,19 @@ async function setupLeaderboard() {
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
+    // fix url search params
+    let urlStr = window.location.href
+    const urlMatches = /(.*)\/leaderboard\/(\d+)(.*?)$/.exec(urlStr);
+    if (urlMatches && urlMatches[3] && urlMatches[3].length) {
+        urlStr = urlMatches[1] + '/leaderboard/' + urlMatches[2] + (urlMatches[3][0] === '&' ? '?' + urlMatches[3].slice(1) : urlMatches[3]);
+    }
+    const url = new URL(urlStr);
+    const urlParams = new URLSearchParams(url.search);
+    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page') ?? '1', 10) : 1;
+
     const props = {
         leaderboardId,
-        leaderboardPage: parseSsSongLeaderboardPage(document)
+        leaderboardPage: {...parseSsSongLeaderboardPage(document), pageNum}
     }
 
     const profileDiv = document.createElement('div');
@@ -57,7 +67,7 @@ async function setupLeaderboard() {
     const originalContent = document.querySelector('.content');
     if (originalContent) originalContent.remove();
 
-    new Leaderboard({target: profileDiv, props});
+    new LeaderboardPage({target: profileDiv, props});
 
     log.info("Setup leaderboard page / Done")
 }

@@ -1,18 +1,18 @@
 <script>
   import {onMount} from 'svelte'
   import {fly} from 'svelte/transition';
-  import {_} from "../../../stores/i18n";
-  import eventBus from '../../../../utils/broadcast-channel-pubsub';
-  import {formatNumber} from "../../../../utils/format";
-  import WhatIfPp from "../WhatIfPp.svelte";
-  import Pp from "../../Common/Pp.svelte";
-  import Value from "../../Common/Value.svelte";
-  import ScoreRank from '../../Common/ScoreRank.svelte'
-  import Difficulty from '../../Common/Difficulty.svelte'
-  import Song from '../Song.svelte'
-  import FormattedDate from '../../Common/FormattedDate.svelte'
-  import {getConfig} from '../../../../plugin-config'
-  import Icons from '../Icons.svelte'
+  import {_} from "../../../../stores/i18n";
+  import eventBus from '../../../../../utils/broadcast-channel-pubsub';
+  import {formatNumber} from "../../../../../utils/format";
+  import WhatIfPp from "../../../Song/WhatIfPp.svelte";
+  import Pp from "../../../Common/Pp.svelte";
+  import Value from "../../../Common/Value.svelte";
+  import ScoreRank from '../../../Common/ScoreRank.svelte'
+  import Difficulty from '../../../Common/Difficulty.svelte'
+  import Song from '../../../Song/Song.svelte'
+  import FormattedDate from '../../../Common/FormattedDate.svelte'
+  import {getConfig} from '../../../../../plugin-config'
+  import Icons from '../../../Song/Icons.svelte'
 
   export let song = null;
   export let series = [];

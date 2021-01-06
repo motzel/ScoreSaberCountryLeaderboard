@@ -3,19 +3,19 @@
   const dispatch = createEventDispatcher();
 
   import {onMount} from 'svelte'
-  import eventBus from '../../../../utils/broadcast-channel-pubsub';
-  import nodeSync from '../../../../network/multinode-sync';
-  import {fetchSsProfilePage} from '../../../../network/scoresaber/scores'
-  import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
-  import {_} from '../../../stores/i18n';
-  import {dateFromString} from '../../../../utils/date'
-  import {getScoresByPlayerId} from '../../../../scoresaber/players'
-  import {convertArrayToObjectByKey, isDateObject} from '../../../../utils/js'
+  import eventBus from '../../../../../utils/broadcast-channel-pubsub';
+  import nodeSync from '../../../../../network/multinode-sync';
+  import {fetchSsProfilePage} from '../../../../../network/scoresaber/scores'
+  import {PLAYS_PER_PAGE} from '../../../../../network/scoresaber/consts'
+  import {_} from '../../../../stores/i18n';
+  import {dateFromString} from '../../../../../utils/date'
+  import {getScoresByPlayerId} from '../../../../../scoresaber/players'
+  import {convertArrayToObjectByKey, isDateObject} from '../../../../../utils/js'
   import {enhanceScore, findTwitchVideo} from './utils'
-  import {setRefreshedPlayerScores} from '../../../../network/scoresaber/players'
-  import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
-  import {getActiveCountry} from '../../../../scoresaber/country'
-  import {getSongDiffInfo} from '../../../../song'
+  import {setRefreshedPlayerScores} from '../../../../../network/scoresaber/players'
+  import {getSsplCountryRanks} from '../../../../../scoresaber/sspl-cache'
+  import {getActiveCountry} from '../../../../../scoresaber/country'
+  import {getSongDiffInfo} from '../../../../../song'
 
   export let playerId = null;
   export let players = [];
