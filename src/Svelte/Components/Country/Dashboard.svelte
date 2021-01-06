@@ -123,7 +123,7 @@
                     <Select bind:value={values.selectedSongPeriod} items={strings.lastSongsPeriods} right={true}/>
                 </nav>
             </header>
-            <Songs {country} sortBy="timeset" filterFunc={songScoresFilter} {refreshTag}
+            <Songs {country} sortBy="timeset" filterFunc={songScoresFilter} {refreshTag} {leaderboardType}
                    min={new Date(Date.now()-values.selectedSongPeriod.value*1000*60*60*24)}
                    itemsPerPage={5} pagesDisplayMax={7} noRank={true}/>
         </div>
@@ -136,7 +136,7 @@
                 </nav>
             </header>
 
-            <Songs {country} sortBy="pp" filterFunc={songScoresFilter} min={minPp} itemsPerPage={5} pagesDisplayMax={7}  {refreshTag} />
+            <Songs {country} sortBy="pp" filterFunc={songScoresFilter} min={minPp} itemsPerPage={5} pagesDisplayMax={7}  {refreshTag} {leaderboardType} />
         </div>
     </div>
 </div>

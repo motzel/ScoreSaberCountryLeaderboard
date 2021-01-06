@@ -4,7 +4,7 @@ import {SCORES_URL} from "./consts";
 import {dateFromString} from "../../utils/date";
 import queue from "../queue";
 import eventBus from "../../utils/broadcast-channel-pubsub";
-import {parseSsProfilePage} from '../../scoresaber/scores'
+import {getSongLeaderboardUrl, parseSsProfilePage, parseSsSongLeaderboardPage} from '../../scoresaber/scores'
 import {extractDiffAndType} from '../../song'
 import {getPlayerProfileUrl} from '../../scoresaber/players'
 
@@ -39,6 +39,10 @@ export const fetchRecentScores = async (playerId, page = 1, rateLimitCallback = 
 export const fetchSsProfilePage = async (playerId, page = 1, type='recent') => ({...parseSsProfilePage(
   await fetchHtmlPage(queue.SCORESABER, getPlayerProfileUrl(playerId, !(type === 'top'), false, page))
 ), type, playerId});
+
+export const fetchSsSongLeaderboardPage = async (leaderboardId, page = 1) => ({...parseSsSongLeaderboardPage(
+    await fetchHtmlPage(queue.SCORESABER, getSongLeaderboardUrl(leaderboardId, page))
+  ), leaderboardId});
 
 let stopFetchingScores = false;
 eventBus.on('stop-fetching-scores-cmd', () => {stopFetchingScores = true;});

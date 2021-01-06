@@ -11,6 +11,9 @@
     export let cls = "";
     export let title;
     export let noMargin = false;
+    export let color = null;
+    export let bgColor = null;
+    export let notSelected = false;
 
     const types = {
         default: {
@@ -61,7 +64,8 @@
     $: btnMargin = noMargin ? 0 : "0 0 .45em 0";
 </script>
 
-<button style="--color:{selectedType.color}; --bg-color: {selectedType.bgColor}; --border: {selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType.activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={'button ' + (type?type:'default') + ' ' + cls}>
+<button style="--color:{color ? color : selectedType.color}; --bg-color: {bgColor ? bgColor : selectedType.bgColor}; --border:{selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType .activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={'button ' + (type?type:'default') + ' ' + cls}
+ class:not-selected={notSelected}>
     {#if icon}<span class="icon">{@html icon}</span>{/if}
     {#if iconFa}<i class={iconFa}></i>{/if}
     <span>{label}</span>
@@ -87,6 +91,7 @@
         background-color: var(--bg-color, #3273dc)!important;
         outline: none !important;
         box-shadow: none !important;
+        transition: opacity .25s;
     }
 
     button:hover {
@@ -113,6 +118,14 @@
         height: 1.3em;
         margin-left: calc(- var(--margin, .45em) - 1px);
         margin-right: var(--margin, .45em);
+    }
+
+    .not-selected {
+        opacity: .35;
+    }
+
+    .not-selected:hover {
+        opacity: 1;
     }
 
     :global(.button.is-loading::after) {

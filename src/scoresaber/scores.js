@@ -3,45 +3,41 @@ import {getFirstRegexpMatch} from '../utils/js'
 import {getDiffAndTypeFromOnlyDiffName} from '../song'
 import {dateFromString} from '../utils/date'
 import {trans} from '../Svelte/stores/i18n'
+import {substituteVars} from '../utils/format'
+import {SONG_LEADERBOARD_URL} from '../network/scoresaber/consts'
+
+export const getSongLeaderboardUrl = (leaderboardId, page = 1) => substituteVars(SONG_LEADERBOARD_URL, {leaderboardId, page})
 
 export const parseSsLeaderboardScores = doc => [...doc.querySelectorAll('table.ranking tbody tr')].map(tr => {
-  let ret = {tr};
+  let ret = {lastUpdated: new Date()};
 
-  const picture = tr.querySelector('td.picture img');
-  ret.picture = picture ? picture.src : null;
+  const parseValue = selector => parseSsFloat(tr.querySelector(selector)?.innerText ?? '') ?? null
 
-  const rank = tr.querySelector('td.rank');
-  ret.rank = rank ? parseSsInt(rank.innerText) : null;
+  ret.picture = tr.querySelector('.picture img')?.src ?? null;
 
-  const player = tr.querySelector('td.player a');
+  ret.rank = parseSsInt(tr.querySelector('td.rank')?.innerText ?? '') ?? null;
+
+  const player = tr.querySelector('.player a');
   if (player) {
-    ret.playerId = getFirstRegexpMatch(/(\d+)$/, player.href);
-
-    const img = player.querySelector('img');
-    ret.country = img ? getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, img.src) : null;
-
-    const name = player.querySelector('.songTop.pp');
-    ret.playerName = name ? name.innerText.trim() : null;
+    ret.country = getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, player.querySelector('img')?.src ?? '') ?? null;
+    ret.playerName = player.querySelector('span.songTop.pp')?.innerText ?? null;
+    ret.playerId = getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, player.href ?? '') ?? null;
   } else {
+    ret.country = null;
     ret.playerId = null;
     ret.playerName = null;
-    ret.country = null;
   }
 
-  const score = tr.querySelector('td.score');
-  ret.score = score ? parseSsInt(score.innerText) : null;
+  ret.score = parseValue('td.score');
 
-  const timeset = tr.querySelector('td.timeset');
-  ret.timesetAgo = timeset ? timeset.innerText.trim() : null;
+  ret.timesetAgo = tr.querySelector('td.timeset')?.innerText?.trim() ?? null;
 
-  const mods = tr.querySelector('td.mods center');
-  ret.mods = mods ? mods.innerText.trim() : null;
+  ret.mods = tr.querySelector('td.mods')?.innerText?.replace('-','').split(',').filter(m => m && m.trim().length) ?? null;
+  ret.mods = ret.mods && ret.mods.length ? ret.mods.join(',') : null;
 
-  const percent = tr.querySelector('td.percentage center');
-  ret.percent = percent && percent.innerText.trim() !== '-' ? parseFloat(percent.innerText.replace(/[^0-9.]/g, '')) / 100 : null;
+  ret.pp = parseValue('td.pp .scoreTop.ppValue');
 
-  const pp = tr.querySelector('td.pp .scoreTop.ppValue');
-  ret.pp = pp ? parseSsFloat(pp.innerText) : null;
+  ret.acc = parseValue('td.percentage');
 
   return ret;
 });
@@ -149,26 +145,26 @@ export const parseSsProfilePage = doc => ({
       ret.timesetStr = songDate ? songDate.title : null;
 
       const pp = tr.querySelector('th.score .scoreTop.ppValue');
-      if (pp) ret.pp = parseFloat(pp.innerText.replace(/[^0-9.]/g, ''));
+      if (pp) ret.pp = parseSsFloat(pp.innerText) ?? null;
 
       const ppWeighted = tr.querySelector('th.score .scoreTop.ppWeightedValue');
       const ppWeightedMatch = ppWeighted ? getFirstRegexpMatch(/^\(([0-9.]+)pp\)$/, ppWeighted.innerText) : null;
-      ret.ppWeighted = ppWeightedMatch ? parseFloat(ppWeightedMatch) : null;
+      ret.ppWeighted = ppWeightedMatch ? parseSsFloat(ppWeightedMatch) : null;
 
       const scoreInfo = tr.querySelector('th.score .scoreBottom');
       const scoreInfoMatch = scoreInfo ? scoreInfo.innerText.match(/^([^:]+):\s*([0-9,.]+)(?:.*?\((.*?)\))?/) : null;
       if (scoreInfoMatch) {
         switch (scoreInfoMatch[1]) {
           case "score":
-            ret.percent = null;
+            ret.acc = null;
             ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-            ret.score = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, ''));
+            ret.score = parseSsFloat(scoreInfoMatch[2]);
             break;
 
           case "accuracy":
             ret.score = null;
             ret.mods = scoreInfoMatch[3] ? scoreInfoMatch[3] : "";
-            ret.percent = parseFloat(scoreInfoMatch[2].replace(/[^0-9.]/g, '')) / 100;
+            ret.acc = parseSsFloat(scoreInfoMatch[2]);
             break;
         }
       }
@@ -176,3 +172,51 @@ export const parseSsProfilePage = doc => ({
       return ret;
     }),
 });
+
+export const parseSsSongLeaderboardPage = doc => {
+  const diffs = [...doc.querySelectorAll('.tabs ul li a') ?? []].map(a => ({name: a.innerText, id: parseInt(getFirstRegexpMatch(/leaderboard\/(\d+)$/, a.href), 10), color: a.querySelector('span')?.style?.color}));
+  const currentDiffHuman = doc.querySelector('.tabs li.is-active a span')?.innerText ?? null;
+  const song = [
+    {id: 'hash', label: 'ID', value: null},
+    {id: 'scores', label: 'Scores', value: null},
+    {id: 'status', label: 'Status', value: null},
+    {id: 'totalScores', label: 'Total Scores', value: null},
+    {id: 'noteCount', label: 'Note Count', value: null},
+    {id: 'bpm', label: 'BPM', value: null},
+    {id: 'stars', label: 'Star Difficulty', value: null},
+    {id: 'levelAuthorName', label: 'Mapped by', value: null},
+  ]
+    .map(sid => ({...sid, value: doc.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
+    .concat([{id: 'songName', value: [null, doc.querySelector('.column.is-one-third-desktop .box:first-of-type .title a')?.innerText]}])
+    .reduce((cum, sid) => {
+      let value = Array.isArray(sid.value) ? sid.value[1] : null;
+      if (value !== null && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseSsFloat(value);
+      if (value && sid.id === 'songName') {
+        const songAuthorMatch = value.match(/^(.*?)\s-\s(.*)$/);
+        if (songAuthorMatch) {
+          value = songAuthorMatch[2];
+          cum.songAuthorName = songAuthorMatch[1];
+        } else {
+          cum.songAuthorName = '';
+        }
+      }
+      if (value && sid.id === 'levelAuthorName') {
+        const el = doc.createElement('div'); el.innerHTML = value;
+        value = el.innerText;
+      }
+      if (value !== null) cum[sid.id] = value;
+
+      return cum;
+    }, {});
+  return {
+    currentDiff: currentDiffHuman?.toLowerCase()?.replace('+', 'Plus') ?? null,
+    currentDiffHuman,
+    diffs,
+    song,
+    diffChart: (getFirstRegexpMatch(/'difficulty',\s*([0-9.,\s]+)\s*\]/, doc.body.innerHTML) ?? '').split(',').map(i => parseFloat(i)).filter(i => i),
+    pageNum: parseInt(doc.querySelector('.pagination .pagination-list li a.is-current')?.innerText ?? '0', 10),
+    pageQty: parseInt(doc.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10),
+    totalItems: song?.scores ?? 0,
+    scores: parseSsLeaderboardScores(doc),
+  }
+};

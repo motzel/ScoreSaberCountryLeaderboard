@@ -21,9 +21,9 @@
     import Refresh from './Refresh.svelte'
     import Settings from './Settings.svelte'
     import Chart from './Chart.svelte'
-    import Browser from '../Song/Browser.svelte'
-    import ScoreSaberProvider from '../Song/Provider/ScoreSaber.svelte'
-    import ScoreSaberPresenter from '../Song/Presenter/ScoreSaber.svelte'
+    import Browser from './Song/Browser.svelte'
+    import ScoreSaberProvider from './Song/Provider/ScoreSaber.svelte'
+    import ScoreSaberPresenter from './Song/Presenter/ScoreSaber.svelte'
     import MiniRanking from '../Country/MiniRanking.svelte'
     import {isDateObject, isEmpty} from '../../../utils/js'
     import TwitchVideosBadge from './TwitchVideosBadge.svelte'
@@ -133,7 +133,7 @@
               ...{
                   label,
                   title,
-                  value: overriderValue ? overriderValue : ssStats[name],
+                  value: overriderValue !== null ? overriderValue : ssStats[name],
                   digits: 0,
                   bgColor: `var(--${color})`,
                   type,
@@ -364,6 +364,9 @@
                 if (profilePage && profilePage.stats) ssStats = profilePage.stats;
             }
         });
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', ({playerId}) => {
+            mainPlayerId = playerId;
+        });
 
         initialized = true;
 
@@ -376,6 +379,7 @@
             unsubscriberTwitchVideosUpdated();
             unsubscriberRecentPlayUpdated();
             unsubscriberPlayerStatsUpdated();
+            unsubscriberMainPlayerChanged();
         }
     })
 
@@ -668,14 +672,13 @@
                  pauseLoading={false}
                  {playerTwitchProfile}
                  {recentPlay}
-                 let:songs let:series let:totalItems let:isLoading let:error let:beforePageChanged let:isPaused
+                 let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
                 >
                     <ScoreSaberPresenter
                      bind:players
                      {songs}
                      {series}
                      {error}
-                     {isLoading}
                      bind:currentPage
                      {totalItems}
                      bind:type={scoresType}

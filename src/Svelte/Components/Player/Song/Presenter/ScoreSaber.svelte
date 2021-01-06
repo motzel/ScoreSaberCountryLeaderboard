@@ -1,13 +1,13 @@
 <script>
   import {createEventDispatcher, onMount} from 'svelte';
-  import {_} from '../../../stores/i18n'
-  import {PLAYS_PER_PAGE} from '../../../../network/scoresaber/consts'
-  import Pager from '../../Common/Pager.svelte'
-  import Button from '../../Common/Button.svelte'
-  import Select from '../../Common/Select.svelte'
+  import {_} from '../../../../stores/i18n'
+  import {PLAYS_PER_PAGE} from '../../../../../network/scoresaber/consts'
+  import Pager from '../../../Common/Pager.svelte'
+  import Button from '../../../Common/Button.svelte'
+  import Select from '../../../Common/Select.svelte'
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
-  import {getPlayers} from '../../../../scoresaber/players'
-  import {getConfig, getMainPlayerId, setConfig} from '../../../../plugin-config'
+  import {getPlayers} from '../../../../../scoresaber/players'
+  import {getConfig, getMainPlayerId, setConfig} from '../../../../../plugin-config'
 
   const dispatch = createEventDispatcher();
 
@@ -86,7 +86,6 @@
     if (!players) return;
 
     const playersIds = players.map(p => p.playerId).slice(1).filter(pId => pId !== mainPlayerId);
-    if (!playersIds.length) return;
 
     const config = await getConfig()
     if (!config) return;
@@ -109,7 +108,7 @@
     <Button iconFa="fa fa-cubes" type={type === 'top' ? 'primary' : 'default'} label={$_.songBrowser.ssScoreType.top}
             on:click={() => onTypeChange('top')} disabled={type === 'top'} />
     {#if isCached}
-    <Button iconFa="fas fa-database" type="danger" label={$_.plugin.transformButton} on:click={onTransform} />
+    <Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onTransform} />
     {/if}
   </div>
 
@@ -138,7 +137,7 @@
           <div class="player-header">
           <Select items={allPlayers} value={allPlayers.find(p => p.playerId === player.playerId)} right={true}
            on:change={(e) => onPlayerSelected(e, playerIdx) }></Select>
-          <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onRemovePlayerFromComparision(playerIdx)}></i>
+            <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onRemovePlayerFromComparision(playerIdx)}></i>
           </div>
         {:else}
           {player.name}
@@ -203,7 +202,7 @@
   }
 
   th.score.main {
-    width: 14rem;
+    width: 14.5rem;
   }
 
   th.icons {

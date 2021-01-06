@@ -198,6 +198,7 @@ export default {
             country: 'Country only',
             manually_added: 'Friends',
         },
+        difficultyGraph: 'Difficulty graph',
     },
     songCard: {
         scores: 'Scores',
@@ -271,7 +272,7 @@ export default {
         sombra: "Sombra's"
     },
     plugin: {
-        transformButton: 'Cached',
+        cachedButton: 'Cached',
     },
     common: {
         ok: 'OK',

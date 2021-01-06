@@ -95,7 +95,7 @@
 
                 <footer>
                     <slot name="footer">
-                        {#if showIcons}<Icons {hash} {twitchUrl} />{/if}
+                        {#if showIcons && hash}<Icons {hash} {twitchUrl} />{/if}
                     </slot>
                 </footer>
             </div>

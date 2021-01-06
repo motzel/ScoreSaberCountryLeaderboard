@@ -57,16 +57,16 @@ export const fetchSsCountryRankPage = async (country, page = 1) =>
         const id = getFirstRegexpMatch(/\/(\d+)$/, a.href)
 
         return {
-            avatar: tr.querySelector('td.picture img').src,
-            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
-            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+            avatar: tr.querySelector('td.picture img')?.src ?? null,
+            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img')?.src ?? '')?.toUpperCase(),
+            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank')?.innerText) ?? null, 10) ?? null,
             id,
             inactive: false,
-            name: a.querySelector('.songTop.pp').innerText,
-            pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue').innerText),
+            name: a.querySelector('.songTop.pp')?.innerText ?? '',
+            pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue')?.innerText ?? '') ?? 0,
             rank: null,
             url: substituteVars(PLAYER_PROFILE_URL, {playerId: id}),
-            weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
+            weeklyDiff: parseInt(tr.querySelector('td.diff')?.innerText, 10) ?? 0,
         }
     });
 export const fetchSsCountryRanking = async (country, count = 50) => {

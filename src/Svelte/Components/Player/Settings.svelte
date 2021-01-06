@@ -404,14 +404,19 @@
 
         const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
 
-        const twitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
+        const unsubscriberTwitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
             if(playerId === profileId) await refreshTwitchProfile(profileId);
+        });
+
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', ({playerId}) => {
+            mainPlayerId = playerId;
         });
 
         return () => {
             unsubscriberScoresUpdated();
             unsubscriberConfigChanged();
-            twitchLinked();
+            unsubscriberTwitchLinked();
+            unsubscriberMainPlayerChanged();
         }
     })
 
@@ -425,7 +430,7 @@
         const playerInfo = getPlayerInfo(profileId);
         if (!playerInfo) await updatePlayer({id: profileId});
 
-        location.reload();
+        eventBus.publish('main-player-changed', {playerId: profileId});
     }
 
     let importing = false;
@@ -531,6 +536,7 @@
         else
             eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync.getId()});
 
+        // TODO: remove it eventually
         window.location.reload();
     }
 

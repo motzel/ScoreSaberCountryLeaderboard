@@ -1,24 +1,17 @@
-import Profile from './Svelte/Components/Player/Profile.svelte';
+import Profile from './Svelte/Components/Player/ProfilePage.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
-import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
-import SongIcons from './Svelte/Components/Song/Icons.svelte';
-import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
-import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
+import LeaderboardPage from './Svelte/Components/Leaderboard/LeaderboardPage.svelte';
 
 import header from '../header.json';
 import log from './utils/logger';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
-import {
-    getSongMaxScore, getSongScores,
-} from "./song";
-
 import twitch from './services/twitch';
-import {getConfig, getMainPlayerId} from "./plugin-config";
+import {getConfig} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
@@ -29,10 +22,8 @@ import {
     getPlayerProfileUrl,
     isPlayerDataAvailable,
 } from "./scoresaber/players";
-import {formatNumber} from "./utils/format";
-import {parseSsLeaderboardScores, parseSsProfilePage} from './scoresaber/scores'
+import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
-import scores from './db/repository/scores'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
@@ -45,164 +36,38 @@ const getRankingCountry = () => {
 }
 const isCurrentCountryRankingPage = async () => getRankingCountry() === (await getActiveCountry());
 
-function assert(el) {
-    if (null === el) throw new Error('Assertion failed');
-
-    return el;
-}
-
-function getBySelector(sel, el = null) {
-    return assert((el ?? document).querySelector(sel));
-}
-
-async function setupPlTable() {
-    let scoreTableNode = getBySelector('.ranking table.global');
-    const leaderboardId = getLeaderboardId();
-    if (!leaderboardId) return null;
-
-    let tblContainer = document.createElement('div');
-    tblContainer["id"] = "sspl";
-    tblContainer.style["display"] = "none";
-    scoreTableNode.parentNode.appendChild(tblContainer);
-
-    new SongLeaderboard({
-        target: tblContainer,
-        props: {leaderboardId, country: await getActiveCountry()}
-    });
-}
-
 async function setupLeaderboard() {
     log.info("Setup leaderboard page");
+
+    const container = document.querySelector('.section .container');
+    if (!container) return;
 
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
-    await setupPlTable();
+    // fix url search params
+    let urlStr = window.location.href
+    const urlMatches = /(.*)\/leaderboard\/(\d+)(.*?)$/.exec(urlStr);
+    if (urlMatches && urlMatches[3] && urlMatches[3].length) {
+        urlStr = urlMatches[1] + '/leaderboard/' + urlMatches[2] + (urlMatches[3][0] === '&' ? '?' + urlMatches[3].slice(1) : urlMatches[3]);
+    }
+    const url = new URL(urlStr);
+    const urlParams = new URLSearchParams(url.search);
+    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page') ?? '1', 10) : 1;
 
-    const tabs = getBySelector('.tabs > ul');
-    tabs.appendChild(
-        generate_tab(
-            'pl_tab',
-            null === document.querySelector('.filter_tab')
-        )
-    );
-
-    document.addEventListener(
-        'click',
-        function (e) {
-            let clickedTab = e.target.closest('.filter_tab');
-            if (!clickedTab) return;
-
-            const box = assert(e.target.closest('.box'));
-
-            const sspl = getBySelector('#sspl', box);
-            const originalTable = getBySelector('table.ranking', box);
-            if (clickedTab.classList.contains('sspl')) {
-                originalTable.style.display = 'none';
-                sspl.style.display = '';
-                getBySelector('.pagination').style.display = 'none';
-            } else {
-                originalTable.style.display = '';
-                sspl.style.display = 'none';
-                getBySelector('.pagination').style.display = '';
-            }
-        },
-        { passive: true }
-    );
-
-    const config = await getConfig('songLeaderboard');
-    const mainPlayerId = await getMainPlayerId();
-    if (mainPlayerId && !!config.showWhatIfPp) {
-        [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
-            const pp = parseFloat(
-                span.innerText.replace(/\s/, '').replace(',', '.')
-            );
-            if (pp && pp > 0.0 + Number.EPSILON) {
-                new WhatIfpp({
-                    target: span.parentNode,
-                    props: {
-                        leaderboardId,
-                        pp
-                    }
-                });
-            }
-        });
+    const props = {
+        leaderboardId,
+        leaderboardPage: {...parseSsSongLeaderboardPage(document), pageNum}
     }
 
-    const songInfoBox = document.querySelector('.column.is-one-third-desktop .box:first-of-type');
+    const profileDiv = document.createElement('div');
+    profileDiv.classList.add('sspl-page');
+    container.prepend(profileDiv);
 
-    const songInfoData = [
-        {id: 'hash', label: 'ID', value: null},
-        {id: 'scores', label: 'Scores', value: null},
-        {id: 'status', label: 'Status', value: null},
-        {id: 'totalScores', label: 'Total Scores', value: null},
-        {id: 'noteCount', label: 'Note Count', value: null},
-        {id: 'bpm', label: 'BPM', value: null},
-        {id: 'stars', label: 'Star Difficulty', value: null},
-    ]
-        .map(sid => ({...sid, value: document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
-        .reduce((cum, sid) => {
-            let value = Array.isArray(sid.value) ? sid.value[1] : null;
-            if (value && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseFloat(value.replace(/[^0-9\.]/, ''));
-            if (value) cum[sid.id] = value;
+    const originalContent = document.querySelector('.content');
+    if (originalContent) originalContent.remove();
 
-            return cum;
-        }, {})
-    const difficulty = document.querySelector('.tabs.is-centered li.is-active a span');
-    songInfoData.difficulty =  difficulty ? difficulty.innerText.toLowerCase().replace('+', 'Plus') : null;
-    if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
-        const newSongBox = document.createElement('div');
-        newSongBox.style.marginBottom = '1.5rem';
-        songInfoBox.parentNode.insertBefore(newSongBox, songInfoBox);
-
-        const songCard = new SongCard({
-            target: newSongBox,
-            props: {...songInfoData, leaderboardId}
-        });
-        songCard.$on('initialized', e => {
-            if (e.detail) songInfoBox.remove()
-            else {
-                newSongBox.remove();
-                new SongIcons({target: songInfoBox, props: {hash: songInfoData.hash}});
-            }
-        });
-
-        const ssConfig = await getConfig('ssSong');
-        const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
-
-        if (songEnhanceEnabled) {
-            const scores = parseSsLeaderboardScores(document);
-            if (scores) {
-                let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
-                if (leaderboardId) {
-                    const leaderboardScores = await getSongScores(leaderboardId);
-                    if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
-                }
-
-                const maxScore = await getSongMaxScore(songInfoData.hash, diffInfo);
-                scores.forEach(s => {
-                    if (s.score) {
-                        const score = s.tr.querySelector('td.score');
-                        if (score) {
-                            score.innerHTML = formatNumber(s.score, 0);
-                        }
-                    }
-
-                    const percentage = s.tr.querySelector('td.percentage center');
-                    if (percentage && s.score && maxScore && maxScore > 0) {
-                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.mods !== '-' && s.percent ? s.percent * 100 : s.score * 100 / maxScore) + '%';
-                    }
-
-                    if (s.pp !== null) {
-                        const pp = s.tr.querySelector('td.pp .scoreTop.ppValue');
-                        if (pp) {
-                            pp.innerHTML = formatNumber(s.pp);
-                        }
-                    }
-                });
-            }
-        }
-    }
+    new LeaderboardPage({target: profileDiv, props});
 
     log.info("Setup leaderboard page / Done")
 }
@@ -315,32 +180,6 @@ async function setupCountryRanking(diffOffset = 6) {
     log.info("Setup country ranking / Done")
 }
 
-function generate_tab(css_id, has_offset) {
-    const tabClass = 'filter_tab sspl ' + (has_offset ? ' offset_tab' : '');
-
-    const li = document.createElement('li');
-    li.id = css_id;
-    tabClass.split(' ').filter(cls => cls.length).map(cls => li.classList.add(cls));
-
-    const a = document.createElement('a');
-    a.classList.add('has-text-info');
-
-    const img = document.createElement('img');
-    img.classList.add('bloodtrail');
-    img.src = require('./resource/img/bloodtrail.png').default;
-    a.appendChild(img);
-    li.appendChild(a);
-
-    a.addEventListener('click', () => {
-        document
-            .querySelectorAll('.tabs > ul .filter_tab')
-            .forEach((x) => x.classList.remove('is-active'));
-        assert(document.getElementById(css_id)).classList.add('is-active');
-    });
-
-    return li;
-}
-
 function setupStyles() {
     log.info("Setup styles");
 
@@ -434,20 +273,6 @@ async function setupDelayed() {
 
     await initDownloadManager();
     addVersionInfoToFooter();
-}
-
-function rafAsync() {
-    return new Promise(resolve => {
-        requestAnimationFrame(resolve); //faster than set time out
-    });
-}
-
-function checkElement(selector) {
-    if (document.querySelector(selector) === null) {
-        return rafAsync().then(() => checkElement(selector));
-    } else {
-        return Promise.resolve(true);
-    }
 }
 
 let initialized = false;

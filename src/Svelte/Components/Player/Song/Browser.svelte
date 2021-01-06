@@ -1,60 +1,60 @@
 <script>
     import {onMount} from 'svelte';
-    import log from '../../../utils/logger';
-    import {copyToClipboard} from '../../../utils/clipboard';
-    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
-    import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
-    import {delay} from "../../../network/fetch";
+    import log from '../../../../utils/logger';
+    import {copyToClipboard} from '../../../../utils/clipboard';
+    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../../scoresaber/pp";
+    import {getRankedSongs, RANKED, UNRANKED} from "../../../../scoresaber/rankeds";
+    import {delay} from "../../../../network/fetch";
     import {
         addToDate,
         dateFromString,
         durationToMillis,
         millisToDuration,
         timestampFromString
-    } from "../../../utils/date";
-    import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
-    import debounce from '../../../utils/debounce';
-    import eventBus from '../../../utils/broadcast-channel-pubsub';
+    } from "../../../../utils/date";
+    import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../../utils/js";
+    import debounce from '../../../../utils/debounce';
+    import eventBus from '../../../../utils/broadcast-channel-pubsub';
     import {
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
         getRankedScoresByPlayerId,
         getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer,
-    } from "../../../scoresaber/players";
+    } from "../../../../scoresaber/players";
     import {
         getAccFromScore,
         getHumanDiffInfo,
         getSongDiffInfo,
         getSongMaxScore,
-    } from "../../../song";
-    import {generateCsv, downloadCsv} from '../../../utils/csv';
-    import {downloadJson} from '../../../utils/json';
-    import {round} from "../../../utils/format";
-    import memoize from '../../../utils/memoize';
-    import {getConfig, getMainPlayerId, setConfig} from "../../../plugin-config";
-    import {getActiveCountry} from "../../../scoresaber/country";
-    import {_, trans} from "../../stores/i18n";
-    import twitch from '../../../services/twitch';
+    } from "../../../../song";
+    import {generateCsv, downloadCsv} from '../../../../utils/csv';
+    import {downloadJson} from '../../../../utils/json';
+    import {round} from "../../../../utils/format";
+    import memoize from '../../../../utils/memoize';
+    import {getConfig, getMainPlayerId, setConfig} from "../../../../plugin-config";
+    import {getActiveCountry} from "../../../../scoresaber/country";
+    import {_, trans} from "../../../stores/i18n";
+    import twitch from '../../../../services/twitch';
 
-    import Song from "./Song.svelte";
-    import Pager from "../Common/Pager.svelte";
-    import Range from "../Common/Range.svelte";
-    import FormattedDate from "../Common/FormattedDate.svelte";
-    import MultiRange from "../Common/MultiRange.svelte";
-    import WhatIfPp from "./WhatIfPp.svelte";
-    import Duration from "../Common/Duration.svelte";
-    import Difficulty from "../Common/Difficulty.svelte";
-    import Value from "../Common/Value.svelte";
-    import Button from "../Common/Button.svelte";
-    import Select from "../Common/Select.svelte";
-    import Leaderboard from "./Leaderboard.svelte";
-    import Checkbox from "../Common/Checkbox.svelte";
-    import Card from "./Card.svelte";
-    import Icons from "./Icons.svelte";
-    import ScoreRank from "../Common/ScoreRank.svelte";
-    import {refreshPlayerScoreRank} from "../../../network/scoresaber/players";
-    import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
+    import Song from "../../Song/Song.svelte";
+    import Pager from "../../Common/Pager.svelte";
+    import Range from "../../Common/Range.svelte";
+    import FormattedDate from "../../Common/FormattedDate.svelte";
+    import MultiRange from "../../Common/MultiRange.svelte";
+    import WhatIfPp from "../../Song/WhatIfPp.svelte";
+    import Duration from "../../Common/Duration.svelte";
+    import Difficulty from "../../Common/Difficulty.svelte";
+    import Value from "../../Common/Value.svelte";
+    import Button from "../../Common/Button.svelte";
+    import Select from "../../Common/Select.svelte";
+    import Leaderboard from "../../Leaderboard/LeaderboardCached.svelte";
+    import Checkbox from "../../Common/Checkbox.svelte";
+    import Card from "../../Song/Card.svelte";
+    import Icons from "../../Song/Icons.svelte";
+    import ScoreRank from "../../Common/ScoreRank.svelte";
+    import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
+    import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
 
     export let playerId;
     export let snipedIds = [];
@@ -1286,7 +1286,7 @@
     async function exportPlaylist() {
         const allPlayedSongs = Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
         const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
-        const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
+        const bloodTrailImg = (await import('../../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
             playlistTitle      : "SSPL playlist",
             playlistAuthor     : "https://github.com/motzel/ScoreSaberCountryLeaderboard",
@@ -1544,7 +1544,7 @@
                                 <div class="card-icons">
                                     <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
 
-                                    {#if selectedAdditionalCols.length > 0}
+                                    {#if selectedAdditionalCols.length > 0 && song}
                                     <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                     {/if}
                                 </div>
