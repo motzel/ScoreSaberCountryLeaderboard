@@ -133,7 +133,7 @@
               ...{
                   label,
                   title,
-                  value: overriderValue ? overriderValue : ssStats[name],
+                  value: overriderValue !== null ? overriderValue : ssStats[name],
                   digits: 0,
                   bgColor: `var(--${color})`,
                   type,
