@@ -108,7 +108,7 @@
     <Button iconFa="fa fa-cubes" type={type === 'top' ? 'primary' : 'default'} label={$_.songBrowser.ssScoreType.top}
             on:click={() => onTypeChange('top')} disabled={type === 'top'} />
     {#if isCached}
-    <Button iconFa="fas fa-database" type="danger" label={$_.plugin.transformButton} on:click={onTransform} />
+    <Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onTransform} />
     {/if}
   </div>
 
