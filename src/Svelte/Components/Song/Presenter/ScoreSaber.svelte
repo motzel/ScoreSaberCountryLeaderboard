@@ -86,7 +86,6 @@
     if (!players) return;
 
     const playersIds = players.map(p => p.playerId).slice(1).filter(pId => pId !== mainPlayerId);
-    if (!playersIds.length) return;
 
     const config = await getConfig()
     if (!config) return;
@@ -138,7 +137,7 @@
           <div class="player-header">
           <Select items={allPlayers} value={allPlayers.find(p => p.playerId === player.playerId)} right={true}
            on:change={(e) => onPlayerSelected(e, playerIdx) }></Select>
-          <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onRemovePlayerFromComparision(playerIdx)}></i>
+            <i class="fas fa-times player-remove" title={$_.songBrowser.compare.remove} on:click={() => onRemovePlayerFromComparision(playerIdx)}></i>
           </div>
         {:else}
           {player.name}
