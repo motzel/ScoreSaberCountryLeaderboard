@@ -2,12 +2,12 @@
   import {createEventDispatcher, onMount} from 'svelte';
   import {_} from '../../../stores/i18n'
   import {SCORES_PER_PAGE} from '../../../../network/scoresaber/consts'
-  import {getMainPlayerId} from '../../../../plugin-config'
 
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
   import Pager from '../../Common/Pager.svelte'
-  import Button from '../../Common/Button.svelte'
+
   import Leaderboard from '../../Song/Leaderboard.svelte'
+  import DiffChanger from '../DiffChanger.svelte'
 
   const dispatch = createEventDispatcher();
 
@@ -18,49 +18,30 @@
   export let totalItems = 0;
   export let error = null;
   export let isPaused = false;
-  export let beforePageChanged;
+  export let beforeChanged;
   export let bgLeft = "0rem";
   export let bgTop = "0rem";
   export let showBgCover = true;
   export let type = 'live';
 
-  let mainPlayerId = null;
-
-  onMount(async () => {
-    mainPlayerId = await getMainPlayerId();
-  });
-
-  function onPageChanged() {
-    dispatch('browse', {currentPage});
+  function onPageChanged(event) {
+    dispatch('browse', {currentPage: event.detail.currentPage});
   }
 
-  function onCached() {
-    type = 'cached';
+  async function onBeforePageChanged(page) {
+    if (!beforeChanged) return true;
+
+    return beforeChanged({leaderboardId, page, type: 'live'})
   }
 
-  function onDiffChange(diffId) {
-    dispatch('diff-change', {leaderboardId: diffId, page: 0})
+  async function onBeforeDiffChanged(newDiff) {
+    if (!beforeChanged) return true;
 
-    type = 'live';
+    return beforeChanged(newDiff);
   }
 </script>
 
-{#if (diffs && (diffs.length > 1 || (diffs.length === 1 && diffs[0].id !== leaderboardId))) || mainPlayerId }
-  <div class="header">
-    <div class="left"></div>
-
-    <div class="switch-types">
-      {#if diffs && diffs.length}
-        {#each diffs as diff (diff.id)}
-          <Button label={diff.name} color="#dbdbdb" bgColor={diff.color} on:click={() => onDiffChange(diff.id)} notSelected={diff.id !== leaderboardId || type !== 'live'}/>
-        {/each}
-      {/if}
-      {#if mainPlayerId}<Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} on:click={onCached} notSelected={type !== 'cached'}/>{/if}
-    </div>
-
-    <div class="right"></div>
-  </div>
-{/if}
+<DiffChanger {leaderboardId} {diffs} beforeDiffChanged={onBeforeDiffChanged} bind:type on:diff-change />
 
 <div class="content">
 {#if type === 'cached'}
@@ -93,11 +74,11 @@
    <p>{$_.common.noData}</p>
   {/if}
 
-  <Pager bind:currentPage
+  <Pager {currentPage}
        itemsPerPage={SCORES_PER_PAGE}
        {totalItems}
        itemsPerPageValues={null}
-       {beforePageChanged}
+       beforePageChanged={onBeforePageChanged}
        on:page-changed={onPageChanged}
        hide={isPaused}
   />
@@ -108,23 +89,6 @@
 </div>
 
 <style>
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .switch-types {
-    display: flex;
-    font-size: .75rem;
-    text-align: center;
-  }
-
-  :global(.switch-types button) {
-    font-weight: 500;
-    margin-right: .125rem!important;
-  }
-
   th {
     padding: .5rem !important;
     text-align: center!important;

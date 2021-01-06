@@ -70,7 +70,7 @@
     if (!pageToLoad) pageToLoad = pageNum;
 
     // do not fetch again the same data
-    if (!!lastPageData && lastPageData.pageNum === pageToLoad && lastPageData.leaderboardId === leaderboardId) return;
+    if (!!lastPageData && lastPageData.pageNum === pageToLoad && lastPageData.leaderboardId === leaderboardId) return true;
 
     error = null;
 
@@ -92,9 +92,11 @@
     return true;
   }
 
-  async function beforePageChanged(page) {
+  async function beforeChanged(newDiff) {
+    if (newDiff.type !== 'live') return true;
+
     // page here is indexed from 0, so add 1 for SS page
-    return await fetchPage(leaderboardId, page + 1);
+    return await fetchPage(newDiff.leaderboardId, newDiff.page + 1);
   }
 
   onMount(async () => {
@@ -130,4 +132,4 @@
   }
 </script>
 
-<slot {data} {diffs} {totalItems} {error} isPaused={pauseLoading} {beforePageChanged}></slot>
+<slot {data} {diffs} {totalItems} {error} isPaused={pauseLoading} {beforeChanged}></slot>

@@ -1,5 +1,4 @@
 <script>
-  import {onMount} from 'svelte'
   import {getSongLeaderboardUrl} from '../../../scoresaber/scores'
 
   import Card from '../Song/LeaderboardCard.svelte'
@@ -58,10 +57,17 @@
   }
 
   function onDiffChange(event) {
-    if (!event || !event.detail || !event.detail.leaderboardId) return;
+    if (!event || !event.detail || !event.detail.leaderboardId || !event.detail.type) return;
 
     leaderboardId = event.detail.leaderboardId;
     currentPage = event.detail.page ? event.detail.page : 0;
+    type = event.detail.type;
+  }
+
+  function onBrowse(event) {
+    if (!event || !event.detail || !event.detail.hasOwnProperty('currentPage')) return;
+
+    currentPage = event.detail.currentPage;
   }
 
   function onLeaderboardPageLoaded(event) {
@@ -73,7 +79,7 @@
 
     // update browser url
     const url = new URL(
-     getSongLeaderboardUrl(leaderboardId, event.detail.pageNum)
+     getSongLeaderboardUrl(leaderboardId, event.detail.pageNum),
     );
 
     history.replaceState(null, '', url.toString());
@@ -101,7 +107,7 @@
        {maxScore}
        pauseLoading={false}
        on:leaderboard-page-loaded={onLeaderboardPageLoaded}
-       let:data let:diffs let:totalItems let:error let:beforePageChanged let:isPaused
+       let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused
       >
         <ScoreSaberPresenter
          {leaderboardId}
@@ -109,10 +115,11 @@
          {data}
          {diffs}
          {error}
-         bind:currentPage
+         {currentPage}
          {totalItems}
-         {beforePageChanged}
+         {beforeChanged}
          on:diff-change={onDiffChange}
+         on:browse={onBrowse}
          {isPaused}
         />
       </ScoreSaberProvider>
