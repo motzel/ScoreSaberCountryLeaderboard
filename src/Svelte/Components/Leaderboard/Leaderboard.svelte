@@ -1,11 +1,12 @@
 <script>
-  import {createEventDispatcher} from 'svelte'
+  import {onMount, createEventDispatcher} from 'svelte'
   const dispatch = createEventDispatcher();
 
   import {getLeaderboardMaxScore} from '../../../song'
 
   import ScoreSaberProvider from './Provider/ScoreSaber.svelte'
   import ScoreSaberPresenter from './Presenter/ScoreSaber.svelte'
+  import {isEmpty} from '../../../utils/js'
 
   export let leaderboardId;
   export let leaderboardPage = {};
@@ -68,6 +69,10 @@
 
     leaderboardPage = event.detail;
   }
+
+  onMount(async () => {
+    if (leaderboardId && isEmpty(leaderboardPage)) initialized = true;
+  })
 
   $: {
     refreshLeaderboardPage(leaderboardPage)
