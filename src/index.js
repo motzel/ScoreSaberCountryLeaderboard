@@ -1,3 +1,4 @@
+import initNodeSync from './utils/multinode-sync'
 import Profile from './Svelte/Components/Player/ProfilePage.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
@@ -284,6 +285,8 @@ async function init() {
         if (initialized) {
             return;
         }
+
+        await initNodeSync();
 
         new Message({
             target: document.body,

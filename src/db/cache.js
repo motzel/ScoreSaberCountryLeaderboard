@@ -1,20 +1,20 @@
 import eventBus from '../utils/broadcast-channel-pubsub'
-import nodeSync from '../network/multinode-sync'
+import nodeSync from '../utils/multinode-sync'
 
 export default (name, getObjKey) => {
   let cache = {};
 
   // update data cached on another node
-  eventBus.on('cache-key-set-' + name, ({nodeId, key, value}) => nodeId !== nodeSync.getId() ? set(key, value, false) : null);
-  eventBus.on('cache-all-set' + name, ({nodeId, data}) => nodeId !== nodeSync.getId() ? setAll(data, false) : null);
-  eventBus.on('cache-merge-' + name, ({nodeId, data}) => nodeId !== nodeSync.getId() ? merge(data, false) : null);
-  eventBus.on('cache-key-forget-' + name, ({nodeId, key}) => nodeId !== nodeSync.getId() ? forget(key, false) : null);
-  eventBus.on('cache-flush-' + name, ({nodeId}) => nodeId !== nodeSync.getId() ? flush(false) : null);
+  eventBus.on('cache-key-set-' + name, ({nodeId, key, value}) => nodeId !== nodeSync().getId() ? set(key, value, false) : null);
+  eventBus.on('cache-all-set' + name, ({nodeId, data}) => nodeId !== nodeSync().getId() ? setAll(data, false) : null);
+  eventBus.on('cache-merge-' + name, ({nodeId, data}) => nodeId !== nodeSync().getId() ? merge(data, false) : null);
+  eventBus.on('cache-key-forget-' + name, ({nodeId, key}) => nodeId !== nodeSync().getId() ? forget(key, false) : null);
+  eventBus.on('cache-flush-' + name, ({nodeId}) => nodeId !== nodeSync().getId() ? flush(false) : null);
 
   const set = (key, value, emitEvent = true) => {
     cache[key] = value;
 
-    if (emitEvent) eventBus.publish('cache-key-set-' + name, {nodeId: nodeSync.getId(), key, value});
+    if (emitEvent) eventBus.publish('cache-key-set-' + name, {nodeId: nodeSync().getId(), key, value});
 
     return value;
   };
@@ -22,14 +22,14 @@ export default (name, getObjKey) => {
   const setAll = (data, emitEvent = true) => {
     cache = data;
 
-    if (emitEvent) eventBus.publish('cache-all-set-' + name, {nodeId: nodeSync.getId(), data});
+    if (emitEvent) eventBus.publish('cache-all-set-' + name, {nodeId: nodeSync().getId(), data});
 
     return cache;
   }
   const merge = (data, emitEvent = true) => {
     cache = {...cache, ...data}
 
-    if (emitEvent) eventBus.publish('cache-merge-' + name, {nodeId: nodeSync.getId(), data});
+    if (emitEvent) eventBus.publish('cache-merge-' + name, {nodeId: nodeSync().getId(), data});
 
     return cache;
   }
@@ -64,7 +64,7 @@ export default (name, getObjKey) => {
   const forget = (key, emitEvent = true) => {
     delete cache[key];
 
-    if (emitEvent) eventBus.publish('cache-key-forget-' + name, {nodeId: nodeSync.getId(), key});
+    if (emitEvent) eventBus.publish('cache-key-forget-' + name, {nodeId: nodeSync().getId(), key});
 
     return cache;
   }
@@ -76,7 +76,7 @@ export default (name, getObjKey) => {
       .forEach(key => {
         delete cache[key]
 
-        if (emitEvent) eventBus.publish('cache-key-forget-' + name, {nodeId: nodeSync.getId(), key});
+        if (emitEvent) eventBus.publish('cache-key-forget-' + name, {nodeId: nodeSync().getId(), key});
       });
 
     return true;
@@ -85,7 +85,7 @@ export default (name, getObjKey) => {
   const flush = (emitEvent = true) => {
     cache = {};
 
-    if (emitEvent) eventBus.publish('cache-flush-' + name, {nodeId: nodeSync.getId()});
+    if (emitEvent) eventBus.publish('cache-flush-' + name, {nodeId: nodeSync().getId()});
 
     return cache;
   }

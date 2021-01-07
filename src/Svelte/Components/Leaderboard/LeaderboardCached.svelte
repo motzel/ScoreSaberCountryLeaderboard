@@ -19,7 +19,7 @@
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import {getLeaderboard} from "../../../song";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
+    import nodeSync from '../../../utils/multinode-sync';
     import {_} from '../../stores/i18n';
     import {getActiveCountry} from '../../../scoresaber/country'
 

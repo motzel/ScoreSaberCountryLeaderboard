@@ -28,7 +28,7 @@
     import {isDateObject, isEmpty} from '../../../utils/js'
     import TwitchVideosBadge from './TwitchVideosBadge.svelte'
     import {fetchSsProfilePage} from '../../../network/scoresaber/scores'
-    import nodeSync from '../../../network/multinode-sync'
+    import nodeSync from '../../../utils/multinode-sync'
 
     export let profileId;
     export let profilePage = {};
@@ -296,7 +296,7 @@
              ? pageData.scores[0].timeset
              : addToDate(new Date(), -ONE_DAY); // no scores at all - schedule as if player is not playing rn
 
-            eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync.getId(), playerId, profilePage: pageData});
+            eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync().getId(), playerId, profilePage: pageData});
         }
         catch {} // swallow error
 

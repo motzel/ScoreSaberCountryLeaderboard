@@ -2,7 +2,7 @@
 	import {onMount} from 'svelte';
 	import twitch from '../../../services/twitch';
 	import eventBus from '../../../utils/broadcast-channel-pubsub';
-	import nodeSync from '../../../network/multinode-sync';
+	import nodeSync from '../../../utils/multinode-sync';
 	import {_} from "../../stores/i18n";
 
 	import Button from "../Common/Button.svelte";
@@ -61,7 +61,7 @@
 		await twitch.updateTwitchUser(profileId, twitchUser.login);
 
 		eventBus.publish('player-twitch-linked', {
-			nodeId     : nodeSync.getId(),
+			nodeId     : nodeSync().getId(),
 			playerId   : profileId,
 			twitchLogin: twitchUser.login
 		});

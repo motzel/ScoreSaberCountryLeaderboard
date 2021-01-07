@@ -10,7 +10,7 @@ import {
     setRankedsNotesCache,
 } from '../scoresaber/rankeds'
 import eventBus from '../utils/broadcast-channel-pubsub'
-import nodeSync from './multinode-sync'
+import nodeSync from '../utils/multinode-sync'
 import {addToDate} from '../utils/date'
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
@@ -153,7 +153,7 @@ export const fetchRankedsFromBs = async rankedsHashesToFetch => {
         await setRankedsNotesCache(currentRankedsCache);
 
         eventBus.publish('rankeds-notes-cache-updated', {
-            nodeId: nodeSync.getId(),
+            nodeId: nodeSync().getId(),
             rankedsNotesCache: currentRankedsCache,
         });
     }

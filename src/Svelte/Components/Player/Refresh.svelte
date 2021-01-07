@@ -20,7 +20,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
-    import nodeSync from '../../../network/multinode-sync';
+    import nodeSync from '../../../utils/multinode-sync';
 
     import logger from "../../../utils/logger";
     import {_, trans} from '../../stores/i18n';
@@ -134,7 +134,7 @@
     async function refresh() {
         stopRefreshingFlag = false;
 
-        eventBus.publish('start-data-refreshing', {nodeId: nodeSync.getId()});
+        eventBus.publish('start-data-refreshing', {nodeId: nodeSync().getId()});
         eventBus.publish('dl-manager-pause-cmd');
 
         updateState({started: true, progress: 0, subLabel: $_.refresh.rankedsDownload});
@@ -176,7 +176,7 @@
 
         await setLastRefreshDate();
 
-        eventBus.publish('data-refreshed', {nodeId: nodeSync.getId()});
+        eventBus.publish('data-refreshed', {nodeId: nodeSync().getId()});
         eventBus.publish('dl-manager-unpause-cmd');
     }
 

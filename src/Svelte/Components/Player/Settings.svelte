@@ -19,7 +19,7 @@
     import {importDataHandler, exportJsonData} from "../../../utils/export-import";
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
+    import nodeSync from '../../../utils/multinode-sync';
     import {
         _,
         trans,
@@ -524,7 +524,7 @@
         await updatePlayer({id: profileId});
         await refreshPlayerStatus(profileId, country);
 
-        eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
+        eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync().getId()});
     }
 
     async function removePlayerFromFriends() {
@@ -532,9 +532,9 @@
         await refreshPlayerStatus(profileId, country);
 
         if (isManuallyAddedPlayer)
-            eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
+            eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync().getId()});
         else
-            eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync.getId()});
+            eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync().getId()});
 
         // TODO: remove it eventually
         window.location.reload();
@@ -543,7 +543,7 @@
     async function manuallyAddPlayer() {
         await addPlayerToFriends();
 
-        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()});
+        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync().getId()});
     }
 
     function onLangChange() {

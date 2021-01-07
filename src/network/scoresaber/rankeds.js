@@ -4,7 +4,7 @@ import {SCORESABER_URL} from "./consts";
 import {default as queue} from "../queue";
 import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
-import nodeSync from "../multinode-sync";
+import nodeSync from "../../utils/multinode-sync";
 import {
   getRankedsNotesCache,
   getRankedSongs, setRankedsNotesCache,
@@ -116,7 +116,7 @@ export async function updateRankeds() {
     }
 
     if (changed.length) {
-      eventBus.publish('rankeds-changed', {nodeId: nodeSync.getId(), changed, allRankeds: fetchedRankedSongs});
+      eventBus.publish('rankeds-changed', {nodeId: nodeSync().getId(), changed, allRankeds: fetchedRankedSongs});
     }
 
     return changed;

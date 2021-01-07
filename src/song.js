@@ -12,7 +12,7 @@ import {getActiveCountry} from "./scoresaber/country";
 import scoresRepository from './db/repository/scores'
 import {getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
 import eventBus from './utils/broadcast-channel-pubsub'
-import nodeSync from './network/multinode-sync'
+import nodeSync from './utils/multinode-sync'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -122,7 +122,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
 
   await setSsplCountryRanks(ssplCountryRanks);
 
-  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync.getId(), ssplCountryRanks});
+  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync().getId(), ssplCountryRanks});
 
   return ssplCountryRanks;
 }

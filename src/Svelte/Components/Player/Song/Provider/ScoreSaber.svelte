@@ -4,7 +4,7 @@
 
   import {onMount} from 'svelte'
   import eventBus from '../../../../../utils/broadcast-channel-pubsub';
-  import nodeSync from '../../../../../network/multinode-sync';
+  import nodeSync from '../../../../../utils/multinode-sync';
   import {fetchSsProfilePage} from '../../../../../network/scoresaber/scores'
   import {PLAYS_PER_PAGE} from '../../../../../network/scoresaber/consts'
   import {_} from '../../../../stores/i18n';
@@ -145,11 +145,11 @@
       if (pageData && pageData.type === 'recent' && pageData.pageNum === 1 && pageData.scores && pageData.scores.length && pageData.scores[0].timeset && isDateObject(pageData.scores[0].timeset)) {
         newRecentPlay = pageData.scores[0].timeset;
 
-        eventBus.publish('recent-play-updated', {nodeId: nodeSync.getId(), playerId, recentPlay: newRecentPlay});
+        eventBus.publish('recent-play-updated', {nodeId: nodeSync().getId(), playerId, recentPlay: newRecentPlay});
       }
 
       if (pageData) {
-        eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync.getId(), playerId, profilePage: pageData});
+        eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync().getId(), playerId, profilePage: pageData});
       }
 
       newRecentPlay = newRecentPlay ? newRecentPlay : recentPlay;

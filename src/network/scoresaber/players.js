@@ -14,7 +14,7 @@ import {
 import {dateFromString, toSSTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsProfilePage} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
-import nodeSync from '../../network/multinode-sync';
+import nodeSync from '../../utils/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
 import {getMainPlayerId} from "../../plugin-config";
 import {updateSongCountryRanks} from "../../song";
@@ -195,7 +195,7 @@ export const updateActivePlayers = async () => {
 
     await keyValueRepository().set(new Date(), 'activePlayersLastUpdate');
 
-    eventBus.publish('active-players-updated', {nodeId: nodeSync.getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
+    eventBus.publish('active-players-updated', {nodeId: nodeSync().getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
 
     return Object.values(allPlayers);
 }
@@ -314,14 +314,14 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
     if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
 
     if (emitEvents) {
-        eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), playerId, scores: scoresToSave});
+        eventBus.publish('player-scores-updated', {nodeId: nodeSync().getId(), playerId, scores: scoresToSave});
     }
 }
 
 const emitEventForScoreUpdate = (eventName, playerId, data = {}) => {
     eventBus.publish(eventName, {
         ...data,
-        nodeId: nodeSync.getId(),
+        nodeId: nodeSync().getId(),
         playerId,
     });
 }
