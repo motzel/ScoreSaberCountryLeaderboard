@@ -73,6 +73,14 @@
 {/if}
 
 <style>
+  :global(.content table tbody tr:last-child table td, .content table tbody tr:last-child table th) {
+    border-bottom-width: 1px;
+  }
+
+  :global(.content table tbody tr:last-child table tr:last-child td, .content table tbody tr:last-child table tr:last-child th) {
+    border-bottom-width: 0px;
+  }
+
   td {
     vertical-align: middle !important;
     padding: .5rem!important;
