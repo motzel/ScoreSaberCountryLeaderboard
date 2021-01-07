@@ -118,7 +118,10 @@
   {#if showLeaderboard}
     <tr class="details">
       <td colspan="7">
-        <Leaderboard leaderboardId={song.leaderboardId} onlySelectedDiff={true} />
+        <Leaderboard leaderboardId={song.leaderboardId} onlySelectedDiff={true}
+                     startAtRank={series && series[0] && series[0].rank ? series[0].rank : 1}
+                     highlight={series && series[0] && series[0].playerId ? [series[0].playerId] : []}
+        />
       </td>
     </tr>
   {/if}

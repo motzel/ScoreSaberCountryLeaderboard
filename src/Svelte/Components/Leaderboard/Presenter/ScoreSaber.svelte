@@ -24,6 +24,7 @@
   export let showBgCover = true;
   export let type = 'live';
   export let isLoading = false;
+  export let initialized = false;
 
   function onPageChanged(event) {
     dispatch('browse', {currentPage: event.detail.currentPage});
@@ -42,6 +43,7 @@
   }
 </script>
 
+{#if initialized}
 <DiffChanger {leaderboardId} {diffs} beforeDiffChanged={onBeforeDiffChanged} bind:type on:diff-change />
 
 <div class="content">
@@ -92,6 +94,7 @@
   {/if}
 {/if}
 </div>
+{/if}
 
 <style>
   .loading {

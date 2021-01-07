@@ -9,6 +9,7 @@
   import {convertArrayToObjectByKey} from '../../../../utils/js'
   import {enhanceScore} from '../../Player/Song/Provider/utils'
   import {getSongScores} from '../../../../song'
+  import {getMainPlayerId} from '../../../../plugin-config'
 
   export let leaderboardId = null;
   export let scores = [];
@@ -17,6 +18,7 @@
   export let totalItems = 0;
   export let pauseLoading = false;
   export let maxScore;
+  export let highlight = [];
 
   let lastPageData = scores && scores.length
    ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), leaderboardId}
@@ -24,6 +26,7 @@
 
   let data = [];
 
+  let mainPlayerId = null;
   let playersScores = {};
 
   let error = null;
@@ -58,7 +61,8 @@
 
     totalItems = pageData.totalItems && !isNaN(pageData.totalItems) ? pageData.totalItems : totalItems;
 
-    data = pageData.scores.map(score => ({...score, leaderboardId}));
+    data = pageData.scores.map(score => ({...score, leaderboardId, highlight: score && score.playerId && (
+     score.playerId === mainPlayerId || (highlight && highlight.includes(score.playerId))) }));
 
     enhanceScores();
   }
@@ -105,6 +109,8 @@
   }
 
   onMount(async () => {
+    mainPlayerId = await getMainPlayerId();
+
     await refreshPlayersScores(leaderboardId);
 
     if(lastPageData) processFetched(lastPageData);
@@ -141,4 +147,4 @@
   }
 </script>
 
-<slot {data} {diffs} {totalItems} {error} {isLoading} isPaused={pauseLoading} {beforeChanged}></slot>
+<slot {data} {diffs} {totalItems} {error} {isLoading} isPaused={pauseLoading} {beforeChanged} {initialized}></slot>

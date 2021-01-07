@@ -8,8 +8,11 @@
   import ScoreSaberProvider from './Provider/ScoreSaber.svelte'
   import ScoreSaberPresenter from './Presenter/ScoreSaber.svelte'
   import {isEmpty} from '../../../utils/js'
+  import {SCORES_PER_PAGE} from '../../../network/scoresaber/consts'
 
   export let leaderboardId;
+  export let startAtRank = 1;
+  export let highlight = [];
   export let leaderboardPage = {};
   export let type = 'live';
   export let onlySelectedDiff = false;
@@ -17,7 +20,7 @@
   let difficulty = null;
   let diffs = null;
 
-  let currentPage = 0;
+  let currentPage = Math.floor((startAtRank - 1) / SCORES_PER_PAGE);
   let totalItems = 0;
 
   let hash = null;
@@ -97,12 +100,14 @@
     pageNum={currentPage + 1}
     {totalItems}
     {maxScore}
+    {highlight}
     pauseLoading={false}
     on:leaderboard-page-loaded={onLeaderboardPageLoaded}
-    let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused let:isLoading
+    let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused let:isLoading let:initialized
   >
     <ScoreSaberPresenter
       {leaderboardId}
+      {initialized}
       bind:type
       {data}
       {diffs}

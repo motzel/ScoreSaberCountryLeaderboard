@@ -13,6 +13,7 @@
     import {_, trans} from '../../stores/i18n';
     import {addToDate, dateFromString, timestampFromString} from "../../../utils/date";
     import twitch from '../../../services/twitch';
+    import {PLAYERS_PER_PAGE} from '../../../network/scoresaber/consts'
 
     import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId, isCountryPlayer} from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
@@ -560,7 +561,7 @@
                             <span class="pp"><Value value={pp} suffix="pp" /></span>
                         </h1>
                         <h2 class="title is-5 ranks" use:hoverable on:hover={onRankHover} on:unhover={onRankUnhover}>
-                            <a href="/global/{rank ? Math.floor((rank-1) / 50) + 1 : ''}" data-type="global" data-rank={rank}>
+                            <a href="/global/{rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : ''}" data-type="global" data-rank={rank}>
                                 <i class="fas fa-globe-americas"></i>
                                 <Value value={rank} prefix="#" digits={0} zero="#0" />
                             </a>

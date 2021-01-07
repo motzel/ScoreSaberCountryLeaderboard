@@ -6,6 +6,7 @@
   import Leaderboard from './Leaderboard.svelte'
 
   export let leaderboardId;
+  export let startAtRank = 1;
   export let leaderboardPage = {};
   export let type = 'live';
 
@@ -46,7 +47,7 @@
 <div class="columns">
   <div class="column">
     <div class="box has-shadow">
-      <Leaderboard bind:leaderboardId bind:leaderboardPage {type} />
+      <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank} />
     </div>
   </div>
 

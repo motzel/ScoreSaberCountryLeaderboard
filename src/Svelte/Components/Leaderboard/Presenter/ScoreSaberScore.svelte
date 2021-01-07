@@ -32,7 +32,7 @@
 </script>
 
 {#if score}
-  <tr in:fly={{ x: 50, duration: 500 }}>
+  <tr in:fly={{ x: 50, duration: 500 }} class:main={score.highlight}>
 
     <td class="picture">
       <Avatar playerId={score.playerId} url={score.picture} />
