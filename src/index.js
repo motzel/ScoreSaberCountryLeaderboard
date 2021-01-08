@@ -250,12 +250,17 @@ function addVersionInfoToFooter() {
     const p = document.createElement('p');
     p.innerText = header.name;
 
-    const a = document.createElement('a');
-    a.href = header.updateURL;
-    a.innerText = ' v' + header.version;
+    const a1 = document.createElement('a');
+    a1.href = header.updateURL;
+    a1.innerText = ' v' + header.version;
 
-    p.append(a);
-    p.innerHTML +=  ' by ' + header.author;
+    p.append(a1);
+    p.innerHTML +=  ' by ';
+
+    const a2 = document.createElement('a');
+    a2.href = 'https://www.github.com/motzel';
+    a2.innerText = header.author;
+    p.append(a2);
 
     footer.append(p);
 }
