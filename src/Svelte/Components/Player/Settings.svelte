@@ -842,6 +842,7 @@
     footer {
         margin-top: auto;
         min-height: 3.75rem;
+        justify-content: space-between;
         align-items: flex-end;
     }
 
