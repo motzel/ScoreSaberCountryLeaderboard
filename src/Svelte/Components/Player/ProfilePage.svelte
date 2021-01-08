@@ -124,6 +124,10 @@
     let miniRankingType = "country";
     let miniRankingCountryRank = null;
 
+    function filterAccChart(score) {
+        return filterByPeriod(score, values.selectedPeriod.value);
+    }
+
     const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
 
     function getBasicStats(ssStats, stats, allScores) {
@@ -655,7 +659,7 @@
 
         {#if showChart}
             <div class="chart">
-                <Chart {profileId} history={chartHistory} type={defaultChartType} />
+                <Chart {profileId} history={chartHistory} type={defaultChartType} accFilterFunc={filterAccChart} refreshTag={values.selectedPeriod} />
             </div>
         {/if}
     </div>

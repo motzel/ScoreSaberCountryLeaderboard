@@ -11,6 +11,8 @@
     export let profileId = null;
     export let history = null;
     export let type = 'rank';
+    export let accFilterFunc =  null;
+    export let refreshTag = null;
 
     let allRankeds = {};
     let chartData = [];
@@ -73,7 +75,7 @@
         if (!playerScores || !rankeds || !rankedsNotesCache) return;
 
         chartData = Object.values(playerScores)
-                .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId])
+                .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && (!accFilterFunc || accFilterFunc(s)))
                 .map(s => {
                     const acc = getAccFromRankedScore(s, rankedsNotesCache);
 
@@ -371,7 +373,7 @@
     }
 
     $: {
-        calcAccChartData(playerScores, allRankeds, rankedsNotesCache);
+        calcAccChartData(playerScores, allRankeds, rankedsNotesCache, refreshTag);
     }
 
     $: {
