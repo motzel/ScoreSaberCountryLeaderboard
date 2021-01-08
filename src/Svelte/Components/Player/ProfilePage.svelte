@@ -72,6 +72,9 @@
     let compareTo = [];
     let players = [];
 
+    let selectedAccBadges = [];
+    let chartRefreshTag = null;
+
     const ALL = 365 * 100;
     let strings = {
         periods: [
@@ -125,7 +128,13 @@
     let miniRankingCountryRank = null;
 
     function filterAccChart(score) {
-        return filterByPeriod(score, values.selectedPeriod.value);
+        return filterByPeriod(score, values.selectedPeriod.value) && (
+         !selectedAccBadges.length ||
+         selectedAccBadges.reduce((result, badge) => {
+             return result || ((!badge.min || badge.min <= score.acc) && (!badge.max || badge.max > score.acc))
+
+         }, false)
+        );
     }
 
     const refreshSsplCountryRanksCache = async () => ssplCountryRanksCache = await getSsplCountryRanks();
@@ -508,6 +517,14 @@
         translateAllStrings($_);
     }
 
+    function updateChartRefreshTag(period, selectedAccBadges) {
+        chartRefreshTag = period + ':' + selectedAccBadges.map(b => b.name).join(':');
+    }
+
+    $: {
+        updateChartRefreshTag(values.selectedPeriod.value, selectedAccBadges);
+    }
+
     let currentPage = profilePage && profilePage.pageNum ? profilePage.pageNum - 1 : 0;
     let scoresType = profilePage && profilePage.type ? profilePage.type : 'recent';
 
@@ -538,6 +555,12 @@
 
     function onRankUnhover(event) {
         countryRankingEl.style.display = 'none';
+    }
+
+    function onAccBadgeClick(badge) {
+        const badgeAlreadySelected = !!(selectedAccBadges.find(b => b === badge))
+        if (badgeAlreadySelected) selectedAccBadges = selectedAccBadges.filter(b => b !== badge);
+        else selectedAccBadges = selectedAccBadges.concat([badge]);
     }
 </script>
 
@@ -647,7 +670,9 @@
                         {#if showBadges && stats && stats.badges}
                             <div class="badges right">
                                 {#each stats.badges as badge (badge)}
-                                    <Badge label={badge.name} value={badge.value} title={badge.title} color="white" bgColor={badge.color} digits={0}/>
+                                    <Badge label={badge.name} value={badge.value} title={badge.title} color="white"
+                                           bgColor={badge.color} digits={0} on:click={() => onAccBadgeClick(badge)}
+                                           clickable={true} notSelected={selectedAccBadges.length && ! (selectedAccBadges.includes(badge))} />
                                 {/each}
                             </div>
                         {/if}
@@ -659,7 +684,8 @@
 
         {#if showChart}
             <div class="chart">
-                <Chart {profileId} history={chartHistory} type={defaultChartType} accFilterFunc={filterAccChart} refreshTag={values.selectedPeriod} />
+                <Chart {profileId} history={chartHistory} type={defaultChartType} accFilterFunc={filterAccChart}
+                       refreshTag={chartRefreshTag} />
             </div>
         {/if}
     </div>

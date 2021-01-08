@@ -13,9 +13,11 @@
     export let type = "number";
     export let suffix = "";
     export let onlyLabel = false;
+    export let clickable = false;
+    export let notSelected = false;
 </script>
 
-<span class="badge" class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title} transition:fade={{ duration: 1000 }}>
+<span class="badge" class:clickable class:not-selected={notSelected} class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title} transition:fade={{ duration: 1000 }} on:click>
     <span class="label"><slot name="label">{label}</slot></span>
     {#if !onlyLabel}
         <span class="spacer"></span>
@@ -37,6 +39,17 @@
         margin: 0 .5em .5em 0;
         padding: .125em;
         border-radius: .25em;
+        transition: opacity .25s;
+    }
+
+    .badge.not-selected {
+        opacity: .35;
+    }
+    .badge.not-selected:hover {
+        opacity: 1;
+    }
+    .badge.clickable {
+        cursor: pointer;
     }
 
     .badge span {
