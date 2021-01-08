@@ -10,13 +10,13 @@
 
     export let profileId = null;
     export let history = null;
+    export let type = 'rank';
 
     let allRankeds = {};
     let chartData = [];
 
     let canvas = null;
     let chart = null;
-    let type = 'rank';
 
     let rankedsNotesCache = null;
 
@@ -387,9 +387,9 @@
     {#if chartData && chartData.length}
         <aside>
             <Button iconFa="fa fa-chart-line" type={type === 'rank' ? 'primary' : 'default'} label={$_.chart.rankingButton}
-                    on:click={() => type = 'rank'} disabled={type === 'rank'} />
+                    on:click={() => type = 'rank'} notSelected={type !== 'rank'} />
             <Button iconFa="fa fa-crosshairs" type={type === 'acc' ? 'primary' : 'default'} label={$_.chart.accuracyButton}
-                    on:click={() => type = 'acc'} disabled={type === 'acc'} />
+                    on:click={() => type = 'acc'} notSelected={type !== 'acc'} />
         </aside>
     {/if}
 </section>
@@ -401,8 +401,15 @@
     }
 
     aside {
-        margin-top: .5rem;
+        display: flex;
+        justify-content: center;
         font-size: .75rem;
         text-align: center;
+        margin-top: .5rem;
+    }
+
+    :global(aside button) {
+        font-weight: 500;
+        margin-right: .125rem!important;
     }
 </style>

@@ -18,7 +18,7 @@ export default {
 
             profile: {
                 header: 'Profile',
-                showChart: 'Show the chart',
+                defaultChart: 'Default chart',
                 showOnePpCalc: 'Show +1PP calculator',
                 showTwitchIcon: 'Show Twitch button',
             },
@@ -264,6 +264,7 @@ export default {
         accTooltip: 'Accuracy: ${acc}% | Stars: ${stars}*',
         rankingButton: 'Ranking',
         accuracyButton: 'Accuracy',
+        none: 'Disabled',
     },
     themes: {
         dark: 'The one and the only',

@@ -18,7 +18,7 @@ export default {
 
             profile: {
                 header: 'Profil',
-                showChart: 'Pokazuj wykres',
+                defaultChart: 'Domyślny wykres',
                 showOnePpCalc: 'Pokazuj kalkulator +1PP',
                 showTwitchIcon: 'Pokazuj przycisk Twitch',
             },
@@ -265,6 +265,7 @@ export default {
         accTooltip: 'Celność: ${acc}% | Gwiazdki: ${stars}*',
         rankingButton: 'Ranking',
         accuracyButton: 'Celność',
+        none: 'Wyłączony'
     },
     themes: {
         dark: 'Jedyny słuszny',

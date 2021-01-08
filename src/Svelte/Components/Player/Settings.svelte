@@ -232,6 +232,12 @@
             },
         ],
 
+        chartTypes: [
+            {_key: 'chart.none', id: "none"},
+            {_key: 'chart.rankingButton', id: "rank"},
+            {_key: 'chart.accuracyButton', id: "acc"},
+        ],
+
         viewTypeUpdates: [
             {_key: 'profile.settings.others.alwaysRefresh', id: "always"},
             {_key: 'profile.settings.others.keepView', id: "keep-view"},
@@ -251,6 +257,7 @@
     let values = {
         songTypes      : strings.songTypes[0],
         viewTypes      : strings.viewTypes[0],
+        chartTypes     : strings.chartTypes[1],
         viewTypeUpdates: strings.viewTypeUpdates[1],
         shownIcons     : strings.icons.map(i => i),
         lang           : availableLangs[0],
@@ -354,6 +361,9 @@
 
         const defaultItemsPerPage = itemsPerPage.find(i => i.val === config.songBrowser.itemsPerPage);
         if (defaultItemsPerPage) configItemsPerPage = defaultItemsPerPage;
+
+        const defaultChart = strings.chartTypes.find(i => i.id === config.profile.showChart);
+        if (defaultChart) values.chartTypes = defaultChart;
 
         const defaultTheme = strings.themes.find(t => t.id === config.others.theme)
         if (defaultTheme) {
@@ -500,6 +510,7 @@
     async function saveConfig() {
         config.songBrowser.defaultType = values.songTypes.id;
         config.songBrowser.defaultView = values.viewTypes.id;
+        config.profile.showChart = values.chartTypes.id;
         config.songBrowser.defaultSort = configSortType.field;
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = values.shownIcons.map(i => i.id);
@@ -683,21 +694,27 @@
                 <section>
                     <div class="menu-label">{$_.profile.settings.profile.header}</div>
                     <div>
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.showChart}>
-                            {$_.profile.settings.profile.showChart}
-                        </label>
+                        <div class="columns">
+                            <div class="column is-one-third">
+                                <label class="menu-label">{$_.profile.settings.profile.defaultChart}</label>
+                                <Select bind:value={values.chartTypes} items={strings.chartTypes} />
+                            </div>
 
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
-                            {$_.profile.settings.profile.showOnePpCalc}
-                        </label>
+                            <div class="column is-two-thirds flex-bottom">
+                                <label class="checkbox">
+                                    <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
+                                    {$_.profile.settings.profile.showOnePpCalc}
+                                </label>
 
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.showTwitchIcon}>
-                            {$_.profile.settings.profile.showTwitchIcon}
-                        </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" bind:checked={config.profile.showTwitchIcon}>
+                                    {$_.profile.settings.profile.showTwitchIcon}
+                                </label>
+                            </div>
+                        </div>
                     </div>
+
+
                 </section>
 
                 <section>
@@ -788,7 +805,7 @@
         margin-bottom: 0;
     }
 
-    .column {
+    .column:not(.is-two-thirds) {
         text-align: center;
         padding-bottom: 0;
         max-width: 20rem;
@@ -796,6 +813,15 @@
 
     .flex-column {
         flex-direction: column;
+    }
+
+    .flex-bottom {
+        display: flex;
+        align-items: flex-end;
+        padding-bottom: 0;
+    }
+    .flex-bottom label {
+        margin-bottom: 0;
     }
 
     @media screen and (max-width: 768px) {

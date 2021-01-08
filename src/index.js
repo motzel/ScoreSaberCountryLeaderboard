@@ -293,7 +293,6 @@ async function init() {
         });
 
         await initDatabase();
-
         await setupDataFixes();
 
         // pre-warm cache

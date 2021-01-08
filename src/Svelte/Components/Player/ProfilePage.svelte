@@ -66,7 +66,8 @@
     let mode = 'pp-stars';
     let showCalc = false;
     let showBadges = true;
-    let showChart = false;
+    let showChart = true;
+    let defaultChartType = 'rank';
 
     let compareTo = [];
     let players = [];
@@ -211,7 +212,8 @@
     }
 
     function refreshChart(config, chartHistory) {
-        showChart = config && config.profile && config.profile.showChart && chartHistory && chartHistory.length;
+        showChart = config && config.profile && config.profile.showChart !== 'none' && chartHistory && chartHistory.length;
+        defaultChartType = config && config.profile && config.profile.showChart ? config.profile.showChart : 'rank';
     }
 
     function setPlayers(profileId, mainPlayerId, name, compareTo) {
@@ -653,7 +655,7 @@
 
         {#if showChart}
             <div class="chart">
-                <Chart {profileId} history={chartHistory} />
+                <Chart {profileId} history={chartHistory} type={defaultChartType} />
             </div>
         {/if}
     </div>

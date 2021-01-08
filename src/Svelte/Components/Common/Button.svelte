@@ -105,7 +105,7 @@
 
     button[disabled] {
         cursor: not-allowed;
-        opacity: .4;
+        opacity: .35;
         color: var(--active-color, white);
         background-color: var(--bg-color, #3273dc);
     }
