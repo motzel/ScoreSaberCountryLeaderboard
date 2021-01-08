@@ -567,7 +567,7 @@
     }
 </script>
 
-<div>
+<div class="container">
     <div class="player-top">
         <div class="icons"><Settings {profileId} /></div>
         <div class="refresh"><Refresh {profileId} /></div>
@@ -730,7 +730,6 @@
         </div>
     </div>
 </div>
-
 
 <style>
     .player-top {

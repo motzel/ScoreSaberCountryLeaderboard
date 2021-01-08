@@ -44,21 +44,23 @@
   }
 </script>
 
-<div class="columns">
-  <div class="column">
-    <div class="box has-shadow">
-      <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank} />
-    </div>
-  </div>
-
-  <div class="column is-one-third-desktop">
-    <Card {leaderboardId} {difficulty} {songInfo} {...song} />
-
-    {#if chartData && chartData.length}
-      <div class="box has-shadow chart">
-        <Chart data={chartData} />
+<div class="container">
+  <div class="columns">
+    <div class="column">
+      <div class="box has-shadow">
+        <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank} />
       </div>
-    {/if}
+    </div>
+
+    <div class="column is-one-third-desktop">
+      <Card {leaderboardId} {difficulty} {songInfo} {...song} />
+
+      {#if chartData && chartData.length}
+        <div class="box has-shadow chart">
+          <Chart data={chartData} />
+        </div>
+      {/if}
+    </div>
   </div>
 </div>
 

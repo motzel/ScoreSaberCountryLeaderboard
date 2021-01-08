@@ -92,11 +92,12 @@
 </script>
 
 {#if country}
-<div class="filters">
-    <TypeFilterSelect bind:value={leaderboardType} {country} />
-</div>
+<div class="container-fluid">
+    <div class="filters">
+        <TypeFilterSelect bind:value={leaderboardType} {country} />
+    </div>
 
-<div class="columns is-multiline">
+    <div class="columns is-multiline">
     <div class="leaderboard content column is-full-tablet is-half-widescreen is-two-fifths-fullhd">
         <div class="ranking box has-shadow">
             <header>
@@ -140,6 +141,7 @@
         </div>
     </div>
 </div>
+</div>
 {/if}
 
 <style>
@@ -147,6 +149,7 @@
         display: flex;
         justify-content: flex-start;
         margin-bottom: .5rem;
+        margin-top: 2.5rem;
     }
 
     .box {

@@ -40,8 +40,8 @@ const isCurrentCountryRankingPage = async () => getRankingCountry() === (await g
 async function setupLeaderboard() {
     log.info("Setup leaderboard page");
 
-    const container = document.querySelector('.section .container');
-    if (!container) return;
+    const section = document.querySelector('body > .section');
+    if (!section) return;
 
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
@@ -63,7 +63,7 @@ async function setupLeaderboard() {
 
     const profileDiv = document.createElement('div');
     profileDiv.classList.add('sspl-page');
-    container.prepend(profileDiv);
+    section.prepend(profileDiv);
 
     const originalContent = document.querySelector('.content');
     if (originalContent) originalContent.remove();
@@ -116,12 +116,12 @@ async function setupProfile() {
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    const container = document.querySelector('.section .container');
-    if (!container) return;
+    const section = document.querySelector('body .section');
+    if (!section) return;
 
     const profileDiv = document.createElement('div');
     profileDiv.classList.add('sspl-page');
-    container.prepend(profileDiv);
+    section.prepend(profileDiv);
 
     const props = {
         profileId,
@@ -172,8 +172,7 @@ async function setupCountryRanking(diffOffset = 6) {
     cont.parentNode.style.position = 'relative';
 
     const newCont = document.createElement('main');
-    newCont.classList.add('container-fluid');
-    newCont.style.paddingTop = '1.75rem';
+    newCont.classList.add('sspl-page');
     cont.parentNode.appendChild(newCont);
 
     new CountryDashboard({target: newCont, props: {country: await getActiveCountry(), overridePlayersPp: actualPlayersPp}});
