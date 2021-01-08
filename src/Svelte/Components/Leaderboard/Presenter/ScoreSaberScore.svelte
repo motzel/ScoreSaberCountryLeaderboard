@@ -21,7 +21,7 @@
   async function updateConfig() {
     const slConfig = await getConfig('songLeaderboard');
     showWhatIfPp = !!(slConfig && slConfig.showWhatIfPp);
-    showDifferences = !!(slConfig && slConfig.showDiff);
+    showDifferences = showDifferences && !!(slConfig && slConfig.showDiff);
   }
 
   onMount(async () => {
@@ -52,7 +52,7 @@
 
     <td class="timeset">
       <div>{score.timesetAgo}</div>
-      {#if score.prevScore}<div><small><FormattedDate date={score.prevTimeset} noDate="&nbsp;" /></small></div>{/if}
+      {#if score.prevScore && showDifferences}<div><small><FormattedDate date={score.prevTimeset} noDate="&nbsp;"/></small></div>{/if}
     </td>
 
     <td class="mods">{score.mods ? score.mods : '-'}</td>

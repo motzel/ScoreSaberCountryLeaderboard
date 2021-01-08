@@ -6,7 +6,7 @@
   import ScoreSaberScorePresenter from './ScoreSaberScore.svelte'
   import Pager from '../../Common/Pager.svelte'
 
-  import Leaderboard from '../LeaderboardCached.svelte'
+  import LeaderboardCached from '../LeaderboardCached.svelte'
   import DiffChanger from '../DiffChanger.svelte'
 
   const dispatch = createEventDispatcher();
@@ -21,10 +21,14 @@
   export let beforeChanged;
   export let bgLeft = "0rem";
   export let bgTop = "0rem";
+  export let bgWidth = "0rem";
+  export let bgHeight = "0rem";
   export let showBgCover = true;
   export let type = 'live';
   export let isLoading = false;
   export let initialized = false;
+  export let showDifferences = true;
+  export let hash = null;
 
   function onPageChanged(event) {
     dispatch('browse', {currentPage: event.detail.currentPage});
@@ -48,50 +52,52 @@
 
 <div class="content">
 {#if type === 'cached'}
-  <Leaderboard leaderboardId={leaderboardId} tableOnly={true} showBgCover={false} />
+  <LeaderboardCached leaderboardId={leaderboardId} tableOnly={true} showDiff={showDifferences} {showBgCover} {bgWidth} {bgHeight} {bgLeft} {bgTop} />
 {:else}
-  {#if data && data.length}
-   <table class="ranking songs sspl">
-     <thead>
-     <tr>
-       <th class="picture"></th>
-       <th class="rank">{$_.songBrowser.fields.rankShort}</th>
-       <th class="player">{$_.songLeaderboard.player}</th>
-       <th class="score">{$_.songBrowser.fields.score}</th>
-       <th class="timeset">{$_.songBrowser.fields.timesetShort}</th>
-       <th class="mods">{$_.songLeaderboard.mods}</th>
-       <th class="percentage">{$_.songBrowser.fields.accShort}</th>
-       <th class="pp">{$_.songBrowser.fields.pp}</th>
-     </tr>
-     </thead>
+  <div class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && hash && hash.length ? hash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}; --bgHeight: {bgHeight}; --bgWidth: {bgWidth}">
+    {#if data && data.length}
+     <table class="ranking songs sspl">
+       <thead>
+       <tr>
+         <th class="picture"></th>
+         <th class="rank">{$_.songBrowser.fields.rankShort}</th>
+         <th class="player">{$_.songLeaderboard.player}</th>
+         <th class="score">{$_.songBrowser.fields.score}</th>
+         <th class="timeset">{$_.songBrowser.fields.timesetShort}</th>
+         <th class="mods">{$_.songLeaderboard.mods}</th>
+         <th class="percentage">{$_.songBrowser.fields.accShort}</th>
+         <th class="pp">{$_.songBrowser.fields.pp}</th>
+       </tr>
+       </thead>
 
-     <tbody>
-     {#each data as score (score.playerId)}
-       <slot {score}>
-         <ScoreSaberScorePresenter {score}/>
-       </slot>
-     {/each}
-     </tbody>
-   </table>
-  {:else if isLoading}
-    <div class="loading">
-      <i class="fas fa-spinner fa-spin"></i>
-    </div>
-  {:else if !error}
-   <p>{$_.common.noData}</p>
-  {/if}
+       <tbody>
+       {#each data as score (score.playerId)}
+         <slot {score}>
+           <ScoreSaberScorePresenter {score}/>
+         </slot>
+       {/each}
+       </tbody>
+     </table>
+    {:else if isLoading}
+      <div class="loading">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+    {:else if !error}
+     <p>{$_.common.noData}</p>
+    {/if}
 
-  <Pager {currentPage}
-       itemsPerPage={SCORES_PER_PAGE}
-       {totalItems}
-       itemsPerPageValues={null}
-       beforePageChanged={onBeforePageChanged}
-       on:page-changed={onPageChanged}
-       hide={isPaused}
-  />
-  {#if error}
-  <div class="error has-text-centered">{error}</div>
-  {/if}
+    <Pager {currentPage}
+         itemsPerPage={SCORES_PER_PAGE}
+         {totalItems}
+         itemsPerPageValues={null}
+         beforePageChanged={onBeforePageChanged}
+         on:page-changed={onPageChanged}
+         hide={isPaused}
+    />
+    {#if error}
+    <div class="error has-text-centered">{error}</div>
+    {/if}
+  </div>
 {/if}
 </div>
 {/if}
@@ -100,6 +106,21 @@
   .loading {
     text-align: center;
     font-size: 3rem;
+  }
+
+  .leaderboard-container {position: relative;}
+  .leaderboard-container:before {
+    position: absolute;
+    content: ' ';
+    background-image: var(--background-image);
+    left: var(--bgLeft, 0);
+    top: var(--bgTop, 0);
+    width: calc(100% + var(--bgWidth, 0) - var(--bgLeft, 0));
+    height: calc(100% + var(--bgHeight, 0) - var(--bgTop, 0));
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 0.1;
+    pointer-events: none;
   }
 
   th {

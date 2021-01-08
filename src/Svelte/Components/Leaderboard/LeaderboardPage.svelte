@@ -48,7 +48,8 @@
   <div class="columns">
     <div class="column">
       <div class="box has-shadow">
-        <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank} />
+        <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank}
+                     bgWidth="1.4rem" bgLeft="-1.4rem" bgHeight="1rem" bgTop="-3.25rem" />
       </div>
     </div>
 

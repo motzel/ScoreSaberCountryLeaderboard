@@ -3,12 +3,14 @@
   const dispatch = createEventDispatcher();
 
   import {_} from "../../stores/i18n";
+  import eventBus from '../../../utils/broadcast-channel-pubsub';
   import {getLeaderboardMaxScore} from '../../../song'
 
   import ScoreSaberProvider from './Provider/ScoreSaber.svelte'
   import ScoreSaberPresenter from './Presenter/ScoreSaber.svelte'
   import {isEmpty} from '../../../utils/js'
   import {SCORES_PER_PAGE} from '../../../network/scoresaber/consts'
+  import {getConfig} from '../../../plugin-config'
 
   export let leaderboardId;
   export let startAtRank = 1;
@@ -16,6 +18,14 @@
   export let leaderboardPage = {};
   export let type = 'live';
   export let onlySelectedDiff = false;
+  export let showDifferences = true;
+  export let showBgCover = true;
+  export let bgLeft = "0rem";
+  export let bgTop = "0rem";
+  export let bgWidth = "0rem";
+  export let bgHeight = "0rem";
+
+  let typeAtStart = type;
 
   let difficulty = null;
   let diffs = null;
@@ -35,6 +45,8 @@
   }
 
   function refreshLeaderboardPage(leaderboardPage) {
+    if (isEmpty(leaderboardPage)) return;
+
     const getProp = (prop, defaultValue = null) => leaderboardPage && leaderboardPage[prop] ? leaderboardPage[prop] : defaultValue;
 
     const newDifficulty = getProp('currentDiff');
@@ -54,7 +66,8 @@
       initialized = true;
     }
 
-    type = 'live';
+    if (typeAtStart === 'cached') typeAtStart = null;
+    else type = 'live';
   }
 
   function onDiffChange(event) {
@@ -77,10 +90,22 @@
     leaderboardPage = event.detail;
   }
 
+  async function refreshConfig() {
+    const config = await getConfig('songLeaderboard');
+    showBgCover = showBgCover && !!(config && config.showBgCover !== false);
+    showDifferences = showDifferences && !!(config && config.showDiff);
+  }
+
   onMount(async () => {
+    await refreshConfig();
+
+    const configChangedUnsubscriber = eventBus.on('config-changed', refreshConfig);
+
     if (leaderboardId && isEmpty(leaderboardPage)) {
       initialized = true;
     }
+
+    return configChangedUnsubscriber;
   })
 
   $: {
@@ -97,24 +122,29 @@
     {leaderboardId}
     {diffs}
     scores={leaderboardPage && leaderboardPage.scores ? leaderboardPage.scores : []}
+    song={leaderboardPage && leaderboardPage.song ? leaderboardPage.song : {}}
     pageNum={currentPage + 1}
     {totalItems}
     {maxScore}
     {highlight}
     pauseLoading={false}
     on:leaderboard-page-loaded={onLeaderboardPageLoaded}
-    let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused let:isLoading let:initialized
+    let:data let:diffs let:totalItems let:error let:beforeChanged let:isPaused let:isLoading let:initialized let:hash
   >
     <ScoreSaberPresenter
       {leaderboardId}
       {initialized}
       bind:type
       {data}
+      {hash}
       {diffs}
       {error}
       {currentPage}
       {totalItems}
       {onlySelectedDiff}
+      {showDifferences}
+      {showBgCover}
+      {bgLeft} {bgTop} {bgWidth} {bgHeight}
       {isLoading}
       {beforeChanged}
       on:diff-change={onDiffChange}

@@ -121,6 +121,7 @@
         <Leaderboard leaderboardId={song.leaderboardId} onlySelectedDiff={true}
                      startAtRank={series && series[0] && series[0].rank ? series[0].rank : 1}
                      highlight={series && series[0] && series[0].playerId ? [series[0].playerId] : []}
+                     bgLeft="-2rem" bgTop="-3rem" bgWidth="2rem" bgHeight="2rem"
         />
       </td>
     </tr>
@@ -149,6 +150,11 @@
 
   tr.details:hover {
     background-color: inherit!important;
+  }
+
+  tr.details td {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
   }
 
   td.song figure {

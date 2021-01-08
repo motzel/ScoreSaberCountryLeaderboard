@@ -19,7 +19,7 @@
     import Song from "../Song/Song.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
-    import Leaderboard from "../Leaderboard/LeaderboardCached.svelte";
+    import LeaderboardCached from "../Leaderboard/LeaderboardCached.svelte";
     import {convertArrayToObjectByKey} from '../../../utils/js'
 
     export let country;
@@ -196,7 +196,7 @@
     </span>
 
     <span slot="details" let:row>
-        <Leaderboard leaderboardId={row.leaderboardId} {leaderboardType} {country} tableOnly={true} showDiff={false} highlight={[row.playerId]} />
+        <LeaderboardCached leaderboardId={row.leaderboardId} {leaderboardType} {country} tableOnly={true} showDiff={false} highlight={[row.playerId]} bgLeft="-1rem" bgWidth="1rem" />
     </span>
 </Table>
 

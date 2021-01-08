@@ -13,6 +13,7 @@
 
   export let leaderboardId = null;
   export let scores = [];
+  export let song = {};
   export let diffs = [];
   export let pageNum = 1;
   export let totalItems = 0;
@@ -33,6 +34,8 @@
 
   let isLoading = false;
   let initialized = false;
+
+  let hash = song && song.hash ? song.hash : null;
 
   const enhanceScores = async () => {
     if (!(leaderboardId && data && data.length && playersScores)) return;
@@ -85,6 +88,7 @@
 
       lastPageData = {...pageData, pageNum: pageToLoad};
       pageNum = pageToLoad;
+      hash = pageData && pageData.song && pageData.song.hash ? pageData.song.hash : hash;
 
       isLoading = false;
 
@@ -147,4 +151,4 @@
   }
 </script>
 
-<slot {data} {diffs} {totalItems} {error} {isLoading} isPaused={pauseLoading} {beforeChanged} {initialized}></slot>
+<slot {data} {diffs} {totalItems} {error} {isLoading} isPaused={pauseLoading} {beforeChanged} {hash} {initialized}></slot>

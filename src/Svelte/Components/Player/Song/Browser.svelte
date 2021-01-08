@@ -48,7 +48,7 @@
     import Value from "../../Common/Value.svelte";
     import Button from "../../Common/Button.svelte";
     import Select from "../../Common/Select.svelte";
-    import Leaderboard from "../../Leaderboard/LeaderboardCached.svelte";
+    import Leaderboard from "../../Leaderboard/Leaderboard.svelte";
     import Checkbox from "../../Common/Checkbox.svelte";
     import Card from "../../Song/Card.svelte";
     import Icons from "../../Song/Icons.svelte";
@@ -1575,7 +1575,7 @@
                                 </div>
 
                                 {#if !!song.leaderboardOpened}
-                                    <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
+                                    <Leaderboard leaderboardId={song.leaderboardId} showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} onlySelectedDiff={true} type="cached" />
                                 {/if}
                             </div>
 
@@ -1775,7 +1775,10 @@
                     </tr>
                     {#if !!song.leaderboardOpened}
                     <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
-                        <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
+                        <Leaderboard leaderboardId={song.leaderboardId}
+                                     showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')}
+                                     bgLeft="-2rem" bgTop="-2rem"
+                                     onlySelectedDiff={true} type="cached" />
                     </td></tr>
                     {/if}
                 {/each}
@@ -1924,6 +1927,10 @@
 
     .card-view .scores.bigger {
         font-size: .875rem;
+    }
+
+    :global(.card-view .scores.bigger table.ranking, table.ranking table.ranking.sspl) {
+        font-size: 1rem;
     }
 
     .card-view .scores .column:nth-child(2n) {
@@ -2146,7 +2153,7 @@
     }
 
     tbody tr.leaderboard td {
-        padding: 1rem!important;
+        padding: 1rem 1rem 1.5rem 1rem!important;
     }
 
     table.ranking tbody tr.leaderboard:hover {

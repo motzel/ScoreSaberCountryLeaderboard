@@ -28,6 +28,8 @@
     export let showDiff;
     export let bgLeft = "0rem";
     export let bgTop = "0rem";
+    export let bgWidth = "0rem";
+    export let bgHeight = "0rem";
     export let highlight = [];
     export let showBgCover = true;
     export let country = null;
@@ -49,7 +51,7 @@
 
     async function refreshConfig() {
         const config = await getConfig('songLeaderboard');
-        showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
+        showDiff = showDiff && !!(config && config.showDiff);
         showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
         showBgCover = showBgCover && config.showBgCover !== false;
     }
@@ -83,7 +85,7 @@
 </script>
 
 {#if initialized}
-<div class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
+<div class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}; --bgHeight: {bgHeight}; --bgWidth: {bgWidth}">
 
 {#if !tableOnly}
     <div class="refresh">
@@ -168,14 +170,15 @@
 {/if}
 
 <style>
+    .leaderboard-container {position: relative;}
     .leaderboard-container:before {
         position: absolute;
         content: ' ';
         background-image: var(--background-image);
         left: var(--bgLeft, 0);
         top: var(--bgTop, 0);
-        width: calc(100% - var(--bgLeft) - var(--bgLeft));
-        height: calc(100% - var(--bgTop) - var(--bgTop));
+        width: calc(100% + var(--bgWidth, 0) - var(--bgLeft, 0));
+        height: calc(100% + var(--bgHeight, 0) - var(--bgTop, 0));
         background-repeat: no-repeat;
         background-size: cover;
         opacity: 0.1;
@@ -223,6 +226,4 @@
     .first-fetch {
         text-align: center
     }
-
-    .leaderboard-container {position: relative;}
 </style>
