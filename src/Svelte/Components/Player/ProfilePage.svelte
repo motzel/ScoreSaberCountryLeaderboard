@@ -1,7 +1,6 @@
 <script>
     import {onMount} from 'svelte';
     import {fade} from 'svelte/transition';
-    import {hoverable} from '../../Actions/hoverable';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Badge from "../Common/Badge.svelte";
     import Select from "../Common/Select.svelte";
@@ -121,11 +120,6 @@
     let initialized = false;
 
     let rankedsNotesCache = null;
-
-    let countryRankingEl = null;
-    let miniRankingCountry = country;
-    let miniRankingType = "country";
-    let miniRankingCountryRank = null;
 
     function filterAccChart(score) {
         return filterByPeriod(score, values.selectedPeriod.value) && (
@@ -248,12 +242,6 @@
     function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
         let newCountryRanks = [];
 
-        if (country && ssStats && ssStats.countryRank) newCountryRanks = newCountryRanks.concat([{
-            rank: ssStats.countryRank,
-            country,
-            type: 'country',
-        }]);
-
         const ssplCountryRank = playerInfo && activeCountry && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (playerInfo && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
         if (ssplCountryRank) newCountryRanks =
          activeCountry === country
@@ -264,6 +252,14 @@
               type: 'active-country',
           }]
           : newCountryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
+
+        if (country && ssStats && ssStats.countryRank && (!ssplCountryRank || activeCountry !== country))
+            newCountryRanks = newCountryRanks
+             .concat([{
+                 rank: ssStats.countryRank,
+                 country,
+                 type: 'country',
+             }]);
 
         countryRanks = newCountryRanks;
     }
@@ -542,21 +538,6 @@
         transformed = true;
     }
 
-    function onRankHover(event) {
-        const el = event.detail.target.closest('[data-type]');
-        if (el && ['country', 'active-country', 'global'].includes(el.dataset.type)) {
-            miniRankingCountryRank = el.dataset.rank;
-            miniRankingCountry = el.dataset.country;
-            miniRankingType = el.dataset.type === 'global' ? 'global' : 'country';
-
-            countryRankingEl.style.display = 'block';
-        }
-    }
-
-    function onRankUnhover(event) {
-        countryRankingEl.style.display = 'none';
-    }
-
     function onAccBadgeClick(badge) {
         const badgeAlreadySelected = !!(selectedAccBadges.find(b => b === badge));
 
@@ -568,176 +549,247 @@
 </script>
 
 <div class="container">
-    <div class="player-top">
-        <div class="icons"><Settings {profileId} /></div>
-        <div class="refresh"><Refresh {profileId} /></div>
-    </div>
+<div class="player-top">
+    <div class="icons"><Settings {profileId} /></div>
+    <div class="refresh"><Refresh {profileId} /></div>
+</div>
+</div>
 
-    <div class="box has-shadow">
-        {#if playerScores && playerScores.length && accStats}
-            <div class="period">
-                <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
-            </div>
-        {/if}
+<div class="container">
+    <main>
+        <div class="box has-shadow">
+            {#if playerScores && playerScores.length && accStats}
+                <div class="period">
+                    <Select bind:value={values.selectedPeriod} items={strings.periods} right={true}/>
+                </div>
+            {/if}
 
-        <div class="columns">
-            <div class="column is-narrow avatar enlarge">
-                <img src={avatarUrl} class="avatar" />
-            </div>
-
-            <div class="column">
-                <div class="columns player-name">
-                    <div class="column">
-                        <h1 class="title is-4">
-                            {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
-                            <span class="pp"><Value value={pp} suffix="pp" /></span>
-                        </h1>
-                        <h2 class="title is-5 ranks" use:hoverable on:hover={onRankHover} on:unhover={onRankUnhover}>
-                            <a href="/global/{rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : ''}" data-type="global" data-rank={rank}>
-                                <i class="fas fa-globe-americas"></i>
-                                <Value value={rank} prefix="#" digits={0} zero="#0" />
-                            </a>
-                            {#each countryRanks as countryRank}
-                            <a href="/global?country={countryRank.country}"
-                               data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
-                            >
-                                <img src="/imports/images/flags/{countryRank.country}.png">
-                                <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" />
-                                {#if countryRank.subRank && countryRank.subRank !== countryRank.rank}
-                                <small>(#{ countryRank.subRank })</small>
-                                {/if}
-                            </a>
-                            {/each}
-                            <div bind:this={countryRankingEl} class="mini-ranking">
-                                <MiniRanking country={miniRankingCountry} type={miniRankingType} rank={miniRankingCountryRank}
-                                             playerId={profileId} playerPp={pp} numOfItems={5} />
-                            </div>
-                        </h2>
-                    </div>
-
-                    {#if playerScores && playerScores.length && ssBadges && ssBadges.length}
-                    <div class="column">
-                        <div class="badges ss-badges" transition:fade={{ duration: 2000 }}>
-                            {#each ssBadges as ssBadge}
-                                <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
-                            {/each}
-                        </div>
-                    </div>
-                    {/if}
+            <div class="columns">
+                <div class="column is-narrow avatar enlarge">
+                    <img src={avatarUrl} class="avatar" />
                 </div>
 
-                <div class="columns">
-                    <div class="column">
-                        <div class="badges">
-                            {#each basicStats as stat} <Badge {...stat}/> {/each}
+                <div class="column">
+                    <div class="columns player-name">
+                        <div class="column">
+                            <h1 class="title is-4">
+                                {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
+                                <span class="pp"><Value value={pp} suffix="pp" /></span>
+                            </h1>
+                            <h2 class="title is-5 ranks">
+                                <a href="/global/{rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : ''}" data-type="global" data-rank={rank}>
+                                    <i class="fas fa-globe-americas"></i>
+                                    <Value value={rank} prefix="#" digits={0} zero="#0" />
+                                </a>
+                                {#each countryRanks as countryRank}
+                                <a href="/global?country={countryRank.country}"
+                                   data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
+                                >
+                                    <img src="/imports/images/flags/{countryRank.country}.png">
+                                    <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" />
+                                    {#if countryRank.subRank && countryRank.subRank !== countryRank.rank}
+                                    <small>(#{ countryRank.subRank })</small>
+                                    {/if}
+                                </a>
+                                {/each}
+                            </h2>
                         </div>
 
-                        {#if (!playerScores || !playerScores.length) && ssBadges && ssBadges.length}
-                            <div class="badges ss-badges">
+                        {#if playerScores && playerScores.length && ssBadges && ssBadges.length}
+                        <div class="column">
+                            <div class="badges ss-badges" transition:fade={{ duration: 2000 }}>
                                 {#each ssBadges as ssBadge}
                                     <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
                                 {/each}
                             </div>
+                        </div>
                         {/if}
+                    </div>
 
-                        <div class="badges">
-                            <TwitchVideosBadge {playerTwitchProfile} />
+                    <div class="columns">
+                        <div class="column">
+                            <div class="badges">
+                                {#each basicStats as stat} <Badge {...stat}/> {/each}
+                            </div>
 
-                            {#if showCalc && allRankedScores && allRankedScores.length}
-                                <ProfilePpCalc scores={allRankedScores} playerId={playerInfo.id} />
+                            {#if (!playerScores || !playerScores.length) && ssBadges && ssBadges.length}
+                                <div class="badges ss-badges">
+                                    {#each ssBadges as ssBadge}
+                                        <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
+                                    {/each}
+                                </div>
+                            {/if}
+
+                            <div class="badges">
+                                <TwitchVideosBadge {playerTwitchProfile} />
+
+                                {#if showCalc && allRankedScores && allRankedScores.length}
+                                    <ProfilePpCalc scores={allRankedScores} playerId={playerInfo.id} />
+                                {/if}
+                            </div>
+                        </div>
+
+                        {#if playerScores && playerScores.length}
+                        <div class="column">
+                            {#if accStats}
+                                <div class="badges right">
+                                    {#each accStats as stat} <Badge {...stat}/> {/each}
+                                </div>
+                            {/if}
+
+                            {#if ssplCountryRankStats}
+                                <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
+                                    <span class="sspl-ranks" slot="value">
+                                        <div>
+                                            {$_.profile.stats.best}: <Value value={ssplCountryRankStats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={ssplCountryRankStats.bestRankCnt} digits={0} zero="-" />)
+                                        </div>
+                                        <div>
+                                            {$_.profile.stats.avg}: <Value value={ssplCountryRankStats.avgRank} digits={2} prefix="#" zero="-" />
+                                        </div>
+                                    </span>
+                                </Badge>
+                            {/if}
+
+                            {#if showBadges && stats && stats.badges}
+                                <div class="badges right">
+                                    {#each stats.badges as badge (badge)}
+                                        <Badge label={badge.name} value={badge.value} title={badge.title} color="white"
+                                               bgColor={badge.color} digits={0} on:click={() => onAccBadgeClick(badge)}
+                                               clickable={true} notSelected={selectedAccBadges.length && ! (selectedAccBadges.includes(badge))} />
+                                    {/each}
+                                </div>
                             {/if}
                         </div>
-                    </div>
-
-                    {#if playerScores && playerScores.length}
-                    <div class="column">
-                        {#if accStats}
-                            <div class="badges right">
-                                {#each accStats as stat} <Badge {...stat}/> {/each}
-                            </div>
-                        {/if}
-
-                        {#if ssplCountryRankStats}
-                            <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
-                                <span class="sspl-ranks" slot="value">
-                                    <div>
-                                        {$_.profile.stats.best}: <Value value={ssplCountryRankStats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={ssplCountryRankStats.bestRankCnt} digits={0} zero="-" />)
-                                    </div>
-                                    <div>
-                                        {$_.profile.stats.avg}: <Value value={ssplCountryRankStats.avgRank} digits={2} prefix="#" zero="-" />
-                                    </div>
-                                </span>
-                            </Badge>
-                        {/if}
-
-                        {#if showBadges && stats && stats.badges}
-                            <div class="badges right">
-                                {#each stats.badges as badge (badge)}
-                                    <Badge label={badge.name} value={badge.value} title={badge.title} color="white"
-                                           bgColor={badge.color} digits={0} on:click={() => onAccBadgeClick(badge)}
-                                           clickable={true} notSelected={selectedAccBadges.length && ! (selectedAccBadges.includes(badge))} />
-                                {/each}
-                            </div>
                         {/if}
                     </div>
-                    {/if}
                 </div>
             </div>
-        </div>
 
-        {#if showChart}
-            <div class="chart">
-                <Chart {profileId} history={chartHistory} bind:type={defaultChartType} accFilterFunc={filterAccChart}
-                       refreshTag={chartRefreshTag} />
-            </div>
-        {/if}
-    </div>
-
-    <div class="box has-shadow">
-        <div class="content">
-            {#if transformed}
-                <Browser playerId={profileId} {recentPlay} />
-            {:else}
-                <ScoreSaberProvider
-                 {players}
-                 playerId={profilePage && profilePage.playerId ? profilePage.playerId : null}
-                 scores={profilePage && profilePage.scores ? profilePage.scores : []}
-                 pageNum={currentPage + 1}
-                 totalItems={ssStats && ssStats.playCount ? ssStats.playCount : 0}
-                 type={scoresType}
-                 pauseLoading={false}
-                 {playerTwitchProfile}
-                 {recentPlay}
-                 let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
-                >
-                    <ScoreSaberPresenter
-                     bind:players
-                     {songs}
-                     {series}
-                     {error}
-                     bind:currentPage
-                     {totalItems}
-                     bind:type={scoresType}
-                     {beforePageChanged}
-                     on:browse={onScoreBrowse}
-                     isCached={!!playerScores && !!playerScores.length}
-                     {isPaused}
-                     cachedRecentPlay={playerInfo ? playerInfo.recentPlay : null}
-                     on:transform-profile={onTransformProfile}
-                    />
-                </ScoreSaberProvider>
+            {#if showChart}
+                <div class="chart">
+                    <Chart {profileId} history={chartHistory} bind:type={defaultChartType} accFilterFunc={filterAccChart}
+                           refreshTag={chartRefreshTag} />
+                </div>
             {/if}
         </div>
-    </div>
+
+        <div class="box has-shadow">
+            <div class="content">
+                {#if transformed}
+                    <Browser playerId={profileId} {recentPlay} />
+                {:else}
+                    <ScoreSaberProvider
+                     {players}
+                     playerId={profilePage && profilePage.playerId ? profilePage.playerId : null}
+                     scores={profilePage && profilePage.scores ? profilePage.scores : []}
+                     pageNum={currentPage + 1}
+                     totalItems={ssStats && ssStats.playCount ? ssStats.playCount : 0}
+                     type={scoresType}
+                     pauseLoading={false}
+                     {playerTwitchProfile}
+                     {recentPlay}
+                     let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
+                    >
+                        <ScoreSaberPresenter
+                         bind:players
+                         {songs}
+                         {series}
+                         {error}
+                         bind:currentPage
+                         {totalItems}
+                         bind:type={scoresType}
+                         {beforePageChanged}
+                         on:browse={onScoreBrowse}
+                         isCached={!!playerScores && !!playerScores.length}
+                         {isPaused}
+                         cachedRecentPlay={playerInfo ? playerInfo.recentPlay : null}
+                         on:transform-profile={onTransformProfile}
+                        />
+                    </ScoreSaberProvider>
+                {/if}
+            </div>
+        </div>
+    </main>
+
+    <aside>
+        {#if initialized}
+            <div class="box has-shadow ranking">
+                <header>
+                    <i class="fas fa-globe-americas"></i>
+                    {$_.profile.aside.globalRanking}
+                </header>
+                <MiniRanking country={null} type="global" rank={rank} playerId={profileId} playerPp={pp} numOfItems={5}/>
+            </div>
+
+            {#each countryRanks as countryRank}
+                <div class="box has-shadow ranking">
+                    <header>
+                        <img src="/imports/images/flags/{countryRank.country}.png">
+                        {$_.profile.aside.countryRanking}
+                    </header>
+                    <MiniRanking country={countryRank.country}
+                                 type={countryRank.type === 'active-country' ? 'country' : countryRank.type}
+                                 rank={countryRank.rank}
+                                 playerId={profileId} playerPp={pp} numOfItems={5}/>
+                </div>
+            {/each}
+        {/if}
+    </aside>
 </div>
 
 <style>
+    .container {
+        display: flex;
+        width: 100%;
+    }
+
+    main {
+        width: 100%;
+    }
+
+    aside {
+        display: none;
+        margin-left: 1rem;
+        font-size: .9rem;
+    }
+
+    aside .box {
+        padding: .5rem;
+    }
+
+    aside .ranking header {
+        font-size: 1.1em;
+        font-weight: 500;
+        margin-bottom: .5em;
+    }
+
+    aside .ranking header > img, aside .ranking header > i {
+        margin-right: .25em;
+    }
+
     .player-top {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
         margin: 0;
+        width: 100%;
     }
+
+    @media screen and (min-width: 1750px) {
+        .container {
+            max-width: 1750px;
+        }
+
+        main, .player-top {
+            width: calc(100% - 30rem);
+        }
+
+        aside {
+            display: block;
+            width: 29rem;
+        }
+    }
+
 
     .icons {
         font-size: .7rem;

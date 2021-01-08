@@ -80,6 +80,10 @@ export default {
             vodsBadge: 'Twitch VOD',
             video: 'Wideo',
         },
+        aside: {
+            globalRanking: 'Ranking globalny',
+            countryRanking: 'Ranking krajowy',
+        },
     },
     songBrowser: {
         types: {

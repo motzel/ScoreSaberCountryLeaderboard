@@ -25,22 +25,19 @@
 
     let activeCountry;
     let activeCountryPlayers = null;
+    let isActiveCountryPlayer = null;
     let playersCache = {global: {}, country: {}};
     let overridePlayersPp = {};
     let players = null;
-    let loading = true;
+    let loading = false;
     let error = null;
+
+    let initialized = false;
 
     const refreshConfig = async () => {
         activeCountry = await getActiveCountry();
         if (activeCountry) activeCountryPlayers = await getActiveCountryPlayers(activeCountry);
     };
-
-    onMount(async () => {
-        await refreshConfig()
-
-        return eventBus.on('config-changed', refreshConfig);
-    });
 
     function getPage(rank) {
         return Math.ceil(rank / PLAYERS_PER_PAGE);
@@ -69,7 +66,9 @@
         return ranking.sort((a, b) => b.pp - a.pp);
     }
 
-    function setPlayers(type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer) {
+    async function setPlayers(initialized, type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer) {
+        if (!initialized || isActiveCountryPlayer === null || loading) return;
+
         players = null;
         error = null;
 
@@ -84,39 +83,40 @@
             loading = true;
             players = null;
 
-            fetchRanking(url, rank, country)
-             .then(ranking => {
-                 if (type === 'country' && country === activeCountry && activeCountryPlayers && isActiveCountryPlayer) {
-                     const additionalPlayers = activeCountryPlayers.filter(p => p.country.toLowerCase() !== activeCountry);
+            try {
+                let ranking = await fetchRanking(url, rank, country);
 
-                     overridePlayersPp = Object.assign(
-                      {},
-                      overridePlayersPp,
-                      convertArrayToObjectByKey(additionalPlayers.map(p => ({id: p.id, pp: p.pp})), 'playerId'),
-                     )
+                if (type === 'country' && country === activeCountry && activeCountryPlayers && isActiveCountryPlayer) {
+                    const additionalPlayers = activeCountryPlayers.filter(p => p.country.toLowerCase() !== activeCountry);
 
-                     ranking = ranking.concat(additionalPlayers)
-                      .map(player => {
-                          if (overridePlayersPp[player.id] && overridePlayersPp[player.id].pp) {
-                              player.pp = overridePlayersPp[player.id].pp;
-                          }
+                    overridePlayersPp = Object.assign(
+                     {},
+                     overridePlayersPp,
+                     convertArrayToObjectByKey(additionalPlayers.map(p => ({id: p.id, pp: p.pp})), 'playerId'),
+                    )
 
-                          return player;
-                      })
-                      .sort((a, b) => b.pp - a.pp) // sort it again after override
-                      .map((p, idx) => ({...p, miniRank: idx + 1}));
-                 }
+                    ranking = ranking.concat(additionalPlayers)
+                     .map(player => {
+                         if (overridePlayersPp[player.id] && overridePlayersPp[player.id].pp) {
+                             player.pp = overridePlayersPp[player.id].pp;
+                         }
 
-                 players = cache.players = ranking;
-                 cache.rank = rank;
+                         return player;
+                     })
+                     .sort((a, b) => b.pp - a.pp) // sort it again after override
+                     .map((p, idx) => ({...p, miniRank: idx + 1}));
+                }
 
-                 loading = false;
-             })
-             .catch(e => {
-                 loading = false;
+                players = cache.players = ranking;
+                cache.rank = rank;
 
-                 error = $_.common.downloadError;
-             })
+                loading = false;
+            }
+            catch {
+                loading = false;
+
+                error = $_.common.downloadError;
+            }
         } else {
             players = cache.players;
         }
@@ -135,6 +135,8 @@
     }
 
     function refreshPlayersCacheWithPlayerPp(currentPlayers, type, country, playerId, playerPp) {
+        if (!initialized) return;
+
         if (!currentPlayers || !currentPlayers.length || !playerId || !playerPp || !type) return;
 
         const cache = type === 'global' ? playersCache.global : playersCache.country[country];
@@ -147,22 +149,41 @@
         }
     }
 
-    $: isActiveCountryPlayer = !!(activeCountryPlayers && activeCountryPlayers.find(p => p.id === playerId));
+    function refreshIsActiveCountryPlayer(playerId, activeCountryPlayers, initialized) {
+        if (!initialized) return;
+
+        isActiveCountryPlayer = !!(activeCountryPlayers && activeCountryPlayers.find(p => p.id === playerId));
+    }
+
+    onMount(async () => {
+        await refreshConfig();
+        await refreshIsActiveCountryPlayer(playerId, activeCountryPlayers, true);
+        await setPlayers(true, type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer);
+
+        initialized = true;
+
+        return eventBus.on('config-changed', refreshConfig);
+    });
 
     $: {
-        setPlayers(type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer);
+        refreshIsActiveCountryPlayer(playerId, activeCountryPlayers, initialized)
+    }
+
+    $: {
+        setPlayers(initialized, type, overridePlayersPp, country, activeCountry, rank, isActiveCountryPlayer);
     }
     $: {
-        refreshPlayersCacheWithPlayerPp(players, type, country, playerId, playerPp)
+        refreshPlayersCacheWithPlayerPp(players, type, country, playerId, playerPp, initialized)
     }
     $: ranking = getRanking(players);
 </script>
 
-{#if loading}
+
+{#if loading || !initialized}
     <div class="spinner-box">
         <i class="fas fa-sun fa-spin fa-3x"></i>
     </div>
-{:else}
+{:else if initialized}
     {#if ranking && ranking.length}
         <table class="sspl">
             <tbody>
@@ -209,6 +230,7 @@
         white-space: nowrap;
         text-overflow: ellipsis;
         width: 14em;
+        max-width: 14rem;
     }
     td.pp {
         min-width: 10.75em;
