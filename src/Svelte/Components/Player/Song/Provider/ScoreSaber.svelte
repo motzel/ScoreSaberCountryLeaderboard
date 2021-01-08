@@ -107,7 +107,7 @@
     const pageSeries = pageData.scores.map(s => {
       const {lastUpdated, leaderboardId, mods, acc, pp, ppWeighted, rank, score, timeset, hash, diffInfo} = s;
 
-      const series = [{leaderboardId, lastUpdated, mods, acc, pp, ppWeighted, rank, score, hash, diffInfo, timeset: dateFromString(timeset)}];
+      const series = [{leaderboardId, lastUpdated, mods, acc, pp, ppWeighted, rank, score, hash, diffInfo, playerId: pageData.playerId, timeset: dateFromString(timeset)}];
 
       // get other players data from cache
       if (players && players.length > 1) {
