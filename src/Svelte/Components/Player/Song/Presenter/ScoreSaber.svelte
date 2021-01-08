@@ -43,7 +43,7 @@
     initialized = true;
   })
 
-  function onTypeChange(newType) {
+  export function onTypeChange(newType) {
     type = newType;
     currentPage = 0;
 
@@ -171,6 +171,16 @@
 {/if}
 
 <style>
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .compare {
+    font-size: .75rem;
+  }
+
   .switch-types {
     display: flex;
     font-size: .75rem;
@@ -226,15 +236,5 @@
     cursor: pointer;
     padding-top: .25rem;
     padding-left: .5rem;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .compare {
-    font-size: .75rem;
   }
 </style>

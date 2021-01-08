@@ -1,5 +1,5 @@
 <script>
-    import {onMount} from 'svelte';
+    import {onMount, tick} from 'svelte';
     import {fade} from 'svelte/transition';
     import ProfilePpCalc from './ProfilePpCalc.svelte';
     import Badge from "../Common/Badge.svelte";
@@ -546,6 +546,14 @@
 
         defaultChartType = 'acc';
     }
+
+    async function onBrowserTypeChanged(event) {
+        transformed = false;
+        await tick();
+
+        if(ssPresenter) ssPresenter.onTypeChange(event.detail);
+    }
+    let ssPresenter  = null;
 </script>
 
 <div class="container">
@@ -676,7 +684,7 @@
         <div class="box has-shadow">
             <div class="content">
                 {#if transformed}
-                    <Browser playerId={profileId} {recentPlay} />
+                    <Browser playerId={profileId} {recentPlay} on:browser-type-changed={onBrowserTypeChanged} />
                 {:else}
                     <ScoreSaberProvider
                      {players}
@@ -684,13 +692,14 @@
                      scores={profilePage && profilePage.scores ? profilePage.scores : []}
                      pageNum={currentPage + 1}
                      totalItems={ssStats && ssStats.playCount ? ssStats.playCount : 0}
-                     type={scoresType}
+                     bind:type={scoresType}
                      pauseLoading={false}
                      {playerTwitchProfile}
                      {recentPlay}
                      let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
                     >
                         <ScoreSaberPresenter
+                         bind:this={ssPresenter}
                          bind:players
                          {songs}
                          {series}

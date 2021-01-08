@@ -1,5 +1,5 @@
 <script>
-    import {onMount, tick} from 'svelte';
+    import {onMount, tick, createEventDispatcher} from 'svelte';
     import log from '../../../../utils/logger';
     import {copyToClipboard} from '../../../../utils/clipboard';
     import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../../scoresaber/pp";
@@ -55,6 +55,8 @@
     import ScoreRank from "../../Common/ScoreRank.svelte";
     import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
     import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+
+    const dispatch = createEventDispatcher();
 
     export let playerId;
     export let snipedIds = [];
@@ -1402,9 +1404,23 @@
     $: {
         translateAllStrings($_);
     }
+
+    function onTypeChange(newType) {
+        dispatch('browser-type-changed', newType)
+    }
+
+    let type = 'cached';
 </script>
 
 {#if initialized}
+    <div class="header">
+        <div class="switch-types">
+            <Button iconFa="fa fa-clock" type="default" label={$_.songBrowser.ssScoreType.recent} on:click={() => onTypeChange('recent')} notSelected={true} />
+            <Button iconFa="fa fa-cubes" type="default" label={$_.songBrowser.ssScoreType.top} on:click={() => onTypeChange('top')} notSelected={true} />
+            <Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} notSelected={false} />
+        </div>
+    </div>
+
     <div class="filters">
         <div>
             <header>{$_.songBrowser.typeHeader}</header>
@@ -1844,6 +1860,22 @@
 {/if}
 
 <style>
+    .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: .75rem;
+    }
+    .switch-types {
+        display: flex;
+        font-size: .75rem;
+        text-align: center;
+    }
+    :global(.switch-types button) {
+        font-weight: 500;
+        margin-right: .125rem!important;
+    }
+
     .filters .columns {
         max-width: 15rem;
     }
