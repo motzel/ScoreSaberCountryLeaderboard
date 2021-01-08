@@ -1,5 +1,5 @@
 <script>
-    import {onMount} from 'svelte';
+    import {onMount, tick} from 'svelte';
     import log from '../../../../utils/logger';
     import {copyToClipboard} from '../../../../utils/clipboard';
     import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../../scoresaber/pp";
@@ -83,6 +83,8 @@
     let sniperModeIds = [];
     let minStarsForSniper = 0;
     let maxStars = 100;
+
+    let resultsEl = null;
 
     let strings = {
         songTypes: [
@@ -1361,8 +1363,23 @@
         checkedSongs = [];
     }
 
-    function onPageChanged() {
+    function scrollToTargetAdjusted(target, offset = 0) {
+        if (!target) return;
+
+        var elementPosition = target.getBoundingClientRect().top;
+        var offsetPosition = elementPosition - offset + window.pageYOffset;
+
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+        });
+    }
+
+    async function onPageChanged() {
         storeCurrentFirstIdentifier();
+
+        await tick();
+        scrollToTargetAdjusted(resultsEl, 106);
     }
 
     $: shownColumns = strings.columns.filter(c => c.displayed)
@@ -1454,7 +1471,7 @@
     {:then calc}
         {#if songsPage.songs.length}
             {#if viewType.id === 'cards'}
-            <div class="columns card-view is-multiline">
+            <div bind:this={resultsEl} class="columns card-view is-multiline">
                 {#each songsPage.songs as song (song.leaderboardId)}
                     <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
                         <Card leaderboardId={song.leaderboardId} hash={song.hash} padding="1em" iconSize="0.875em"
@@ -1555,7 +1572,7 @@
             </div>
             {:else}
 
-            <table class="ranking sspl">
+            <table bind:this={resultsEl} class="ranking sspl">
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
                     <tr>
