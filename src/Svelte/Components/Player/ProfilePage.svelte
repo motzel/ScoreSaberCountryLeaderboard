@@ -558,9 +558,12 @@
     }
 
     function onAccBadgeClick(badge) {
-        const badgeAlreadySelected = !!(selectedAccBadges.find(b => b === badge))
+        const badgeAlreadySelected = !!(selectedAccBadges.find(b => b === badge));
+
         if (badgeAlreadySelected) selectedAccBadges = selectedAccBadges.filter(b => b !== badge);
         else selectedAccBadges = selectedAccBadges.concat([badge]);
+
+        defaultChartType = 'acc';
     }
 </script>
 
@@ -684,7 +687,7 @@
 
         {#if showChart}
             <div class="chart">
-                <Chart {profileId} history={chartHistory} type={defaultChartType} accFilterFunc={filterAccChart}
+                <Chart {profileId} history={chartHistory} bind:type={defaultChartType} accFilterFunc={filterAccChart}
                        refreshTag={chartRefreshTag} />
             </div>
         {/if}
