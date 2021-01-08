@@ -1,4 +1,3 @@
-import {convertFromLocalForage, fetchLocalForageData} from './convert-localforage'
 import {openDB} from 'idb'
 import log from '../utils/logger'
 import {isDateObject} from '../utils/js'
@@ -24,16 +23,10 @@ export default async () => {
     return "IDBKeyRange-" + (isDateObject(this.lower) ? this.lower.getTime() : this.lower) + '-' + (isDateObject(this.upper) ? this.upper : this.upper);
   }
 
-  // TODO: remove compatibility layer after 1.0 release
-  let cache = null;
-  if (await isConversionFromLocalforageNeeded()) {
-    cache = await fetchLocalForageData();
-  }
-
-  return await openDatabase(cache);
+  return await openDatabase();
 }
 
-async function openDatabase(cache = null) {
+async function openDatabase() {
   try {
     let dbNewVersion = 0, dbOldVersion = 0;
 
@@ -98,8 +91,6 @@ async function openDatabase(cache = null) {
             const groups = db.createObjectStore('groups', {keyPath: '_idbId', autoIncrement: true});
             groups.createIndex('groups-name', 'name', {unique: false});
             groups.createIndex('groups-playerId', 'playerId', {unique: false});
-
-            await convertFromLocalForage(cache, transaction);
         }
 
         log.info("Database converted");
@@ -178,19 +169,4 @@ async function openDatabase(cache = null) {
 
     throw e;
   }
-}
-
-async function isConversionFromLocalforageNeeded() {
-  let convertingFromLocalForageNeeded = false;
-  try {
-    const db1 = await openDB('sspl', 1, {
-      async upgrade(db, oldVersion, newVersion) {
-        convertingFromLocalForageNeeded = true;
-      },
-    });
-    db1.close();
-  } catch {
-    // swallow error - old localforage cache is already converted
-  }
-  return convertingFromLocalForageNeeded
 }
