@@ -86,6 +86,8 @@
 
     let resultsEl = null;
 
+    let browserWasInitialized = false;
+
     let strings = {
         songTypes: [
             {id: 'all', _key: 'songBrowser.types.all'},
@@ -1378,8 +1380,12 @@
     async function onPageChanged() {
         storeCurrentFirstIdentifier();
 
-        await tick();
-        scrollToTargetAdjusted(resultsEl, 106);
+        if (browserWasInitialized) {
+            await tick();
+            scrollToTargetAdjusted(resultsEl, 106);
+        }
+
+        browserWasInitialized = true;
     }
 
     $: shownColumns = strings.columns.filter(c => c.displayed)
