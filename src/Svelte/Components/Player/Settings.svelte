@@ -454,7 +454,9 @@
         try {
             importing = true;
             if (importBtn) importBtn.$set({disabled: true});
-            if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
+            if (noDataImportBtn) {
+                noDataImportBtn.$set({disabled: true});
+            }
 
             importDataHandler(
              e,
@@ -591,7 +593,7 @@
 {#if initialized && profileId}
     <div class="buttons flex-center" transition:fade={{ duration: 1000 }}>
     {#if (!dataAvailable)}
-        <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
+        <File iconFa={importing ? "fas fa-spin fa-spinner" : "fas fa-upload"} label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
     {:else if !isActivePlayer && (mainPlayerId && mainPlayerId !== profileId)}
         <Button iconFa="far fa-star" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
@@ -608,7 +610,7 @@
         {/if}
     {/if}
 
-    {#if !mainPlayerId || mainPlayerId !== profileId}
+    {#if (!mainPlayerId || mainPlayerId !== profileId) && !importing}
         <Button iconFa="fas fa-user-check" type="primary" label={!dataAvailable ? $_.profile.setAsDefault : ''} title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
         {#if (!dataAvailable)}
         <span class="pulse onboarding-hint"><i class="fas fa-arrow-left"></i> {$_.onboarding.importOrSetProfile}</span>
