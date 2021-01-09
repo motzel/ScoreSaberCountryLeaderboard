@@ -1,5 +1,8 @@
 <script>
     import {onMount, createEventDispatcher} from 'svelte';
+    import { fly, fade } from 'svelte/transition';
+    import { tweened } from 'svelte/motion';
+    import { cubicOut } from 'svelte/easing';
     import {getSongDiffInfo, getSongScores} from "../../../song";
     import {getConfig} from "../../../plugin-config";
     import eventBus from '../../../utils/broadcast-channel-pubsub'
@@ -15,12 +18,12 @@
     export let leaderboardId;
     export let songInfo;
     export let hash;
-    export let scores;
-    export let totalScores;
+    export let scores = 0;
+    export let totalScores = 0;
     export let status;
-    export let stars;
-    export let bpm;
-    export let noteCount;
+    export let stars = 0;
+    export let bpm = 0;
+    export let noteCount = 0;
     export let difficulty;
     export let bgLeft = "0rem";
     export let bgTop = "0rem";
@@ -29,6 +32,16 @@
 
     let diffInfo;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
+
+    const starsTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const totalScoresTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const scoresTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const notesTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const bpmTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const njsTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const npsTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const bombsTweened = tweened(0, {duration: 500, easing: cubicOut});
+    const obstaclesTweened = tweened(0, {duration: 500, easing: cubicOut});
 
     async function refreshConfig() {
         const config = await getConfig('songBrowser');
@@ -77,6 +90,17 @@
     $: {
         refreshSongInfo(hash, diffInfo);
     }
+
+    $: {starsTweened.set(stars);}
+    $: {scoresTweened.set(scores);}
+    $: {totalScoresTweened.set(totalScores);}
+    $: {notesTweened.set(songInfo && songInfo.notes ? songInfo.notes : noteCount);}
+    $: {bpmTweened.set(songInfo && songInfo.bpm ? songInfo.bpm : bpm);}
+    $: {njsTweened.set(songInfo && songInfo.njs ? songInfo.njs : 0);}
+    $: {npsTweened.set(songInfo && songInfo.nps ? songInfo.nps : 0);}
+    $: {bombsTweened.set(songInfo && songInfo.bombs ? songInfo.bombs : 0);}
+    $: {obstaclesTweened.set(songInfo && songInfo.obstacles ? songInfo.obstacles : 0);}
+
 </script>
 
 {#if songInfo}
@@ -87,14 +111,14 @@
                 <header>
                     <h1 class="title is-4">{songInfo.metadata.songName} {songInfo.metadata.songSubName ? songInfo.metadata.songSubName : ''}</h1>
                     <h2 class="title is-5">
-                        {songInfo.metadata.songAuthorName}
+                        <span>{songInfo.metadata.songAuthorName}</span>
                         <small>{songInfo.metadata.levelAuthorName}</small></h2>
                     <h3 class="title is-6" class:unranked={status && status !== 'Ranked'}>
-                        {#if status}{status}{/if}
-                        {#if stars}<Value value={stars} digits={2} zero="" suffix="★"/>{/if}
+                        {#if status}<span>{status}</span>{/if}
+                        {#if $starsTweened}<Value value={$starsTweened} digits={2} zero="" suffix="★"/>{/if}
                         {#if diffInfo}<span class="diff"><Difficulty diff={diffInfo} reverseColors={true}/></span>{/if}
                         {#if songInfo.length}
-                        <span class="time">
+                        <span class="time" transition:fade={{duration: 500}}>
                             <i class="fas fa-clock"></i> <Duration value={songInfo.length}/>
                         </span>
                         {/if}
@@ -103,47 +127,46 @@
 
                 <main>
                     <slot name="main">
-                        {#if scores || totalScores}
-
-                        <div>
-                            {#if scores} <i class="fas fa-align-justify"></i> {$_.songCard.scores}: <strong><Value value={scores} digits={0}/></strong> {/if}
-                            {#if scores !== totalScores}&nbsp;/ <strong><Value value={totalScores} digits={0}/></strong>{/if}
+                        {#if $scoresTweened || $totalScoresTweened}
+                        <div transition:fly={{x:100, duration: 500}}>
+                            {#if $scoresTweened} <i class="fas fa-align-justify"></i> {$_.songCard.scores}: <strong><Value value={$scoresTweened} digits={0}/></strong> {/if}
+                            {#if $scoresTweened !== $totalScoresTweened}&nbsp;/ <strong><Value value={$totalScoresTweened} digits={0}/></strong>{/if}
                         </div>
                         {/if}
 
-                        {#if songInfo.notes || noteCount}
-                        <div><i class="fas fa-music"></i> {$_.songCard.notes}: <strong>
-                            <Value value={songInfo.notes || noteCount} digits={0}/>
+                        {#if $notesTweened}
+                        <div transition:fly={{x:100, duration: 500}}><i class="fas fa-music"></i> {$_.songCard.notes}: <strong>
+                            <Value value={$notesTweened} digits={0}/>
                         </strong></div>
                         {/if}
 
-                        {#if songInfo.bpm || bpm}
-                        <div><i class="fas fa-drum"></i> {$_.songBrowser.fields.bpm}: <strong>
-                            <Value value={songInfo.bpm || bpm} digits={0}/>
+                        {#if $bpmTweened}
+                        <div transition:fly={{x:100, duration: 500}}><i class="fas fa-drum"></i> {$_.songBrowser.fields.bpm}: <strong>
+                            <Value value={$bpmTweened} digits={0}/>
                         </strong></div>
                         {/if}
 
-                        {#if songInfo.njs}
-                        <div><i class="fas fa-tachometer-alt"></i> {$_.songBrowser.fields.njs}: <strong>
-                            <Value value={songInfo.njs} digits={0}/>
+                        {#if $njsTweened}
+                        <div transition:fly={{x:100, duration: 500}}><i class="fas fa-tachometer-alt"></i> {$_.songBrowser.fields.njs}: <strong>
+                            <Value value={$njsTweened} digits={0}/>
                         </strong></div>
                         {/if}
 
-                        {#if songInfo.nps}
-                        <div><i class="fas fa-fire"></i> {$_.songBrowser.fields.nps}: <strong>
-                            <Value value={songInfo.nps} digits={2}/>
+                        {#if $npsTweened}
+                        <div transition:fly={{x:100, duration: 500}}><i class="fas fa-fire"></i> {$_.songBrowser.fields.nps}: <strong>
+                            <Value value={$npsTweened} digits={2}/>
                         </strong></div>
                         {/if}
 
-                        {#if songInfo.bombs}
-                        <div><i class="fas fa-bomb"></i> {$_.songCard.bombs}: <strong>
-                            <Value value={songInfo.bombs} digits={0} zero="0"/>
+                        {#if $bombsTweened}
+                        <div transition:fly={{x:100, duration: 500}}><i class="fas fa-bomb"></i> {$_.songCard.bombs}: <strong>
+                            <Value value={$bombsTweened} digits={0} zero="0"/>
                         </strong></div>
                         {/if}
 
-                        {#if songInfo.obstacles}
-                        <div><i class="fas fa-skull"></i> {$_.songCard.obstacles}: <strong>
-                            <Value value={songInfo.obstacles} digits={0} zero="0"/>
+                        {#if $obstaclesTweened}
+                        <div transition:fly={{x:100, duration: 500}}><i class="fas fa-skull"></i> {$_.songCard.obstacles}: <strong>
+                            <Value value={$obstaclesTweened} digits={0} zero="0"/>
                         </strong></div>
                         {/if}
                     </slot>
@@ -245,6 +268,11 @@
         margin-left: .5em;
         margin-right: .5em;
         border-radius: .25em;
+    }
+
+    main i {
+        width: 1em;
+        text-align: center;
     }
 
     footer {
