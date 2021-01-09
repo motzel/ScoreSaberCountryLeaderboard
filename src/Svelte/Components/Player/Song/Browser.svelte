@@ -1405,6 +1405,15 @@
         translateAllStrings($_);
     }
 
+    async function scrollCardIntoView(selector, offset = 0) {
+        await tick();
+
+        const el = document.querySelector(selector);
+        if (el) {
+            scrollToTargetAdjusted(el, 60 + offset);
+        }
+    }
+
     function onTypeChange(newType) {
         dispatch('browser-type-changed', newType)
     }
@@ -1495,7 +1504,8 @@
             {#if viewType.id === 'cards'}
             <div bind:this={resultsEl} class="columns card-view is-multiline">
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
+                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop") + ( " card-" + song.leaderboardId ) }
+                         on:dblclick={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.card-' + song.leaderboardId)} }>
                         <Card leaderboardId={song.leaderboardId} hash={song.hash} padding="1em" iconSize="0.875em"
                               songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
                               diffInfo={song.diffInfo}
@@ -1581,7 +1591,7 @@
 
                             <div slot="footer">
                                 <div class="card-icons">
-                                    <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
+                                    <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.card-' + song.leaderboardId)}} />
 
                                     {#if selectedAdditionalCols.length > 0 && song}
                                     <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
@@ -1650,7 +1660,8 @@
 
                 <tbody>
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <tr class="item" class:opened={!!song.leaderboardOpened}>
+                    <tr class={"item tr-" + song.leaderboardId} class:opened={!!song.leaderboardOpened}
+                        on:dblclick={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.tr-' + song.leaderboardId)}}>
                         {#if showCheckboxes}
                             <td class="check">
                                 <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
@@ -1674,7 +1685,7 @@
                                     </figure>
                                 </Song>
 
-                                <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-down" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
+                                <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-down" : "fas fa-chevron-right"} on:click={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.tr-' + song.leaderboardId)}} />
                             </div>
                         </td>
 
@@ -1774,10 +1785,10 @@
                         {/each}
                     </tr>
                     {#if !!song.leaderboardOpened}
-                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => toggleLeaderboardOpen(song)}>
                         <Leaderboard leaderboardId={song.leaderboardId}
                                      showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')}
-                                     bgLeft="-2rem" bgTop="-2rem"
+                                     bgLeft="-2rem" bgTop="-3rem" bgWidth="2rem" bgHeight="1.5rem"
                                      onlySelectedDiff={true} type="cached" />
                     </td></tr>
                     {/if}
