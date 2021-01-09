@@ -102,15 +102,18 @@
   }
 
   function refreshBgOffsets(diffs, mainPlayerId, leaderboardId) {
-    const shouldDecreaseTopOffset = !((diffs && (diffs.length > 1 || (diffs.length === 1 && diffs[0].id !== leaderboardId))) || !!mainPlayerId);
-    if (!shouldDecreaseTopOffset) return;
+    const shouldDecreaseTopOffset = !((diffs && (diffs.length > 1 || (diffs.length === 1 && diffs[0].id !== leaderboardId))) || mainPlayerId);
+    if (!shouldDecreaseTopOffset) {
+      bgTop = originalBgTop;
+      return;
+    }
 
     const matches = originalBgTop.match(/^([\d-.]+)(.*)$/);
-     if(matches) {
-       if (['rem', 'em'].includes(matches[2])) {
-         bgTop = (parseFloat(matches[1]) + 2) + matches[2];
-       }
-     }
+    if (matches) {
+      if (['rem', 'em'].includes(matches[2])) {
+        bgTop = (parseFloat(matches[1]) + 2) + matches[2];
+      }
+    }
   }
 
   onMount(async () => {
