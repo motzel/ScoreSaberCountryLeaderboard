@@ -1,6 +1,7 @@
 import {uuid} from "./uuid";
 import logger from "./logger";
-import {dateFromString} from './date'
+import {dateFromString} from './date';
+import header from '../../header.json';
 
 let nodeSync = null;
 let nodeId;
@@ -21,7 +22,7 @@ const initNodeSync = async () => {
               .map(t => ({
                   ...t,
                   since: dateFromString(t.since),
-                  current: currentTab && t.id === currentTab.id,
+                  current: currentTab && t.id === currentTab.id
               }));
         }
         catch {
@@ -65,7 +66,7 @@ const initNodeSync = async () => {
         }
     }
     const addNewNode = async id => {
-        await saveObjectToCurrentTab({id, since: new Date(), current: true, visible: true});
+        await saveObjectToCurrentTab({id, since: new Date(), current: true, visible: true, version: header.versionNumeric});
 
         notifyOthers(id, 'added');
     }
@@ -95,6 +96,12 @@ const initNodeSync = async () => {
                 // sort all tabs; visible first, then by creation time (from the newest)
                 const sortedTabs = (await getAllTabs())
                   .sort((a, b) => a.visible === b.visible ? b.since - a.since : b.visible - a.visible);
+
+                const maxVersion = sortedTabs.reduce((max, cur) => max = cur.version > max ? cur.version : max, 0);
+                if (header.versionNumeric < maxVersion) {
+                    window.location.reload();
+                    return;
+                }
 
                 const newMasterId = sortedTabs.length ? sortedTabs[0].id : null;
 
