@@ -14,7 +14,13 @@
     import twitch from '../../../services/twitch';
     import {PLAYERS_PER_PAGE} from '../../../network/scoresaber/consts'
 
-    import {getPlayerInfo, getPlayerProfileUrl, getScoresByPlayerId, isCountryPlayer} from '../../../scoresaber/players'
+    import {
+        getPlayerInfo,
+        getPlayerProfileUrl,
+        getScoresByPlayerId,
+        isCountryPlayer,
+        isDataAvailable,
+    } from '../../../scoresaber/players'
     import {getActiveCountry} from '../../../scoresaber/country'
     import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
     import Value from '../Common/Value.svelte'
@@ -73,6 +79,8 @@
 
     let selectedAccBadges = [];
     let chartRefreshTag = null;
+
+    let anyDataIsAvailable = null;
 
     const ALL = 365 * 100;
     let strings = {
@@ -333,6 +341,8 @@
     }
 
     onMount(async () => {
+        anyDataIsAvailable = await isDataAvailable();
+
         mainPlayerId = await getMainPlayerId();
 
         activeCountry = await getActiveCountry();
@@ -345,11 +355,16 @@
         await updatePlayerInfo(profileId);
 
         const unsubscriberRankedsNotesCache = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
-        const unsubscriberDataRefreshed = eventBus.on('data-refreshed', () => updatePlayerInfo(profileId));
+        const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
+            await updatePlayerInfo(profileId);
+            anyDataIsAvailable = await isDataAvailable();
+        });
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
             if (playerId === profileId) {
                 await updatePlayerInfo(profileId);
             }
+
+            anyDataIsAvailable = await isDataAvailable();
         })
         const unsubscriberSsplCountryRanksCacheUpdated = eventBus.on('sspl-country-ranks-cache-updated', async () => updateSsplCountryRanksCache(activeCountry));
         const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
@@ -376,8 +391,9 @@
                 if (profilePage && profilePage.stats) ssStats = profilePage.stats;
             }
         });
-        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', ({playerId}) => {
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', async ({playerId}) => {
             mainPlayerId = playerId;
+            anyDataIsAvailable = await isDataAvailable();
         });
 
         initialized = true;

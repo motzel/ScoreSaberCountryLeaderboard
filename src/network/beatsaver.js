@@ -72,7 +72,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
     try {
         if (isSuspended(bsSuspension) || await isHashUnavailable(hash)) return null;
 
-        const songInfo = await resolvePromiseOrWaitForPending(hash, () => fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash})));
+        const songInfo = await resolvePromiseOrWaitForPending(hash, () => fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash})), 8000);
         if (!songInfo) {
             log.warn(`Song with ${hash} hash is no longer available at Beat Saver.`);
             return Promise.resolve(null)

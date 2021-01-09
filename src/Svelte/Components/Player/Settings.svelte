@@ -12,8 +12,7 @@
     import twitch from '../../../services/twitch';
     import {
         addPlayerToGroup, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
-        getPlayerInfo,
-        isDataAvailable, removePlayerFromGroup, updatePlayer,
+        getPlayerInfo, isDataAvailable, removePlayerFromGroup, updatePlayer,
     } from "../../../scoresaber/players";
     import {setThemeInFastCache} from "../../../store";
     import {importDataHandler, exportJsonData} from "../../../utils/export-import";
@@ -412,6 +411,10 @@
             }
         })
 
+        const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async ({playerId}) => {
+            await updatePlayerInfo(profileId);
+        })
+
         const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
 
         const unsubscriberTwitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
@@ -427,6 +430,7 @@
             unsubscriberConfigChanged();
             unsubscriberTwitchLinked();
             unsubscriberMainPlayerChanged();
+            unsubscriberDataRefreshed();
         }
     })
 
@@ -437,8 +441,10 @@
         config.users.main = profileId;
         await setConfig(config);
 
-        const playerInfo = getPlayerInfo(profileId);
+        const playerInfo = await getPlayerInfo(profileId);
         if (!playerInfo) await updatePlayer({id: profileId});
+
+        dataAvailable = true;
 
         eventBus.publish('main-player-changed', {playerId: profileId});
     }
@@ -583,7 +589,7 @@
 </script>
 
 {#if initialized && profileId}
-    <div class="buttons flex-center" class:flex-column={!dataAvailable} transition:fade={{ duration: 1000 }}>
+    <div class="buttons flex-center" transition:fade={{ duration: 1000 }}>
     {#if (!dataAvailable)}
         <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
@@ -604,6 +610,9 @@
 
     {#if !mainPlayerId || mainPlayerId !== profileId}
         <Button iconFa="fas fa-user-check" type="primary" label={!dataAvailable ? $_.profile.setAsDefault : ''} title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
+        {#if (!dataAvailable)}
+        <span class="pulse onboarding-hint"><i class="fas fa-arrow-left"></i> {$_.onboarding.importOrSetProfile}</span>
+        {/if}
     {/if}
 
     {#if showTwitchUserBtn && twitchProfile}

@@ -302,5 +302,8 @@ export default {
     db: {
         conversionMessage: 'Konwersja bazy danych',
         conversionSecondaryMessage: 'Proszę czekać, nie powinno to zająć dłużej niż pół minuty...',
+    },
+    onboarding: {
+        importOrSetProfile: "Zaimportuj dane lub ustaw jako swój profil"
     }
 }

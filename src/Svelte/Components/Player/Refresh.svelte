@@ -95,6 +95,10 @@
             }
         })
 
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', async () => {
+            await onRefresh();
+        });
+
         await setLastRefreshDate();
         setInterval(() => setLastRefreshDate(), 1000 * 60);
 
@@ -105,6 +109,7 @@
             unsubscriberBgError();
             unsubscriberBgStopped();
             unsubscriberScoresUpdated();
+            unsubscriberMainPlayerChanged();
         }
     })
 

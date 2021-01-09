@@ -137,7 +137,7 @@ async function setupProfile() {
     log.info("Setup profile page / Done")
 }
 
-async function setupCountryRanking(diffOffset = 6) {
+async function setupCountryRanking() {
     const country = getRankingCountry();
     if (!country) return; // not a country leaderboard page
 

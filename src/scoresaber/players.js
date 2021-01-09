@@ -32,7 +32,7 @@ export const getCountryRanking = async (country) => {
     return players ? players.sort((a,b) => b.pp - a.pp).slice(0, tempConfig.COUNTRY_PLAYERS_QTY) : null;
 }
 
-export const isDataAvailable = async () => !isEmpty(await getPlayers());
+export const isDataAvailable = async () => (await getPlayers()).length > 0;
 
 export const updatePlayer = async playerInfo => playersRepository().set(playerInfo);
 export const getPlayers = async () => playersRepository().getAll();

@@ -301,5 +301,8 @@ export default {
     db: {
         conversionMessage: 'Database conversion',
         conversionSecondaryMessage: 'Please wait, this should not take more than half a minute...',
+    },
+    onboarding: {
+        importOrSetProfile: "Import data or set as your profile"
     }
 }
