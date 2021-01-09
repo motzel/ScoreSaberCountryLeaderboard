@@ -12,6 +12,7 @@ import {
 import eventBus from '../utils/broadcast-channel-pubsub'
 import nodeSync from '../utils/multinode-sync'
 import {addToDate} from '../utils/date'
+import makePendingPromisePool from '../utils/pending-promises'
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
 const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
@@ -56,6 +57,8 @@ const setHashNotFound = async hash => {
     }
 }
 
+const resolvePromiseOrWaitForPending = makePendingPromisePool();
+
 export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false) => {
     hash = hash.toLowerCase();
 
@@ -69,7 +72,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
     try {
         if (isSuspended(bsSuspension) || await isHashUnavailable(hash)) return null;
 
-        const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash}));
+        const songInfo = await resolvePromiseOrWaitForPending(hash, () => fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_HASH_URL, {hash})));
         if (!songInfo) {
             log.warn(`Song with ${hash} hash is no longer available at Beat Saver.`);
             return Promise.resolve(null)
@@ -104,7 +107,7 @@ export const getSongByKey = async (key, forceUpdate = false, cacheOnly = false) 
     try {
         if (isSuspended(bsSuspension)) return null;
 
-        const songInfo = await fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_KEY_URL, {key}));
+        const songInfo = await resolvePromiseOrWaitForPending(key, () => fetchApiPage(queue.BEATSAVER, substituteVars(SONG_BY_KEY_URL, {key})));
         if (!songInfo) {
             log.warn(`Song with ${key} key is no longer available at Beat Saver.`);
             return Promise.resolve(null);
