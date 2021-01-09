@@ -76,6 +76,8 @@
     leaderboardId = event.detail.leaderboardId;
     currentPage = event.detail.page ? event.detail.page : 0;
     type = event.detail.type;
+
+    dispatch('diff-change', event.detail);
   }
 
   function onBrowse(event) {

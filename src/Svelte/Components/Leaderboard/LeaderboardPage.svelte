@@ -28,12 +28,14 @@
       song = getProp('song');
       songInfo = song ? {metadata: song} : null;
     }
+  }
 
-    if (!leaderboardId) return;
+  function onDiffChange(event) {
+    if (!event || !event.detail || !event.detail.leaderboardId) return;
 
     // update browser url
     const url = new URL(
-     getSongLeaderboardUrl(leaderboardId, leaderboardPage.pageNum),
+     getSongLeaderboardUrl(event.detail.leaderboardId, event.detail.page ? event.detail.page + 1 : 1),
     );
 
     history.replaceState(null, '', url.toString());
@@ -49,7 +51,9 @@
     <div class="column">
       <div class="box has-shadow">
         <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank}
-                     bgWidth="1.4rem" bgLeft="-1.4rem" bgHeight="1rem" bgTop="-3.25rem" />
+                     bgWidth="1.4rem" bgLeft="-1.4rem" bgHeight="1rem" bgTop="-3.25rem"
+                     on:diff-change={onDiffChange}
+        />
       </div>
     </div>
 
