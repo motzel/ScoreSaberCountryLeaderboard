@@ -10,7 +10,7 @@
   import ScoreSaberPresenter from './Presenter/ScoreSaber.svelte'
   import {isEmpty} from '../../../utils/js'
   import {SCORES_PER_PAGE} from '../../../network/scoresaber/consts'
-  import {getConfig} from '../../../plugin-config'
+  import {getConfig, getMainPlayerId} from '../../../plugin-config'
 
   export let leaderboardId;
   export let startAtRank = 1;
@@ -28,13 +28,16 @@
   let typeAtStart = type;
 
   let difficulty = null;
-  let diffs = null;
+  let diffs = leaderboardPage && leaderboardPage['diffs'] ? leaderboardPage['diffs'] : [];
 
   let currentPage = Math.floor((startAtRank - 1) / SCORES_PER_PAGE);
   let totalItems = 0;
 
   let hash = null;
   let maxScore = null;
+
+  const originalBgTop = bgTop;
+  let mainPlayerId = null;
 
   let initialized = false;
 
@@ -98,8 +101,22 @@
     showDifferences = showDifferences && !!(config && config.showDiff);
   }
 
+  function refreshBgOffsets(diffs, mainPlayerId, leaderboardId) {
+    const shouldDecreaseTopOffset = !((diffs && (diffs.length > 1 || (diffs.length === 1 && diffs[0].id !== leaderboardId))) || !!mainPlayerId);
+    if (!shouldDecreaseTopOffset) return;
+
+    const matches = originalBgTop.match(/^([\d-.]+)(.*)$/);
+     if(matches) {
+       if (['rem', 'em'].includes(matches[2])) {
+         bgTop = (parseFloat(matches[1]) + 2) + matches[2];
+       }
+     }
+  }
+
   onMount(async () => {
     await refreshConfig();
+
+    mainPlayerId = await getMainPlayerId();
 
     const configChangedUnsubscriber = eventBus.on('config-changed', refreshConfig);
 
@@ -109,6 +126,10 @@
 
     return configChangedUnsubscriber;
   })
+
+  $: {
+    refreshBgOffsets(diffs, mainPlayerId, leaderboardId);
+  }
 
   $: {
     refreshLeaderboardPage(leaderboardPage)
