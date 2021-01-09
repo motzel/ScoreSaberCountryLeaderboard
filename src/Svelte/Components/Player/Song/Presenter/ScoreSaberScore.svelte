@@ -117,7 +117,7 @@
   </tr>
   {#if showLeaderboard}
     <tr class="details">
-      <td colspan="7">
+      <td colspan="7" on:dblclick={() => showLeaderboard = !showLeaderboard}>
         <Leaderboard leaderboardId={song.leaderboardId} onlySelectedDiff={true}
                      startAtRank={series && series[0] && series[0].rank ? series[0].rank : 1}
                      highlight={series && series[0] && series[0].playerId ? [series[0].playerId] : []}
