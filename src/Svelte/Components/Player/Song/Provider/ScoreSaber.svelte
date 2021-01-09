@@ -15,7 +15,7 @@
   import {setRefreshedPlayerScores} from '../../../../../network/scoresaber/players'
   import {getSsplCountryRanks} from '../../../../../scoresaber/sspl-cache'
   import {getActiveCountry} from '../../../../../scoresaber/country'
-  import {getSongDiffInfo} from '../../../../../song'
+  import {getLeaderboardMaxScore, getSongDiffInfo} from '../../../../../song'
 
   export let playerId = null;
   export let players = [];
@@ -41,8 +41,17 @@
 
   let initialized = false;
 
-  const enhanceScores = async () => {
+  let leaderboardsMaxScores = {};
+
+  const enhanceScores = async pageData => {
     if (!(songs && series && songs.length && series.length && playersScores)) return;
+
+    const createEnhanceScoresTag = pageData => pageData && pageData.pageNum && pageData.type && pageData.playerId
+      ? pageData.playerId + '-' + pageData.type + '-' + pageData.pageNum
+      : null;
+
+    const currentEnhanceScoresTag = createEnhanceScoresTag(pageData);
+    const currentLeaderboardsIdsToGetMaxScores = [];
 
     series = await Promise.all(series.map(async (songSeries, songIdx) => await Promise.all(songSeries.map(async (score, idx) => {
       if (!score) return score;
@@ -67,8 +76,28 @@
         }
       }
 
-      return await enhanceScore(score, cachedScore);
+      const songDataAvailable = !!(score.leaderboardId && score.hash && score.diffInfo);
+      let maxScore = songDataAvailable
+        ? await getLeaderboardMaxScore(score.leaderboardId, score.hash, score.diffInfo.diff, [], true)
+        : null;
+
+      if (songDataAvailable && !maxScore) {
+        if (leaderboardsMaxScores.hasOwnProperty(score.leaderboardId)) maxScore = leaderboardsMaxScores[score.leaderboardId];
+        else {
+          currentLeaderboardsIdsToGetMaxScores.push(async () => {
+            return leaderboardsMaxScores[score.leaderboardId] = await getLeaderboardMaxScore(score.leaderboardId, score.hash, score.diffInfo.diff);
+          })
+        }
+      }
+
+      return await enhanceScore(score, cachedScore, maxScore);
     }))));
+
+    if (currentLeaderboardsIdsToGetMaxScores && currentLeaderboardsIdsToGetMaxScores.length)
+      Promise.all(currentLeaderboardsIdsToGetMaxScores.map(f => f())).then(all => {
+        if (currentEnhanceScoresTag === createEnhanceScoresTag(lastPageData))
+          enhanceScores(lastPageData)
+      })
 
     if (series && series.length && players && players.length) {
       const data = series
@@ -122,7 +151,7 @@
     songs = pageSongs;
     series = pageSeries;
 
-    enhanceScores();
+    enhanceScores(pageData);
   }
 
   async function fetchPage(playerId, typeToLoad, pageToLoad) {

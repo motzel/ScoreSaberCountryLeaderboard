@@ -1,18 +1,12 @@
-import {
-  getAccFromScore,
-  getDiffAndTypeFromOnlyDiffName,
-  getLeaderboardMaxScore,
-  getSongMaxScore,
-} from '../../../../../song'
+import {getAccFromScore} from '../../../../../song'
 import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../../../../../utils/date'
 import {shouldBeHidden} from '../../../../../eastereggs'
 import {round} from '../../../../../utils/format'
-import en from '../../../../../translations/en'
 
-export const enhanceScore = async (score, cachedScore, maxScore, waitForMaxScore = false) => {
+export const enhanceScore = async (score, cachedScore, maxScore) => {
   let enhancedScore = {};
   try {
-    const maxScoreEx = maxScore ?? (!waitForMaxScore && score.leaderboardId && score.hash && score.diffInfo ? await getLeaderboardMaxScore(score.leaderboardId, score.hash, score.diffInfo.diff) : cachedScore?.maxScoreEx);
+    const maxScoreEx = maxScore ?? cachedScore?.maxScoreEx;
 
     const ssScoreDate = dateFromString(score.timeset);
     const useDownloadedScore = cachedScore?.timeset && ssScoreDate && cachedScore?.timeset?.getTime() === ssScoreDate.getTime();
