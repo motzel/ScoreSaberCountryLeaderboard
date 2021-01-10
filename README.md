@@ -64,7 +64,7 @@ Then, depending on the selected mode:
 
 ![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/05_accuracy_chart.png)
 
-![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/14_twitch_and_ppcalc.png)
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/14_twich_and_ppcalc.png)
 
 ### Song browser for live data
 
