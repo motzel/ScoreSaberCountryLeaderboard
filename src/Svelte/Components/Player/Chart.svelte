@@ -7,6 +7,8 @@
     import {_, trans} from '../../stores/i18n';
     import eventBus from '../../../utils/broadcast-channel-pubsub'
     import Button from "../Common/Button.svelte";
+    import {getConfig} from '../../../plugin-config'
+    import {getTheme} from '../../../theme'
 
     export let profileId = null;
     export let history = null;
@@ -26,7 +28,19 @@
     let userHistory = null;
     let playerScores = null;
 
+    let themeName = 'darkss';
+    let theme = null;
+
+    async function refreshConfig() {
+        const othersConfig = await getConfig('others');
+        themeName = othersConfig && othersConfig.theme ? othersConfig.theme : 'darkss';
+
+        theme = getTheme(themeName).reduce((cum, item) => {cum[item[0]] = item[1]; return cum;}, {});
+    }
+
     onMount(async () => {
+        await refreshConfig();
+
         canvas = document.getElementById('rankChart');
 
         await refreshRankedSongs();
@@ -45,12 +59,15 @@
 
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async () => await refreshPlayerScores(profileId));
 
+        const configChangedUnsubscriber = eventBus.on('config-changed', async () => await refreshConfig());
+
         return () => {
             rankedSongsUnsubscriber();
             rankedsNotesCacheUnsubscriber();
             activePlayersUpdatedUnsubscriber();
             playerScoresUpdatedUnsubscriber();
             dataRefreshedUnsubscriber();
+            configChangedUnsubscriber();
         }
     });
 
@@ -143,12 +160,16 @@
             }
         }
 
+        const rankColor = theme && theme.alternate ? theme.alternate : "#3e95cd";
+        const ppColor = theme && theme.increase ? theme.increase : "#007100";
+        const activityColor = theme && theme.dimmed ? theme.dimmed : "#3e3e3e"
+
         const datasets = [
             {
                 yAxisID: 'rank-axis',
                 data: chartData,
                 label: trans('chart.rankLabel'),
-                borderColor: "#3e95cd",
+                borderColor: rankColor,
                 fill: false,
                 tooltipStr: 'rankTooltip',
                 round: 0,
@@ -180,7 +201,7 @@
                 data: ppData,
                 spanGaps: true,
                 label: trans('chart.ppLabel'),
-                borderColor: "#007100",
+                borderColor: ppColor,
                 fill: false,
                 tooltipStr: 'ppTooltip',
                 round: 2,
@@ -210,7 +231,7 @@
                 yAxisID: 'activity-axis',
                 data: activityChart,
                 label: trans('chart.activityLabel'),
-                backgroundColor: "#666666",
+                backgroundColor: activityColor,
                 tooltipStr: 'activityTooltip',
                 round: 0,
             });
@@ -288,6 +309,8 @@
 
         if (chart) chart.destroy();
 
+        const accColor = theme && theme.alternate ? theme.alternate : "#3e95cd"
+
         chart = new Chart(
                 document.getElementById("rankChart"),
                 {
@@ -300,7 +323,7 @@
                     data: {
                         datasets: [{
                             label: '',
-                            borderColor: "#3e95cd",
+                            borderColor: accColor,
                             fill: true,
                             pointRadius: 3,
                             pointHoverRadius: 3,
@@ -422,7 +445,7 @@
     }
 
     $: {
-        setupChart(type, canvas, chartData, history, userHistory, activityChart)
+        setupChart(type, canvas, chartData, history, userHistory, activityChart, theme)
     }
 </script>
 

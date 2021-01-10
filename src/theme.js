@@ -86,6 +86,7 @@ const sseVars = [
     ['color-highlight', 'darkgreen']
 ];
 
-export const setTheme = name => (themes[name] ? themes[name] : 'darkss').def.concat(sseVars).map(s => document.documentElement.style.setProperty('--' + s[0], s[1]))
+export const getTheme = name => (themes[name] ? themes[name] : 'darkss').def.concat(sseVars)
+export const setTheme = name => getTheme(name).map(s => document.documentElement.style.setProperty('--' + s[0], s[1]))
 export const getSsDefaultTheme = () => getComputedStyle(document.documentElement).getPropertyValue('--foreground').length ? 'darkss' : 'lightss';
 export const setSsDefaultTheme = () => setTheme(getSsDefaultTheme())
