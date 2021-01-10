@@ -1,7 +1,7 @@
 <script>
     import {getAccFromRankedScore, getRankedsNotesCache, getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerHistory, getScoresByPlayerId} from "../../../scoresaber/players";
-    import {dateFromString, toSSTimestamp} from "../../../utils/date";
+    import {addToDate, dateFromString, DAY, toSSTimestamp} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
     import {onMount} from "svelte";
     import {_, trans} from '../../stores/i18n';
@@ -16,6 +16,7 @@
 
     let allRankeds = {};
     let chartData = [];
+    let activityChart = [];
 
     let canvas = null;
     let chart = null;
@@ -90,6 +91,31 @@
                     }
                 })
         ;
+
+        const ssToday = new Date(toSSTimestamp(new Date()))
+        const oldestDate = addToDate(ssToday, -49 * DAY);
+        const lastScores = playerScores
+          .map(score => ({...score, timeset: score.timeset ? dateFromString(score.timeset) : null}))
+          .filter(score => score.timeset && score.timeset > oldestDate)
+          .reduce((cum, score) => {
+              const ssDate = toSSTimestamp(score.timeset)
+              const ssTimestamp = (new Date(ssDate)).getTime();
+
+              if (!cum.hasOwnProperty(ssTimestamp)) cum[ssTimestamp] = 0;
+
+              cum[ssTimestamp]++;
+
+              return cum;
+          }, {})
+        ;
+        if (playerScores && playerScores.length)
+            activityChart = Array(50).fill(0)
+              .map((_, idx) => {
+                  const agoTimeset = (addToDate(ssToday, -(49 - idx) * DAY)).getTime();
+
+                  return lastScores[agoTimeset] ? lastScores[agoTimeset] : 0;
+              })
+            ;
     }
 
     async function setupRankChart(canvas, chartData, userHistory) {
@@ -126,6 +152,7 @@
                 fill: false,
                 tooltipStr: 'rankTooltip',
                 round: 0,
+                type: 'line'
             },
         ];
 
@@ -157,6 +184,7 @@
                 fill: false,
                 tooltipStr: 'ppTooltip',
                 round: 2,
+                type: 'line'
             });
 
             yAxes.push({
@@ -177,6 +205,23 @@
             });
         }
 
+        if (activityChart.length) {
+            datasets.push({
+                yAxisID: 'activity-axis',
+                data: activityChart,
+                label: trans('chart.activityLabel'),
+                backgroundColor: "#666666",
+                tooltipStr: 'activityTooltip',
+                round: 0,
+            });
+
+            yAxes.push({
+                id: 'activity-axis',
+                display: false,
+                position: 'right',
+            });
+        }
+
         if (chart) chart.destroy();
 
         chart = new Chart(
@@ -187,7 +232,7 @@
                         chart.resize();
                         chart.render(true);
                     },
-                    type: 'line',
+                    type: 'bar',
                     data: {
                         labels: daysAgo.map(d => formatDateRelativeInUnits(-d, 'day')),
                         datasets
@@ -359,7 +404,7 @@
 
             case 'rank':
             default:
-                setupRankChart(canvas, history && history.length ? history : null, userHistory);
+                setupRankChart(canvas, history && history.length ? history : null, userHistory, activityChart);
                 break;
         }
     }
@@ -377,7 +422,7 @@
     }
 
     $: {
-        setupChart(type, canvas, chartData, history, userHistory)
+        setupChart(type, canvas, chartData, history, userHistory, activityChart)
     }
 </script>
 
