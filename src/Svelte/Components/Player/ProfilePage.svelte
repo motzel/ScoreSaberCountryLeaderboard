@@ -40,6 +40,8 @@
     export let profilePage = {};
     export let autoTransform = false;
 
+    export const MAX_COMPARE_PLAYERS = 3;
+
     const ONE_DAY = 1000 * 60 * 60 * 24
 
     let transformed = autoTransform;
@@ -244,7 +246,7 @@
            ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
            : [],
          )
-         .slice(0, 4);
+         .slice(0, MAX_COMPARE_PLAYERS);
     }
 
     function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
@@ -729,6 +731,7 @@
                          {isPaused}
                          cachedRecentPlay={playerInfo ? playerInfo.recentPlay : null}
                          on:transform-profile={onTransformProfile}
+                         maxComparePlayers={MAX_COMPARE_PLAYERS}
                         />
                     </ScoreSaberProvider>
                 {/if}

@@ -11,8 +11,6 @@
 
   const dispatch = createEventDispatcher();
 
-  const MAX_COMPARE_PLAYERS = 4;
-
   export let players;
   export let songs = [];
   export let series = [];
@@ -24,6 +22,7 @@
   export let isPaused = false;
   export let cachedRecentPlay;
   export let beforePageChanged;
+  export let maxComparePlayers = 4;
 
   let allPlayers = null;
   let mainPlayerId = null;
@@ -59,9 +58,9 @@
 
   let comparisionModified = false;
   function onAddPlayerToComparision() {
-    if(!allPlayers || !allPlayers.length || !players || players.length >= MAX_COMPARE_PLAYERS) return;
+    if(!allPlayers || !allPlayers.length || !players || players.length >= maxComparePlayers) return;
 
-    players = players.concat([allPlayers[0]]);
+    players = players.concat([allPlayers[0]]).slice(0, maxComparePlayers);
 
     comparisionModified = true;
   }
@@ -114,7 +113,7 @@
 
   <div class="compare">
   {#if allPlayers && allPlayers.length}
-    {#if players && players.length < MAX_COMPARE_PLAYERS}
+    {#if players && players.length < maxComparePlayers}
     <Button iconFa="fas fa-balance-scale" title={$_.songBrowser.compare.add} on:click={onAddPlayerToComparision} />
     {/if}
     {#if comparisionModified && isCached}

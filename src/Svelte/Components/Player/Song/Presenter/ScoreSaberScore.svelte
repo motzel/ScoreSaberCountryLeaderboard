@@ -80,7 +80,7 @@
           {/if}
 
           {#if playerScore.acc}
-            <div>
+            <div class:bigger={!playerScore.pp}>
               <span class="scoreBottom">
                 {$_.songBrowser.fields.acc}:
                 <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 || !showDifferences ? null : playerScore.prevAcc} inline={true}
@@ -117,7 +117,7 @@
   </tr>
   {#if showLeaderboard}
     <tr class="details">
-      <td colspan="7" on:dblclick={() => showLeaderboard = !showLeaderboard}>
+      <td colspan={6 + series.length} on:dblclick={() => showLeaderboard = !showLeaderboard}>
         <Leaderboard leaderboardId={song.leaderboardId} onlySelectedDiff={true}
                      startAtRank={series && series[0] && series[0].rank ? series[0].rank : 1}
                      highlight={series && series[0] && series[0].playerId ? [series[0].playerId] : []}
@@ -146,6 +146,7 @@
   td.song > div {
     display: flex;
     justify-content: space-between;
+    align-items: center;
   }
 
   tr.details:hover {
@@ -194,6 +195,10 @@
   td.score {
     position: relative;
     width: 11rem;
+  }
+
+  td.score .bigger .scoreBottom {
+      font-size: 1rem;
   }
 
   td.score.main {
