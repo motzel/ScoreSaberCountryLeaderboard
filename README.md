@@ -1,6 +1,8 @@
 # ScoreSaber Country Leaderboard
 Provides additional features to [ScoreSaber](https://scoresaber.com). See the feature list below.
 
+## UPDATE: After 8 months and 523 commits plugin version 1.0.0 is released! Tons of changes!
+
 # Userscript installation
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js).
 
@@ -22,7 +24,8 @@ Then, depending on the selected mode:
 
 # Feature list
 
-### Song country leaderboard
+### Song leaderboard
+- Browsing scores and difficulties without reloading the page
 - A country leaderboard for the song
 - Filtering by country or friends
 - Song cover in the background
@@ -52,13 +55,28 @@ Then, depending on the selected mode:
 - Ranked songs badges
 - Enlarged, more readable chart
 - New PP chart
-- New accuracy chart
+- New filterable accuracy chart
+- The latest twitch VODs
+- Automatic profile refreshing
+- Global and country leaderboards
  
 ![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/04_enhanced_profile.png)
 
-![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/05_accuracy_chart.png) 
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/05_accuracy_chart.png)
 
-### Song browser
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/14_twitch_and_ppcalc.png)
+
+### Song browser for live data
+
+- Browsing scores without reloading the page
+- Comparing results with other players
+- Integrated song leaderboards
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/13_ss_song_browser_1.png)
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/13_ss_song_browser_2.png)
+
+### Song browser for cached data
 - Immediate, advanced filtering by the name of the song, song author and map author, type (ranked/unranked/unplayed rankeds) and number of stars.
 - Quickly browse the next page without loading
 - Customizable number of displayed songs per page

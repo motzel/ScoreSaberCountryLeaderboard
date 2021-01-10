@@ -5,6 +5,16 @@
 [!] bug fix
 [*] other changes
 
+1.0.0
+
+- [+] browsing player's scores and songs leaderboards without the page reloading
+- [+] integrated song leaderboard
+- [+] global and country leaderboards on a player's profile
+- [+] the latest Twitch VODs on a player's profile
+- [+] acc chart filterable by period & acc badges
+- [+] compare scores to other players, even not cached ones
+- [+] automatic profile refreshing
+
 0.9.9.8
 - [!] fix fresh start, thx Drakonno
 
