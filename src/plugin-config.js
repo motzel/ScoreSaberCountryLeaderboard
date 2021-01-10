@@ -24,7 +24,7 @@ export const getConfig = async (key = null) => {
       "itemsPerPage": 12,
     },
     "songLeaderboard": {"showDiff": true, "showWhatIfPp": true, "showBgCover": true, "defaultType": "country"},
-    "profile": {"enlargeAvatar": true, "showOnePpCalc": true, "showTwitchIcon": true, "showChart": true},
+    "profile": {"showOnePpCalc": true, "showTwitchIcon": true, "showChart": 'rank'},
     "others": {"theme": "darkss", "bgDownload": true, "viewsUpdate": "keep-view", "language": "en", "locale": "en-US"},
     "ssSong": {"enhance": true, "showDiff": true, "showWhatIfPp": true},
   };

@@ -19,7 +19,7 @@
     import Song from "../Song/Song.svelte";
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
-    import Leaderboard from "../Song/Leaderboard.svelte";
+    import LeaderboardCached from "../Leaderboard/LeaderboardCached.svelte";
     import {convertArrayToObjectByKey} from '../../../utils/js'
 
     export let country;
@@ -30,10 +30,13 @@
     export let pagesDisplayMax = 10;
     export let filterFunc = null;
     export let refreshTag = null;
+    export let leaderboardType = null;
 
     const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 2000;
 
     let currentPage = 0;
+
+    let rows = [];
 
     const header = [
         {label: '', key: 'picture', className: 'picture'},
@@ -70,6 +73,15 @@
 
              return {...s, playerInfo: {id, country, name}}
          });
+    }
+
+    function refreshRows() {
+        if (!scores || !scores.length) return [];
+
+        rows = scores
+         .filter(s => (min === undefined || min === null || (s[sortBy] && s[sortBy] >= min)) && (!filterFunc || filterFunc(s)))
+         .sort((a, b) => b[sortBy] - a[sortBy])
+         .map((s, idx) => ({...s, rank: idx + 1}));
     }
 
     onMount(async () => {
@@ -141,13 +153,12 @@
 
     const getRowIdentifier = row => !!row[sortBy] ? row[sortBy] : null;
 
-    $: rows = scores
-            .filter(s => (min === undefined || min === null || (s[sortBy] && s[sortBy] >= min)) && (!filterFunc || filterFunc(s)))
-            .sort((a, b) => b[sortBy] - a[sortBy])
-            .map((s, idx) => ({...s, rank: idx + 1}));
+    $: {
+        refreshRows(scores, filterFunc, leaderboardType);
+    }
 
     $: {
-        refreshScores(sortBy, min, refreshTag);
+        refreshScores(sortBy, min, country, refreshTag);
     }
 </script>
 
@@ -185,7 +196,7 @@
     </span>
 
     <span slot="details" let:row>
-        <Leaderboard leaderboardId={row.leaderboardId} {country} tableOnly={true} showDiff={false} highlight={[row.playerId]} />
+        <LeaderboardCached leaderboardId={row.leaderboardId} {leaderboardType} {country} tableOnly={true} showDiff={false} highlight={[row.playerId]} bgLeft="-1rem" bgWidth="1rem" />
     </span>
 </Table>
 

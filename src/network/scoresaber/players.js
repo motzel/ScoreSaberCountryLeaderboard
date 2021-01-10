@@ -1,7 +1,7 @@
 import {substituteVars} from "../../utils/format";
 import {delay, fetchApiPage, fetchHtmlPage} from "../fetch";
 import {arrayUnique, convertArrayToObjectByKey, getFirstRegexpMatch, isEmpty} from "../../utils/js";
-import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, USER_PROFILE_URL, USERS_URL} from "./consts";
+import {PLAYER_INFO_URL, PLAYERS_PER_PAGE, PLAYER_PROFILE_URL, COUNTRY_URL} from "./consts";
 import queue from "../queue";
 import {
     getManuallyAddedPlayersIds,
@@ -12,9 +12,9 @@ import {
     updateSongScore,
 } from "../../scoresaber/players";
 import {dateFromString, toSSTimestamp} from "../../utils/date";
-import {fetchAllNewScores, fetchRecentScores, fetchSsRecentScores} from "./scores";
+import {fetchAllNewScores, fetchRecentScores, fetchSsProfilePage} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
-import nodeSync from '../../network/multinode-sync';
+import nodeSync from '../../utils/multinode-sync';
 import {getActiveCountry} from "../../scoresaber/country";
 import {getMainPlayerId} from "../../plugin-config";
 import {updateSongCountryRanks} from "../../song";
@@ -46,27 +46,27 @@ export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_A
         name,
         pp,
         rank,
-        url: substituteVars(USER_PROFILE_URL, {userId: id}),
+        url: substituteVars(PLAYER_PROFILE_URL, {playerId: id}),
         weeklyDiff,
     };
 });
 export const fetchSsCountryRankPage = async (country, page = 1) =>
-  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(USERS_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
+  [...(await fetchHtmlPage(queue.SCORESABER, substituteVars(COUNTRY_URL, {country}), page)).querySelectorAll('.ranking.global .player a')]
     .map(a => {
         const tr = a.closest("tr");
         const id = getFirstRegexpMatch(/\/(\d+)$/, a.href)
 
         return {
-            avatar: tr.querySelector('td.picture img').src,
-            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img').src).toUpperCase(),
-            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank').innerText), 10),
+            avatar: tr.querySelector('td.picture img')?.src ?? null,
+            country: getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, tr.querySelector('td.player img')?.src ?? '')?.toUpperCase(),
+            countryRank: parseInt(getFirstRegexpMatch(/^\s*#(\d+)\s*$/, tr.querySelector('td.rank')?.innerText) ?? null, 10) ?? null,
             id,
             inactive: false,
-            name: a.querySelector('.songTop.pp').innerText,
-            pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue').innerText),
+            name: a.querySelector('.songTop.pp')?.innerText ?? '',
+            pp: parseSsFloat(tr.querySelector('td.pp .scoreTop.ppValue')?.innerText ?? '') ?? 0,
             rank: null,
-            url: substituteVars(USER_PROFILE_URL, {userId: id}),
-            weeklyDiff: parseInt(tr.querySelector('td.diff').innerText, 10),
+            url: substituteVars(PLAYER_PROFILE_URL, {playerId: id}),
+            weeklyDiff: parseInt(tr.querySelector('td.diff')?.innerText, 10) ?? 0,
         }
     });
 export const fetchSsCountryRanking = async (country, count = 50) => {
@@ -195,7 +195,7 @@ export const updateActivePlayers = async () => {
 
     await keyValueRepository().set(new Date(), 'activePlayersLastUpdate');
 
-    eventBus.publish('active-players-updated', {nodeId: nodeSync.getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
+    eventBus.publish('active-players-updated', {nodeId: nodeSync().getId(), countryPlayers, manuallyAddedPlayers, allPlayers});
 
     return Object.values(allPlayers);
 }
@@ -314,14 +314,14 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
     if(leaderboardsIds.length) await updateSongCountryRanks(leaderboardsIds);
 
     if (emitEvents) {
-        eventBus.publish('player-scores-updated', {nodeId: nodeSync.getId(), playerId, scores: scoresToSave});
+        eventBus.publish('player-scores-updated', {nodeId: nodeSync().getId(), playerId, scores: scoresToSave});
     }
 }
 
 const emitEventForScoreUpdate = (eventName, playerId, data = {}) => {
     eventBus.publish(eventName, {
         ...data,
-        nodeId: nodeSync.getId(),
+        nodeId: nodeSync().getId(),
         playerId,
     });
 }
@@ -330,13 +330,13 @@ const emitEventForScoresUpdate = (eventName, playerId, leaderboardIds) => {
     leaderboardIds.forEach(leaderboardId => emitEventForScoreUpdate(eventName, playerId, {leaderboardId}));
 }
 
-export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true) => {
+export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdateOnly = true, emitEvents = true) => {
     let playerScores;
     if (someFieldsUpdateOnly) {
         playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');
 
         if (!playerScores) {
-            emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
+            if (emitEvents) emitEventForScoresUpdate('player-score-update-failed', playerId, scores.map(s => s.leaderboardId));
 
             return false;
         }
@@ -352,14 +352,14 @@ export const setRefreshedPlayerScores = async (playerId, scores, someFieldsUpdat
           const currentScore = playerScores[s.leaderboardId] ?? null;
 
           if (someFieldsUpdateOnly && !currentScore) {
-              emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
+              if (emitEvents) emitEventForScoreUpdate('player-score-update-failed', playerId, {leaderboardId: s.leaderboardId});
 
               return null;
           }
 
           const updatedScore = {...currentScore ?? {}, ...s, lastUpdated: new Date()};
 
-          emitEventForScoreUpdate('player-score-updated', playerId, updatedScore);
+          if (emitEvents) emitEventForScoreUpdate('player-score-updated', playerId, updatedScore);
 
           return updatedScore;
       })
@@ -385,7 +385,7 @@ eventBus.on('player-scores-page-updated', ({playerId, page}) => {
 export const fetchScores = async (playerId, page = 1, ssTimeout = 3000) => {
     try {
         return await Promise.race([
-            fetchSsRecentScores(playerId, page),
+            (async () => (await fetchSsProfilePage(playerId, page))?.scores ?? [])(),
             delay(ssTimeout, null, true)
         ]);
     }
@@ -401,7 +401,7 @@ export const refreshPlayerScoreRank = async (playerId, leaderboardIds, lastScore
     try {
         emitEventForScoresUpdate('player-score-update-start', playerId, leaderboardIds);
 
-        const playerInfo = await getPlayerInfo(playerId, true);
+        const playerInfo = await getPlayerInfo(playerId);
         if (!playerInfo) throw 'Player not found';
 
         const playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');

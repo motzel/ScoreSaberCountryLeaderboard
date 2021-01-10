@@ -1,5 +1,5 @@
 import eventBus from "../utils/broadcast-channel-pubsub";
-import nodeSync from './multinode-sync';
+import nodeSync from '../utils/multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
 import {getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
@@ -54,7 +54,7 @@ const enqueuePlayerScores = async (queue, playerId, force = false, then = null, 
     if (shouldBeQueued) {
         logger.debug(`Scores of player ${playerId} enqueued`, 'DlManager')
 
-        const mergedMetadata = {type: TYPES.PLAYER_SCORES, nodeId: nodeSync.getId(), playerId, ...metadata};
+        const mergedMetadata = {type: TYPES.PLAYER_SCORES, nodeId: nodeSync().getId(), playerId, ...metadata};
         queue.add(
             async () => await updatePlayerScores(
                 playerId, true,
@@ -96,7 +96,7 @@ const enqueueRankeds = async (queue, force = false, then = null) => {
     if (shouldBeQueued) {
         logger.debug(`Rankeds enqueued`, 'DlManager')
 
-        const metadata = {type: TYPES.RANKEDS, nodeId: nodeSync.getId()};
+        const metadata = {type: TYPES.RANKEDS, nodeId: nodeSync().getId()};
         queue.add(async () => await updateRankeds(), QUEUE_LABEL, RANKEDS_PRIORITY, then, metadata);
     }
 }
@@ -116,7 +116,7 @@ const enqueueActivePlayers = async (queue, force = false, then = null, priority 
     if (shouldBeQueued) {
         logger.debug(`Active players enqueued`, 'DlManager')
 
-        const metadata = {type: TYPES.ACTIVE_PLAYERS, nodeId: nodeSync.getId()};
+        const metadata = {type: TYPES.ACTIVE_PLAYERS, nodeId: nodeSync().getId()};
         queue.add(async () => await updateActivePlayers(true), QUEUE_LABEL, priority, then, metadata);
     }
 }
@@ -150,14 +150,14 @@ const enqueueRankedsNotesCache = async (queue, then = null) => {
 
         logger.trace(`Fetching first 10 rankeds: ${JSON.stringify(rankedsHashesToFetch)}`, 'DlManager');
 
-        const metadata = {type: TYPES.RANKEDS_NOTES_CACHE, nodeId: nodeSync.getId()};
+        const metadata = {type: TYPES.RANKEDS_NOTES_CACHE, nodeId: nodeSync().getId()};
         queue.add(async () => await fetchRankedsFromBs(rankedsHashesToFetch), QUEUE_LABEL, RANKEDS_NOTES_CACHE_PRIORITY, then, metadata);
     }
 };
 
 let queueIsProcessed = false;
 const processQueue = async (queue) => {
-    logger.debug(`Try to process queue. isPaused: ${isPaused ? 'ON' : 'OFF'}, BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
+    logger.debug(`Try to process queue. isPaused: ${isPaused ? 'ON' : 'OFF'}, BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync().isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
 
     if(queueIsProcessed) {
         logger.debug(`Queue processing in progress. SKIPPED`);
@@ -165,7 +165,7 @@ const processQueue = async (queue) => {
         return;
     }
 
-    if (!bgDownload || isPaused || !nodeSync.isMaster()) {
+    if (!bgDownload || isPaused || !nodeSync().isMaster()) {
         queue.clear();
 
         return;
@@ -223,9 +223,9 @@ const processQueue = async (queue) => {
 }
 
 const enqueue = async (queue, type, force = false, data = null, then = null) => {
-    logger.debug(`Try to enqueue type ${type}. BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}, forced: ${force}`, 'DlManager');
+    logger.debug(`Try to enqueue type ${type}. BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync().isMaster()}, forced: ${force}`, 'DlManager');
 
-    if (!bgDownload || !nodeSync.isMaster()) {
+    if (!bgDownload || !nodeSync().isMaster()) {
         queue.clear();
 
         return;
@@ -254,9 +254,9 @@ const enqueue = async (queue, type, force = false, data = null, then = null) => 
 }
 
 const enqueueAndProcess = async (queue, force = false) => {
-    logger.debug(`Try to enqueue & process queue. BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync.isMaster()}`, 'DlManager');
+    logger.debug(`Try to enqueue & process queue. BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync().isMaster()}`, 'DlManager');
 
-    if (!bgDownload || !nodeSync.isMaster()) {
+    if (!bgDownload || !nodeSync().isMaster()) {
         queue.clear();
 
         return;
@@ -273,7 +273,7 @@ const enqueueAndProcess = async (queue, force = false) => {
 
 let intervalId;
 const startSyncing = async queue => {
-    if (nodeSync.isMaster()) {
+    if (nodeSync().isMaster()) {
         await enqueueAndProcess(queue);
         intervalId = setInterval(() => enqueueAndProcess(queue), INTERVAL_TICK);
     }
@@ -289,7 +289,7 @@ const stopSyncing = () => {
 export default async () => {
     const queue = fifoQueue();
 
-    let currentMasterId = nodeSync.getMasterId();
+    let currentMasterId = nodeSync().getMasterId();
 
     bgDownload = await isBackgroundDownloadEnabled();
 
@@ -309,7 +309,7 @@ export default async () => {
             await startSyncing(queue)
         }
 
-        if (!nodeSync.isMaster()) {
+        if (!nodeSync().isMaster()) {
             stopSyncing();
         }
 

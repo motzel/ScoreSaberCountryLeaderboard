@@ -29,7 +29,9 @@ module.exports = {
                         comments: /(UserScript|@name|@namespace|@version|@description|@author|@icon|@.*URL|@match|@include|@require|@grant|@run-at)/i
                     }
                 },
-                extractComments: true
+                extractComments: {
+                    banner: false
+                }
             })
         ]
     },

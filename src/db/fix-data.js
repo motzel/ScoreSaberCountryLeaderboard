@@ -1,10 +1,12 @@
 import keyValueRepository from './repository/key-value';
 import log from '../utils/logger';
 import {db} from './db'
+import {getConfig, setConfig} from '../plugin-config'
 
 const FIXES_KEY = 'data-fix';
 
 const getAppliedFixes = async () => keyValueRepository().get(FIXES_KEY, true);
+const storeAppliedFixes = async fixes => keyValueRepository().set(fixes, FIXES_KEY);
 
 const allFixes = {
   'rankeds-20201129': {
@@ -36,6 +38,22 @@ const allFixes = {
       });
     },
   },
+
+  'config-chart-20210108': {
+    apply: async () => {
+      log.info('Apply config showChart fix (20210108)');
+
+      const config = await getConfig();
+      if (config && config.profile) {
+        config.profile.showChart = config.profile.showChart === true ? 'rank' : (config.profile.showChart === false ? 'none' : config.profile.showChart);
+        await setConfig(config);
+      }
+
+      const allAppliedFixes = await getAppliedFixes() ?? [];
+      allAppliedFixes.push('config-chart-20210108');
+      await storeAppliedFixes(allAppliedFixes);
+    }
+  }
 };
 
 export const setupDataFixes = async () => {

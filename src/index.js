@@ -1,55 +1,35 @@
-import Profile from './Svelte/Components/Player/Profile.svelte';
-import ProfileStats from './Svelte/Components/Player/ProfileStats.svelte';
+import initNodeSync from './utils/multinode-sync'
+import Profile from './Svelte/Components/Player/ProfilePage.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
-import SongLeaderboard from './Svelte/Components/Song/Leaderboard.svelte';
-import SongIcons from './Svelte/Components/Song/Icons.svelte';
-import SongCard from './Svelte/Components/Song/LeaderboardCard.svelte';
-import WhatIfpp from './Svelte/Components/Song/WhatIfPp.svelte';
-import SongScore from './Svelte/Components/SsEnhance/Score.svelte';
-import Refresh from './Svelte/Components/Player/Refresh.svelte';
-import SongBrowser from './Svelte/Components/Song/Browser.svelte';
-import Button from './Svelte/Components/Common/Button.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
-import PlayerSettings from './Svelte/Components/Player/Settings.svelte';
-import Chart from './Svelte/Components/Player/Chart.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
+import LeaderboardPage from './Svelte/Components/Leaderboard/LeaderboardPage.svelte';
 
+import header from '../header.json';
 import log from './utils/logger';
-import tempConfig from './temp';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
-import {
-    getAccFromScore,
-    getDiffAndTypeFromOnlyDiffName,
-    getSongMaxScore, getSongScores,
-} from "./song";
-import {shouldBeHidden} from "./eastereggs";
-
 import twitch from './services/twitch';
-import {getConfig, getMainPlayerId} from "./plugin-config";
+import {getConfig} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
 import initDatabase from './db/db';
-import {trans, setLangFromConfig} from "./Svelte/stores/i18n";
+import {setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    getPlayerInfo,
     getPlayerProfileUrl,
-    getScoresByPlayerId,
+    isPlayerDataAvailable,
 } from "./scoresaber/players";
-import {dateFromString} from "./utils/date";
-import {setRefreshedPlayerScores} from "./network/scoresaber/players";
-import {parseSsInt} from "./scoresaber/other";
-import {formatNumber, round} from "./utils/format";
-import {parseSsLeaderboardScores, parseSsUserScores} from './scoresaber/scores'
+import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
+import {getSsplCountryRanks} from './scoresaber/sspl-cache'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
-const getProfileId = () => getFirstRegexpMatch(/\u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
+const getProfileId = () => getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, window.location.href.toLowerCase());
 const isProfilePage = () => null !== getProfileId();
 const getRankingCountry = () => {
     const match = window.location.href.match(new RegExp('^https://scoresaber.com/global(?:\\?|/1[&?])country=(.{1,3})'));
@@ -57,194 +37,40 @@ const getRankingCountry = () => {
 }
 const isCurrentCountryRankingPage = async () => getRankingCountry() === (await getActiveCountry());
 
-function assert(el) {
-    if (null === el) throw new Error('Assertion failed');
-
-    return el;
-}
-
-function getBySelector(sel, el = null) {
-    return assert((el ?? document).querySelector(sel));
-}
-
-async function setupPlTable() {
-    let scoreTableNode = getBySelector('.ranking table.global');
-    const leaderboardId = getLeaderboardId();
-    if (!leaderboardId) return null;
-
-    let tblContainer = document.createElement('div');
-    tblContainer["id"] = "sspl";
-    tblContainer.style["display"] = "none";
-    scoreTableNode.parentNode.appendChild(tblContainer);
-
-    new SongLeaderboard({
-        target: tblContainer,
-        props: {leaderboardId, country: await getActiveCountry()}
-    });
-}
-
 async function setupLeaderboard() {
     log.info("Setup leaderboard page");
+
+    const section = document.querySelector('body > .section');
+    if (!section) return;
 
     const leaderboardId = getLeaderboardId();
     if (!leaderboardId) return;
 
-    await setupPlTable();
+    // fix url search params
+    let urlStr = window.location.href
+    const urlMatches = /(.*)\/leaderboard\/(\d+)(.*?)$/.exec(urlStr);
+    if (urlMatches && urlMatches[3] && urlMatches[3].length) {
+        urlStr = urlMatches[1] + '/leaderboard/' + urlMatches[2] + (urlMatches[3][0] === '&' ? '?' + urlMatches[3].slice(1) : urlMatches[3]);
+    }
+    const url = new URL(urlStr);
+    const urlParams = new URLSearchParams(url.search);
+    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page') ?? '1', 10) : 1;
 
-    const tabs = getBySelector('.tabs > ul');
-    tabs.appendChild(
-        generate_tab(
-            'pl_tab',
-            null === document.querySelector('.filter_tab')
-        )
-    );
-
-    document.addEventListener(
-        'click',
-        function (e) {
-            let clickedTab = e.target.closest('.filter_tab');
-            if (!clickedTab) return;
-
-            const box = assert(e.target.closest('.box'));
-
-            const sspl = getBySelector('#sspl', box);
-            const originalTable = getBySelector('table.ranking', box);
-            if (clickedTab.classList.contains('sspl')) {
-                originalTable.style.display = 'none';
-                sspl.style.display = '';
-                getBySelector('.pagination').style.display = 'none';
-            } else {
-                originalTable.style.display = '';
-                sspl.style.display = 'none';
-                getBySelector('.pagination').style.display = '';
-            }
-        },
-        { passive: true }
-    );
-
-    const config = await getConfig('songLeaderboard');
-    const mainPlayerId = await getMainPlayerId();
-    if (mainPlayerId && !!config.showWhatIfPp) {
-        [].forEach.call(document.querySelectorAll('.scoreTop.ppValue'), async function (span) {
-            const pp = parseFloat(
-                span.innerText.replace(/\s/, '').replace(',', '.')
-            );
-            if (pp && pp > 0.0 + Number.EPSILON) {
-                new WhatIfpp({
-                    target: span.parentNode,
-                    props: {
-                        leaderboardId,
-                        pp
-                    }
-                });
-            }
-        });
+    const props = {
+        leaderboardId,
+        leaderboardPage: {...parseSsSongLeaderboardPage(document), pageNum}
     }
 
-    const songInfoBox = document.querySelector('.column.is-one-third-desktop .box:first-of-type');
+    const profileDiv = document.createElement('div');
+    profileDiv.classList.add('sspl-page');
+    section.prepend(profileDiv);
 
-    const songInfoData = [
-        {id: 'hash', label: 'ID', value: null},
-        {id: 'scores', label: 'Scores', value: null},
-        {id: 'status', label: 'Status', value: null},
-        {id: 'totalScores', label: 'Total Scores', value: null},
-        {id: 'noteCount', label: 'Note Count', value: null},
-        {id: 'bpm', label: 'BPM', value: null},
-        {id: 'stars', label: 'Star Difficulty', value: null},
-    ]
-        .map(sid => ({...sid, value: document.querySelector('.column.is-one-third-desktop .box:first-of-type').innerHTML.match(new RegExp(sid.label + ':\\s*<b>(.*?)</b>', 'i'))}))
-        .reduce((cum, sid) => {
-            let value = Array.isArray(sid.value) ? sid.value[1] : null;
-            if (value && ['scores', 'totalScores', 'stars', 'bpm', 'noteCount'].includes(sid.id)) value = parseFloat(value.replace(/[^0-9\.]/, ''));
-            if (value) cum[sid.id] = value;
+    const originalContent = document.querySelector('.content');
+    if (originalContent) originalContent.remove();
 
-            return cum;
-        }, {})
-    const difficulty = document.querySelector('.tabs.is-centered li.is-active a span');
-    songInfoData.difficulty =  difficulty ? difficulty.innerText.toLowerCase().replace('+', 'Plus') : null;
-    if (songInfoBox && songInfoData && songInfoData.hash && songInfoData.hash.length) {
-        const newSongBox = document.createElement('div');
-        newSongBox.style.marginBottom = '1.5rem';
-        songInfoBox.parentNode.insertBefore(newSongBox, songInfoBox);
-
-        const songCard = new SongCard({
-            target: newSongBox,
-            props: {...songInfoData, leaderboardId}
-        });
-        songCard.$on('initialized', e => {
-            if (e.detail) songInfoBox.remove()
-            else {
-                newSongBox.remove();
-                new SongIcons({target: songInfoBox, props: {hash: songInfoData.hash}});
-            }
-        });
-
-        const ssConfig = await getConfig('ssSong');
-        const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
-
-        if (songEnhanceEnabled) {
-            const scores = parseSsLeaderboardScores(document);
-            if (scores) {
-                let diffInfo = {diff: songInfoData.difficulty, type: 'Standard'};
-                if (leaderboardId) {
-                    const leaderboardScores = await getSongScores(leaderboardId);
-                    if (leaderboardScores && leaderboardScores.length) diffInfo = leaderboardScores[0].diffInfo;
-                }
-
-                const maxScore = await getSongMaxScore(songInfoData.hash, diffInfo);
-                scores.forEach(s => {
-                    if (s.score) {
-                        const score = s.tr.querySelector('td.score');
-                        if (score) {
-                            score.innerHTML = formatNumber(s.score, 0);
-                        }
-                    }
-
-                    const percentage = s.tr.querySelector('td.percentage center');
-                    if (percentage && s.score && maxScore && maxScore > 0) {
-                        percentage.innerHTML = formatNumber(s.mods && s.mods.length && s.mods !== '-' && s.percent ? s.percent * 100 : s.score * 100 / maxScore) + '%';
-                    }
-
-                    if (s.pp !== null) {
-                        const pp = s.tr.querySelector('td.pp .scoreTop.ppValue');
-                        if (pp) {
-                            pp.innerHTML = formatNumber(s.pp);
-                        }
-                    }
-                });
-            }
-        }
-    }
+    new LeaderboardPage({target: profileDiv, props});
 
     log.info("Setup leaderboard page / Done")
-}
-
-async function setupChart() {
-    log.info("Setup chart");
-
-    const chart = document.getElementById('rankChart');
-    if(!chart) return;
-
-    const box = chart.closest('.box');
-    if(!box) return;
-
-    chart.closest('section').remove();
-
-    const profileConfig = await getConfig('profile');
-    if (profileConfig && !profileConfig.showChart) return;
-
-    const profileId = getProfileId();
-    if(profileId) {
-        new Chart({
-            target: box,
-            props: {
-                profileId,
-                history: getFirstRegexpMatch(/data:\s*\[([0-9,]+)\]/, document.body.innerHTML),
-            }
-        });
-    }
-
-    log.info("Setup chart / Done")
 }
 
 async function setupProfile() {
@@ -253,22 +79,26 @@ async function setupProfile() {
     const profileId = getProfileId();
     if (!profileId) return;
 
-    const playerInfo = await getPlayerInfo(profileId);
-
-    const playerScores = await getScoresByPlayerId(profileId);
-    const isPlayerDataAvailable = playerScores && Object.keys(playerScores).length;
-
     // redirect to recent plays if auto-transform is enabled or transforming was requested
-    const url = new URL(window.location.href);
+
+    // fix url search params
+    let urlStr = window.location.href
+    const urlMatches = /(.*)\/u\/(\d+)(.*?)$/.exec(urlStr);
+    if (urlMatches && urlMatches[3] && urlMatches[3].length) {
+        urlStr = urlMatches[1] + '/u/' + urlMatches[2] + (urlMatches[3][0] === '&' ? '?' + urlMatches[3].slice(1) : urlMatches[3]);
+    }
+    const url = new URL(urlStr);
     const urlParams = new URLSearchParams(url.search);
 
     const songBrowserConfig = await getConfig('songBrowser');
     const urlHasTransformParam = urlParams.has('transform');
-    const autoTransformEnabled = isPlayerDataAvailable && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
+    const autoTransform = await isPlayerDataAvailable(profileId) && ((songBrowserConfig && songBrowserConfig.autoTransform) || urlHasTransformParam);
     const isRecentPlaysPage = urlParams.get('sort') === '2';
+    const pageNum = urlParams.has('page') ? parseInt(urlParams.get('page') ?? '1', 10) : 1;
 
-    if (autoTransformEnabled && !isRecentPlaysPage) {
-        window.location.href = getPlayerProfileUrl(profileId, true);
+    if (autoTransform && !isRecentPlaysPage) {
+        window.location.href = getPlayerProfileUrl(profileId, true, urlHasTransformParam);
+        return;
     }
 
     if (urlHasTransformParam) {
@@ -277,251 +107,37 @@ async function setupProfile() {
         history.replaceState(null, '', url.toString());
     }
 
-    // setup chart when ready
-    if (document.readyState == 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setupChart()
-        })
-    } else {
-        // DOM is ready
-        setupChart();
-    }
+    const avatarCol = document.querySelector('.column.avatar');
+    if (avatarCol) avatarCol.classList.add('enlarge')
 
-    const profileConfig = await getConfig('profile');
-    if (profileConfig && profileConfig.enlargeAvatar) {
-        const avatarCol = document.querySelector('.column.avatar');
-        if (avatarCol) avatarCol.classList.add('enlarge')
-
-        const usersConfig = await getConfig('users');
-        if(usersConfig && usersConfig.main && usersConfig.main === profileId) avatarCol.classList.add('main')
-    }
+    const usersConfig = await getConfig('users');
+    if(usersConfig && usersConfig.main && usersConfig.main === profileId) avatarCol.classList.add('main')
 
     const tbl = document.querySelector('table.ranking');
     if(tbl) tbl.classList.add('sspl');
 
-    const ssConfig = await getConfig('ssSong');
-    const showDiff = !!ssConfig?.showDiff;
-    const showWhatIfPp = !!ssConfig?.showWhatIfPp;
+    const section = document.querySelector('body .section');
+    if (!section) return;
 
-    const songEnhanceEnabled = ssConfig && !!ssConfig.enhance;
+    const profileDiv = document.createElement('div');
+    profileDiv.classList.add('sspl-page');
+    section.prepend(profileDiv);
 
-    const parsedScores = Promise.all(parseSsUserScores(document).map(async s => {
-        const leaderboard = playerScores.find(ps => ps.leaderboardId === s.leaderboardId);
-
-        if (songEnhanceEnabled && !autoTransformEnabled) {
-            try {
-                const maxSongScore = await getSongMaxScore(
-                  leaderboard?.hash ? leaderboard.hash : s.hash,
-                  leaderboard?.diffInfo ? leaderboard.diffInfo : getDiffAndTypeFromOnlyDiffName(s.songDiff)
-                );
-
-                const maxScoreEx = maxSongScore ?? leaderboard?.maxScoreEx;
-
-                const ssScoreDate = dateFromString(s.timeset);
-                const useDownloadedScore = leaderboard?.timeset && ssScoreDate && leaderboard?.timeset?.getTime() === ssScoreDate.getTime();
-                if (useDownloadedScore) {
-                    s = {...s, ...leaderboard, maxScoreEx, percent: maxScoreEx && leaderboard?.score ? leaderboard.score / maxScoreEx : s.percent};
-                }
-
-                s.acc = s.percent ? s.percent * 100 : null;
-
-                const useCurrentScoreAsPrev = (s.pp && leaderboard?.pp && round(leaderboard.pp) < round(s.pp)) ||
-                  (s.score && leaderboard?.score && leaderboard.score < s.score);
-
-                if (!s.acc && s.score && maxScoreEx) {
-                    s.acc = getAccFromScore({score: s.score, maxScoreEx});
-                }
-
-                if(!s.score && s.percent) {
-                    s.score = maxScoreEx ? Math.round(s.percent * maxScoreEx) : null;
-                }
-
-                s.hidden = leaderboard?.acc ? shouldBeHidden(Object.assign({}, leaderboard, {id: leaderboard.playerId, acc: leaderboard.acc})) : false;
-
-                const history = leaderboard?.history?.[0];
-                if (showDiff && (useCurrentScoreAsPrev || history)) {
-                    s.prevRank = useCurrentScoreAsPrev ? leaderboard.rank : history.rank;
-                    s.prevPp = useCurrentScoreAsPrev ? leaderboard.pp : history.pp;
-                    s.prevScore = useCurrentScoreAsPrev ? leaderboard.score : history.score;
-                    s.prevTimeset = dateFromString(useCurrentScoreAsPrev ? leaderboard.timeset : history.timeset);
-                    s.prevAcc = getAccFromScore({
-                        score: useCurrentScoreAsPrev ? leaderboard.score : history.score,
-                        uScore: useCurrentScoreAsPrev ? leaderboard.uScore : history.uScore,
-                        maxScoreEx,
-                    });
-                }
-            } catch (e) {} // swallow error
-        }
-
-        return s;
-    }))
-      .then(async parsedScores => {
-          await setRefreshedPlayerScores(profileId, parsedScores.map(s => ({
-              leaderboardId: s.leaderboardId,
-              rank         : s.rank,
-          })));
-
-          return parsedScores
-      })
-      .then(parsedScores => {
-          if (songEnhanceEnabled && !autoTransformEnabled)
-              parsedScores
-                .filter(s => null !== s.tr)
-                .forEach(s => {
-                    const score = s.tr.querySelector('.score');
-                    if(!score) return;
-
-                    score.innerHTML = "";
-
-                    new SongScore({
-                        target: score,
-                        props: {song: s, showWhatIfPp}
-                    })
-                });
-      });
-
-    const header = document.querySelector('.content .column h5').closest('.box');
-    if (header) {
-        const refreshDiv = document.createElement('div');
-        refreshDiv.classList.add('refresh');
-        header.appendChild(refreshDiv);
-        new Refresh({
-            target: refreshDiv,
-            props: {profileId}
-        })
+    const props = {
+        profileId,
+        profilePage: {...parseSsProfilePage(document), type: isRecentPlaysPage ? 'recent' : 'top', pageNum, playerId: profileId},
+        autoTransform,
     }
 
-    const mainUl = document.querySelector('.content .column ul');
-    const mainColumn = mainUl.closest('.column');
-    if (mainColumn) {
-        if (isPlayerDataAvailable) {
-            let ssplCountryRank = playerInfo?.ssplCountryRank;
-            const country = await getActiveCountry();
-            ssplCountryRank = ssplCountryRank && typeof ssplCountryRank === "object" && ssplCountryRank[country] ? ssplCountryRank[country] : (typeof ssplCountryRank === "number" ? ssplCountryRank : null)
-            const rankLi = mainColumn.querySelector('ul li:first-of-type');
-            if (rankLi) {
-                const globalRankA = rankLi.querySelector('a:first-of-type');
-                const rankA = rankLi.querySelector('a[href^="/global?country="]');
-                if(globalRankA && rankA) {
-                    const originalGlobalRank = parseSsInt(globalRankA.innerText);
-                    const originalRank = parseSsInt(rankA.innerText);
-                    const originalCountry = getFirstRegexpMatch(/flags\/(.*).png$/, rankA.querySelector('img')?.src)
-                    if (originalGlobalRank && originalRank && originalCountry) {
-                        const pageStats =
-                            [
-                                {label: trans('profile.stats.ranking'), type: 'rank', value: originalGlobalRank, originalCountry: originalCountry, ssplCountryRank, originalRank}
-                            ].concat(
-                                [...document.querySelectorAll('.content .column ul li:not(:first-child)')]
-                                    .map(li => {
-                                        const matches = li.innerHTML.match(/^\s*<strong>([^:]+)\s*:\s*<\/strong>\s*(.*)$/);
-                                        if (!matches) return null;
+    const originalContent = document.querySelector('.content');
+    if (originalContent) originalContent.remove();
 
-                                        const mapping = [
-                                            {key: 'Performance Points', type: 'number', precision: 2, suffix: 'pp', label: trans('profile.stats.pp'), number: true},
-                                            {key: 'Play Count', type: 'number', precision: 0, label: trans('profile.stats.playCount'), number: true},
-                                            {key: 'Total Score', type: 'number', precision: 0, label: trans('profile.stats.totalScore'), number: true},
-                                            {key: 'Replays Watched by Others', type: 'number', precision: 0, label: trans('profile.stats.replays'), number: true},
-                                            {key: 'Role', label: trans('profile.stats.role'), number: false},
-                                        ];
-
-                                        const value = mapping.filter(m => m.number).map(m => m.key).includes(matches[1])
-                                            ? parseFloat(matches[2].replace(/[^0-9.]/g, ''))
-                                            : matches[2];
-
-                                        const item = mapping.find(m => m.key === matches[1]);
-                                        return item ? {...item, value} : {label: matches[1], value};
-                                    })
-                                    .filter(s => s)
-                            );
-
-                        mainUl.innerHTML = '';
-                        new ProfileStats({
-                            target: mainColumn,
-                            props: {profileId, stats: pageStats}
-                        })
-                    }
-                }
-            }
-
-            const additionalProfile = document.createElement('div');
-            additionalProfile.classList.add('column');
-            const ul = document.createElement('ul');
-            ul.style.marginTop = sseInstalled ? '3.375rem' : '2.875rem';
-            additionalProfile.appendChild(ul);
-            new Profile({
-                target: ul,
-                props: {
-                    profile: playerInfo,
-                }
-            });
-            mainColumn.closest('.columns').appendChild(additionalProfile);
-
-            const div = document.createElement('div')
-            div.classList.add('el-group');
-            div.classList.add('flex-center');
-            div.style.marginTop = "1em";
-            div.style.fontSize = "0.875rem";
-            mainColumn.closest('.box').appendChild(div);
-
-            const transformBtn = new Button({
-                target: div,
-                props: {
-                    label: trans('plugin.transformButton'),
-                    iconFa: "fas fa-expand-arrows-alt",
-                    type: 'primary'
-                }
-            })
-            const transformSongs = async () => {
-                if (!isRecentPlaysPage) {
-                    window.location.href = getPlayerProfileUrl(profileId, true) + '&transform=true';
-                    return;
-                }
-
-                const content = mainColumn.closest('.content');
-                const songBox = content.querySelector('.box:nth-child(2)');
-                if (songBox) {
-                    const box = document.createElement('div');
-                    box.classList.add('box');
-                    box.classList.add('has-shadow');
-                    content.insertBefore(box, songBox);
-
-                    new SongBrowser({
-                        target: box,
-                        props: {
-                            playerId: profileId,
-                            country,
-                            recentPlay: parsedScores && parsedScores.length ? dateFromString(parsedScores[0].timeset) : null
-                        }
-                    })
-
-                    songBox.remove();
-                    transformBtn.$destroy();
-
-                    document.querySelector('.el-group.flex-center').remove();
-                }
-            }
-            if (autoTransformEnabled) await transformSongs();
-            else transformBtn.$on('click', transformSongs)
-        }
-
-        const avatarColumn = document.querySelector('.column.avatar');
-        if (avatarColumn) {
-            const div = document.createElement('div')
-            div.style.marginTop = "1rem";
-            div.style.fontSize = "0.75rem";
-            avatarColumn.appendChild(div);
-
-            new PlayerSettings({
-                target: div,
-                props: {profileId}
-            })
-        }
-    }
+    new Profile({target: profileDiv, props})
 
     log.info("Setup profile page / Done")
 }
 
-async function setupCountryRanking(diffOffset = 6) {
+async function setupCountryRanking() {
     const country = getRankingCountry();
     if (!country) return; // not a country leaderboard page
 
@@ -556,39 +172,12 @@ async function setupCountryRanking(diffOffset = 6) {
     cont.parentNode.style.position = 'relative';
 
     const newCont = document.createElement('main');
-    newCont.classList.add('container-fluid');
-    newCont.style.paddingTop = '1.75rem';
+    newCont.classList.add('sspl-page');
     cont.parentNode.appendChild(newCont);
 
     new CountryDashboard({target: newCont, props: {country: await getActiveCountry(), overridePlayersPp: actualPlayersPp}});
 
     log.info("Setup country ranking / Done")
-}
-
-function generate_tab(css_id, has_offset) {
-    const tabClass = 'filter_tab sspl ' + (has_offset ? ' offset_tab' : '');
-
-    const li = document.createElement('li');
-    li.id = css_id;
-    tabClass.split(' ').filter(cls => cls.length).map(cls => li.classList.add(cls));
-
-    const a = document.createElement('a');
-    a.classList.add('has-text-info');
-
-    const img = document.createElement('img');
-    img.classList.add('bloodtrail');
-    img.src = require('./resource/img/bloodtrail.png').default;
-    a.appendChild(img);
-    li.appendChild(a);
-
-    a.addEventListener('click', () => {
-        document
-            .querySelectorAll('.tabs > ul .filter_tab')
-            .forEach((x) => x.classList.remove('is-active'));
-        assert(document.getElementById(css_id)).classList.add('is-active');
-    });
-
-    return li;
 }
 
 function setupStyles() {
@@ -654,11 +243,30 @@ async function setupGlobalEventsListeners() {
     });
 }
 
+function addVersionInfoToFooter() {
+    const footer = document.querySelector('footer .content');
+    if (!footer) return;
+
+    const p = document.createElement('p');
+    p.innerText = header.name;
+
+    const a1 = document.createElement('a');
+    a1.href = header.updateURL;
+    a1.innerText = ' v' + header.version;
+
+    p.append(a1);
+    p.innerHTML +=  ' by ';
+
+    const a2 = document.createElement('a');
+    a2.href = 'https://www.github.com/motzel';
+    a2.innerText = header.author;
+    p.append(a2);
+
+    footer.append(p);
+}
+
 async function setupDelayed() {
     initialized = true;
-
-    // wait for SSE or given timeout
-    await waitForSSEInit(tempConfig.SSE_CHECK_DELAY);
 
     if (isLeaderboardPage()) {
         await setupLeaderboard();
@@ -669,32 +277,7 @@ async function setupDelayed() {
     }
 
     await initDownloadManager();
-}
-
-function rafAsync() {
-    return new Promise(resolve => {
-        requestAnimationFrame(resolve); //faster than set time out
-    });
-}
-
-function checkElement(selector) {
-    if (document.querySelector(selector) === null) {
-        return rafAsync().then(() => checkElement(selector));
-    } else {
-        return Promise.resolve(true);
-    }
-}
-
-let sseInstalled = false;
-async function waitForSSEInit(timeout) {
-    log.info("Waiting for SSE initialization");
-
-    return new Promise(function(resolve, reject) {
-        // whatever comes first
-        checkElement('#all_scores_tab').then(el => {sseInstalled = true; resolve(el)})
-        checkElement('#user_compare').then(el => {sseInstalled = true; resolve(el)})
-        setTimeout(() => resolve(null), timeout);
-    });
+    addVersionInfoToFooter();
 }
 
 let initialized = false;
@@ -707,16 +290,18 @@ async function init() {
             return;
         }
 
+        await initNodeSync();
+
         new Message({
             target: document.body,
         });
 
         await initDatabase();
-
         await setupDataFixes();
 
-        // pre-warm config cache
-        const config = await getConfig();
+        // pre-warm cache
+        await getConfig();
+        await getSsplCountryRanks();
 
         await Promise.allSettled(
             [

@@ -12,7 +12,7 @@ import twitchRepository from "../db/repository/twitch";
 import keyValueRepository from "../db/repository/key-value";
 import {getPlayerInfo} from '../scoresaber/players';
 import eventBus from '../utils/broadcast-channel-pubsub';
-import nodeSync from "../network/multinode-sync";
+import nodeSync from "../utils/multinode-sync";
 
 const users = {
     '76561198059659922': 'patian25',
@@ -103,7 +103,7 @@ const updateVideosForPlayerId = async playerId => {
     const twitchProfile = await getProfileByPlayerId(playerId, true);
     const playerInfo = await getPlayerInfo(playerId);
 
-    if (twitchProfile.id && playerInfo) {
+    if (twitchProfile?.id && playerInfo) {
         const scoresRecentPlay = playerInfo.recentPlay ? playerInfo.recentPlay : playerInfo.lastUpdated;
         const twitchLastUpdated = twitchProfile.lastUpdated;
 
@@ -116,7 +116,7 @@ const updateVideosForPlayerId = async playerId => {
 
             if (videos && videos.data && videos.data.length) {
                 eventBus.publish('player-twitch-videos-updated', {
-                    nodeId     : nodeSync.getId(),
+                    nodeId     : nodeSync().getId(),
                     playerId,
                     twitchProfile,
                 });

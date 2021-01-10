@@ -12,7 +12,7 @@ import {getActiveCountry} from "./scoresaber/country";
 import scoresRepository from './db/repository/scores'
 import {getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
 import eventBus from './utils/broadcast-channel-pubsub'
-import nodeSync from './network/multinode-sync'
+import nodeSync from './utils/multinode-sync'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -122,11 +122,12 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
 
   await setSsplCountryRanks(ssplCountryRanks);
 
-  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync.getId(), ssplCountryRanks});
+  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync().getId(), ssplCountryRanks});
 
   return ssplCountryRanks;
 }
 
+export const getAnySongScore = async (leaderboardId) => scoresRepository().getFromIndex('scores-leaderboardId', leaderboardId);
 export const getSongScores = async (leaderboardId) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId);
 
 export function getAccFromScore(score, maxSongScore) {
@@ -209,6 +210,16 @@ export async function getSongMaxScore(hash, diffInfo, cacheOnly = false, forceUp
   const songInfo = await getSongByHash(hash, forceUpdate, cacheOnly);
   const songCharacteristics = songInfo?.metadata?.characteristics;
   return getMaxScoreFromSongCharacteristics(songCharacteristics, diffInfo, maxScorePerBlock)
+}
+
+// TODO: add support for mods
+export async function getLeaderboardMaxScore(leaderboardId, hash, difficulty, mods=[], cacheOnly = false, maxScorePerBlock = 115) {
+  const score = await getAnySongScore(leaderboardId);
+  if (!score && (!hash || !difficulty)) return null;
+
+  const diffInfo = score?.diffInfo ?? {type: 'Standard', diff: difficulty};
+
+  return getSongMaxScore(hash, diffInfo, cacheOnly, false, maxScorePerBlock);
 }
 
 export async function getSongDiffInfo(hash, diffAndType, cacheOnly = false) {

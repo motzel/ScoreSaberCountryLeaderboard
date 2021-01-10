@@ -1,6 +1,7 @@
 <!--suppress JSUnfilteredForInLoop -->
 <script>
     import {onMount} from 'svelte';
+    import { fade } from 'svelte/transition';
     import Progress from '../Common/Progress.svelte';
     import Button from '../Common/Button.svelte';
     import FormattedDate from '../Common/FormattedDate.svelte';
@@ -19,7 +20,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {getPlayerLastUpdated} from "../../../scoresaber/players";
     import {isBackgroundDownloadEnabled} from "../../../plugin-config";
-    import nodeSync from '../../../network/multinode-sync';
+    import nodeSync from '../../../utils/multinode-sync';
 
     import logger from "../../../utils/logger";
     import {_, trans} from '../../stores/i18n';
@@ -94,6 +95,10 @@
             }
         })
 
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', async () => {
+            await onRefresh();
+        });
+
         await setLastRefreshDate();
         setInterval(() => setLastRefreshDate(), 1000 * 60);
 
@@ -104,6 +109,7 @@
             unsubscriberBgError();
             unsubscriberBgStopped();
             unsubscriberScoresUpdated();
+            unsubscriberMainPlayerChanged();
         }
     })
 
@@ -112,7 +118,7 @@
             const playerLastUpdated = await getPlayerLastUpdated(profileId);
             if (playerLastUpdated) $lastUpdatedState = dateFromString(playerLastUpdated);
         } else {
-            getAnyLastUpdated(true).then(d => $lastUpdatedState = dateFromString(d));
+            $lastUpdatedState = dateFromString(await getAnyLastUpdated());
         }
     }
 
@@ -133,7 +139,7 @@
     async function refresh() {
         stopRefreshingFlag = false;
 
-        eventBus.publish('start-data-refreshing', {nodeId: nodeSync.getId()});
+        eventBus.publish('start-data-refreshing', {nodeId: nodeSync().getId()});
         eventBus.publish('dl-manager-pause-cmd');
 
         updateState({started: true, progress: 0, subLabel: $_.refresh.rankedsDownload});
@@ -175,7 +181,7 @@
 
         await setLastRefreshDate();
 
-        eventBus.publish('data-refreshed', {nodeId: nodeSync.getId()});
+        eventBus.publish('data-refreshed', {nodeId: nodeSync().getId()});
         eventBus.publish('dl-manager-unpause-cmd');
     }
 
@@ -192,7 +198,7 @@
     }
 </script>
 
-<div class="refresh-widget" class:pulse={isBackgroundDownloadInProgress} class:error={hasBackgroundDownloadError}>
+<div class="refresh-widget" class:pulse={isBackgroundDownloadInProgress} class:error={hasBackgroundDownloadError} transition:fade={{ duration: 1000 }}>
     {#if $state.started}
         <Progress value={$state.progress} label={$state.label} subLabel={$state.subLabel} maxWidth="16rem"/>
     {:else}

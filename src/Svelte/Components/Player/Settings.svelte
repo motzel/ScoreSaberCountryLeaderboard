@@ -1,5 +1,6 @@
 <script>
     import {onMount} from "svelte";
+    import { fade } from 'svelte/transition';
 
     import Button from '../Common/Button.svelte';
     import Select from '../Common/Select.svelte';
@@ -11,14 +12,13 @@
     import twitch from '../../../services/twitch';
     import {
         addPlayerToGroup, getAllActivePlayersIds, getFriendsIds, getManuallyAddedPlayersIds,
-        getPlayerInfo,
-        isDataAvailable, removePlayerFromGroup, updatePlayer,
+        getPlayerInfo, isDataAvailable, removePlayerFromGroup, updatePlayer,
     } from "../../../scoresaber/players";
     import {setThemeInFastCache} from "../../../store";
     import {importDataHandler, exportJsonData} from "../../../utils/export-import";
     import {themes, setTheme} from "../../../theme";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
+    import nodeSync from '../../../utils/multinode-sync';
     import {
         _,
         trans,
@@ -231,6 +231,12 @@
             },
         ],
 
+        chartTypes: [
+            {_key: 'chart.none', id: "none"},
+            {_key: 'chart.rankingButton', id: "rank"},
+            {_key: 'chart.accuracyButton', id: "acc"},
+        ],
+
         viewTypeUpdates: [
             {_key: 'profile.settings.others.alwaysRefresh', id: "always"},
             {_key: 'profile.settings.others.keepView', id: "keep-view"},
@@ -250,6 +256,7 @@
     let values = {
         songTypes      : strings.songTypes[0],
         viewTypes      : strings.viewTypes[0],
+        chartTypes     : strings.chartTypes[1],
         viewTypeUpdates: strings.viewTypeUpdates[1],
         shownIcons     : strings.icons.map(i => i),
         lang           : availableLangs[0],
@@ -293,7 +300,7 @@
 
     }
 
-    async function refreshPlayerStatus() {
+    async function refreshPlayerStatus(profileId, country) {
         isActivePlayer = (await getAllActivePlayersIds(country)).includes(profileId);
         isManuallyAddedPlayer = (await getManuallyAddedPlayersIds(country)).includes(profileId);
         isFriend = (await getFriendsIds()).includes(profileId);
@@ -301,7 +308,7 @@
 
     let initialized = false;
 
-    async function refreshTwitchProfile() {
+    async function refreshTwitchProfile(profileId) {
         twitchProfile = await twitch.getProfileByPlayerId(profileId, true);
         twitchToken = await twitch.getCurrentToken();
         const tokenExpireInDays = twitchToken ? Math.floor(twitchToken.expires_in / 1000 / 60 / 60 / 24) : null;
@@ -354,6 +361,9 @@
         const defaultItemsPerPage = itemsPerPage.find(i => i.val === config.songBrowser.itemsPerPage);
         if (defaultItemsPerPage) configItemsPerPage = defaultItemsPerPage;
 
+        const defaultChart = strings.chartTypes.find(i => i.id === config.profile.showChart);
+        if (defaultChart) values.chartTypes = defaultChart;
+
         const defaultTheme = strings.themes.find(t => t.id === config.others.theme)
         if (defaultTheme) {
             values.theme = defaultTheme;
@@ -379,38 +389,48 @@
 
         filterSortTypes();
 
-        await refreshPlayerStatus();
+        if (profileId) {
+            await refreshPlayerStatus(profileId, country);
 
-        await refreshTwitchProfile()
+            await refreshTwitchProfile(profileId)
+        }
     }
 
     onMount(async () => {
         dataAvailable = await isDataAvailable();
 
-        await refreshConfig();
-
         playerInfo = await getPlayerInfo(profileId);
+
+        await refreshConfig();
 
         initialized = true;
 
-        const profileExists = !!(await getPlayerInfo(profileId));
         const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
-            if (!profileExists && playerId === profileId) {
-                // TODO: reload profile page for now, try to do it to be more dynamic
-                window.location.reload();
+            if (!playerInfo && playerId === profileId) {
+                await updatePlayerInfo(profileId);
             }
         })
 
-        const unsubscriberConfigChanged = eventBus.on('config-changed', () => refreshConfig());
+        const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async ({playerId}) => {
+            await updatePlayerInfo(profileId);
+        })
 
-        const twitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
-            if(playerId === profileId) await refreshTwitchProfile();
+        const unsubscriberConfigChanged = eventBus.on('config-changed', refreshConfig);
+
+        const unsubscriberTwitchLinked = eventBus.on('player-twitch-linked', async ({playerId}) => {
+            if(playerId === profileId) await refreshTwitchProfile(profileId);
+        });
+
+        const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', ({playerId}) => {
+            mainPlayerId = playerId;
         });
 
         return () => {
             unsubscriberScoresUpdated();
             unsubscriberConfigChanged();
-            twitchLinked();
+            unsubscriberTwitchLinked();
+            unsubscriberMainPlayerChanged();
+            unsubscriberDataRefreshed();
         }
     })
 
@@ -421,10 +441,12 @@
         config.users.main = profileId;
         await setConfig(config);
 
-        const playerInfo = getPlayerInfo(profileId);
+        const playerInfo = await getPlayerInfo(profileId);
         if (!playerInfo) await updatePlayer({id: profileId});
 
-        location.reload();
+        dataAvailable = true;
+
+        eventBus.publish('main-player-changed', {playerId: profileId});
     }
 
     let importing = false;
@@ -432,7 +454,9 @@
         try {
             importing = true;
             if (importBtn) importBtn.$set({disabled: true});
-            if (noDataImportBtn) noDataImportBtn.$set({disabled: true});
+            if (noDataImportBtn) {
+                noDataImportBtn.$set({disabled: true});
+            }
 
             importDataHandler(
              e,
@@ -494,6 +518,7 @@
     async function saveConfig() {
         config.songBrowser.defaultType = values.songTypes.id;
         config.songBrowser.defaultView = values.viewTypes.id;
+        config.profile.showChart = values.chartTypes.id;
         config.songBrowser.defaultSort = configSortType.field;
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = values.shownIcons.map(i => i.id);
@@ -516,27 +541,28 @@
     async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
         await updatePlayer({id: profileId});
-        await refreshPlayerStatus();
+        await refreshPlayerStatus(profileId, country);
 
-        eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync.getId()});
+        eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync().getId()});
     }
 
     async function removePlayerFromFriends() {
         await removePlayerFromGroup(profileId, isManuallyAddedPlayer);
-        await refreshPlayerStatus();
+        await refreshPlayerStatus(profileId, country);
 
         if (isManuallyAddedPlayer)
-            eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync.getId()});
+            eventBus.publish('player-removed', {playerId: profileId, nodeId: nodeSync().getId()});
         else
-            eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync.getId()});
+            eventBus.publish('player-removed-from-friends', {playerId: profileId, nodeId: nodeSync().getId()});
 
+        // TODO: remove it eventually
         window.location.reload();
     }
 
     async function manuallyAddPlayer() {
         await addPlayerToFriends();
 
-        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync.getId()});
+        eventBus.publish('player-added', {playerId: profileId, nodeId: nodeSync().getId()});
     }
 
     function onLangChange() {
@@ -547,15 +573,27 @@
         setCurrentLocale(values.locale.id);
     }
 
+    async function updatePlayerInfo(profileId) {
+        dataAvailable = await isDataAvailable();
+        playerInfo = await getPlayerInfo(profileId);
+
+        refreshPlayerStatus(profileId, country);
+        refreshTwitchProfile(profileId);
+    }
+
+    $: if (initialized && profileId) {
+        updatePlayerInfo(profileId);
+    }
+
     $: {
         translateAllStrings($_);
     }
 </script>
 
 {#if initialized && profileId}
-    <div class="buttons flex-center" class:flex-column={!dataAvailable}>
+    <div class="buttons flex-center" transition:fade={{ duration: 1000 }}>
     {#if (!dataAvailable)}
-        <File iconFa="fas fa-upload" label="Import" accept="application/json" bind:this={noDataImportBtn}
+        <File iconFa={importing ? "fas fa-spin fa-spinner" : "fas fa-upload"} label="Import" accept="application/json" bind:this={noDataImportBtn}
               on:change={importData}/>
     {:else if !isActivePlayer && (mainPlayerId && mainPlayerId !== profileId)}
         <Button iconFa="far fa-star" type="primary" title={$_.profile.addPlayer} on:click={manuallyAddPlayer}/>
@@ -572,16 +610,17 @@
         {/if}
     {/if}
 
-    {#if !mainPlayerId || mainPlayerId !== profileId}
+    {#if (!mainPlayerId || mainPlayerId !== profileId) && !importing}
         <Button iconFa="fas fa-user-check" type="primary" label={!dataAvailable ? $_.profile.setAsDefault : ''} title={$_.profile.setAsDefault} on:click={setAsMainProfile}/>
+        {#if (!dataAvailable)}
+        <span class="pulse onboarding-hint"><i class="fas fa-arrow-left"></i> {$_.onboarding.importOrSetProfile}</span>
+        {/if}
     {/if}
 
     {#if showTwitchUserBtn && twitchProfile}
         <TwitchProfileLink {profileId} twitchLogin={twitchProfile ? twitchProfile.login : null} noLabel={!!twitchProfile} />
     {/if}
-    </div>
 
-    <div class="buttons flex-center flex-column">
     {#if playerInfo}
         {#if showTwitchLinkBtn}
             <Button iconFa="fab fa-twitch" label={twitchBtnLabel} title={twitchBtnTitle} disabled={twitchBtnDisabled}
@@ -666,26 +705,27 @@
                 <section>
                     <div class="menu-label">{$_.profile.settings.profile.header}</div>
                     <div>
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.enlargeAvatar}>
-                            {$_.profile.settings.profile.enlargeAvatar}
-                        </label>
+                        <div class="columns">
+                            <div class="column is-one-third">
+                                <label class="menu-label">{$_.profile.settings.profile.defaultChart}</label>
+                                <Select bind:value={values.chartTypes} items={strings.chartTypes} />
+                            </div>
 
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.showChart}>
-                            {$_.profile.settings.profile.showChart}
-                        </label>
+                            <div class="column is-two-thirds flex-bottom">
+                                <label class="checkbox">
+                                    <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
+                                    {$_.profile.settings.profile.showOnePpCalc}
+                                </label>
 
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
-                            {$_.profile.settings.profile.showOnePpCalc}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.profile.showTwitchIcon}>
-                            {$_.profile.settings.profile.showTwitchIcon}
-                        </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" bind:checked={config.profile.showTwitchIcon}>
+                                    {$_.profile.settings.profile.showTwitchIcon}
+                                </label>
+                            </div>
+                        </div>
                     </div>
+
+
                 </section>
 
                 <section>
@@ -717,26 +757,6 @@
                             <label class="menu-label">{$_.profile.settings.others.refreshHeader}</label>
                             <Select bind:value={values.viewTypeUpdates} items={strings.viewTypeUpdates} />
                         </div>
-                    </div>
-                </section>
-
-                <section>
-                    <div class="menu-label">{$_.profile.settings.defaultSongList.header}</div>
-                    <div>
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.enhance}>
-                            {$_.profile.settings.defaultSongList.enhance}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.showDiff}>
-                            {$_.profile.settings.defaultSongList.showDiff}
-                        </label>
-
-                        <label class="checkbox">
-                            <input type="checkbox" bind:checked={config.ssSong.showWhatIfPp}>
-                            {$_.profile.settings.songLeaderboard.showWhatIfPp}
-                        </label>
                     </div>
                 </section>
 
@@ -796,7 +816,7 @@
         margin-bottom: 0;
     }
 
-    .column {
+    .column:not(.is-two-thirds) {
         text-align: center;
         padding-bottom: 0;
         max-width: 20rem;
@@ -804,6 +824,15 @@
 
     .flex-column {
         flex-direction: column;
+    }
+
+    .flex-bottom {
+        display: flex;
+        align-items: flex-end;
+        padding-bottom: 0;
+    }
+    .flex-bottom label {
+        margin-bottom: 0;
     }
 
     @media screen and (max-width: 768px) {
@@ -823,6 +852,9 @@
 
     footer {
         margin-top: auto;
+        min-height: 3.75rem;
+        justify-content: space-between;
+        align-items: flex-end;
     }
 
     footer .column {

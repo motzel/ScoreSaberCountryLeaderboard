@@ -1,5 +1,7 @@
 <script>
     import {onMount} from 'svelte';
+    import {fly} from 'svelte/transition';
+
     import debounce from '../../../utils/debounce';
 
     import Avatar from '../Common/Avatar.svelte';
@@ -9,7 +11,7 @@
     import Pp from '../Common/Pp.svelte';
     import Value from '../Common/Value.svelte';
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
-    import WhatIfPp from './WhatIfPp.svelte';
+    import WhatIfPp from '../Song/WhatIfPp.svelte';
 
     import Refresh from '../Player/Refresh.svelte';
 
@@ -17,17 +19,21 @@
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import {getLeaderboard} from "../../../song";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../network/multinode-sync';
+    import nodeSync from '../../../utils/multinode-sync';
     import {_} from '../../stores/i18n';
+    import {getActiveCountry} from '../../../scoresaber/country'
 
     export let leaderboardId;
     export let tableOnly = false;
     export let showDiff;
     export let bgLeft = "0rem";
     export let bgTop = "0rem";
+    export let bgWidth = "0rem";
+    export let bgHeight = "0rem";
     export let highlight = [];
     export let showBgCover = true;
-    export let country;
+    export let country = null;
+    export let leaderboardType;
 
     const PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY = 3000;
 
@@ -35,38 +41,51 @@
 
     let showWhatIfPp = false;
 
-    let leaderboardType;
+    let initialized = false;
 
     async function refreshLeaderboard() {
-        if (!leaderboardType) return;
+        if (!leaderboardId || !leaderboardType || (leaderboardType === 'country' && !country)) return;
 
         leaderboard = await getLeaderboard(leaderboardId, country, leaderboardType);
+    }
+
+    async function refreshConfig() {
+        const config = await getConfig('songLeaderboard');
+        showDiff = showDiff && !!(config && config.showDiff);
+        showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
+        showBgCover = showBgCover && config.showBgCover !== false;
     }
 
     onMount(async () => {
         const mainPlayerId = await getMainPlayerId()
         if (mainPlayerId) highlight.push(mainPlayerId);
 
-        const config = await getConfig('songLeaderboard');
-        showDiff = undefined !== showDiff ? showDiff : !!config.showDiff;
-        showWhatIfPp = !!config.showWhatIfPp && !tableOnly;
-        showBgCover = showBgCover && config.showBgCover !== false;
+        if (!country) {
+            country = await getActiveCountry();
+        }
+
+        await refreshConfig();
 
         const dataRefreshedUnsubscriber = eventBus.on('data-refreshed', async () => await refreshLeaderboard());
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', debounce(async () => await refreshLeaderboard(), PLAYERS_SCORES_UPDATED_DEBOUNCE_DELAY))
+        const configChangedUnsubscriber = eventBus.on('config-changed', refreshConfig);
+
+        initialized = true;
 
         return () => {
             dataRefreshedUnsubscriber();
             playerScoresUpdatedUnsubscriber();
+            configChangedUnsubscriber();
         }
     })
 
     $: {
-        refreshLeaderboard(leaderboardType);
+        refreshLeaderboard(leaderboardId, country, leaderboardType);
     }
 </script>
 
-<div class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}">
+{#if initialized}
+<div class="leaderboard-container" style="--background-image: url(/imports/images/songs/{showBgCover && leaderboard && leaderboard.length ? leaderboard[0].songHash : ''}.png); --bgLeft: {bgLeft}; --bgTop: {bgTop}; --bgHeight: {bgHeight}; --bgWidth: {bgWidth}">
 
 {#if !tableOnly}
     <div class="refresh">
@@ -99,7 +118,7 @@
             <tbody>
             {#each leaderboard as item, idx (item.id)}
                 <tr class={(item.hidden ? 'hidden' : '') + (highlight.includes(item.id) ? ' main' : '')}
-                    data-id={item.id}>
+                    data-id={item.id}  in:fly={{ x: 50, duration: 500 }}>
                     <td class="picture">
                         <Avatar playerId={item.id}/>
                     </td>
@@ -148,16 +167,18 @@
     </div>
 {/if}
 </div>
+{/if}
 
 <style>
+    .leaderboard-container {position: relative;}
     .leaderboard-container:before {
         position: absolute;
         content: ' ';
         background-image: var(--background-image);
         left: var(--bgLeft, 0);
         top: var(--bgTop, 0);
-        width: calc(100% - var(--bgLeft) - var(--bgLeft));
-        height: calc(100% - var(--bgTop) - var(--bgTop));
+        width: calc(100% + var(--bgWidth, 0) - var(--bgLeft, 0));
+        height: calc(100% + var(--bgHeight, 0) - var(--bgTop, 0));
         background-repeat: no-repeat;
         background-size: cover;
         opacity: 0.1;
@@ -205,6 +226,4 @@
     .first-fetch {
         text-align: center
     }
-
-    .leaderboard-container {position: relative;}
 </style>

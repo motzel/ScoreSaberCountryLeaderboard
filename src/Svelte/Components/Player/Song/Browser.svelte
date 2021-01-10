@@ -1,60 +1,62 @@
 <script>
-    import {onMount} from 'svelte';
-    import log from '../../../utils/logger';
-    import {copyToClipboard} from '../../../utils/clipboard';
-    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../scoresaber/pp";
-    import {getRankedSongs, RANKED, UNRANKED} from "../../../scoresaber/rankeds";
-    import {delay} from "../../../network/fetch";
+    import {onMount, tick, createEventDispatcher} from 'svelte';
+    import log from '../../../../utils/logger';
+    import {copyToClipboard} from '../../../../utils/clipboard';
+    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../../scoresaber/pp";
+    import {getRankedSongs, RANKED, UNRANKED} from "../../../../scoresaber/rankeds";
+    import {delay} from "../../../../network/fetch";
     import {
         addToDate,
         dateFromString,
         durationToMillis,
         millisToDuration,
         timestampFromString
-    } from "../../../utils/date";
-    import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../utils/js";
-    import debounce from '../../../utils/debounce';
-    import eventBus from '../../../utils/broadcast-channel-pubsub';
+    } from "../../../../utils/date";
+    import {arrayUnique, capitalize, convertArrayToObjectByKey} from "../../../../utils/js";
+    import debounce from '../../../../utils/debounce';
+    import eventBus from '../../../../utils/broadcast-channel-pubsub';
     import {
         getAllActivePlayers,
         getCountryRanking,
         getPlayerInfo,
         getRankedScoresByPlayerId,
         getScoresByPlayerId, getPlayerSongScoreHistory, isCountryPlayer,
-    } from "../../../scoresaber/players";
+    } from "../../../../scoresaber/players";
     import {
         getAccFromScore,
         getHumanDiffInfo,
         getSongDiffInfo,
         getSongMaxScore,
-    } from "../../../song";
-    import {generateCsv, downloadCsv} from '../../../utils/csv';
-    import {downloadJson} from '../../../utils/json';
-    import {round} from "../../../utils/format";
-    import memoize from '../../../utils/memoize';
-    import {getConfig, getMainPlayerId, setConfig} from "../../../plugin-config";
-    import {getActiveCountry} from "../../../scoresaber/country";
-    import {_, trans} from "../../stores/i18n";
-    import twitch from '../../../services/twitch';
+    } from "../../../../song";
+    import {generateCsv, downloadCsv} from '../../../../utils/csv';
+    import {downloadJson} from '../../../../utils/json';
+    import {round} from "../../../../utils/format";
+    import memoize from '../../../../utils/memoize';
+    import {getConfig, getMainPlayerId, setConfig} from "../../../../plugin-config";
+    import {getActiveCountry} from "../../../../scoresaber/country";
+    import {_, trans} from "../../../stores/i18n";
+    import twitch from '../../../../services/twitch';
 
-    import Song from "./Song.svelte";
-    import Pager from "../Common/Pager.svelte";
-    import Range from "../Common/Range.svelte";
-    import FormattedDate from "../Common/FormattedDate.svelte";
-    import MultiRange from "../Common/MultiRange.svelte";
-    import WhatIfPp from "./WhatIfPp.svelte";
-    import Duration from "../Common/Duration.svelte";
-    import Difficulty from "../Common/Difficulty.svelte";
-    import Value from "../Common/Value.svelte";
-    import Button from "../Common/Button.svelte";
-    import Select from "../Common/Select.svelte";
-    import Leaderboard from "./Leaderboard.svelte";
-    import Checkbox from "../Common/Checkbox.svelte";
-    import Card from "./Card.svelte";
-    import Icons from "./Icons.svelte";
-    import ScoreRank from "../Common/ScoreRank.svelte";
-    import {refreshPlayerScoreRank} from "../../../network/scoresaber/players";
-    import {getSsplCountryRanks} from '../../../scoresaber/sspl-cache'
+    import Song from "../../Song/Song.svelte";
+    import Pager from "../../Common/Pager.svelte";
+    import Range from "../../Common/Range.svelte";
+    import FormattedDate from "../../Common/FormattedDate.svelte";
+    import MultiRange from "../../Common/MultiRange.svelte";
+    import WhatIfPp from "../../Song/WhatIfPp.svelte";
+    import Duration from "../../Common/Duration.svelte";
+    import Difficulty from "../../Common/Difficulty.svelte";
+    import Value from "../../Common/Value.svelte";
+    import Button from "../../Common/Button.svelte";
+    import Select from "../../Common/Select.svelte";
+    import Leaderboard from "../../Leaderboard/Leaderboard.svelte";
+    import Checkbox from "../../Common/Checkbox.svelte";
+    import Card from "../../Song/Card.svelte";
+    import Icons from "../../Song/Icons.svelte";
+    import ScoreRank from "../../Common/ScoreRank.svelte";
+    import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
+    import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+
+    const dispatch = createEventDispatcher();
 
     export let playerId;
     export let snipedIds = [];
@@ -83,6 +85,10 @@
     let sniperModeIds = [];
     let minStarsForSniper = 0;
     let maxStars = 100;
+
+    let resultsEl = null;
+
+    let browserWasInitialized = false;
 
     let strings = {
         songTypes: [
@@ -354,7 +360,7 @@
     const getPlayersInfosForCurrentlySelected = async (withScores = true) => {
         const playersIds = getCurrentlySelectedPlayersIds();
 
-        const playersInfos = await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId)));
+        const playersInfos = (await Promise.all(playersIds.map(async playerId => getPlayerInfo(playerId)))).filter(p => p);
 
         if (withScores) {
             const playersScores = await getPlayersScores();
@@ -977,6 +983,7 @@
             const sortedRankeds = {};
 
             const playersInfos = await getPlayersInfosForCurrentlySelected(true);
+            if (!playersInfos.length) return;
 
             const ssplCountryRanksCache = await getSsplCountryRanks();
 
@@ -1285,7 +1292,7 @@
     async function exportPlaylist() {
         const allPlayedSongs = Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
         const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
-        const bloodTrailImg = (await import('../../../resource/img/bloodtrail-playlist.png')).default;
+        const bloodTrailImg = (await import('../../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
             playlistTitle      : "SSPL playlist",
             playlistAuthor     : "https://github.com/motzel/ScoreSaberCountryLeaderboard",
@@ -1360,8 +1367,27 @@
         checkedSongs = [];
     }
 
-    function onPageChanged() {
+    function scrollToTargetAdjusted(target, offset = 0) {
+        if (!target) return;
+
+        var elementPosition = target.getBoundingClientRect().top;
+        var offsetPosition = elementPosition - offset + window.pageYOffset;
+
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: "smooth",
+        });
+    }
+
+    async function onPageChanged() {
         storeCurrentFirstIdentifier();
+
+        if (browserWasInitialized) {
+            await tick();
+            scrollToTargetAdjusted(resultsEl, 106);
+        }
+
+        browserWasInitialized = true;
     }
 
     $: shownColumns = strings.columns.filter(c => c.displayed)
@@ -1378,9 +1404,32 @@
     $: {
         translateAllStrings($_);
     }
+
+    async function scrollCardIntoView(selector, offset = 0) {
+        await tick();
+
+        const el = document.querySelector(selector);
+        if (el) {
+            scrollToTargetAdjusted(el, 60 + offset);
+        }
+    }
+
+    function onTypeChange(newType) {
+        dispatch('browser-type-changed', newType)
+    }
+
+    let type = 'cached';
 </script>
 
 {#if initialized}
+    <div class="header">
+        <div class="switch-types">
+            <Button iconFa="fa fa-clock" type="default" label={$_.songBrowser.ssScoreType.recent} on:click={() => onTypeChange('recent')} notSelected={true} />
+            <Button iconFa="fa fa-cubes" type="default" label={$_.songBrowser.ssScoreType.top} on:click={() => onTypeChange('top')} notSelected={true} />
+            <Button iconFa="fas fa-database" type="danger" label={$_.plugin.cachedButton} notSelected={false} />
+        </div>
+    </div>
+
     <div class="filters">
         <div>
             <header>{$_.songBrowser.typeHeader}</header>
@@ -1453,9 +1502,10 @@
     {:then calc}
         {#if songsPage.songs.length}
             {#if viewType.id === 'cards'}
-            <div class="columns card-view is-multiline">
+            <div bind:this={resultsEl} class="columns card-view is-multiline">
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop")} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
+                    <div class:full-width={!!song.leaderboardOpened} class={"song-card column is-full is-half-tablet " + (songsPage.series > 1 ? "is-one-third-fullhd" : "is-one-quarter-widescreen is-one-third-desktop") + ( " card-" + song.leaderboardId ) }
+                         on:dblclick={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.card-' + song.leaderboardId)} }>
                         <Card leaderboardId={song.leaderboardId} hash={song.hash} padding="1em" iconSize="0.875em"
                               songName={song.name} songAuthorName={song.songAuthor} levelAuthorName={song.levelAuthor}
                               diffInfo={song.diffInfo}
@@ -1535,15 +1585,15 @@
                                 </div>
 
                                 {#if !!song.leaderboardOpened}
-                                    <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} />
+                                    <Leaderboard leaderboardId={song.leaderboardId} showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')} showBgCover={false} onlySelectedDiff={true} type="cached" />
                                 {/if}
                             </div>
 
                             <div slot="footer">
                                 <div class="card-icons">
-                                    <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
+                                    <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.card-' + song.leaderboardId)}} />
 
-                                    {#if selectedAdditionalCols.length > 0}
+                                    {#if selectedAdditionalCols.length > 0 && song}
                                     <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                     {/if}
                                 </div>
@@ -1554,7 +1604,7 @@
             </div>
             {:else}
 
-            <table class="ranking sspl">
+            <table bind:this={resultsEl} class="ranking sspl">
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
                     <tr>
@@ -1610,7 +1660,8 @@
 
                 <tbody>
                 {#each songsPage.songs as song (song.leaderboardId)}
-                    <tr class="item" class:opened={!!song.leaderboardOpened}>
+                    <tr class={"item tr-" + song.leaderboardId} class:opened={!!song.leaderboardOpened}
+                        on:dblclick={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.tr-' + song.leaderboardId)}}>
                         {#if showCheckboxes}
                             <td class="check">
                                 <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
@@ -1622,7 +1673,7 @@
                         </td>
 
                         <td class="song">
-                            <div class="flex-start flex-justify-between">
+                            <div>
                                 <Song song={song}>
                                     <figure>
                                         <img src="/imports/images/songs/{song.hash}.png"/>
@@ -1634,7 +1685,7 @@
                                     </figure>
                                 </Song>
 
-                                <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-down" : "fas fa-chevron-right"} on:click={() => song.leaderboardOpened = !song.leaderboardOpened} />
+                                <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-down" : "fas fa-chevron-right"} on:click={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.tr-' + song.leaderboardId)}} />
                             </div>
                         </td>
 
@@ -1734,8 +1785,11 @@
                         {/each}
                     </tr>
                     {#if !!song.leaderboardOpened}
-                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => song.leaderboardOpened = !song.leaderboardOpened}>
-                        <Leaderboard leaderboardId={song.leaderboardId} {country} tableOnly={true} showDiff={!!getObjectFromArrayByKey(selectedColumns, 'diff')} bgLeft="-2rem" bgTop="-1rem" />
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => toggleLeaderboardOpen(song)}>
+                        <Leaderboard leaderboardId={song.leaderboardId}
+                                     showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')}
+                                     bgLeft="-2rem" bgTop="-3rem" bgWidth="2rem" bgHeight="1.5rem"
+                                     onlySelectedDiff={true} type="cached" />
                     </td></tr>
                     {/if}
                 {/each}
@@ -1820,6 +1874,22 @@
 {/if}
 
 <style>
+    .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: .75rem;
+    }
+    .switch-types {
+        display: flex;
+        font-size: .75rem;
+        text-align: center;
+    }
+    :global(.switch-types button) {
+        font-weight: 500;
+        margin-right: .125rem!important;
+    }
+
     .filters .columns {
         max-width: 15rem;
     }
@@ -1868,6 +1938,10 @@
 
     .card-view .scores.bigger {
         font-size: .875rem;
+    }
+
+    :global(.card-view .scores.bigger table.ranking, table.ranking table.ranking.sspl) {
+        font-size: 1rem;
     }
 
     .card-view .scores .column:nth-child(2n) {
@@ -2034,6 +2108,11 @@
         border-left-width: 1px;
     }
 
+    tbody td.song > div {
+        display: flex;
+        justify-content: space-between;
+    }
+
     tbody td.song figure {
         display: flex;
         justify-content: flex-start;
@@ -2085,7 +2164,7 @@
     }
 
     tbody tr.leaderboard td {
-        padding: 1rem!important;
+        padding: 1rem 1rem 1.5rem 1rem!important;
     }
 
     table.ranking tbody tr.leaderboard:hover {

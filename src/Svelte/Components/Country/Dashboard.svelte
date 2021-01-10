@@ -92,11 +92,12 @@
 </script>
 
 {#if country}
-<div class="filters">
-    <TypeFilterSelect bind:value={leaderboardType} {country} />
-</div>
+<div class="container-fluid">
+    <div class="filters">
+        <TypeFilterSelect bind:value={leaderboardType} {country} />
+    </div>
 
-<div class="columns is-multiline">
+    <div class="columns is-multiline">
     <div class="leaderboard content column is-full-tablet is-half-widescreen is-two-fifths-fullhd">
         <div class="ranking box has-shadow">
             <header>
@@ -123,7 +124,7 @@
                     <Select bind:value={values.selectedSongPeriod} items={strings.lastSongsPeriods} right={true}/>
                 </nav>
             </header>
-            <Songs {country} sortBy="timeset" filterFunc={songScoresFilter} {refreshTag}
+            <Songs {country} sortBy="timeset" filterFunc={songScoresFilter} {refreshTag} {leaderboardType}
                    min={new Date(Date.now()-values.selectedSongPeriod.value*1000*60*60*24)}
                    itemsPerPage={5} pagesDisplayMax={7} noRank={true}/>
         </div>
@@ -136,9 +137,10 @@
                 </nav>
             </header>
 
-            <Songs {country} sortBy="pp" filterFunc={songScoresFilter} min={minPp} itemsPerPage={5} pagesDisplayMax={7}  {refreshTag} />
+            <Songs {country} sortBy="pp" filterFunc={songScoresFilter} min={minPp} itemsPerPage={5} pagesDisplayMax={7}  {refreshTag} {leaderboardType} />
         </div>
     </div>
+</div>
 </div>
 {/if}
 
@@ -147,6 +149,7 @@
         display: flex;
         justify-content: flex-start;
         margin-bottom: .5rem;
+        margin-top: 2.5rem;
     }
 
     .box {

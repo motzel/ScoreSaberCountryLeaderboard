@@ -18,8 +18,7 @@ export default {
 
             profile: {
                 header: 'Profil',
-                enlargeAvatar: 'Powiększaj avatar',
-                showChart: 'Pokazuj wykres',
+                defaultChart: 'Domyślny wykres',
                 showOnePpCalc: 'Pokazuj kalkulator +1PP',
                 showTwitchIcon: 'Pokazuj przycisk Twitch',
             },
@@ -30,12 +29,6 @@ export default {
                 showWhatIfPp: 'Pokazuj przycisk "jeśli tak zagrasz"',
                 showBgCover: 'Pokazuj okładkę w tle',
                 defaultType: 'Domyślny typ',
-            },
-
-            defaultSongList: {
-                header: 'Domyślna lista nut',
-                enhance: 'Dodawaj wynik/dokładność',
-                showDiff: 'Pokazuj różnice',
             },
 
             others: {
@@ -55,15 +48,16 @@ export default {
         removeFromFriends: 'Usuń z Przyjaciół',
         removePlayer: 'Usuń gracza',
         rawNewPlay: 'pp w nowej grze',
-        onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, ${num2} jest, a nawet ${num3}. Ale "${expectedStr}"?',
-        mapToPp: 'Mapa ${stars}* przy ${acc}% da ${rawPp}pp raw i +${pp}pp global',
+        onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, czy ${num2} jest. Ale "${str}"?',
         stats: {
             ranking: 'Ranking',
             pp: 'Punkty',
             playCount: 'Liczba gier',
             totalScore: 'Wynik razem',
             replays: 'Powtórki obejrzane przez innych',
+            replaysShort: 'Powtorki',
             role: 'Rola',
+            inactiveAccount: 'Konto nieaktywne',
             rankedPlayCount: 'Liczba zagranych rankedów',
             countryRank: 'Pozycja na krajowych leaderboardach',
             best: 'Naj.',
@@ -72,6 +66,9 @@ export default {
             avgRankedAccuracy: 'Średnia celność rankedów',
             medianRankedAccuracy: 'Mediana celności rankedów',
             stdDeviationRankedAccuracy: 'Odchylenie stand. celności rankedów',
+            avgRankedAccuracyShort: 'Średnia',
+            medianRankedAccuracyShort: 'Mediana',
+            stdDeviationRankedAccuracyShort: 'Odchylenie std',
         },
         twitch: {
             link: 'Połącz',
@@ -80,6 +77,12 @@ export default {
             daysLeft: 'Pozostało dni: ${days}',
             setupPlayerProfile: 'Ustaw profil Twitch',
             userNotFound: 'Użytkownik Twitcha nie znaleziony',
+            vodsBadge: 'Twitch VOD',
+            video: 'Wideo',
+        },
+        aside: {
+            globalRanking: 'Ranking globalny',
+            countryRanking: 'Ranking krajowy',
         },
     },
     songBrowser: {
@@ -158,7 +161,7 @@ export default {
             label: 'Porównaj',
             add: 'Dodaj gracza do porównania',
             remove: 'Usuń z porównania',
-            saveAsDefault: 'Zapisz jako domyślne'
+            saveAsDefault: 'Zapisz porównanie jako domyślne'
         },
         playlist: {
             label: 'Playlista',
@@ -182,6 +185,10 @@ export default {
         former: 'Poprzednio',
         totalPp: 'Razem dla ${name}',
         rankOfDate: 'Pozycja z dnia ${date}, kliknij aby odświeżyć',
+        ssScoreType: {
+            top: 'Najlepsze',
+            recent: 'Ostatnie',
+        },
     },
     songLeaderboard: {
         player: 'Gracz',
@@ -196,6 +203,7 @@ export default {
             country: 'Tylko kraj',
             manually_added: 'Przyjaciele',
         },
+        difficultyGraph: 'Difficulty graph',
     },
     songCard: {
         scores: 'Wyniki',
@@ -261,6 +269,7 @@ export default {
         accTooltip: 'Celność: ${acc}% | Gwiazdki: ${stars}*',
         rankingButton: 'Ranking',
         accuracyButton: 'Celność',
+        none: 'Wyłączony'
     },
     themes: {
         dark: 'Jedyny słuszny',
@@ -269,7 +278,8 @@ export default {
         sombra: 'Sombra'
     },
     plugin: {
-        transformButton: 'Transformuj',
+        cachedButton: 'Cache',
+        liveButton: 'Live',
     },
     common: {
         ok: 'OK',
@@ -292,5 +302,8 @@ export default {
     db: {
         conversionMessage: 'Konwersja bazy danych',
         conversionSecondaryMessage: 'Proszę czekać, nie powinno to zająć dłużej niż pół minuty...',
+    },
+    onboarding: {
+        importOrSetProfile: "Zaimportuj dane lub ustaw jako swój profil"
     }
 }

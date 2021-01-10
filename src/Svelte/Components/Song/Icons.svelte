@@ -1,5 +1,6 @@
 <script>
     import {onMount} from 'svelte';
+    import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {getSongByHash} from "../../../network/beatsaver";
     import {getConfig} from "../../../plugin-config";
     import {copyToClipboard} from '../../../utils/clipboard';
@@ -14,14 +15,20 @@
     let songKey;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
 
-    onMount(async () => {
+    async function refreshConfig() {
         const config = await getConfig('songBrowser');
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
+    }
+
+    onMount(async () => {
+        await refreshConfig();
 
         const songInfo = await getSongByHash(hash);
         if (songInfo && songInfo.key) {
             songKey = songInfo.key;
         }
+
+        return eventBus.on('config-changed', refreshConfig);
     });
 </script>
 

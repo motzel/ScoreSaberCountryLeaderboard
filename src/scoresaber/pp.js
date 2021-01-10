@@ -19,7 +19,7 @@ export function calcRawPpAtIdx(bottomScores, idx, expected) {
 }
 
 export function findRawPp(scores, expected) {
-    if (!scores.length) return expected;
+    if (!scores || !scores.length) return expected;
 
     let idx = scores.length - 1;
 
