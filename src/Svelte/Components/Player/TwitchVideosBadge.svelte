@@ -10,19 +10,19 @@
   let showDetails = false;
 </script>
 
-{#if playerTwitchProfile && playerTwitchProfile.videos}
+{#if playerTwitchProfile}
   <Badge label={$_.profile.twitch.vodsBadge} fluid={true} color="#dbdbdb" bgColor="#9146ff">
     <span slot="value">
-      <Value value={playerTwitchProfile.videos.length} digits={0} />
+      <Value value={playerTwitchProfile && playerTwitchProfile.videos ? playerTwitchProfile.videos.length : 0} digits={0} />
 
-     {#if playerTwitchProfile.videos.length > 0}
+     {#if playerTwitchProfile && playerTwitchProfile.videos && playerTwitchProfile.videos.length > 0}
        <i class={showDetails ? "fas fa-chevron-up details" : "fas fa-chevron-right details"}
           on:click={() => showDetails = !showDetails}></i>
      {/if}
     </span>
   </Badge>
 
-  {#if playerTwitchProfile.videos.length > 0 && showDetails}
+  {#if playerTwitchProfile && playerTwitchProfile.videos && playerTwitchProfile.videos.length > 0 && showDetails}
   <div class="content" transition:slide={{duration: 500}}>
     <table>
       <thead>
