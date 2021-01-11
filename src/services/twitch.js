@@ -103,7 +103,7 @@ const updateVideosForPlayerId = async playerId => {
     const twitchProfile = await getProfileByPlayerId(playerId, true);
     const playerInfo = await getPlayerInfo(playerId);
 
-    if (twitchProfile?.id && playerInfo) {
+    if (twitchProfile?.id && playerInfo && playerInfo.lastUpdated) {
         const scoresRecentPlay = playerInfo.recentPlay ? playerInfo.recentPlay : playerInfo.lastUpdated;
         const twitchLastUpdated = twitchProfile.lastUpdated;
 
