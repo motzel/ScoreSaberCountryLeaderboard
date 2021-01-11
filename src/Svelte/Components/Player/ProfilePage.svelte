@@ -44,6 +44,8 @@
 
     const ONE_DAY = 1000 * 60 * 60 * 24
 
+    let badgeStyling = "";
+
     let transformed = autoTransform;
 
     let name = profilePage && profilePage.name ? profilePage.name : '';
@@ -52,8 +54,8 @@
     let country = profilePage && profilePage.country ? profilePage.country : null;
 
     let recentPlay = profilePage && profilePage.scores && profilePage.scores.length && profilePage.pageNum === 1 && profilePage.type === 'recent'
-     ? dateFromString(profilePage.scores[0].timeset)
-     : null;
+      ? dateFromString(profilePage.scores[0].timeset)
+      : null;
 
     let chartHistory = profilePage && profilePage.chartHistory && profilePage.chartHistory.length ? profilePage.chartHistory : null;
     let ssBadges = profilePage && profilePage.ssBadges && profilePage.ssBadges.length ? profilePage.ssBadges : null;
@@ -72,7 +74,6 @@
 
     let mode = 'pp-stars';
     let showCalc = false;
-    let showBadges = true;
     let showChart = true;
     let defaultChartType = 'rank';
 
@@ -133,11 +134,11 @@
 
     function filterAccChart(score) {
         return filterByPeriod(score, values.selectedPeriod.value) && (
-         !selectedAccBadges.length ||
-         selectedAccBadges.reduce((result, badge) => {
-             return result || ((!badge.min || badge.min <= score.acc) && (!badge.max || badge.max > score.acc))
+          !selectedAccBadges.length ||
+          selectedAccBadges.reduce((result, badge) => {
+              return result || ((!badge.min || badge.min <= score.acc) && (!badge.max || badge.max > score.acc))
 
-         }, false)
+          }, false)
         );
     }
 
@@ -147,29 +148,31 @@
         const basicStats = [];
 
         const addStdStat = (name, label, color, title = null, overriderValue = null, type = 'number', otherProps = {}) =>
-         ssStats && ssStats.hasOwnProperty(name)
-          ? basicStats.push({
-              ...{
-                  label,
-                  title,
-                  value: overriderValue !== null ? overriderValue : ssStats[name],
-                  digits: 0,
-                  bgColor: `var(--${color})`,
-                  type,
-                  fluid: true,
-              }, ...otherProps,
-          })
-          : null;
+          ssStats && ssStats.hasOwnProperty(name)
+            ? basicStats.push({
+                ...{
+                    label,
+                    title,
+                    value: overriderValue !== null ? overriderValue : ssStats[name],
+                    digits: 0,
+                    bgColor: `var(--${color})`,
+                    type,
+                    fluid: true,
+                    styling: badgeStyling
+                }, ...otherProps,
+            })
+            : null;
 
         const addSsplStat = (varName, label) => stats && stats.hasOwnProperty(varName)
-         ? basicStats.push({
-             label,
-             value: stats[varName],
-             digits: 0,
-             bgColor: `var(--ppColour)`,
-             fluid: true,
-         })
-         : null;
+          ? basicStats.push({
+              label,
+              value: stats[varName],
+              digits: 0,
+              bgColor: `var(--ppColour)`,
+              fluid: true,
+              styling: badgeStyling
+          })
+          : null;
 
         const addTotalScore = allScores => addStdStat('totalScore', $_.profile.stats.totalScore, 'selected', null, allScores ? allScores.reduce((sum, s) => sum + s.score, 0) : null);
 
@@ -177,9 +180,10 @@
 
         if (playerScores && playerScores.length) {
             addSsplStat('playCount', $_.profile.stats.rankedPlayCount);
-            addStdStat('replays', $_.profile.stats.replaysShort, 'dimmed', $_.profile.stats.replays);
+            if (badgeStyling !== 'text') addStdStat('replays', $_.profile.stats.replaysShort, 'dimmed', $_.profile.stats.replays);
             addTotalScore(allScores);
             addSsplStat('totalScore', $_.profile.stats.totalRankedScore);
+            if (badgeStyling === 'text') addStdStat('replays', $_.profile.stats.replays, 'dimmed');
         } else {
             addTotalScore();
             addStdStat('replays', $_.profile.stats.replaysShort, 'dimmed', $_.profile.stats.replays);
@@ -200,19 +204,20 @@
 
         let accStats = [];
         const addSsplStat = (varName, label, title, color) => stats && stats.hasOwnProperty(varName)
-         ? accStats.push({
-             label,
-             value: stats[varName],
-             title: title,
-             digits: 2,
-             bgColor: `var(--${color})`,
-             fluid: true,
-             suffix: '%',
-         })
-         : null;
-        addSsplStat('avgAcc', $_.profile.stats.avgRankedAccuracyShort, $_.profile.stats.avgRankedAccuracy, 'selected');
-        addSsplStat('medianAcc', $_.profile.stats.medianRankedAccuracyShort, $_.profile.stats.medianRankedAccuracy, 'ppColour');
-        addSsplStat('stdDeviation', $_.profile.stats.stdDeviationRankedAccuracyShort, $_.profile.stats.stdDeviationRankedAccuracy, 'decrease');
+          ? accStats.push({
+              label,
+              value: stats[varName],
+              title: title,
+              digits: 2,
+              bgColor: `var(--${color})`,
+              fluid: true,
+              suffix: '%',
+              styling: badgeStyling
+          })
+          : null;
+        addSsplStat('avgAcc', badgeStyling === 'text' ? $_.profile.stats.avgRankedAccuracy : $_.profile.stats.avgRankedAccuracyShort, badgeStyling === 'text' ? '' : $_.profile.stats.avgRankedAccuracy, 'selected');
+        addSsplStat('medianAcc', badgeStyling === 'text' ? $_.profile.stats.medianRankedAccuracy : $_.profile.stats.medianRankedAccuracyShort, badgeStyling === 'text' ? '' : $_.profile.stats.medianRankedAccuracy, 'ppColour');
+        addSsplStat('stdDeviation', badgeStyling === 'text' ? $_.profile.stats.stdDeviationRankedAccuracy : $_.profile.stats.stdDeviationRankedAccuracyShort, badgeStyling === 'text' ? '' : $_.profile.stats.stdDeviationRankedAccuracy, 'decrease');
 
         return accStats;
     }
@@ -225,7 +230,8 @@
         }
 
         showCalc = config && config.profile && config.profile.showOnePpCalc;
-        showBadges = config && config.profile && (config.profile.showBadges === undefined || config.profile.showBadges);
+
+        badgeStyling = config && config.profile && config.profile.statsStyle === 'text' ? 'text' : '';
     }
 
     function refreshChart(config, chartHistory) {
@@ -235,18 +241,18 @@
 
     function setPlayers(profileId, mainPlayerId, name, compareTo) {
         players = []
-         .concat(profileId ? [{playerId: profileId, name}] : [])
-         .concat(
-          profileId && mainPlayerId && mainPlayerId !== profileId
-           ? [{playerId: mainPlayerId, name: 'Main'}] :
-           [],
-         )
-         .concat(
-          compareTo && compareTo.length
-           ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
-           : [],
-         )
-         .slice(0, MAX_COMPARE_PLAYERS);
+          .concat(profileId ? [{playerId: profileId, name}] : [])
+          .concat(
+            profileId && mainPlayerId && mainPlayerId !== profileId
+              ? [{playerId: mainPlayerId, name: 'Main'}] :
+              [],
+          )
+          .concat(
+            compareTo && compareTo.length
+              ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
+              : [],
+          )
+          .slice(0, MAX_COMPARE_PLAYERS);
     }
 
     function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
@@ -254,22 +260,22 @@
 
         const ssplCountryRank = playerInfo && activeCountry && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (playerInfo && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
         if (ssplCountryRank) newCountryRanks =
-         activeCountry === country
-          ? [{
-              rank: ssplCountryRank,
-              subRank: ssStats && ssStats.countryRank ? ssStats.countryRank : null,
-              country: activeCountry,
-              type: 'active-country',
-          }]
-          : newCountryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
+          activeCountry === country
+            ? [{
+                rank: ssplCountryRank,
+                subRank: ssStats && ssStats.countryRank ? ssStats.countryRank : null,
+                country: activeCountry,
+                type: 'active-country',
+            }]
+            : newCountryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
 
         if (country && ssStats && ssStats.countryRank && (!ssplCountryRank || activeCountry !== country))
             newCountryRanks = newCountryRanks
-             .concat([{
-                 rank: ssStats.countryRank,
-                 country,
-                 type: 'country',
-             }]);
+              .concat([{
+                  rank: ssStats.countryRank,
+                  country,
+                  type: 'country',
+              }]);
 
         countryRanks = newCountryRanks;
     }
@@ -315,8 +321,8 @@
             if (!pageData || !pageData.scores) throw 'Download error';
 
             recentPlay = pageData.scores.length && pageData.scores[0].timeset && isDateObject(pageData.scores[0].timeset)
-             ? pageData.scores[0].timeset
-             : addToDate(new Date(), -ONE_DAY); // no scores at all - schedule as if player is not playing rn
+              ? pageData.scores[0].timeset
+              : addToDate(new Date(), -ONE_DAY); // no scores at all - schedule as if player is not playing rn
 
             eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync().getId(), playerId, profilePage: pageData});
         }
@@ -332,12 +338,12 @@
         const TEN_SECS = 1000 * 10;
 
         const nextUpdateIn = !recentPlay
-         ? TEN_SECS
-         : (
-          recentPlay > addToDate(new Date(), -10 * ONE_MIUTE)
-           ? ONE_MIUTE
-           : 5 * ONE_MIUTE
-         );
+          ? TEN_SECS
+          : (
+            recentPlay > addToDate(new Date(), -10 * ONE_MIUTE)
+              ? ONE_MIUTE
+              : 5 * ONE_MIUTE
+          );
 
         setTimeout(() => refreshProfile(playerId), nextUpdateIn);
     }
@@ -481,8 +487,8 @@
         }, {...stats})
 
         stats.medianAcc = scores.length > 1
-         ? (scores.sort((a, b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc
-         : scores[0].acc;
+          ? (scores.sort((a, b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc
+          : scores[0].acc;
         stats.avgAcc = stats.totalAcc / scores.length;
         stats.stdDeviation = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(stats.avgAcc - s.acc, 2), 0) / scores.length);
 
@@ -494,8 +500,8 @@
     const filterByPeriod = (s, period) => period === ALL || Date.now() - timestampFromString(s.timeset) <= period * ONE_DAY;
 
     $: allRankedScores = playerScores
-     ? playerScores.filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
-     : [];
+      ? playerScores.filter(s => s.pp > 0 && (!UNRANKED.includes(s.leaderboardId) || RANKED.includes(s.leaderboardId)))
+      : [];
 
     $: filteredRankedScores = allRankedScores.filter(s => filterByPeriod(s, values.selectedPeriod.value));
     $: filteredAllScores = playerScores ? playerScores.filter(s => filterByPeriod(s, values.selectedPeriod.value)) : null;
@@ -503,8 +509,8 @@
     $: stats = getPlayerStats(filteredRankedScores, rankedsNotesCache, initialized)
     $: ssplCountryRankStats = getSsplCountryRankStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, initialized)
 
-    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores);
-    $: accStats = getAccStats(stats);
+    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores, badgeStyling);
+    $: accStats = getAccStats(stats, badgeStyling);
 
     $: isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
 
@@ -547,7 +553,7 @@
 
         // update browser url
         const url = new URL(
-         getPlayerProfileUrl(players[0].playerId, !(scoresType === 'top'), false, currentPage + 1),
+          getPlayerProfileUrl(players[0].playerId, !(scoresType === 'top'), false, currentPage + 1),
         );
         history.replaceState(null, '', url.toString());
     }
@@ -575,10 +581,10 @@
 </script>
 
 <div class="container">
-<div class="player-top">
-    <div class="icons"><Settings {profileId} /></div>
-    <div class="refresh"><Refresh {profileId} /></div>
-</div>
+    <div class="player-top">
+        <div class="icons"><Settings {profileId} /></div>
+        <div class="refresh"><Refresh {profileId} /></div>
+    </div>
 </div>
 
 <div class="container">
@@ -608,34 +614,42 @@
                                     <Value value={rank} prefix="#" digits={0} zero="#0" />
                                 </a>
                                 {#each countryRanks as countryRank}
-                                <a href="/global?country={countryRank.country}"
-                                   data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
-                                >
-                                    <img src="/imports/images/flags/{countryRank.country}.png">
-                                    <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" />
-                                    {#if countryRank.subRank && countryRank.subRank !== countryRank.rank}
-                                    <small>(#{ countryRank.subRank })</small>
-                                    {/if}
-                                </a>
+                                    <a href="/global?country={countryRank.country}"
+                                       data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
+                                    >
+                                        <img src="/imports/images/flags/{countryRank.country}.png">
+                                        <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" />
+                                        {#if countryRank.subRank && countryRank.subRank !== countryRank.rank}
+                                            <small>(#{ countryRank.subRank })</small>
+                                        {/if}
+                                    </a>
                                 {/each}
                             </h2>
                         </div>
 
                         {#if playerScores && playerScores.length && ssBadges && ssBadges.length}
-                        <div class="column">
-                            <div class="badges ss-badges" transition:fade={{ duration: 2000 }}>
-                                {#each ssBadges as ssBadge}
-                                    <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
-                                {/each}
+                            <div class="column">
+                                <div class="badges ss-badges" transition:fade={{ duration: 2000 }}>
+                                    {#each ssBadges as ssBadge}
+                                        <img src={ssBadge.src} alt={ssBadge.title} title={ssBadge.title}/>
+                                    {/each}
+                                </div>
                             </div>
-                        </div>
                         {/if}
                     </div>
 
                     <div class="columns">
-                        <div class="column">
-                            <div class="badges">
+                        <div class="column"><div class:flex-column-between={badgeStyling === 'text'}>
+                            <div class={"badges " + badgeStyling}>
                                 {#each basicStats as stat} <Badge {...stat}/> {/each}
+                            </div>
+
+                            <div class="badges std">
+                                <TwitchVideosBadge {playerTwitchProfile} />
+
+                                {#if showCalc && allRankedScores && allRankedScores.length}
+                                    <ProfilePpCalc scores={allRankedScores} playerId={playerInfo.id} />
+                                {/if}
                             </div>
 
                             {#if (!playerScores || !playerScores.length) && ssBadges && ssBadges.length}
@@ -645,47 +659,39 @@
                                     {/each}
                                 </div>
                             {/if}
-
-                            <div class="badges">
-                                <TwitchVideosBadge {playerTwitchProfile} />
-
-                                {#if showCalc && allRankedScores && allRankedScores.length}
-                                    <ProfilePpCalc scores={allRankedScores} playerId={playerInfo.id} />
-                                {/if}
-                            </div>
-                        </div>
+                        </div></div>
 
                         {#if playerScores && playerScores.length}
-                        <div class="column">
-                            {#if accStats}
-                                <div class="badges right">
-                                    {#each accStats as stat} <Badge {...stat}/> {/each}
-                                </div>
-                            {/if}
+                            <div class="column"><div class:flex-column-between={badgeStyling === 'text'}>
+                                {#if accStats}
+                                    <div class={"badges right " + badgeStyling}>
+                                        {#each accStats as stat} <Badge {...stat}/> {/each}
 
-                            {#if ssplCountryRankStats}
-                                <Badge label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
-                                    <span class="sspl-ranks" slot="value">
-                                        <div>
-                                            {$_.profile.stats.best}: <Value value={ssplCountryRankStats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={ssplCountryRankStats.bestRankCnt} digits={0} zero="-" />)
-                                        </div>
-                                        <div>
-                                            {$_.profile.stats.avg}: <Value value={ssplCountryRankStats.avgRank} digits={2} prefix="#" zero="-" />
-                                        </div>
-                                    </span>
-                                </Badge>
-                            {/if}
+                                        {#if ssplCountryRankStats}
+                                        <Badge styling={badgeStyling} label={$_.profile.stats.countryRank} bgColor="var(--dimmed)" fluid={true}>
+                                            <span class="sspl-ranks" slot="value">
+                                                <div>
+                                                    {$_.profile.stats.best}: <Value value={ssplCountryRankStats.bestRank} digits={0} prefix="#" zero="-" /> (<Value value={ssplCountryRankStats.bestRankCnt} digits={0} zero="-" />)
+                                                </div>
+                                                <div>
+                                                    {$_.profile.stats.avg}: <Value value={ssplCountryRankStats.avgRank} digits={2} prefix="#" zero="-" />
+                                                </div>
+                                            </span>
+                                        </Badge>
+                                        {/if}
+                                    </div>
+                                {/if}
 
-                            {#if showBadges && stats && stats.badges}
-                                <div class="badges right">
-                                    {#each stats.badges as badge (badge)}
-                                        <Badge label={badge.name} value={badge.value} title={badge.title} color="white"
-                                               bgColor={badge.color} digits={0} on:click={() => onAccBadgeClick(badge)}
-                                               clickable={true} notSelected={selectedAccBadges.length && ! (selectedAccBadges.includes(badge))} />
-                                    {/each}
-                                </div>
-                            {/if}
-                        </div>
+                                {#if stats && stats.badges}
+                                    <div class="badges std right">
+                                        {#each stats.badges as badge (badge)}
+                                            <Badge label={badge.name} value={badge.value} title={badge.title} color="white"
+                                                   bgColor={badge.color} digits={0} on:click={() => onAccBadgeClick(badge)}
+                                                   clickable={true} notSelected={selectedAccBadges.length && ! (selectedAccBadges.includes(badge))} />
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </div></div>
                         {/if}
                     </div>
                 </div>
@@ -705,33 +711,33 @@
                     <Browser playerId={profileId} {recentPlay} on:browser-type-changed={onBrowserTypeChanged} />
                 {:else}
                     <ScoreSaberProvider
-                     {players}
-                     playerId={profilePage && profilePage.playerId ? profilePage.playerId : null}
-                     scores={profilePage && profilePage.scores ? profilePage.scores : []}
-                     pageNum={currentPage + 1}
-                     totalItems={ssStats && ssStats.playCount ? ssStats.playCount : 0}
-                     bind:type={scoresType}
-                     pauseLoading={false}
-                     {playerTwitchProfile}
-                     {recentPlay}
-                     let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
+                      {players}
+                      playerId={profilePage && profilePage.playerId ? profilePage.playerId : null}
+                      scores={profilePage && profilePage.scores ? profilePage.scores : []}
+                      pageNum={currentPage + 1}
+                      totalItems={ssStats && ssStats.playCount ? ssStats.playCount : 0}
+                      bind:type={scoresType}
+                      pauseLoading={false}
+                      {playerTwitchProfile}
+                      {recentPlay}
+                      let:songs let:series let:totalItems let:error let:beforePageChanged let:isPaused
                     >
                         <ScoreSaberPresenter
-                         bind:this={ssPresenter}
-                         bind:players
-                         {songs}
-                         {series}
-                         {error}
-                         bind:currentPage
-                         {totalItems}
-                         bind:type={scoresType}
-                         {beforePageChanged}
-                         on:browse={onScoreBrowse}
-                         isCached={!!playerScores && !!playerScores.length}
-                         {isPaused}
-                         cachedRecentPlay={playerInfo ? playerInfo.recentPlay : null}
-                         on:transform-profile={onTransformProfile}
-                         maxComparePlayers={MAX_COMPARE_PLAYERS}
+                          bind:this={ssPresenter}
+                          bind:players
+                          {songs}
+                          {series}
+                          {error}
+                          bind:currentPage
+                          {totalItems}
+                          bind:type={scoresType}
+                          {beforePageChanged}
+                          on:browse={onScoreBrowse}
+                          isCached={!!playerScores && !!playerScores.length}
+                          {isPaused}
+                          cachedRecentPlay={playerInfo ? playerInfo.recentPlay : null}
+                          on:transform-profile={onTransformProfile}
+                          maxComparePlayers={MAX_COMPARE_PLAYERS}
                         />
                     </ScoreSaberProvider>
                 {/if}
@@ -942,20 +948,16 @@
         font-size: .75em;
     }
 
-    .mini-ranking {
-        display: none;
-        position: absolute;
-        top: 1.5rem;
-        left: 0;
-        z-index: 10;
-        width: 28rem;
-        max-height: 12rem;
-        padding: .25rem;
-        font-size: .875rem;
-        font-weight: normal;
-        color: var(--textColor);
-        background-color: var(--foreground);
-        border: 1px solid var(--textColor);
-        overflow: hidden;
+    .badges.text {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: .5rem;
+    }
+
+    .flex-column-between {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
     }
 </style>

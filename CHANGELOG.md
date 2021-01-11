@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.1.1
+- [+] add two ways of showing statistics on a player's profile (switchable in settings); you're welcome, Sombra
+
 1.1.0
 - [+] add activity chart
 - [!] fix rank chart when the player started playing later than 49 days ago  
