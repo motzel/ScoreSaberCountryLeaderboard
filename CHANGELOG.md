@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+1.1.2
+- [!] fix rank url when player's account is inactive
+- [*] remove original theme switcher
+
 1.1.1
 - [+] add two ways of showing statistics on a player's profile (switchable in settings); you're welcome, Sombra
 

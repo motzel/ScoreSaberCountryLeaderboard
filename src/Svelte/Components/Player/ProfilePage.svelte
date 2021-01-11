@@ -609,7 +609,8 @@
                                 <span class="pp"><Value value={pp} suffix="pp" /></span>
                             </h1>
                             <h2 class="title is-5 ranks">
-                                <a href="/global/{rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : ''}" data-type="global" data-rank={rank}>
+                                <a href={rank ? "/global/" + (rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : '') : '#'}
+                                   data-type="global" data-rank={rank}>
                                     <i class="fas fa-globe-americas"></i>
                                     <Value value={rank} prefix="#" digits={0} zero="#0" />
                                 </a>
@@ -746,7 +747,7 @@
     </main>
 
     <aside>
-        {#if initialized}
+        {#if initialized && rank}
             <div class="box has-shadow ranking">
                 <header>
                     <i class="fas fa-globe-americas"></i>
