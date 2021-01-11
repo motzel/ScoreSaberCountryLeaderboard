@@ -15,9 +15,10 @@
     export let onlyLabel = false;
     export let clickable = false;
     export let notSelected = false;
+    export let styling = "";
 </script>
 
-<span class="badge" class:clickable class:not-selected={notSelected} class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title} transition:fade={{ duration: 1000 }} on:click>
+<span class={"badge " + styling} class:clickable class:not-selected={notSelected} class:fluid={fluid} style="--color:{color}; --background-color:{bgColor}" title={title} transition:fade={{ duration: 1000 }} on:click>
     <span class="label"><slot name="label">{label}</slot></span>
     {#if !onlyLabel}
         <span class="spacer"></span>
@@ -85,5 +86,40 @@
     }
     .badge.fluid span.value {
         padding: 0 .5em;
+    }
+
+    .badge.text:before {
+        content: "\A";
+        width: 5px;
+        height: 5px;
+        display: inline-block;
+        border-radius: 50%;
+        background: var(--textColor);
+        margin-right: .5rem;
+        top: -3px;
+        position: relative;
+    }
+    .badge.text {
+        background: transparent!important;
+        display: block !important;
+        padding: 0!important;
+        margin: 0 0 0.05em 0!important;
+    }
+    .badge.text span.label {
+        display: inline;
+        padding: 0!important;
+    }
+    .badge.text span.label:after {
+        content: ":";
+        margin-left: .125em;
+        display: inline-block;
+    }
+    .badge.text span.spacer {
+        border-left-width: 0px;
+        width: 0;
+    }
+    .badge.text span.value {
+        padding: 0!important;
+        min-width: auto;
     }
 </style>
