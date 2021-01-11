@@ -540,7 +540,10 @@
 
     async function addPlayerToFriends() {
         await addPlayerToGroup(profileId);
-        await updatePlayer({id: profileId});
+
+        const playerInfo = await getPlayerInfo(profileId);
+        if (!playerInfo) await updatePlayer({id: profileId});
+
         await refreshPlayerStatus(profileId, country);
 
         eventBus.publish('player-added-to-friends', {playerId: profileId, nodeId: nodeSync().getId()});
@@ -577,8 +580,8 @@
         dataAvailable = await isDataAvailable();
         playerInfo = await getPlayerInfo(profileId);
 
-        refreshPlayerStatus(profileId, country);
-        refreshTwitchProfile(profileId);
+        await refreshPlayerStatus(profileId, country);
+        await refreshTwitchProfile(profileId);
     }
 
     $: if (initialized && profileId) {
