@@ -19,8 +19,11 @@ export default {
             profile: {
                 header: 'Profile',
                 defaultChart: 'Default chart',
+                statsStyling: 'Stats style',
                 showOnePpCalc: 'Show +1PP calculator',
                 showTwitchIcon: 'Show Twitch button',
+                statsStyleBadge: 'Badges',
+                statsStyleText: 'Text',
             },
 
             songLeaderboard: {

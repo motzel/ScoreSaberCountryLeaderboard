@@ -237,6 +237,11 @@
             {_key: 'chart.accuracyButton', id: "acc"},
         ],
 
+        statsStyles: [
+            {_key: 'profile.settings.profile.statsStyleBadge', id: "badges"},
+            {_key: 'profile.settings.profile.statsStyleText', id: "text"},
+        ],
+
         viewTypeUpdates: [
             {_key: 'profile.settings.others.alwaysRefresh', id: "always"},
             {_key: 'profile.settings.others.keepView', id: "keep-view"},
@@ -257,6 +262,7 @@
         songTypes      : strings.songTypes[0],
         viewTypes      : strings.viewTypes[0],
         chartTypes     : strings.chartTypes[1],
+        statsStyles    : strings.statsStyles[0],
         viewTypeUpdates: strings.viewTypeUpdates[1],
         shownIcons     : strings.icons.map(i => i),
         lang           : availableLangs[0],
@@ -363,6 +369,9 @@
 
         const defaultChart = strings.chartTypes.find(i => i.id === config.profile.showChart);
         if (defaultChart) values.chartTypes = defaultChart;
+
+        let defaultStatsStyle = strings.statsStyles.find(i => i.id === config.profile.statsStyle);
+        if (defaultStatsStyle) values.statsStyles = defaultStatsStyle;
 
         const defaultTheme = strings.themes.find(t => t.id === config.others.theme)
         if (defaultTheme) {
@@ -519,6 +528,7 @@
         config.songBrowser.defaultType = values.songTypes.id;
         config.songBrowser.defaultView = values.viewTypes.id;
         config.profile.showChart = values.chartTypes.id;
+        config.profile.statsStyle = values.statsStyles.id;
         config.songBrowser.defaultSort = configSortType.field;
         config.songBrowser.showColumns = configShowColumns.map(c => c.key);
         config.songBrowser.showIcons = values.shownIcons.map(i => i.id);
@@ -710,11 +720,16 @@
                     <div>
                         <div class="columns">
                             <div class="column is-one-third">
+                                <label class="menu-label">{$_.profile.settings.profile.statsStyling}</label>
+                                <Select bind:value={values.statsStyles} items={strings.statsStyles} />
+                            </div>
+
+                            <div class="column is-one-third">
                                 <label class="menu-label">{$_.profile.settings.profile.defaultChart}</label>
                                 <Select bind:value={values.chartTypes} items={strings.chartTypes} />
                             </div>
 
-                            <div class="column is-two-thirds flex-bottom">
+                            <div class="column is-one-third text-align-left">
                                 <label class="checkbox">
                                     <input type="checkbox" bind:checked={config.profile.showOnePpCalc}>
                                     {$_.profile.settings.profile.showOnePpCalc}
@@ -794,6 +809,10 @@
 {/if}
 
 <style>
+    .text-align-left {
+        text-align: left!important;
+    }
+
     header {
         font-size: 1.5em;
         text-align: center;

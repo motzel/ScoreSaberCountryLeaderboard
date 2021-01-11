@@ -231,7 +231,7 @@
 
         showCalc = config && config.profile && config.profile.showOnePpCalc;
 
-        badgeStyling = config && config.profile && config.profile.badgesStyle === 'text' ? 'text' : '';
+        badgeStyling = config && config.profile && config.profile.statsStyle === 'text' ? 'text' : '';
     }
 
     function refreshChart(config, chartHistory) {
@@ -509,8 +509,8 @@
     $: stats = getPlayerStats(filteredRankedScores, rankedsNotesCache, initialized)
     $: ssplCountryRankStats = getSsplCountryRankStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, initialized)
 
-    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores);
-    $: accStats = getAccStats(stats);
+    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores, badgeStyling);
+    $: accStats = getAccStats(stats, badgeStyling);
 
     $: isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
 
