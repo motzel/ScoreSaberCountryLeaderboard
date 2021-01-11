@@ -56,6 +56,7 @@ Then, depending on the selected mode:
 - Enlarged, more readable chart
 - New PP chart
 - New filterable accuracy chart
+- New Activity chart  
 - The latest twitch VODs
 - Automatic profile refreshing
 - Global and country leaderboards
