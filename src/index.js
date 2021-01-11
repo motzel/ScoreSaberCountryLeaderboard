@@ -247,6 +247,10 @@ function addVersionInfoToFooter() {
     const footer = document.querySelector('footer .content');
     if (!footer) return;
 
+    // remove original theme switch
+    const themeSwitch = footer.querySelector('p:nth-child(2)');
+    if (themeSwitch) themeSwitch.remove();
+
     const p = document.createElement('p');
     p.innerText = header.name;
 
