@@ -140,6 +140,8 @@
 
         const daysAgo = Array(50).fill(0).map((v, i) => i).reverse();
 
+        if (chartData.length < 50) chartData = Array(50 - chartData.length).fill(null).concat(chartData);
+
         let ppData = [];
 
         if (userHistory) {

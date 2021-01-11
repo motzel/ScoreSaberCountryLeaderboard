@@ -5,6 +5,12 @@
 [!] bug fix
 [*] other changes
 
+1.1.0
+- [+] add activity chart
+- [!] fix rank chart when the player started playing later than 49 days ago  
+- [!] fix adding country players to friends, thx Thanos
+- [!] fix refreshing twitch videos for just added players
+
 1.0.0
 
 - [+] browsing player's scores and songs leaderboards without the page reloading
