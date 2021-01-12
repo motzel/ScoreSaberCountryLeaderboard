@@ -194,16 +194,32 @@
         width: 2rem;
     }
 
-    .sspl thead th, .sspl tbody td.mods, .sspl tbody td.percentage, .sspl tbody td.pp {
+    .sspl thead th {
+        text-align: left;
+    }
+
+    .sspl thead th.mods, .sspl thead th.percentage, .sspl thead th.pp, .sspl tbody td.mods, .sspl tbody td.percentage, .sspl tbody td.pp {
         text-align: center;
     }
 
-    .sspl tbody td.score {
-        text-align: right;
+    .sspl thead th.timeset {
+        width: 7.9rem;
     }
 
-    .sspl .score, .sspl .pp {
+    .sspl thead th.rank {
+        width: 3.75rem;
+    }
+
+    .sspl thead th.score {
+        width: 5rem;
+    }
+
+    .sspl .pp {
         width: 6rem;
+    }
+
+    .sspl thead th.mods {
+        width: 3.75rem;
     }
 
     .sspl .picture {
