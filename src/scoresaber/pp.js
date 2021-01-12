@@ -108,11 +108,11 @@ const ppCurve = [
     { at: 110, value: 1.18 },
     { at: 114, value: 1.25 },
 ];
-export function ppFromScore(score) {
-    if (!score || score <= 0) {
+export function ppFactorFromAcc(acc) {
+    if (!acc || acc <= 0) {
         return 0;
     }
-    let index = ppCurve.findIndex(o => o.at >= score);
+    let index = ppCurve.findIndex(o => o.at >= acc);
     if (index === -1) {
         return ppCurve[ppCurve.length - 1].value;
     }
@@ -121,6 +121,6 @@ export function ppFromScore(score) {
     }
     let from = ppCurve[index - 1];
     let to = ppCurve[index];
-    let progress = (score - from.at) / (to.at - from.at);
+    let progress = (acc - from.at) / (to.at - from.at);
     return from.value + (to.value - from.value) * progress;
 }

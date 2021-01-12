@@ -1,7 +1,7 @@
 <script>
     import debounce from '../../../utils/debounce';
     import {formatNumber, parseFormattedNumber} from '../../../utils/format';
-    import {findRawPp, ppFromScore, PP_PER_STAR, getWhatIfScore} from '../../../scoresaber/pp';
+    import {findRawPp, ppFactorFromAcc, PP_PER_STAR, getWhatIfScore} from '../../../scoresaber/pp';
     import {_, trans} from '../../stores/i18n';
     import Value from "../Common/Value.svelte";
     import Range from "../Common/Range.svelte";
@@ -35,11 +35,11 @@
     })
 
     function getStarsForAcc(rawPp, acc) {
-        return rawPp / PP_PER_STAR / ppFromScore(acc)
+        return rawPp / PP_PER_STAR / ppFactorFromAcc(acc)
     }
 
     async function calcPpFromStars(stars, percent) {
-        const newRawPpFromStars = PP_PER_STAR * stars * ppFromScore(percent);
+        const newRawPpFromStars = PP_PER_STAR * stars * ppFactorFromAcc(percent);
         const newDiffPpFromStars = (await getWhatIfScore(playerId, -1, newRawPpFromStars)).diff;
 
         rawPp = newRawPpFromStars;

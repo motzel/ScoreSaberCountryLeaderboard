@@ -20,12 +20,15 @@ import initDatabase from './db/db';
 import {setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    getPlayerProfileUrl,
+    getPlayerProfileUrl, getScoresByPlayerId,
     isPlayerDataAvailable,
 } from "./scoresaber/players";
 import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
+import {getRankedSongs} from './scoresaber/rankeds'
+import {dateFromString} from './utils/date'
+import {getTotalPp, getTotalPpFromSortedPps, PP_PER_STAR, ppFactorFromAcc} from './scoresaber/pp'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -311,6 +314,104 @@ async function init() {
 
         await initDatabase();
         await setupDataFixes();
+
+        function getEstimatedAcc(stars, scores) {
+            let now = Date.now();
+            let decay = 1000 * 60 * 60 * 24 * 15;
+            let maxStars = Math.max(...scores.map(e => e.stars));
+            let data = scores.reduce((o, score) => {
+                let d = 2 * Math.abs(stars - score.stars);
+                let front = stars > score.stars ? d * d * d : 1;
+                let timeset = score.timeset || now;
+                let time = 1 + Math.max(now - timeset, 0) / decay;
+                let weight = 1 / (1 + d * time * front);
+                o.weight += weight;
+                o.sum += score.acc * weight;
+                return o;
+            }, { weight: 0, sum: 0 });
+            let result = data.weight ? data.sum / data.weight : 0;
+            if (stars > maxStars) {
+                let d = 2 * Math.abs(stars - maxStars);
+                result /= (1 + d * d);
+            }
+            return result;
+        }
+
+        function getTotalPpFromSortedScores(sortedScores) {
+            // TODO: remember sum up to all idx after first use and then recalc only remaining scores
+            return sortedScores.reduce((cum, score, idx) => cum + Math.pow(0.965, idx) * score.pp, 0);
+        }
+
+        console.time('fetching');
+
+        // const playerId = "76561198025451538"
+        const playerId = "76561198166289091";
+        // const playerId = "76561198035381239";
+        const allRankeds = await getRankedSongs();
+        console.log(`allRankeds.length=${Object.keys(allRankeds).length}`)
+        const playerScores = ((await getScoresByPlayerId(playerId)) ?? []).filter(s => s.pp).sort((a, b) => b.pp - a.pp);
+        const playerScoresIndex = playerScores.reduce((cum, score, idx) => {cum[score.leaderboardId] = idx; return cum;}, {})
+        console.log(`[FILTERED&SORTED] playerScores.length=${playerScores.length}`)
+
+        const playerScoresWithStars = playerScores
+          .map(s => Object.assign({}, s, {
+              timeset: dateFromString(s.timeset),
+              stars: allRankeds?.[s.leaderboardId]?.stars,
+              acc: s.score / s.maxScoreEx
+          }))
+          .filter(s => s.stars)
+          .sort((a, b) => b.pp - a.pp)
+          ;
+
+        const playerScoresObj = convertArrayToObjectByKey(playerScores, 'leaderboardId');
+
+        const totalPp = getTotalPpFromSortedScores(playerScores);
+        console.log(`totalPp=${totalPp}`)
+        const starsRange = 4;
+        const onePpBoundary95PercentStars = 9.31;
+        const maxStars = onePpBoundary95PercentStars >= 7 ? null : onePpBoundary95PercentStars + starsRange;
+
+        console.timeLog('fetching');
+
+        console.time('estimating')
+        const estimated = Object.values(allRankeds)
+          // filter low-tier maps
+          // .filter(r => r.stars >= onePpBoundary95PercentStars && (!maxStars || maxStars > r.stars))
+          .map(r => {
+              const score = playerScoresObj?.[r.leaderboardId];
+              const acc = score?.acc ?? (score?.maxScoreEx ? (score.uScore ?? score.score) / score.maxScoreEx * 100 :null);
+              const pp = score?.pp ?? null;
+              const estimatedAcc = getEstimatedAcc(r.stars, playerScoresWithStars) * 100;
+              const estimatedPp = PP_PER_STAR * r.stars * ppFactorFromAcc(estimatedAcc);
+
+              // insert new score without array re-sorting
+              let scoresWithoutLeaderboard = playerScores;
+              if (score) {
+                  const leaderboardIdx = playerScoresIndex?.[r.leaderboardId] ?? -1;
+                  if (leaderboardIdx >= 0) scoresWithoutLeaderboard = playerScores.slice(0, leaderboardIdx).concat(playerScores.slice(leaderboardIdx + 1));
+              }
+
+              const firstLowerScoreIdx = scoresWithoutLeaderboard.findIndex(s => s.pp < estimatedPp);
+
+              const sortedScores = firstLowerScoreIdx >= 0
+                ? scoresWithoutLeaderboard.slice(0, firstLowerScoreIdx).concat([{pp: estimatedPp}]).concat(scoresWithoutLeaderboard.slice(firstLowerScoreIdx))
+                : [{pp: estimatedPp}].concat(scoresWithoutLeaderboard)
+
+              const newTotalPp = estimatedPp && (!pp || pp < estimatedPp)
+                // ? getTotalPp({...playerScoresObj, [r.leaderboardId]: { pp: estimatedPp }})
+                ? getTotalPpFromSortedScores(sortedScores)
+                : 0;
+
+              return {...r, acc, pp, estimatedAcc, estimatedPp, ppDiff: Math.max(newTotalPp - totalPp, 0), totalPp, newTotalPp}
+          })
+          .filter(r => r.ppDiff >= 1)
+          .sort((a, b) => b.ppDiff - a.ppDiff)
+
+        console.timeEnd('estimating');
+
+        console.log(estimated)
+
+        return;
 
         // pre-warm cache
         await getConfig();
