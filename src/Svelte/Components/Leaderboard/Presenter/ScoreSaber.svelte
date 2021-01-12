@@ -134,6 +134,7 @@
 
   th.rank {
     width: 3.75rem;
+    text-align: left!important;
   }
 
   th.player {
@@ -143,10 +144,12 @@
   th.score {
     width: 5rem!important;
     min-width: auto!important;
+    text-align: left!important;
   }
 
   th.timeset {
     width: 7.9rem;
+    text-align: left!important;
   }
 
   th.mods {
