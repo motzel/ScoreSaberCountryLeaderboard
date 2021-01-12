@@ -146,7 +146,7 @@
   }
 
   th.timeset {
-    width: 7.7rem;
+    width: 7.9rem;
   }
 
   th.mods {
