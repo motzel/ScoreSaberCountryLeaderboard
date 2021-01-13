@@ -38,11 +38,11 @@ export const fetchRecentScores = async (playerId, page = 1, rateLimitCallback = 
 
 export const fetchSsProfilePage = async (playerId, page = 1, type='recent') => ({...parseSsProfilePage(
   await fetchHtmlPage(queue.SCORESABER, getPlayerProfileUrl(playerId, !(type === 'top'), false, page))
-), type, playerId});
+), type, playerId, pageNum: page});
 
 export const fetchSsSongLeaderboardPage = async (leaderboardId, page = 1) => ({...parseSsSongLeaderboardPage(
     await fetchHtmlPage(queue.SCORESABER, getSongLeaderboardUrl(leaderboardId, page))
-  ), leaderboardId});
+  ), leaderboardId, pageNum: page});
 
 let stopFetchingScores = false;
 eventBus.on('stop-fetching-scores-cmd', () => {stopFetchingScores = true;});

@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+1.1.3
+- [!] fix loading the last pages of scores, thx Blackangeleg
+- [!] fix the number of score pages on the leaderboard if the value displayed on the ScoreSaber is incorrect
+
 1.1.2
 - [!] fix rank url when player's account is inactive
 - [*] remove original theme switcher

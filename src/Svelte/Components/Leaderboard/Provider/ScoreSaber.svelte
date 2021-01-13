@@ -86,7 +86,7 @@
       const pageData = await fetchSsSongLeaderboardPage(leaderboardId, pageToLoad);
       if (!pageData || !pageData.scores || isNaN(pageData.totalItems)) throw 'Download error';
 
-      lastPageData = {...pageData, pageNum: pageToLoad};
+      lastPageData = {...pageData};
       pageNum = pageToLoad;
       hash = pageData && pageData.song && pageData.song.hash ? pageData.song.hash : hash;
 
