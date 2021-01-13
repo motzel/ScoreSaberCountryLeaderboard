@@ -4,7 +4,7 @@ import {getDiffAndTypeFromOnlyDiffName} from '../song'
 import {dateFromString} from '../utils/date'
 import {trans} from '../Svelte/stores/i18n'
 import {substituteVars} from '../utils/format'
-import {SONG_LEADERBOARD_URL} from '../network/scoresaber/consts'
+import {SCORES_PER_PAGE, SONG_LEADERBOARD_URL} from '../network/scoresaber/consts'
 
 export const getSongLeaderboardUrl = (leaderboardId, page = 1) => substituteVars(SONG_LEADERBOARD_URL, {leaderboardId, page})
 
@@ -208,6 +208,11 @@ export const parseSsSongLeaderboardPage = doc => {
 
       return cum;
     }, {});
+
+  const pageQty = parseInt(doc.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10)
+  const scoresQty = song?.scores ?? 0;
+  const totalItems = Math.ceil(scoresQty / SCORES_PER_PAGE) > pageQty ? pageQty * SCORES_PER_PAGE : scoresQty;
+
   return {
     currentDiff: currentDiffHuman?.toLowerCase()?.replace('+', 'Plus') ?? null,
     currentDiffHuman,
@@ -215,8 +220,8 @@ export const parseSsSongLeaderboardPage = doc => {
     song,
     diffChart: (getFirstRegexpMatch(/'difficulty',\s*([0-9.,\s]+)\s*\]/, doc.body.innerHTML) ?? '').split(',').map(i => parseFloat(i)).filter(i => i),
     pageNum: parseInt(doc.querySelector('.pagination .pagination-list li a.is-current')?.innerText ?? '0', 10),
-    pageQty: parseInt(doc.querySelector('.pagination .pagination-list li:last-of-type')?.innerText ?? '0', 10),
-    totalItems: song?.scores ?? 0,
+    pageQty,
+    totalItems,
     scores: parseSsLeaderboardScores(doc),
   }
 };
