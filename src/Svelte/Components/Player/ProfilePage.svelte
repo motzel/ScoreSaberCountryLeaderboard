@@ -10,11 +10,19 @@
     import {diffColors} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
-    import {addToDate, dateFromString, timestampFromString} from "../../../utils/date";
+    import {
+        addToDate,
+        dateFromString,
+        daysAgo,
+        getFirstNotNewerThan,
+        timestampFromString,
+        toSSTimestamp,
+    } from "../../../utils/date";
     import twitch from '../../../services/twitch';
     import {PLAYERS_PER_PAGE} from '../../../network/scoresaber/consts'
 
     import {
+        getAllPlayersHistory, getPlayerHistory,
         getPlayerInfo,
         getPlayerProfileUrl,
         getScoresByPlayerId,
@@ -35,6 +43,7 @@
     import TwitchVideosBadge from './TwitchVideosBadge.svelte'
     import {fetchSsProfilePage} from '../../../network/scoresaber/scores'
     import nodeSync from '../../../utils/multinode-sync'
+    import {formatDateRelative} from '../../../utils/format'
 
     export let profileId;
     export let profilePage = {};
@@ -65,6 +74,9 @@
     let rank = null;
     let countryRanks = [];
     let pp = null;
+
+    let prevPp = 0;
+    let prevPpSince = null;
 
     let playerScores = null;
 
@@ -300,9 +312,9 @@
         if (rank === null || rank === undefined) rank = playerInfo.rank;
         if (!pp) pp = playerInfo.pp;
 
-        updateRankedsNotesCache();
+        await updateRankedsNotesCache();
 
-        if (activeCountry) updateSsplCountryRanksCache(activeCountry);
+        if (activeCountry) await updateSsplCountryRanksCache(activeCountry);
 
         await twitch.updateVideosForPlayerId(profileId);
 
@@ -348,6 +360,27 @@
         setTimeout(() => refreshProfile(playerId), nextUpdateIn);
     }
 
+    async function refreshPlayerDiffPp(profileId, pp, numOfDays) {
+        if (!initialized || !profileId || !numOfDays || !pp || !Number.isFinite(pp)) return;
+
+        prevPp = 0;
+        prevPpSince = null;
+
+        numOfDays = numOfDays >= ALL ? 1 : numOfDays;
+
+        const timestampDiffAgo = toSSTimestamp(daysAgo(numOfDays));
+        const playerHistory = await getPlayerHistory(profileId);
+        if (!playerHistory || !playerHistory.length) return;
+
+        const compareTo = playerHistory
+          .sort((a,b) => b.timestamp - a.timestamp)
+          .reduce((val, t) => t.timestamp >= timestampDiffAgo ? t : val, null);
+        if (!compareTo || !Number.isFinite(compareTo.pp) || !isDateObject(compareTo.timestamp)) return;
+
+        prevPp = compareTo.pp < pp ? compareTo.pp : 0;
+        prevPpSince = formatDateRelative(compareTo.timestamp.toISOString());
+    }
+
     onMount(async () => {
         anyDataIsAvailable = await isDataAvailable();
 
@@ -384,20 +417,22 @@
         const unsubscriberRecentPlayUpdated = eventBus.on('recent-play-updated', ({playerId, recentPlay: newRecentPlay}) => {
             if (playerId === profileId) recentPlay = newRecentPlay;
         });
-        const unsubscriberPlayerStatsUpdated = eventBus.on('player-profile-page-parsed', ({playerId, profilePage}) => {
-            if (playerId === profileId) {
-                const chartHistoryFingerprint = history => history.reduce((cum, item) => cum + ':' + item, '');
+        const unsubscriberPlayerStatsUpdated = eventBus.on('player-profile-page-parsed', async ({playerId, profilePage}) => {
+            if (!playerId || playerId !== profileId) return;
 
-                if (profilePage && profilePage.name) name = profilePage.name;
-                if (profilePage && profilePage.steamUrl) steamUrl = profilePage.steamUrl;
-                if (profilePage && profilePage.avatarUrl) avatarUrl = profilePage.avatarUrl;
-                if (profilePage && profilePage.chartHistory && profilePage.chartHistory.length) {
-                    if (!chartHistory || chartHistoryFingerprint(chartHistory) !== chartHistoryFingerprint(profilePage.chartHistory))
-                        chartHistory = profilePage.chartHistory;
-                }
-                if (profilePage && profilePage.ssBadges && profilePage.ssBadges.length) ssBadges = profilePage.ssBadges;
-                if (profilePage && profilePage.stats) ssStats = profilePage.stats;
+            const chartHistoryFingerprint = history => history.reduce((cum, item) => cum + ':' + item, '');
+
+            if (profilePage && profilePage.name) name = profilePage.name;
+            if (profilePage && profilePage.steamUrl) steamUrl = profilePage.steamUrl;
+            if (profilePage && profilePage.avatarUrl) avatarUrl = profilePage.avatarUrl;
+            if (profilePage && profilePage.chartHistory && profilePage.chartHistory.length) {
+                if (!chartHistory || chartHistoryFingerprint(chartHistory) !== chartHistoryFingerprint(profilePage.chartHistory))
+                    chartHistory = profilePage.chartHistory;
             }
+            if (profilePage && profilePage.ssBadges && profilePage.ssBadges.length) ssBadges = profilePage.ssBadges;
+            if (profilePage && profilePage.stats) ssStats = profilePage.stats;
+
+            await refreshPlayerDiffPp(profileId, pp, values.selectedPeriod.value);
         });
         const unsubscriberMainPlayerChanged = eventBus.on('main-player-changed', async ({playerId}) => {
             mainPlayerId = playerId;
@@ -545,6 +580,10 @@
         updateChartRefreshTag(values.selectedPeriod.value, selectedAccBadges);
     }
 
+    $: {
+        refreshPlayerDiffPp(profileId, pp, values.selectedPeriod.value, initialized)
+    }
+
     let currentPage = profilePage && profilePage.pageNum ? profilePage.pageNum - 1 : 0;
     let scoresType = profilePage && profilePage.type ? profilePage.type : 'recent';
 
@@ -606,7 +645,8 @@
                         <div class="column">
                             <h1 class="title is-4">
                                 {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
-                                <span class="pp"><Value value={pp} suffix="pp" /></span>
+                                <span class="pp"><Value value={pp} suffix="pp" prevValue={prevPp}
+                                                        prevLabel={prevPpSince} inline={true} /></span>
                             </h1>
                             <h2 class="title is-5 ranks">
                                 <a href={rank ? "/global/" + (rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : '') : '#'}

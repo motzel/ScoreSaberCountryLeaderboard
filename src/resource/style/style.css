@@ -1,6 +1,6 @@
 .sspl .player-name {font-size: 1.1em; font-weight: 700;}
-.sspl .inc, .sspl .diff.inc, .card-view .inc {color: var(--increase) !important;}
-.sspl .dec, .sspl .diff.dec, .card-view .dec {color: var(--decrease) !important;}
+.sspl .inc, .sspl .diff.inc, .card-view .inc, .sspl-page .inc {color: var(--increase) !important;}
+.sspl .dec, .sspl .diff.dec, .card-view .dec, .sspl-page .dec {color: var(--decrease) !important;}
 .what-if {position: absolute; top: 1em; right: 0em; font-weight: 700; padding:0;}
 table.ranking.songs th.score, table.ranking td.pp {position: relative;}
 table.ranking tbody tr.hidden {opacity: 0.05;}

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.2.0
+- [+] add the pp growth in the selected period on the player's profile
+
 1.1.3
 - [!] fix loading the last pages of scores, thx Blackangeleg
 - [!] fix the number of score pages on the leaderboard if the value displayed on the ScoreSaber is incorrect
