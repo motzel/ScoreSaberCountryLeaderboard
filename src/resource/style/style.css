@@ -160,3 +160,25 @@ body .select select {
     color: var(--dimmed);
   }
 }
+
+.sspl-page-container {
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media screen and (min-width: 1750px) {
+  .sspl-page-container {
+    max-width: 1750px !important;
+  }
+}
+
+nav.navbar .sspl-page-container {
+  width: calc(100% - 3rem);
+  max-width: calc(100% - 3rem);
+}
+
+@media screen and (min-width: 1024px) and (max-width:1300px) {
+  nav.navbar .sspl-page-container .navbar-end > a {
+    display: none;
+  }
+}

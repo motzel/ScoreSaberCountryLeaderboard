@@ -73,6 +73,11 @@ async function setupLeaderboard() {
     log.info("Setup leaderboard page / Done")
 }
 
+function fullSizeNavbar() {
+    const navBarContainer = document.querySelector('nav.navbar > .container');
+    if (navBarContainer) navBarContainer.classList.add('sspl-page-container');
+}
+
 async function setupProfile() {
     log.info("Setup profile page");
 
@@ -132,6 +137,8 @@ async function setupProfile() {
     const originalContent = document.querySelector('.content');
     if (originalContent) originalContent.remove();
 
+    fullSizeNavbar();
+
     new Profile({target: profileDiv, props})
 
     log.info("Setup profile page / Done")
@@ -174,6 +181,8 @@ async function setupCountryRanking() {
     const newCont = document.createElement('main');
     newCont.classList.add('sspl-page');
     cont.parentNode.appendChild(newCont);
+
+    fullSizeNavbar();
 
     new CountryDashboard({target: newCont, props: {country: await getActiveCountry(), overridePlayersPp: actualPlayersPp}});
 

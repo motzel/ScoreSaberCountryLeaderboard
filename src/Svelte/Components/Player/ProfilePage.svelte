@@ -619,14 +619,14 @@
     let ssPresenter  = null;
 </script>
 
-<div class="container">
+<div class="sspl-page-container">
     <div class="player-top">
         <div class="icons"><Settings {profileId} /></div>
         <div class="refresh"><Refresh {profileId} /></div>
     </div>
 </div>
 
-<div class="container">
+<div class="sspl-page-container">
     <main>
         <div class="box has-shadow">
             {#if playerScores && playerScores.length && accStats}
@@ -813,9 +813,8 @@
 </div>
 
 <style>
-    .container {
+    .sspl-page-container {
         display: flex;
-        width: 100%;
     }
 
     main {
@@ -851,10 +850,6 @@
     }
 
     @media screen and (min-width: 1750px) {
-        .container {
-            max-width: 1750px;
-        }
-
         main, .player-top {
             width: calc(100% - 30rem);
         }
@@ -864,7 +859,6 @@
             width: 29rem;
         }
     }
-
 
     .icons {
         font-size: .7rem;

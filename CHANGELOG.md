@@ -7,6 +7,7 @@
 
 1.2.0
 - [+] add the pp growth in the selected period on the player's profile
+- [*] navbar's width now matches width of player profile and country ranking
 
 1.1.3
 - [!] fix loading the last pages of scores, thx Blackangeleg

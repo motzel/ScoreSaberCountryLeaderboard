@@ -92,7 +92,7 @@
 </script>
 
 {#if country}
-<div class="container-fluid">
+<div class="sspl-page-container">
     <div class="filters">
         <TypeFilterSelect bind:value={leaderboardType} {country} />
     </div>
