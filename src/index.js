@@ -337,15 +337,30 @@ async function init() {
             return result;
         }
 
-        function getTotalPpFromSortedScores(sortedScores) {
-            // TODO: remember sum up to all idx after first use and then recalc only remaining scores
-            return sortedScores.reduce((cum, score, idx) => cum + Math.pow(0.965, idx) * score.pp, 0);
+        let weightedPpUpToIdx = [];
+        function getTotalPpFromSortedScores(sortedScores, startFromIdx = null) {
+            const sumPp = (score, cum, idx) => cum + Math.pow(0.965, idx) * score.pp;
+
+            // get precalculated sum from index
+            const indexAlreadyCreated = weightedPpUpToIdx && weightedPpUpToIdx.length
+            const startWithPp = startFromIdx >= 1 && indexAlreadyCreated ? weightedPpUpToIdx[startFromIdx - 1] : 0
+            startFromIdx = startFromIdx > 0 ? startFromIdx : 0;
+
+            return !indexAlreadyCreated
+              ? sortedScores.reduce((cum, score, idx) => {
+                  cum = sumPp(score, cum, idx);
+
+                  weightedPpUpToIdx[idx] = cum;
+
+                  return cum;
+              }, 0)
+              : sortedScores.reduce((cum, score, idx) => sumPp(score, cum, idx + startFromIdx), startWithPp);
         }
 
         console.time('fetching');
 
-        // const playerId = "76561198025451538"
-        const playerId = "76561198166289091";
+        const playerId = "76561198025451538"
+        // const playerId = "76561198166289091";
         // const playerId = "76561198035381239";
         const allRankeds = await getRankedSongs();
         console.log(`allRankeds.length=${Object.keys(allRankeds).length}`)
@@ -365,6 +380,7 @@ async function init() {
 
         const playerScoresObj = convertArrayToObjectByKey(playerScores, 'leaderboardId');
 
+        // TODO: it HAS TO be called first with ORIGINAL scores in order to create index array
         const totalPp = getTotalPpFromSortedScores(playerScores);
         console.log(`totalPp=${totalPp}`)
         const starsRange = 4;
@@ -384,23 +400,25 @@ async function init() {
               const estimatedAcc = getEstimatedAcc(r.stars, playerScoresWithStars) * 100;
               const estimatedPp = PP_PER_STAR * r.stars * ppFactorFromAcc(estimatedAcc);
 
-              // insert new score without array re-sorting
-              let scoresWithoutLeaderboard = playerScores;
-              if (score) {
-                  const leaderboardIdx = playerScoresIndex?.[r.leaderboardId] ?? -1;
-                  if (leaderboardIdx >= 0) scoresWithoutLeaderboard = playerScores.slice(0, leaderboardIdx).concat(playerScores.slice(leaderboardIdx + 1));
+              let newTotalPp = totalPp;
+              if (estimatedPp && (!pp || pp < estimatedPp)) {
+                  // insert new score without array re-sorting
+                  let scoresWithoutLeaderboard = playerScores;
+                  if (score) {
+                      const leaderboardIdx = playerScoresIndex?.[r.leaderboardId] ?? -1;
+                      if (leaderboardIdx >= 0) scoresWithoutLeaderboard = playerScores.slice(0, leaderboardIdx).concat(playerScores.slice(leaderboardIdx + 1));
+                  }
+
+                  const firstLowerScoreIdx = scoresWithoutLeaderboard.findIndex(s => s.pp < estimatedPp);
+
+                  const sortedScoresFromStartingWithNew = firstLowerScoreIdx >= 0
+                    ? [{pp: estimatedPp}].concat(scoresWithoutLeaderboard.slice(firstLowerScoreIdx))
+                    : [{pp: estimatedPp}]
+
+                  newTotalPp = estimatedPp && (!pp || pp < estimatedPp)
+                    ? getTotalPpFromSortedScores(sortedScoresFromStartingWithNew, firstLowerScoreIdx < 0 ? scoresWithoutLeaderboard.length : firstLowerScoreIdx)
+                    : 0;
               }
-
-              const firstLowerScoreIdx = scoresWithoutLeaderboard.findIndex(s => s.pp < estimatedPp);
-
-              const sortedScores = firstLowerScoreIdx >= 0
-                ? scoresWithoutLeaderboard.slice(0, firstLowerScoreIdx).concat([{pp: estimatedPp}]).concat(scoresWithoutLeaderboard.slice(firstLowerScoreIdx))
-                : [{pp: estimatedPp}].concat(scoresWithoutLeaderboard)
-
-              const newTotalPp = estimatedPp && (!pp || pp < estimatedPp)
-                // ? getTotalPp({...playerScoresObj, [r.leaderboardId]: { pp: estimatedPp }})
-                ? getTotalPpFromSortedScores(sortedScores)
-                : 0;
 
               return {...r, acc, pp, estimatedAcc, estimatedPp, ppDiff: Math.max(newTotalPp - totalPp, 0), totalPp, newTotalPp}
           })
@@ -409,7 +427,7 @@ async function init() {
 
         console.timeEnd('estimating');
 
-        console.log(estimated)
+        console.table(estimated.map(s => ({name: s.name, estimatedAcc: s.estimatedAcc, estimatedPp: s.estimatedPp, ppDiff: s.ppDiff})))
 
         return;
 
