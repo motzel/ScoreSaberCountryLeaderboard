@@ -315,23 +315,18 @@ async function init() {
         await initDatabase();
         await setupDataFixes();
 
-        function getEstimatedAcc(stars, scores) {
-            let now = Date.now();
-            let decay = 1000 * 60 * 60 * 24 * 15;
-            let maxStars = Math.max(...scores.map(e => e.stars));
+        function getEstimatedAcc(stars, scores, maxScoresStars) {
             let data = scores.reduce((o, score) => {
                 let d = 2 * Math.abs(stars - score.stars);
                 let front = stars > score.stars ? d * d * d : 1;
-                let timeset = score.timeset || now;
-                let time = 1 + Math.max(now - timeset, 0) / decay;
-                let weight = 1 / (1 + d * time * front);
+                let weight = 1 / (1 + d * score.timeCoeff * front);
                 o.weight += weight;
                 o.sum += score.acc * weight;
                 return o;
             }, { weight: 0, sum: 0 });
             let result = data.weight ? data.sum / data.weight : 0;
-            if (stars > maxStars) {
-                let d = 2 * Math.abs(stars - maxStars);
+            if (stars > maxScoresStars) {
+                let d = 2 * Math.abs(stars - maxScoresStars);
                 result /= (1 + d * d);
             }
             return result;
@@ -368,15 +363,20 @@ async function init() {
         const playerScoresIndex = playerScores.reduce((cum, score, idx) => {cum[score.leaderboardId] = idx; return cum;}, {})
         console.log(`[FILTERED&SORTED] playerScores.length=${playerScores.length}`)
 
+        let now = Date.now();
+        let decay = 1000 * 60 * 60 * 24 * 15;
+
         const playerScoresWithStars = playerScores
           .map(s => Object.assign({}, s, {
               timeset: dateFromString(s.timeset),
+              timeCoeff: 1 + Math.max(now - dateFromString(s.timeset), 0) / decay,
               stars: allRankeds?.[s.leaderboardId]?.stars,
               acc: s.score / s.maxScoreEx
           }))
           .filter(s => s.stars)
           .sort((a, b) => b.pp - a.pp)
           ;
+        let maxScoresStars = Math.max(...playerScoresWithStars.map(e => e.stars));
 
         const playerScoresObj = convertArrayToObjectByKey(playerScores, 'leaderboardId');
 
@@ -397,7 +397,7 @@ async function init() {
               const score = playerScoresObj?.[r.leaderboardId];
               const acc = score?.acc ?? (score?.maxScoreEx ? (score.uScore ?? score.score) / score.maxScoreEx * 100 :null);
               const pp = score?.pp ?? null;
-              const estimatedAcc = getEstimatedAcc(r.stars, playerScoresWithStars) * 100;
+              const estimatedAcc = getEstimatedAcc(r.stars, playerScoresWithStars, maxScoresStars) * 100;
               const estimatedPp = PP_PER_STAR * r.stars * ppFactorFromAcc(estimatedAcc);
 
               let newTotalPp = totalPp;
