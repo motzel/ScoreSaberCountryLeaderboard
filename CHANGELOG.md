@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.0
+- [+] add WhatToPlay widget to player's profile, thx BaliBalo for the opportunity to use your accuracy estimation algorithm
+
 1.2.0
 - [+] add the pp growth in the selected period on the player's profile
 - [*] navbar's width now matches width of player profile and country ranking
