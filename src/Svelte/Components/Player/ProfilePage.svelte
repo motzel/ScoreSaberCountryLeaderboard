@@ -544,8 +544,8 @@
     $: stats = getPlayerStats(filteredRankedScores, rankedsNotesCache, initialized)
     $: ssplCountryRankStats = getSsplCountryRankStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, initialized)
 
-    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores, badgeStyling);
-    $: accStats = getAccStats(stats, badgeStyling);
+    $: basicStats = getBasicStats(ssStats, stats, filteredAllScores, badgeStyling, $_);
+    $: accStats = getAccStats(stats, badgeStyling, $_);
 
     $: isPlayerFromCurrentCountry = isCountryPlayer(playerInfo, activeCountry);
 

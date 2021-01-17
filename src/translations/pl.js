@@ -88,6 +88,12 @@ export default {
             countryRanking: 'Ranking krajowy',
             whatToPlay: 'Co zagrać?',
         },
+        whatToPlay: {
+            all: 'Wszystkie',
+            notPlayed: 'Niezagrane',
+            toImprove: 'Do poprawy',
+            algorithmBy: 'Algorytm szacowania dokładności opracowany przez'
+        },
     },
     songBrowser: {
         types: {

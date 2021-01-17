@@ -36,7 +36,9 @@ export default () => {
       : sortedScores.reduce((cum, score, idx) => sumPp(score, cum, idx + startFromIdx), startWithPp);
   }
 
-  // each score has to have three fields at least: acc, stars and timeCoeff (=1 + Math.max(now - timeset, 0) / DECAY)
+  // Written by BaliBalo: https://github.com/BaliBalo/ScoreSaber/blob/master/pages/peepee.js
+  // Optimized by motzel
+  // Note: each score has to have three fields at least: acc, stars and timeCoeff (=1 + Math.max(now - timeset, 0) / DECAY)
   function getEstimatedAcc(stars, scores, maxScoresStars) {
     let data = scores.reduce((o, score) => {
       let d = 2 * Math.abs(stars - score.stars);

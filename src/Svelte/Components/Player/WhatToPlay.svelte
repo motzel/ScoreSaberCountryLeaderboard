@@ -1,6 +1,6 @@
 <script>
   import {onMount} from 'svelte'
-  import {_} from '../../stores/i18n';
+  import {_, trans} from '../../stores/i18n';
   import {getRankedSongs} from '../../../scoresaber/rankeds'
   import balibalo from '../../../scoresaber/balibalo';
   import eventBus from '../../../utils/broadcast-channel-pubsub'
@@ -8,6 +8,7 @@
   import Difficulty from '../Common/Difficulty.svelte'
   import Value from '../Common/Value.svelte'
   import Pager from '../Common/Pager.svelte'
+  import Switcher from '../Common/Switcher.svelte'
 
   export let playerScores = [];
 
@@ -20,19 +21,54 @@
   let currentPage = 0;
   let itemsPerPage = 5;
 
+  let strings = {
+    switches: [
+      {_key: 'profile.whatToPlay.all', id: 'all'},
+      {_key: 'profile.whatToPlay.notPlayed', id: 'not-played'},
+      {_key: 'profile.whatToPlay.toImprove', id: 'to-improve'},
+    ],
+  }
+
+  let values = {
+    type: strings.switches[0],
+  }
+
+  function translateAllStrings() {
+    Object.keys(strings).forEach(key => {
+      strings[key].forEach(item => {
+        if (item._key) item.label = trans(item._key);
+      })
+    })
+
+    strings = {...strings};
+    values = {...values};
+  }
+
   let initialized = true;
 
   async function refreshRankeds() {
     allRankeds = await getRankedSongs();
   }
 
-  function refreshPage(estimatedScores, currentPage, itemsPerPage) {
-    if (!estimatedScores || !Number.isFinite(currentPage) || !Number.isFinite(itemsPerPage)) return;
+  function refreshPage(estimatedScores, type) {
+    if (!estimatedScores || !type || !type.id) return;
 
-    // TODO: add filtering and sorting
+    switch (type.id) {
+      case 'not-played':
+        results = estimatedScores.filter(s => !s.pp);
+        break;
 
-    results = estimatedScores.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+      case 'to-improve':
+        results = estimatedScores.filter(s => s.pp);
+        break;
 
+      case 'all':
+      default:
+        results = estimatedScores;
+        break;
+    }
+
+    currentPage = 0;
   }
 
   async function refreshPlayerScores(estimator, playerScores, allRankeds) {
@@ -82,7 +118,11 @@
   }
 
   $: {
-    refreshPage(estimatedScores, currentPage, itemsPerPage);
+    refreshPage(estimatedScores, values.type);
+  }
+
+  $: {
+    translateAllStrings($_);
   }
 </script>
 
@@ -93,11 +133,15 @@
       {$_.profile.aside.whatToPlay}
     </header>
 
+    <div class="switcher">
+      <Switcher values={strings.switches} bind:value={values.type}/>
+    </div>
+
     <div>
       {#if results.length}
         <table class="sspl">
           <tbody>
-          {#each results.slice(0, 5) as song(song.leaderboardId)}
+          {#each results.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage) as song(song.leaderboardId)}
             <tr>
               <td>
                 <div class="song">
@@ -122,12 +166,12 @@
 
                   <div>
                     <i class="fa fa-table"></i>
-                    <Value value={song.estimatedPp} prevValue={song.pp} suffix="pp" inline={true} />
+                    <Value value={song.estimatedPp} prevValue={song.pp} suffix="pp" inline={true}/>
                   </div>
 
                   <div class="ppDiff">
                     <i class="fa fa-chart-line"></i>
-                    <Value value={song.ppDiff} prefix="+" suffix="pp" inline={true} />
+                    <Value value={song.ppDiff} prefix="+" suffix="pp" inline={true}/>
                   </div>
                 </div>
 
@@ -137,11 +181,12 @@
           </tbody>
         </table>
 
-        <Pager bind:currentPage totalItems={estimatedScores.length} {itemsPerPage} itemsPerPageValues={null} mode="simple" />
+        <Pager bind:currentPage totalItems={results.length} {itemsPerPage} itemsPerPageValues={null}
+               mode="simple"/>
 
         <small class="balibalo">
-          Accuracy estimates provided by
-          <a href="https://github.com/BaliBalo" target="_blank" rel="noopener">BaliBalo</a>
+          {$_.profile.whatToPlay.algorithmBy}
+          <a href="https://github.com/BaliBalo/ScoreSaber" target="_blank" rel="noopener">BaliBalo</a>
         </small>
       {:else}
         <p>{$_.common.noData}</p>
@@ -163,6 +208,10 @@
 
     header > i {
         margin-right: .25em;
+    }
+
+    .switcher {
+        padding: .5em 0;
     }
 
     table {
@@ -219,6 +268,7 @@
     :global(.values > div > span) {
         font-weight: 500;
     }
+
     :global(.values small.inline) {
         margin-left: .2em;
     }
@@ -233,8 +283,9 @@
         color: var(--dimmed);
         text-align: right;
     }
+
     .balibalo a {
-        color: inherit!important;
+        color: inherit !important;
         text-decoration: underline;
     }
 </style>
