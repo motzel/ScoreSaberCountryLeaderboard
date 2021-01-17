@@ -14,7 +14,6 @@
         addToDate,
         dateFromString,
         daysAgo,
-        getFirstNotNewerThan,
         timestampFromString,
         toSSTimestamp,
     } from "../../../utils/date";
@@ -22,7 +21,7 @@
     import {PLAYERS_PER_PAGE} from '../../../network/scoresaber/consts'
 
     import {
-        getAllPlayersHistory, getPlayerHistory,
+        getPlayerHistory,
         getPlayerInfo,
         getPlayerProfileUrl,
         getScoresByPlayerId,
@@ -44,6 +43,7 @@
     import {fetchSsProfilePage} from '../../../network/scoresaber/scores'
     import nodeSync from '../../../utils/multinode-sync'
     import {formatDateRelative} from '../../../utils/format'
+    import WhatToPlay from './WhatToPlay.svelte'
 
     export let profileId;
     export let profilePage = {};
@@ -808,6 +808,8 @@
                                  playerId={profileId} playerPp={pp} numOfItems={5}/>
                 </div>
             {/each}
+
+            <WhatToPlay {playerScores} />
         {/if}
     </aside>
 </div>

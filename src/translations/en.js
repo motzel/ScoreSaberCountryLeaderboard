@@ -85,6 +85,7 @@ export default {
         aside: {
             globalRanking: 'Global ranking',
             countryRanking: 'Country ranking',
+            whatToPlay: 'What to play',
         },
     },
     songBrowser: {

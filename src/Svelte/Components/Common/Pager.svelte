@@ -11,6 +11,7 @@
     if (!displayMax) displayMax = 11;
     export let hide = false;
     export let beforePageChanged;
+    export let mode = 'pages';
 
     let displayStart = false;
     let displayEnd = false;
@@ -85,29 +86,75 @@
 {#if pagesTotal > 1 && !hide}
 <nav class="pagination">
     <div class="position">{startItem} - {endItem} / {totalItems}</div>
-    <ul class="pagination-list">
-        {#if displayStart}
-            <li data-page={0}><a href="#" on:click|preventDefault={() => onPageChanged(0)}
-                                 class={'pagination-link' + (currentPage === 0 ? ' is-current' : '')}>
-                {#if currentlyLoadedPage === 0}<i class="fas fa-spinner fa-spin"></i>{:else}{1}{/if}
-            </a></li>
-            <li><span class="pagination-ellipsis">…</span></li>
-        {/if}
+    <ul class="pagination-list" class:simple={mode === 'simple'}>
+        {#if mode === 'simple'}
+            <li data-page={0}>
+                {#if currentPage !== 0}
+                    <a href="#" on:click|preventDefault={() => onPageChanged(0)} class="pagination-link">
+                        {#if currentlyLoadedPage === 0}
+                            <i class="fas fa-spinner fa-spin"></i>
+                        {:else}
+                            <i class="fas fa-step-backward"></i>
+                        {/if}
+                    </a>
 
-        {#each displayedPages as page}
-        <li data-page={page}>
-            <a href="#" on:click|preventDefault={() => onPageChanged(page-1)} class={'pagination-link' + (currentPage === page - 1 ? ' is-current' : '')}>
-                {#if currentlyLoadedPage === page - 1}<i class="fas fa-spinner fa-spin"></i>{:else}{page}{/if}
-            </a>
-        </li>
-        {/each}
+                    <a href="#" on:click|preventDefault={() => onPageChanged(currentPage - 1)} class="pagination-link">
+                        {#if currentlyLoadedPage === 0}
+                            <i class="fas fa-spinner fa-spin"></i>
+                        {:else}
+                            <i class="fas fa-chevron-left"></i>
+                        {/if}
+                    </a>
+                {:else}
+                    <span class="pagination-link disabled"><i class="fas fa-step-backward"></i></span>
+                    <span class="pagination-link disabled"><i class="fas fa-chevron-left"></i></span>
+                {/if}
 
-        {#if displayEnd}
-            <li><span class="pagination-ellipsis">…</span></li>
-            <li data-page={pagesTotal - 1}><a href="#" on:click|preventDefault={() => onPageChanged(pagesTotal - 1)}
-                                              class={'pagination-link' + (currentPage === pagesTotal - 1 ? ' is-current' : '')}>
-                {#if currentlyLoadedPage === pagesTotal -1}<i class="fas fa-spinner fa-spin"></i>{:else}{pagesTotal}{/if}
-            </a></li>
+                {#if currentPage !== pagesTotal - 1}
+                    <a href="#" on:click|preventDefault={() => onPageChanged(currentPage + 1)} class="pagination-link">
+                        {#if currentlyLoadedPage === pagesTotal - 1}
+                            <i class="fas fa-spinner fa-spin"></i>
+                        {:else}
+                            <i class="fas fa-chevron-right"></i>
+                        {/if}
+                    </a>
+
+                    <a href="#" on:click|preventDefault={() => onPageChanged(pagesTotal - 1)} class="pagination-link">
+                        {#if currentlyLoadedPage === pagesTotal - 1}
+                            <i class="fas fa-spinner fa-spin"></i>
+                        {:else}
+                            <i class="fas fa-step-forward"></i>
+                        {/if}
+                    </a>
+                {:else}
+                    <span class="pagination-link disabled"><i class="fas fa-chevron-right"></i></span>
+                    <span class="pagination-link disabled"><i class="fas fa-step-forward"></i></span>
+                {/if}
+            </li>
+        {:else}
+            {#if displayStart}
+                <li data-page={0}><a href="#" on:click|preventDefault={() => onPageChanged(0)}
+                                     class={'pagination-link' + (currentPage === 0 ? ' is-current' : '')}>
+                    {#if currentlyLoadedPage === 0}<i class="fas fa-spinner fa-spin"></i>{:else}{1}{/if}
+                </a></li>
+                <li><span class="pagination-ellipsis">…</span></li>
+            {/if}
+
+            {#each displayedPages as page}
+            <li data-page={page}>
+                <a href="#" on:click|preventDefault={() => onPageChanged(page-1)} class={'pagination-link' + (currentPage === page - 1 ? ' is-current' : '')}>
+                    {#if currentlyLoadedPage === page - 1}<i class="fas fa-spinner fa-spin"></i>{:else}{page}{/if}
+                </a>
+            </li>
+            {/each}
+
+            {#if displayEnd}
+                <li><span class="pagination-ellipsis">…</span></li>
+                <li data-page={pagesTotal - 1}><a href="#" on:click|preventDefault={() => onPageChanged(pagesTotal - 1)}
+                                                  class={'pagination-link' + (currentPage === pagesTotal - 1 ? ' is-current' : '')}>
+                    {#if currentlyLoadedPage === pagesTotal -1}<i class="fas fa-spinner fa-spin"></i>{:else}{pagesTotal}{/if}
+                </a></li>
+            {/if}
         {/if}
     </ul>
     {#if itemsPerPageValues && itemsPerPageValues.length}
@@ -133,6 +180,9 @@
         justify-content: center;
         margin-top: 0;
         margin-bottom: 0!important;
+    }
+    .pagination-list.simple {
+        justify-content: flex-end;
     }
     .pagination-previous, .pagination-next, .pagination-link {
         border-color: var(--alternate);
