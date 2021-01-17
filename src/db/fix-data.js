@@ -53,7 +53,33 @@ const allFixes = {
       allAppliedFixes.push('config-chart-20210108');
       await storeAppliedFixes(allAppliedFixes);
     }
-  }
+  },
+
+  'rankeds-20210117': {
+    apply: async () => {
+      log.info('Apply rankeds diff fix (20210117)')
+
+      return db.runInTransaction(['rankeds', 'key-value'], async tx => {
+        let cursor = await tx.objectStore('rankeds').openCursor();
+
+        while (cursor) {
+          const {diff, ...ranked} = cursor.value;
+
+          if (diff && !cursor.value.diffInfo) {
+            const updatedRanked = {...ranked, diffInfo: diff};
+            cursor.update(updatedRanked);
+          }
+
+          cursor = await cursor.continue();
+        }
+
+        const store = tx.objectStore('key-value');
+        const allAppliedFixes = await store.get(FIXES_KEY) ?? [];
+        allAppliedFixes.push('rankeds-20210117');
+        await store.put(allAppliedFixes, FIXES_KEY);
+      });
+    },
+  },
 };
 
 export const setupDataFixes = async () => {
