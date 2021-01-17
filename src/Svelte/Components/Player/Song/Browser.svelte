@@ -2,7 +2,7 @@
     import {onMount, tick, createEventDispatcher} from 'svelte';
     import log from '../../../../utils/logger';
     import {copyToClipboard} from '../../../../utils/clipboard';
-    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFromScore, getWeightedPp} from "../../../../scoresaber/pp";
+    import {findRawPp, getTotalPlayerPp, PP_PER_STAR, ppFactorFromAcc, getWeightedPp} from "../../../../scoresaber/pp";
     import {getRankedSongs, RANKED, UNRANKED} from "../../../../scoresaber/rankeds";
     import {delay} from "../../../../network/fetch";
     import {
@@ -523,7 +523,7 @@
 
         const onePpBoundary = findRawPp(playerPpScores, boundary);
 
-        return onePpBoundary / PP_PER_STAR / ppFromScore(maxAcc);
+        return onePpBoundary / PP_PER_STAR / ppFactorFromAcc(maxAcc);
     }
     const getCachedMinStars = memoize(getMinStars);
 
@@ -777,7 +777,7 @@
         for (const songsKey in songPage.songs) {
             const song = songPage.songs[songsKey];
 
-            song.maxPp = song.stars * PP_PER_STAR * ppFromScore(100);
+            song.maxPp = song.stars * PP_PER_STAR * ppFactorFromAcc(100);
 
             if (!song.maxScoreEx || !song.bpm) {
                 try {

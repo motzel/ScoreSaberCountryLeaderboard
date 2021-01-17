@@ -85,6 +85,13 @@ export default {
         aside: {
             globalRanking: 'Global ranking',
             countryRanking: 'Country ranking',
+            whatToPlay: 'What to play',
+        },
+        whatToPlay: {
+            all: 'All',
+            notPlayed: 'Not played',
+            toImprove: 'To improve',
+            algorithmBy: 'Accuracy estimation algorithm developed by',
         },
     },
     songBrowser: {

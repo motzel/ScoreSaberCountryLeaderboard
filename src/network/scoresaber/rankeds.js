@@ -32,7 +32,7 @@ const fetchRankedSongsArray = async () =>
                     name: s.name + (s.songSubName && s.songSubName.length ? ' ' + s.songSubName : ''),
                     songAuthor: s.songAuthorName,
                     levelAuthor: s.levelAuthorName,
-                    diff: extractDiffAndType(s.diff),
+                    diffInfo: extractDiffAndType(s.diff),
                     stars: s.stars,
                     oldStars: null,
                 }))
