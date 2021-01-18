@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.1
+- [!] fix song name parsing when name contains @ (SS bug?)
+
 1.3.0
 - [+] add WhatToPlay widget to player's profile, thx BaliBalo for the opportunity to use your accuracy estimation algorithm
 

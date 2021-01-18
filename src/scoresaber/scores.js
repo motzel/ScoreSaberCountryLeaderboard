@@ -121,7 +121,12 @@ export const parseSsProfilePage = doc => ({
       ret.hash = imgMatch ? imgMatch[1] : null;
 
       const songPp = tr.querySelector('th.song a .songTop.pp');
-      const songMatch = songPp ? songPp.innerHTML.replace(/&amp;/g,'&').match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/) : null;
+      const songMatch = songPp
+        ? songPp.innerHTML
+          .replace(/&amp;/g, '&')
+          .replace(/<span class="__cf_email__" data-cfemail="[^"]+">\[email&nbsp;protected]<\/span>/g, '')
+          .match(/^(.*?)\s*<span[^>]+>(.*?)<\/span>/)
+        : null;
       if (songMatch) {
         const songAuthorMatch = songMatch[1].match(/^(.*?)\s-\s(.*)$/);
         if (songAuthorMatch) {
