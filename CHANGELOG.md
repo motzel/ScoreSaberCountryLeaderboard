@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.2
+- [!] fix parsing of player scores if the song name contains a @ character (Cloudflare "email" protection)
+
 1.3.1
 - [!] fix song name parsing when name contains @ (SS bug?)
 
