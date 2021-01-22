@@ -655,7 +655,7 @@
                                     <Value value={rank} prefix="#" digits={0} zero="#0" />
                                 </a>
                                 {#each countryRanks as countryRank}
-                                    <a href="/global?country={countryRank.country}"
+                                    <a href={countryRank.rank ? "/global/" + (Math.floor((countryRank.rank-1) / PLAYERS_PER_PAGE) + 1) + '?country=' + countryRank.country : '#'}
                                        data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
                                     >
                                         <img src="/imports/images/flags/{countryRank.country}.png">
@@ -791,7 +791,9 @@
             <div class="box has-shadow ranking">
                 <header>
                     <i class="fas fa-globe-americas"></i>
+                    <a href={rank ? "/global/" + (Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 ) : '#'}>
                     {$_.profile.aside.globalRanking}
+                    </a>
                 </header>
                 <MiniRanking country={null} type="global" rank={rank} playerId={profileId} playerPp={pp} numOfItems={5}/>
             </div>
@@ -800,7 +802,9 @@
                 <div class="box has-shadow ranking">
                     <header>
                         <img src="/imports/images/flags/{countryRank.country}.png">
+                        <a href={countryRank.rank ? "/global/" + (Math.floor((countryRank.rank-1) / PLAYERS_PER_PAGE) + 1) + '?country=' + countryRank.country : '#'}>
                         {$_.profile.aside.countryRanking}
+                        </a>
                     </header>
                     <MiniRanking country={countryRank.country}
                                  type={countryRank.type === 'active-country' ? 'country' : countryRank.type}
@@ -837,6 +841,10 @@
         font-size: 1.1em;
         font-weight: 500;
         margin-bottom: .5em;
+    }
+
+    aside .ranking header a {
+        color: inherit!important;
     }
 
     aside .ranking header > img, aside .ranking header > i {

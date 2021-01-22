@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.5
+- [+] global/country ranking headings are now clickable
+
 1.3.4
 - [+] all scores with zero pp for ranked songs are refetched once a day within 100 days of playing 
 
