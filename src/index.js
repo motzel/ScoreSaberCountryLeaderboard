@@ -20,15 +20,13 @@ import initDatabase from './db/db';
 import {setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    getPlayerProfileUrl, getScoresByPlayerId,
+    getPlayerProfileUrl,
     isPlayerDataAvailable,
 } from "./scoresaber/players";
 import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
 import {getRankedSongs} from './scoresaber/rankeds'
-import {dateFromString} from './utils/date'
-import {getTotalPp, getTotalPpFromSortedPps, PP_PER_STAR, ppFactorFromAcc} from './scoresaber/pp'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -318,6 +316,7 @@ async function init() {
         // pre-warm cache
         await getConfig();
         await getSsplCountryRanks();
+        await getRankedSongs();
 
         await Promise.allSettled(
             [

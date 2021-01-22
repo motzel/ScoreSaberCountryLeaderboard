@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.4
+- [+] all scores with zero pp for ranked songs are refetched once a day within 100 days of playing 
+
 1.3.3
 - [!] fix display of pp if result on SS page contains it and result in cache does not
 

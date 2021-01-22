@@ -216,9 +216,9 @@ export const getPlayerScorePagesToUpdate = (allScores, leaderboardIdsToUpdate, i
       }, {});
 }
 
-export const getPlayerRankedsScorePagesToUpdate = async (scores, previousLastUpdated) => {
+export const getPlayerRankedsScorePagesToUpdate = async (scores, previousLastUpdated, additionalLeaderboardsToUpdate = []) => {
     const songsToUpdate = await getPlayerRankedsToUpdate(scores, previousLastUpdated);
-    if (!songsToUpdate.length) return {};
+    if (!songsToUpdate.length && !additionalLeaderboardsToUpdate.length) return {};
 
-    return getPlayerScorePagesToUpdate(scores, songsToUpdate);
+    return getPlayerScorePagesToUpdate(scores, songsToUpdate.concat(additionalLeaderboardsToUpdate));
 }

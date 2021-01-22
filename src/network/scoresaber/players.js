@@ -11,7 +11,7 @@ import {
     getScoresByPlayerId,
     updateSongScore,
 } from "../../scoresaber/players";
-import {dateFromString, toSSTimestamp} from "../../utils/date";
+import {dateFromString, toSSTimestamp, toUTCDate} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsProfilePage} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../utils/multinode-sync';
@@ -24,7 +24,7 @@ import {db} from '../../db/db'
 import tempConfig from '../../temp'
 import players from '../../db/repository/players'
 import scores from '../../db/repository/scores'
-import {getRankedsChangesSince} from '../../scoresaber/rankeds'
+import {getRankedsChangesSince, getRankedSongs, UNRANKED} from '../../scoresaber/rankeds'
 import playersRepository from '../../db/repository/players';
 import playersHistoryRepository from '../../db/repository/players-history';
 import scoresRepository from '../../db/repository/scores';
@@ -216,15 +216,29 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
 
     const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
-    if (Object.keys(newScores.scores).length) {
-        playerScores = convertArrayToObjectByKey(await getScoresByPlayerId(playerId) ?? [], 'leaderboardId');
+    const shouldCheckForRankedsPp = playerLastUpdated && toUTCDate(playerLastUpdated) !== toUTCDate(new Date()); // check for pp update once a day
+    let additionalLeaderboardsToUpdate = [];
+
+    if (shouldCheckForRankedsPp || Object.keys(newScores.scores).length) {
+        const playerScoresArr = await getScoresByPlayerId(playerId) ?? []
+        playerScores = convertArrayToObjectByKey(playerScoresArr, 'leaderboardId');
+
+        if (shouldCheckForRankedsPp) {
+            const HOUNDRED_DAYS_AGO = new Date(Date.now() - 1000 * 60 * 60 * 24 * 100);
+
+            const allRankeds = await getRankedSongs();
+            UNRANKED.forEach(leaderboardId => delete allRankeds[leaderboardId]);
+            additionalLeaderboardsToUpdate = playerScoresArr
+              .filter(s => !s.pp && s.leaderboardId && allRankeds[s.leaderboardId] && !newScores?.scores[s.leaderboardId] && s.timeset && dateFromString(s.timeset) > HOUNDRED_DAYS_AGO)
+              .map(s => s.leaderboardId);
+        }
     }
 
     // update rankeds scores if needed
-    if (!isEmpty(songsChangedAfterPreviousUpdate)) {
+    if (!isEmpty(songsChangedAfterPreviousUpdate) || additionalLeaderboardsToUpdate.length) {
         // fetch all player pages that need to be re-fetched
         // {pageIdx: [leaderboardId, leaderboardId...]}
-        const playerRankedsScoresPagesToUpdate = await getPlayerRankedsScorePagesToUpdate({...playerScores, ...newScores.scores}, playerLastUpdated);
+        const playerRankedsScoresPagesToUpdate = await getPlayerRankedsScorePagesToUpdate({...playerScores, ...newScores.scores}, playerLastUpdated, additionalLeaderboardsToUpdate);
 
         let idxProgress = 0;
         let updatedPlayerScores = {};
