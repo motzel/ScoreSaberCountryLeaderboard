@@ -20,8 +20,8 @@ import initDatabase from './db/db';
 import {setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    getPlayerProfileUrl,
-    isPlayerDataAvailable,
+    getPlayerProfileUrl, getPlayers,
+    isPlayerDataAvailable, updatePlayer,
 } from "./scoresaber/players";
 import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
 import {setupDataFixes} from './db/fix-data'
@@ -251,6 +251,25 @@ async function setupGlobalEventsListeners() {
     eventBus.on('player-twitch-linked', async ({playerId}) => {
         await twitch.updateVideosForPlayerId(playerId);
     });
+
+    eventBus.on('refetch-all-player-scores-cmd', async playerId => {
+        if (!playerId) {
+            console.error('Command requires a player ID');
+            return;
+        }
+
+        const player = (await getPlayers() ?? []).find(p => p.id === playerId);
+        if (!player) {
+            console.error(`The player with the ID "${playerId}" does not exist in the cache`)
+            return;
+        }
+
+        await updatePlayer({...player, lastUpdated: null});
+
+        eventBus.publish('refresh-all-cmd');
+    });
+
+    if (unsafeWindow) unsafeWindow.ssplEventBus = eventBus;
 }
 
 function addVersionInfoToFooter() {

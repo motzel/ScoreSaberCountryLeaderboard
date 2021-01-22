@@ -99,6 +99,10 @@
             await onRefresh();
         });
 
+        const unsubscriberRefreshAll = eventBus.on('refresh-all-cmd', async () => {
+            await onRefresh();
+        });
+
         await setLastRefreshDate();
         setInterval(() => setLastRefreshDate(), 1000 * 60);
 
@@ -110,6 +114,7 @@
             unsubscriberBgStopped();
             unsubscriberScoresUpdated();
             unsubscriberMainPlayerChanged();
+            unsubscriberRefreshAll();
         }
     })
 

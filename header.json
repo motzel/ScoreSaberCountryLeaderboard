@@ -13,7 +13,7 @@
   "include": ["/^https://scoresaber\\.com\\/global(\\/\\d+&country=pl|\\?country=pl)/"],
   "require": [],
   "grant": [
-    "GM_addStyle", "GM_info", "GM_xmlhttpRequest", "GM_getTab", "GM_getTabs", "GM_saveTab", "GM_getValue", "GM_setValue", "GM_addValueChangeListener"
+    "GM_addStyle", "GM_info", "GM_xmlhttpRequest", "GM_getTab", "GM_getTabs", "GM_saveTab", "GM_getValue", "GM_setValue", "GM_addValueChangeListener", "unsafeWindow"
   ],
   "run-at": "document-start"
 }
