@@ -1,5 +1,5 @@
 <script>
-  import {onMount, createEventDispatcher} from 'svelte'
+  import {onMount, createEventDispatcher, tick} from 'svelte'
   const dispatch = createEventDispatcher();
 
   import eventBus from '../../../../utils/broadcast-channel-pubsub';
@@ -22,8 +22,8 @@
   export let highlight = [];
 
   let lastPageData = scores && scores.length
-   ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), leaderboardId}
-   : null;
+    ? {scores, pageNum, totalItems, pageQty: Math.ceil(totalItems / PLAYS_PER_PAGE), leaderboardId}
+    : null;
 
   let data = [];
 
@@ -37,13 +37,21 @@
 
   let hash = song && song.hash ? song.hash : null;
 
+  let lastEnhanced = null;
+
   const enhanceScores = async () => {
-    if (!(leaderboardId && data && data.length && playersScores)) return;
+    if (!(leaderboardId && data && data.length && playersScores && data[0].leaderboardId === leaderboardId && lastPageData && lastPageData.leaderboardId === leaderboardId)) return;
+
+    const createEnhanceTag = () => maxScore + '::' + leaderboardId + '::' + lastPageData.pageNum + '::' + Object.values(playersScores).map(s => s.score && s.playerId ? s.playerId + '/' + s.score : '').join('::');
+    const enhanceTag = createEnhanceTag();
+    if (lastEnhanced === enhanceTag) return;
+
+    lastEnhanced = enhanceTag;
 
     data = await Promise.all(data.map(async score => {
       if (!score || !score.playerId) return score;
 
-      const cachedScore = playersScores[score.playerId] ? playersScores[score.playerId] : null;
+      const cachedScore = playersScores[score.playerId] && playersScores[score.playerId].leaderboardId === score.leaderboardId ? playersScores[score.playerId] : null;
 
       return await enhanceScore(score, cachedScore, maxScore, true);
     }));
@@ -54,9 +62,11 @@
 
     const leaderboard = await getSongScores(leaderboardId);
     playersScores = leaderboard && leaderboard.length ? convertArrayToObjectByKey(leaderboard, 'playerId') : {};
+
+    enhanceScores();
   }
 
-  function processFetched(pageData) {
+  async function processFetched(pageData) {
     if (!pageData) {
       data = [];
       return;
@@ -64,8 +74,13 @@
 
     totalItems = pageData.totalItems && !isNaN(pageData.totalItems) ? pageData.totalItems : totalItems;
 
-    data = pageData.scores.map(score => ({...score, leaderboardId, highlight: score && score.playerId && (
-     score.playerId === mainPlayerId || (highlight && highlight.includes(score.playerId))) }));
+    data = pageData.scores.map(score => ({
+      ...score,
+      leaderboardId: pageData.leaderboardId,
+      highlight: score && score.playerId && (score.playerId === mainPlayerId || (highlight && highlight.includes(score.playerId)))
+    }));
+
+    await tick();
 
     enhanceScores();
   }
@@ -117,7 +132,7 @@
 
     await refreshPlayersScores(leaderboardId);
 
-    if(lastPageData) processFetched(lastPageData);
+    if(lastPageData) await processFetched(lastPageData);
 
     const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
       refreshPlayersScores();
@@ -147,7 +162,7 @@
   }
 
   $: {
-    enhanceScores(playersScores, maxScore);
+    enhanceScores(leaderboardId, lastPageData, playersScores, maxScore);
   }
 </script>
 
