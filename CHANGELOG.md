@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.3
+- [!] fix display of pp if result on SS page contains it and result in cache does not
+
 1.3.2
 - [!] fix parsing of player scores if the song name contains a @ character (Cloudflare "email" protection)
 
