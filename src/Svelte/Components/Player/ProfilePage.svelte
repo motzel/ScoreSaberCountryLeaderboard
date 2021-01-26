@@ -97,6 +97,8 @@
 
     let anyDataIsAvailable = null;
 
+    let browserSongType = null;
+
     const ALL = 365 * 100;
     let strings = {
         periods: [
@@ -601,6 +603,11 @@
         transformed = true;
     }
 
+    function onShowWhatToPlay() {
+        browserSongType = 'what_to_play';
+        transformed = true;
+    }
+
     function onAccBadgeClick(badge) {
         const badgeAlreadySelected = !!(selectedAccBadges.find(b => b === badge));
 
@@ -616,6 +623,11 @@
 
         if(ssPresenter) ssPresenter.onTypeChange(event.detail);
     }
+
+    function onSongTypeChanged(event) {
+        browserSongType = event.detail;
+    }
+
     let ssPresenter  = null;
 </script>
 
@@ -749,7 +761,8 @@
         <div class="box has-shadow">
             <div class="content">
                 {#if transformed}
-                    <Browser playerId={profileId} {recentPlay} on:browser-type-changed={onBrowserTypeChanged} />
+                    <Browser playerId={profileId} {recentPlay} songType={browserSongType}
+                             on:browser-type-changed={onBrowserTypeChanged} on:song-type-changed={onSongTypeChanged} />
                 {:else}
                     <ScoreSaberProvider
                       {players}
@@ -813,7 +826,7 @@
                 </div>
             {/each}
 
-            <WhatToPlay {playerScores} />
+            <WhatToPlay {playerScores} on:show-full={onShowWhatToPlay} />
         {/if}
     </aside>
 </div>

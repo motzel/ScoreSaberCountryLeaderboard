@@ -66,7 +66,9 @@ export default () => {
       }));
 
       const newRecentRankedPlay = onlyRankedPlayerScores.reduce((recent, s) => s.timeset > recent ? s.timeset : recent, null);
-      if (!newRecentRankedPlay || newRecentRankedPlay <= recentRankedPlay) return false;
+      if (!newRecentRankedPlay) return false;
+
+      if (newRecentRankedPlay <= recentRankedPlay) return true;
 
       recentRankedPlay = newRecentRankedPlay;
 

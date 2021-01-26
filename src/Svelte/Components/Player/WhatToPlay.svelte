@@ -1,5 +1,7 @@
 <script>
-  import {onMount} from 'svelte'
+  import {onMount, createEventDispatcher} from 'svelte'
+  const dispatch = createEventDispatcher();
+
   import {_, trans} from '../../stores/i18n';
   import {getRankedSongs} from '../../../scoresaber/rankeds'
   import balibalo from '../../../scoresaber/balibalo';
@@ -99,6 +101,10 @@
     }
   }
 
+  function onShowFull() {
+    dispatch('show-full')
+  }
+
   onMount(async () => {
     await refreshRankeds();
 
@@ -129,8 +135,12 @@
 {#if initialized && results}
   <div class="box has-shadow ranking">
     <header>
-      <i class="fas fa-play-circle"></i>
-      {$_.profile.aside.whatToPlay}
+      <div>
+        <i class="fas fa-play-circle"></i>
+        <a on:click={onShowFull}>{$_.profile.aside.whatToPlay}</a>
+      </div>
+
+      <a on:click={onShowFull} class="show-full"><i class="fas fa-external-link-alt"></i></a>
     </header>
 
     <div class="switcher">
@@ -201,9 +211,15 @@
     }
 
     header {
+        display: flex;
+        justify-content: space-between;
         font-size: 1.1em;
         font-weight: 500;
         margin-bottom: .5em;
+    }
+
+    header a {
+        color: inherit!important;
     }
 
     header > i {

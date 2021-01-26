@@ -36,6 +36,7 @@
     import {getActiveCountry} from "../../../../scoresaber/country";
     import {_, trans} from "../../../stores/i18n";
     import twitch from '../../../../services/twitch';
+    import balibalo from '../../../../scoresaber/balibalo';
 
     import Song from "../../Song/Song.svelte";
     import Pager from "../../Common/Pager.svelte";
@@ -63,6 +64,7 @@
     export let minPpPerMap = 1;
     export let country;
     export let recentPlay = null;
+    export let songType = null;
 
     let viewUpdates = 'keep-view';
     let currentFirstRowIdentifier = null;
@@ -86,6 +88,9 @@
     let minStarsForSniper = 0;
     let maxStars = 100;
 
+    let estimator = null;
+    let estimatedScores = null;
+
     let resultsEl = null;
 
     let browserWasInitialized = false;
@@ -96,6 +101,7 @@
             {id: 'rankeds', _key: 'songBrowser.types.ranked_only'},
             {id: 'unrankeds', _key: 'songBrowser.types.unranked_only'},
             {id: 'rankeds_unplayed', _key: 'songBrowser.types.not_played_only'},
+            {id: 'what_to_play', _key: 'profile.aside.whatToPlay'},
             {id: 'sniper_mode', _key: 'songBrowser.types.sniper_mode'},
         ],
 
@@ -126,6 +132,8 @@
             {_key: 'songBrowser.fields.rank', field: 'rank'},
             {_key: 'songBrowser.fields.diffPp', field: 'diffPp'},
             {_key: 'songBrowser.fields.diffPp', field: 'bestDiffPp'},
+            {_key: 'songBrowser.fields.estimatedAcc', field: 'estimatedAcc'},
+            {_key: 'songBrowser.fields.estimatedPp', field: 'estimatedPp'},
         ],
 
         sortOrders: [
@@ -195,6 +203,40 @@
                 valueProps: {zero: "-"}
             },
             {
+                _key      : 'songBrowser.fields.estimatedPp',
+                _keyName  : 'songBrowser.fields.estimatedPpShort',
+                _keyCompactLabel: 'songBrowser.estimatedShort',
+                name      : 'PP',
+                key       : 'estimatedPp',
+                selected  : true,
+                type      : 'series',
+                valueProps: {zero: "-", suffix: "pp"},
+                displayed : false
+            },
+            {
+                _key        : 'songBrowser.fields.estimatedAcc',
+                _keyName    : 'songBrowser.fields.estimatedAccShort',
+                _keyCompactLabel: 'songBrowser.estimatedShort',
+                compactLabel: null,
+                name        : 'Est. Acc',
+                key         : 'estimatedAcc',
+                selected    : true,
+                type        : 'series',
+                displayed   : false,
+                valueProps  : {zero: "-", suffix: "%"}
+            },
+            {
+                _key        : 'songBrowser.fields.diffPp',
+                _keyName    : 'songBrowser.fields.diffPpShort',
+                compactLabel: null,
+                name        : '+PP',
+                key         : 'diffPp',
+                selected    : false,
+                type        : 'series',
+                displayed   : false,
+                valueProps  : {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
+            },
+            {
                 _key        : 'songBrowser.fields.timeset',
                 _keyName    : 'songBrowser.fields.timesetShort',
                 compactLabel: null,
@@ -214,17 +256,6 @@
                 selected    : true,
                 type        : 'series',
                 displayed   : true
-            },
-            {
-                _key        : 'songBrowser.fields.diffPp',
-                _keyName    : 'songBrowser.fields.diffPpShort',
-                compactLabel: null,
-                name        : '+PP',
-                key         : 'diffPp',
-                selected    : false,
-                type        : 'series',
-                displayed   : false,
-                valueProps  : {zero: "-", suffix: "pp global", withSign: true, useColorsForValue: true}
             },
             {
                 _key      : 'songBrowser.fields.pp',
@@ -310,7 +341,7 @@
         },
     ];
     let allFilters = {
-        songType      : strings.songTypes[0],
+        songType      : songType ? strings.songTypes.find(st => st.id === songType) : strings.songTypes[0],
         songTypeOption: strings.songTypeOptions[0],
         name          : "",
         starsFilter   : {from: 0, to: maxStars},
@@ -377,7 +408,16 @@
         const playerTwitchUpdated = playerTwitchProfile && playerTwitchProfile.lastUpdated ? timestampFromString
         (playerTwitchProfile.lastUpdated) : '';
 
-        const newRefreshTag = playerInfos.map(playerInfo => playerInfo.id + ':' + (playerInfo.recentPlay ? timestampFromString(playerInfo.recentPlay) : 'null')).join(':') + ':' + playerTwitchUpdated;
+        const newRefreshTag = playerInfos.map(playerInfo => playerInfo.id + ':' + (playerInfo.recentPlay ? timestampFromString(playerInfo.recentPlay) : 'null')).join(':') +
+          ':' + playerTwitchUpdated +
+          ':' + allFilters.countryRankVal + ':' + allFilters.countryRankOp[0].id +
+          ':' + allFilters.minPpDiff +
+          ':' + allFilters.name +
+          ':' + allFilters.songType.id +
+          ':' + allFilters.songTypeOption.id +
+          ':' + allFilters.sortBy.field + ':' + allFilters.sortBy.type + ':' + allFilters.sortBy.subtype + ':' + allFilters.sortOrder.order +
+          ':' + allFilters.starsFilter.from + ':' + allFilters.starsFilter.to
+        ;
 
         if (refreshTag !== newRefreshTag) refreshTag = newRefreshTag;
     }
@@ -385,7 +425,7 @@
     const generateSortTypes = async _ => {
         let types = [];
 
-        if (allFilters.songType.id === 'sniper_mode')
+        if (['sniper_mode', 'what_to_play'].includes(allFilters.songType.id))
             types.push({
                 ...getObjectFromArrayByKey(strings.sortTypes, 'bestDiffPp', 'field'),
                 type   : 'song',
@@ -393,6 +433,24 @@
                 field  : 'bestDiffPp',
                 enabled: true
             });
+
+        if (allFilters.songType.id === 'what_to_play') {
+            types.push({
+                ...getObjectFromArrayByKey(strings.sortTypes, 'estimatedAcc', 'field'),
+                type: 'series',
+                subtype: 0,
+                field: 'estimatedAcc',
+                enabled: true
+            });
+
+            types.push({
+                ...getObjectFromArrayByKey(strings.sortTypes, 'estimatedPp', 'field'),
+                type: 'series',
+                subtype: 0,
+                field: 'estimatedPp',
+                enabled: true
+            });
+        }
 
         if (allFilters.songType.id !== 'unrankeds')
             types.push({
@@ -419,7 +477,7 @@
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'diffPp', 'field'),
                             field  : "diffPp",
-                            enabled: 'sniper_mode' === allFilters.songType.id && idx !== 0
+                            enabled: ['sniper_mode', 'what_to_play'].includes(allFilters.songType.id) && idx !== 0
                         },
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'pp', 'field'),
@@ -434,7 +492,7 @@
                         {
                             ...getObjectFromArrayByKey(strings.sortTypes, 'rank', 'field'),
                             field  : "rank",
-                            enabled: allFilters.songType.id !== 'rankeds_unplayed'
+                            enabled: !['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id)
                         },
                     ].forEach(field => {
                         if (field.enabled)
@@ -459,7 +517,7 @@
         sortTypes = types;
 
         const config = await getConfig('songBrowser');
-        const sortBy = allFilters.songType.id === 'sniper_mode' ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
+        const sortBy = ['sniper_mode', 'what_to_play'].includes(allFilters.songType.id) ? 'bestDiffPp' : (config.defaultSort ? config.defaultSort : 'timeset');
         const defaultSort = sortTypes.find(s => s.field === sortBy);
         allFilters.sortBy = defaultSort ? defaultSort : types[0];
 
@@ -546,6 +604,13 @@
         viewUpdates = config.viewUpdates ? config.viewUpdates : 'keep-view';
     }
 
+    async function refreshRankedSongs() {
+        allRankeds = await getRankedSongs();
+        maxStars = Object.values(allRankeds).map(r => r.stars).reduce((max, stars) => stars > max ? stars : max, 0);
+
+        estimatedScores = null;
+    }
+
     // initialize async values
     onMount(async () => {
         if (!playerId) playerId = await getMainPlayerId();
@@ -571,12 +636,13 @@
             if (config.compareTo && Array.isArray(config.compareTo)) snipedIds = [...config.compareTo];
         }
 
-        allRankeds = await getRankedSongs();
-        maxStars = Object.values(allRankeds).map(r => r.stars).reduce((max, stars) => stars > max ? stars : max, 0);
+        await refreshRankedSongs();
 
         allFilters.starsFilter = Object.assign({}, allFilters.starsFilter, {to: maxStars});
 
         minStarsForSniper = await getCachedMinStars(playerId, minPpPerMap)
+
+        estimator = balibalo();
 
         shownIcons = config && config.showIcons ? config.showIcons : shownIcons;
 
@@ -585,7 +651,7 @@
             if (defaultView) viewType = defaultView;
         }
 
-        if (config.defaultType) {
+        if (config.defaultType && !songType) {
             const defaultType = strings.songTypes.find(t => t.id === config.defaultType);
             if (defaultType) allFilters.songType = defaultType;
         }
@@ -598,7 +664,7 @@
             itemsPerPage = config.itemsPerPage;
         }
 
-        await generateSortTypes();
+        await onSongTypeChange();
 
         players = (await getAllActivePlayers(country))
           .reduce((cum, player) => {
@@ -619,8 +685,12 @@
             // return if not relevant for current dataset
             if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
 
+            estimatedScores = null;
+
             await generateRefreshTag();
         });
+
+        const rankedsUnsubscriber = eventBus.on('rankeds-changed', async () => await refreshRankedSongs());
 
         const countryRanksUpdatedUnsubscriber = eventBus.on('sspl-country-ranks-cache-updated', ({ssplCountryRanks}) => {
             if (!ssplCountryRanks || !songsPage || !songsPage.songs || !songsPage.series || !songsPage.series.length)
@@ -652,6 +722,7 @@
 
         return () => {
             playerScoresUpdatedUnsubscriber();
+            rankedsUnsubscriber();
             countryRanksUpdatedUnsubscriber();
             configChangedUnsubscriber();
             twitchVideosUpdated();
@@ -900,6 +971,8 @@
                 getObjectFromArrayByKey(strings.columns, 'pp').displayed = false;
                 getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = false;
                 getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedAcc').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedPp').displayed = false;
 
                 selectedColumns = strings.columns.filter(c => c.displayed && selectedColumns.includes(c))
 
@@ -910,6 +983,8 @@
                 getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
                 getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedAcc').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedPp').displayed = false;
 
                 selectedColumns = strings.columns.filter(c => c.displayed && selectedColumns.includes(c))
 
@@ -922,6 +997,8 @@
                 getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
                 getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'estimatedAcc').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedPp').displayed = false;
 
                 selectedColumns = strings.columns.filter(c => c.displayed && (selectedColumns.includes(c) || ['diffPp', 'pp'].includes(c.key)))
 
@@ -932,11 +1009,27 @@
                 await generateSortTypes();
                 break;
 
+            case 'what_to_play':
+                getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'estimatedAcc').displayed = true;
+                getObjectFromArrayByKey(strings.columns, 'estimatedPp').displayed = true;
+
+                selectedColumns = strings.columns.filter(c => c.displayed && (selectedColumns.includes(c) || ['pp', 'diffPp', 'estimatedAcc', 'estimatedPp'].includes(c.key)))
+
+                allFilters.starsFilter.from = 0;
+
+                await generateSortTypes();
+                break;
+
             case 'rankeds':
             default:
                 getObjectFromArrayByKey(strings.columns, 'pp').displayed = true;
                 getObjectFromArrayByKey(strings.columns, 'weightedPp').displayed = true;
                 getObjectFromArrayByKey(strings.columns, 'diffPp').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedAcc').displayed = false;
+                getObjectFromArrayByKey(strings.columns, 'estimatedPp').displayed = false;
 
                 selectedColumns = strings.columns.filter(c => c.displayed && (selectedColumns.includes(c) || ['pp'].includes(c.key)))
 
@@ -951,7 +1044,10 @@
         // force refresh
         strings.columns = strings.columns.splice(0);
 
-        forceFiltersChanged()
+        // TODO: is it really needed?
+        // forceFiltersChanged()
+
+        if (allFilters.songType) dispatch('song-type-changed', allFilters.songType.id)
     }
 
     function setColumnsSuffixes(columns, viewType) {
@@ -968,11 +1064,11 @@
         return columns.filter(c => type === c.type);
     }
 
-    const onFilterNameChange = debounce(e => allFilters.name = e.target.value, DEBOUNCE_DELAY);
-    const onFilterStarsChange = debounce(e => allFilters.starsFilter = Object.assign({}, allFilters.starsFilter), DEBOUNCE_DELAY);
-    const onFilterCountryRankChange = debounce(e => allFilters.countryRankVal = e.target.value, DEBOUNCE_DELAY);
+    const onFilterNameChange = debounce(e => {allFilters.name = e.target.value; generateRefreshTag()}, DEBOUNCE_DELAY);
+    const onFilterStarsChange = debounce(e => {allFilters.starsFilter = Object.assign({}, allFilters.starsFilter); generateRefreshTag()}, DEBOUNCE_DELAY);
+    const onFilterCountryRankChange = debounce(e => {allFilters.countryRankVal = e.target.value; generateRefreshTag()}, DEBOUNCE_DELAY);
     const onCountryRankKeyDown = e => {if(!['ArrowUp', 'ArrowDown', 'Tab', 'F5'].includes(e.key)) e.preventDefault();}
-    const onFilterMinPlusPpChanged = debounce(e => allFilters.minPpDiff = e.detail, DEBOUNCE_DELAY * 2);
+    const onFilterMinPlusPpChanged = debounce(e => {allFilters.minPpDiff = e.detail; generateRefreshTag()}, DEBOUNCE_DELAY * 2);
 
     const getSortValue = (song, playersSeries, filters) => {
         switch (filters.sortBy.type) {
@@ -988,7 +1084,7 @@
         }
     }
 
-    async function calculate(playerId, snipedIds, filters, forceRefresh) {
+    async function calculate(forceRefresh) {
         calculating = true;
 
         currentPage = 0;
@@ -1011,7 +1107,7 @@
                   const {scores, stats, weeklyDiff, url, lastUpdated, userHistory, ...playerInfo} = pInfo;
 
                   // set all players total pp to main player's total pp
-                  const shouldCalculateTotalPp = filters.songType.id === 'sniper_mode';
+                  const shouldCalculateTotalPp = allFilters.songType.id === 'sniper_mode';
                   playerInfo.prevTotalPp = shouldCalculateTotalPp ? await getCachedTotalPlayerPp(playerId) : null;
                   playerInfo.totalPp = playerInfo.prevTotalPp;
 
@@ -1074,27 +1170,61 @@
             })
             UNRANKED.forEach(id => {
                 delete allRankeds[id];
-            })
+            });
 
-            const filteredSongs = (await Promise.all((
-              filters.songType.id === 'sniper_mode'
-                ? Object.values(Object.assign(
-                convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
-                allRankeds
-                ))
-                : (filters.songType.id === 'rankeds_unplayed'
-                  ? Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId])
-                  : allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
-                )
-            )
+            let songsBase = [];
+            switch(allFilters.songType.id) {
+                case 'sniper_mode':
+                    songsBase = Object.values(Object.assign(
+                      convertArrayToObjectByKey(allPlayedSongs, 'leaderboardId'),
+                      allRankeds
+                    ));
+                    break;
+
+                case 'what_to_play':
+                    if (estimator) {
+                        if ((!estimatedScores && playersSeries.length)) {
+                            estimator.init(Object.values(playersSeries[0].scores), allRankeds);
+                            estimatedScores = estimator.estimate();
+                        }
+
+                        if (estimatedScores && estimatedScores.scores && estimatedScores.scores.length && playersSeries.length) {
+                            const relevantEstimatedScores = estimatedScores.scores.filter(s => !s.pp || s.pp < s.estimatedPp);
+                            songsBase = relevantEstimatedScores.map(s => ({...s, ...(allRankeds[s.leaderboardId] ? allRankeds[s.leaderboardId]: {})}))
+
+                            relevantEstimatedScores.forEach(s => {
+                                const score = playersSeries[0].scores[s.leaderboardId]
+                                if (!score) {
+                                    playersSeries[0].scores[s.leaderboardId] = s;
+                                    return;
+                                }
+
+                                score.estimatedAcc = s.estimatedAcc;
+                                score.estimatedPp = s.estimatedPp;
+                                score.diffPp = s.ppDiff;
+                            })
+                        }
+                    }
+                    break;
+
+                case 'rankeds_unplayed':
+                    songsBase = Object.values(allRankeds).filter(r => !playersSeries[0].scores[r.leaderboardId]);
+                    break;
+
+                default:
+                    songsBase = allPlayedSongs.map(s => allRankeds[s.leaderboardId] && !s.stars ? Object.assign({}, s, {stars: allRankeds[s.leaderboardId].stars}) : s)
+                    break;
+            }
+
+            const filteredSongs = (await Promise.all((songsBase)
               .filter(s =>
                 // filter by name
-                (!filters.name.length || filterBySongName(s, filters.name)) &&
+                (!allFilters.name.length || filterBySongName(s, allFilters.name)) &&
 
                 // filter by type & stars
                 (
-                  (songIsUnranked(s) && ['unrankeds', 'all'].includes(filters.songType.id)) ||
-                  (filters.songType.id !== 'unrankeds' && mapHasStars(s, filters.starsFilter.from, filters.starsFilter.to))
+                  (songIsUnranked(s) && ['unrankeds', 'all'].includes(allFilters.songType.id)) ||
+                  (allFilters.songType.id !== 'unrankeds' && mapHasStars(s, allFilters.starsFilter.from, allFilters.starsFilter.to))
                 )
               )
 
@@ -1174,7 +1304,7 @@
                       }
                   }
 
-                  if (filters.songType.id === 'sniper_mode') {
+                  if (allFilters.songType.id === 'sniper_mode') {
                       for (const idx in playersSeries) {
                           // skip calculating if player is the best - will be filtered belowe
                           if (playersSeries[0].scores[s.leaderboardId] && playersSeries[compareToIdx].scores[s.leaderboardId].best) continue;
@@ -1192,6 +1322,10 @@
                       if (s.bestRealIdx) s.bestRealDiffPp = playersSeries[s.bestRealIdx].scores[s.leaderboardId].diffPp;
                   }
 
+                  if (allFilters.songType.id === 'what_to_play') {
+                      s.bestDiffPp = s.ppDiff;
+                      if (playersSeries.length) playersSeries[0].scores[s.leaderboardId].diffPp = s.ppDiff;
+                  }
                   return s;
               })))
 
@@ -1199,11 +1333,11 @@
               .filter(s =>
                 (
                     (
-                      filters.songType.id === 'sniper_mode' &&
-                      (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, filters.minPpDiff))
+                      allFilters.songType.id === 'sniper_mode' &&
+                      (playerIsNotTheBest(s.leaderboardId, playersSeries[compareToIdx]) && bestSeriesGivesAtLeastMinPpDiff(s, allFilters.minPpDiff))
                     ) ||
 
-                    (filters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
+                    (allFilters.songType.id !== 'sniper_mode' && (!snipedIds || !snipedIds.length)) ||
 
                     (
                       'sniper_mode' !== allFilters.songType.id &&
@@ -1217,21 +1351,24 @@
 
                 // filter by country rank
                 (
-                  !isPlayerFromCurrentCountry || allFilters.songType.id === 'rankeds_unplayed' || countryRankPassesCondition(s.leaderboardId, playersSeries[0], allFilters.countryRankVal, allFilters.countryRankOp.id)
+                  !isPlayerFromCurrentCountry || ['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id) || countryRankPassesCondition(s.leaderboardId, playersSeries[0], allFilters.countryRankVal, allFilters.countryRankOp.id)
                 )
               )
 
               .sort((songA, songB) => {
-                  const a = getSortValue(songA, playersSeries, filters);
-                  const b = getSortValue(songB, playersSeries, filters);
+                  let a = getSortValue(songA, playersSeries, allFilters);
+                  let b = getSortValue(songB, playersSeries, allFilters);
 
-                  return filters.sortOrder.order === 'asc' ? a - b : b - a;
+                  if (!a) a = null;
+                  if (!b) b = null;
+
+                  return allFilters.sortOrder.order === 'asc' ? a - b : b - a;
               })
 
             let bestTotalRealPp = playersSeries[compareToIdx].totalPp
             let bestTotalPp = playersSeries[compareToIdx].totalPp;
 
-            if (filters.songType.id === 'sniper_mode') {
+            if (allFilters.songType.id === 'sniper_mode') {
                 const filteredSongsIds = filteredSongs.map(s => s.leaderboardId);
                 for (const p of playersSeries) {
                     const betterScores = convertArrayToObjectByKey(
@@ -1414,7 +1551,7 @@
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
-    $: calcPromised = initialized ? calculate(playerId, snipedIds, allFilters, refreshTag) : null;
+    $: calcPromised = initialized ? calculate(refreshTag) : null;
     $: pagedPromised = promiseGetPage(calcPromised, currentPage, itemsPerPage)
     $: comparePossible = players.length && snipedIds.length < 3;
     $: {
@@ -1438,6 +1575,18 @@
     }
 
     let type = 'cached';
+
+    async function externalSongTypeChanged(songType) {
+        if(songType && allFilters.songType && allFilters.songType.id !== songType) {
+            allFilters.songType = strings.songTypes.find(st => st.id === songType);
+            await tick();
+            await onSongTypeChange();
+        }
+    }
+
+    $: {
+        externalSongTypeChanged(songType);
+    }
 </script>
 
 {#if initialized}
@@ -1478,7 +1627,7 @@
         </div>
 
         {#if isPlayerFromCurrentCountry}
-        <div class="filter-country-rank">
+        <div class="filter-country-rank" style="display: { allFilters.songType.id !== 'what_to_play' ? 'flex' : 'none'}">
             <header>{$_.songBrowser.countryRankHeader}</header>
             <div class="values">
                 <Select bind:value={allFilters.countryRankOp} items={strings.countryRankOps} />
@@ -1502,7 +1651,7 @@
 
         <div>
             <header>{$_.songBrowser.sortingHeader}</header>
-            <Select bind:value={allFilters.sortBy} items={sortTypes} bind:option={allFilters.sortOrder} optionItems={strings.sortOrders}/>
+            <Select bind:value={allFilters.sortBy} items={sortTypes} bind:option={allFilters.sortOrder} optionItems={strings.sortOrders} on:change={generateRefreshTag}/>
         </div>
 
         <div class="player-compare-btns">
@@ -1556,8 +1705,8 @@
                                                 {/if}
                                                 </div>
                                             {/if}
-                                            {#if getScoreValueByKey(series, song, 'score')}
-                                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                            {#if allFilters.songType.id === 'what_to_play' || getScoreValueByKey(series, song, 'score')}
+                                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId || allFilters.songType.id === 'what_to_play'}
                                                     {#if col.key === 'timeset'}
                                                         <strong class={'compact-' + col.key + '-val'}>
                                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)}
@@ -1647,7 +1796,7 @@
                                 </th>
                             {:else}
                                 {#if selectedSeriesCols.length > 0 && !(selectedSeriesCols.length === 1 && series.id === playerId && !!getObjectFromArrayByKey(selectedColumns, 'diffPp'))}
-                                    <th colspan={series.id !== playerId ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
+                                    <th colspan={series.id !== playerId || allFilters.songType.id === 'what_to_play' ? selectedSeriesCols.length : selectedSeriesCols.length - (!!getObjectFromArrayByKey(selectedColumns, 'diffPp') ? 1 : 0)}
                                         class="series left player-sel">
                                         {#if sIdx > 0}
                                             <Select items={players} value={players.find(u => u.id === series.id)} right={true} on:change={(e) => onPlayerSelected(e,sIdx)} />
@@ -1668,7 +1817,7 @@
                     {#if viewType.id !== 'compact'}
                         <tr>
                             {#each songsPage.series as series (series.id)}
-                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId || allFilters.songType.id === 'what_to_play'}
                                     <th class={'left ' + col.key + (idx > 0 ? ' middle' : '')}>{col.name}</th>
                                 {/if}{/each}
                             {/each}
@@ -1723,8 +1872,8 @@
                                 <td class="left compact series-{songsPage.series.length}"
                                     class:with-cols={selectedSongCols.length > 0}
                                     class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
-                                    {#if getScoreValueByKey(series, song, 'score')}
-                                        {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                    {#if allFilters.songType.id === 'what_to_play' || getScoreValueByKey(series, song, 'score')}
+                                        {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId || allFilters.songType.id === 'what_to_play'}
                                             {#if col.key === 'timeset'}
                                                 <strong class={'compact-' + col.key + '-val'}>
                                                     <FormattedDate date={getScoreValueByKey(series, song, col.key)}
@@ -1767,7 +1916,7 @@
                                     {/if}
                                 </td>
                             {:else}
-                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId}
+                                {#each selectedSeriesCols as col,idx (col.key)}{#if col.key !== 'diffPp' || series.id !== playerId || allFilters.songType.id === 'what_to_play'}
                                     <td class={'left ' + col.key} class:middle={idx > 0}
                                         class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                         {#if col.key === 'timeset'}
@@ -2225,12 +2374,12 @@
         font-size: 1.25em;
     }
 
-    .compact-pp-val {
+    .compact-pp-val, .compact-estimatedPp-val {
         font-size: 1.15em;
         color: var(--ppColour) !important;
     }
 
-    .compact-acc-val {
+    .compact-acc-val, .compact-estimatedAcc-val {
         font-size: 1.1em;
     }
 
