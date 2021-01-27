@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.6
+- [!] fix acc estimation in What to play widget
+
 1.3.5
 - [+] global/country ranking headings are now clickable
 

@@ -74,6 +74,8 @@ export default () => {
 
       allRankeds = {...rankedSongs};
 
+      initializedAtTimestamp = Date.now();
+
       sortedPlayerScores = onlyRankedPlayerScores
         .map(s => ({
           leaderboardId: s.leaderboardId,
@@ -92,8 +94,6 @@ export default () => {
       playerScoresObj = convertArrayToObjectByKey(sortedPlayerScores, 'leaderboardId');
       maxScoresStars = Math.max(...sortedPlayerScores.map(e => e.stars));
       totalPp = getTotalPpFromSortedScores(sortedPlayerScores);
-
-      initializedAtTimestamp = Date.now();
 
       return true;
     },
