@@ -43,7 +43,7 @@ export const fetchPlayerInfo = async playerId => fetchApiPage(queue.SCORESABER_A
         countryRank,
         id,
         inactive: !!inactive || !!banned,
-        name,
+        name: name ? name.replace('&#039;', "'") : '',
         pp,
         rank,
         url: substituteVars(PLAYER_PROFILE_URL, {playerId: id}),
@@ -87,7 +87,7 @@ export const fetchCountryRanking = async (country, withMain = true, count = 50) 
     return ssCountryRanking.concat(await Promise.all(additionalPlayersIds.map(async playerId => fetchPlayerInfo(playerId))))
       .filter(player => !player.inactive)
       .sort((a, b) => b.pp - a.pp)
-      .map((player, idx) => ({...player, ssplCountryRank: country ? {[country]: idx + 1} : null}))
+      .map((player, idx) => ({...player, ssplCountryRank: country ? {[country]: idx + 1} : null, name: player?.name ? player.name.replace('&#039;', "'") : ''}))
       .slice(0, count);
 }
 

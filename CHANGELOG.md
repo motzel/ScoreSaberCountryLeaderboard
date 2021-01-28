@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.7
+- [!] fix wrong display of players in the ranking if the name contains apostrophe (SS bug)
+
 1.3.6
 - [!] fix acc estimation in What to play widget
 
