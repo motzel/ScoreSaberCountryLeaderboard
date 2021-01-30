@@ -122,7 +122,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
 
   await setSsplCountryRanks(ssplCountryRanks);
 
-  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync().getId(), ssplCountryRanks});
+  eventBus.publish('sspl-country-ranks-cache-updated', {nodeId: nodeSync().getId(), ssplCountryRanks, onlyLeaderboardsIds});
 
   return ssplCountryRanks;
 }

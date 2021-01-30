@@ -621,6 +621,24 @@
 
             await generateRefreshTag();
         });
+
+        const countryRanksUpdatedUnsubscriber = eventBus.on('sspl-country-ranks-cache-updated', ({ssplCountryRanks}) => {
+            if (!ssplCountryRanks || !songsPage || !songsPage.songs || !songsPage.series || !songsPage.series.length)
+                return;
+
+            songsPage.songs.forEach(song => {
+                if (!ssplCountryRanks[song.leaderboardId]) return;
+
+                songsPage.series.forEach(s => {
+                   if (!s.scores || !s.scores[song.leaderboardId] || !ssplCountryRanks[song.leaderboardId][s.id]) return;
+
+                   s.scores[song.leaderboardId].ssplCountryRank = ssplCountryRanks[song.leaderboardId][s.id];
+                });
+            });
+
+            songsPage = songsPage;
+        });
+
         const configChangedUnsubscriber = eventBus.on('config-changed', updateViewUpdatesConfig);
 
         const twitchVideosUpdated = eventBus.on('player-twitch-videos-updated', async ({playerId}) => {
@@ -634,6 +652,7 @@
 
         return () => {
             playerScoresUpdatedUnsubscriber();
+            countryRanksUpdatedUnsubscriber();
             configChangedUnsubscriber();
             twitchVideosUpdated();
         }
