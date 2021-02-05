@@ -24,7 +24,7 @@ export const parseSsLeaderboardScores = doc => {
     const player = tr.querySelector('.player a');
     if (player) {
       ret.country = getFirstRegexpMatch(/^.*?\/flags\/([^.]+)\..*$/, player.querySelector('img')?.src ?? '') ?? null;
-      ret.playerName = player.querySelector('span.songTop.pp')?.innerText ?? null;
+      ret.playerName = player.querySelector('span.songTop.pp')?.innerText.replace('&#039;', "'") ?? null;
       ret.playerId = getFirstRegexpMatch(/\/u\/(\d+)((\?|&|#).*)?$/, player.href ?? '') ?? null;
     } else {
       ret.country = null;

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.9
+- [!] fix wrong display of players in the song leaderboard if the name contains apostrophe (SS bug)
+
 1.3.8
 - [!] fix country rank updating in the Song Browser view when new scores are downloaded, thx Drakonno
 
