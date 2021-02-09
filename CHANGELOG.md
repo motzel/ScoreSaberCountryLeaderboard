@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.10
+- [!] display original SS page PPs if cached PPs are different (after song nerf)
+
 1.3.9
 - [!] fix wrong display of players in the song leaderboard if the name contains apostrophe (SS bug)
 

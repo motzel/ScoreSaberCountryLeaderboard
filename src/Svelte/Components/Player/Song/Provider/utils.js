@@ -9,7 +9,9 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
     const maxScoreEx = maxScore ?? cachedScore?.maxScoreEx;
 
     const ssScoreDate = dateFromString(score.timeset);
-    const useDownloadedScore = cachedScore?.timeset && ssScoreDate && cachedScore?.timeset?.getTime() === ssScoreDate.getTime();
+    const useDownloadedScore = cachedScore?.timeset && ssScoreDate && cachedScore?.timeset?.getTime() === ssScoreDate.getTime() && (
+      cachedScore?.pp && score.pp && Math.abs(round(cachedScore.pp) - round(score.pp)) <= 0.015 // rounding differences mitigation on the SS page
+    );
     if (useDownloadedScore) {
       enhancedScore = {...score, ...cachedScore, maxScoreEx, rank: score.rank, pp: cachedScore.pp ? cachedScore.pp : score.pp};
     } else {
@@ -18,8 +20,7 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
 
     if (maxScoreEx && enhancedScore.score && (!enhancedScore?.mods?.length || enhancedScore?.mods === "-")) enhancedScore.acc = enhancedScore.score * 100 / maxScoreEx;
 
-    const useCurrentScoreAsPrev = (score.pp && cachedScore?.pp && round(cachedScore.pp) < round(score.pp)) ||
-      (score.score && cachedScore?.score && cachedScore.score < score.score);
+    const useCurrentScoreAsPrev = score.timeset && cachedScore?.timeset && cachedScore.timeset < score.timeset;
 
     if (!enhancedScore.acc && enhancedScore.score && maxScoreEx) {
       enhancedScore.acc = getAccFromScore({score: enhancedScore.score, maxScoreEx});
