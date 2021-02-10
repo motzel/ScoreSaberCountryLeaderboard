@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.3.11
+- [+] all ranked scores are downloaded again after 24h from the song being ranked
+
 1.3.10
 - [!] display original SS page PPs if cached PPs are different (after song nerf)
 

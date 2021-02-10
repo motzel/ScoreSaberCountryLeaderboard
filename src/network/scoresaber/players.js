@@ -217,9 +217,16 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
     const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
     const shouldCheckForRankedsPp = playerLastUpdated && toUTCDate(playerLastUpdated) !== toUTCDate(new Date()); // check for pp update once a day
+
+    const SIX_HOURS = 1000 * 60 * 60 * 6;
+    const ONE_DAY = 1000 * 60 * 60 * 24;
+    const MAX_RANKEDS_TO_FETCH = 200;
+    const lastRankedsRefetch = dateFromString(player?.lastRankedsRefetch) ?? new Date(Date.parse('2021-02-06T00:00:00Z')); // arbitrary date, when feature is added
+    const shouldRankedsBeCheckedForRefetch = new Date() - lastRankedsRefetch >= SIX_HOURS;
+
     let additionalLeaderboardsToUpdate = [];
 
-    if (shouldCheckForRankedsPp || Object.keys(newScores.scores).length) {
+    if (shouldRankedsBeCheckedForRefetch || shouldCheckForRankedsPp || Object.keys(newScores.scores).length) {
         const playerScoresArr = await getScoresByPlayerId(playerId) ?? []
         playerScores = convertArrayToObjectByKey(playerScoresArr, 'leaderboardId');
 
@@ -231,6 +238,12 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             additionalLeaderboardsToUpdate = playerScoresArr
               .filter(s => !s.pp && s.leaderboardId && allRankeds[s.leaderboardId] && !newScores?.scores[s.leaderboardId] && s.timeset && dateFromString(s.timeset) > HOUNDRED_DAYS_AGO)
               .map(s => s.leaderboardId);
+        }
+
+        if (shouldRankedsBeCheckedForRefetch) {
+            const recentlyChangedRankeds = Object.keys(await getRankedsChangesSince(lastRankedsRefetch.getTime() - ONE_DAY, Date.now() - ONE_DAY)).map(leaderboardId => parseInt(leaderboardId, 10));
+            if (recentlyChangedRankeds && recentlyChangedRankeds.length <= MAX_RANKEDS_TO_FETCH)
+                additionalLeaderboardsToUpdate = additionalLeaderboardsToUpdate.concat(recentlyChangedRankeds);
         }
     }
 
@@ -277,6 +290,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             const playersStore = tx.objectStore('players')
             player = await playersStore.get(playerId);
             player.lastUpdated = new Date();
+            player.lastRankedsRefetch = new Date();
             player.recentPlay = newScores.recentPlay;
             await playersStore.put(player);
 
@@ -311,6 +325,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             const playersStore = tx.objectStore('players')
             player = await playersStore.get(playerId);
             player.lastUpdated = new Date();
+            player.lastRankedsRefetch = new Date();
             await playersStore.put(player);
 
             playersCacheToUpdate.push(player);

@@ -12,8 +12,8 @@ export const storeRankeds = async rankeds => Promise.all(rankeds.map(async ranke
 export const getRankedSongs = async () => convertArrayToObjectByKey(await rankedsRepository().getAll() ?? {}, 'leaderboardId');
 export const getRankedSongsLastUpdated = async () => keyValueRepository().get('rankedSongsLastUpdated');
 export const setRankedSongsLastUpdated = async date => keyValueRepository().set(date,'rankedSongsLastUpdated');
-export const getRankedsChangesSince = async sinceTimestamp => {
-    const changes = await rankedsChangesRepository().getAllFromIndex('rankeds-changes-timestamp', IDBKeyRange.lowerBound(sinceTimestamp));
+export const getRankedsChangesSince = async (sinceTimestamp, upToTimestamp = null) => {
+    const changes = await rankedsChangesRepository().getAllFromIndex('rankeds-changes-timestamp', upToTimestamp ? IDBKeyRange.bound(sinceTimestamp, upToTimestamp) : IDBKeyRange.lowerBound(sinceTimestamp));
     if (!changes || !changes.length) return {};
 
     // return all song changes for matched timestamps {leaderboardId: [{change1}, {change2}...]}
