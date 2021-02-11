@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+1.4.0
+- [+] add "what to play" mode to SongBrowser
+- [!] fix playlist generation in not-played mode
+
 1.3.11
 - [+] all ranked scores are downloaded again after 24h from the song being ranked
 

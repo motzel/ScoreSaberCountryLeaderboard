@@ -1446,8 +1446,11 @@
     }
 
     async function exportPlaylist() {
-        const allPlayedSongs = Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
-        const songs = allPlayedSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
+        const allSongs =
+          ['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id)
+            ? Object.values(allRankeds)
+            : Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
+        const songs = allSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
         const bloodTrailImg = (await import('../../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
             playlistTitle      : "SSPL playlist",
