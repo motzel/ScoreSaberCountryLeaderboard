@@ -1605,7 +1605,7 @@
         <div>
             <header>{$_.songBrowser.typeHeader}</header>
             <Select bind:value={allFilters.songType} items={strings.songTypes} on:change={onSongTypeChange}
-                    bind:option={allFilters.songTypeOption} optionItems={snipedIds && snipedIds.length && 'sniper_mode' !== allFilters.songType.id ? strings.songTypeOptions : []}
+                    bind:option={allFilters.songTypeOption} optionItems={snipedIds && snipedIds.length && !['what_to_play','sniper_mode'].includes(allFilters.songType.id) ? strings.songTypeOptions : []}
             />
         </div>
 
