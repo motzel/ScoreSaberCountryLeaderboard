@@ -348,7 +348,7 @@
         minPpDiff     : 1,
         sortBy        : sortTypes[0],
         sortOrder     : strings.sortOrders[0],
-        countryRankOp : strings.countryRankOps.filter(cro => cro.id === '>='),
+        countryRankOp : strings.countryRankOps.find(cro => cro.id === '>='),
         countryRankVal: 1,
     }
     const forceFiltersChanged = () => allFilters = Object.assign({}, allFilters);
@@ -410,7 +410,7 @@
 
         const newRefreshTag = playerInfos.map(playerInfo => playerInfo.id + ':' + (playerInfo.recentPlay ? timestampFromString(playerInfo.recentPlay) : 'null')).join(':') +
           ':' + playerTwitchUpdated +
-          ':' + allFilters.countryRankVal + ':' + allFilters.countryRankOp[0].id +
+          ':' + allFilters.countryRankVal + ':' + allFilters.countryRankOp.id +
           ':' + allFilters.minPpDiff +
           ':' + allFilters.name +
           ':' + allFilters.songType.id +
@@ -1633,7 +1633,7 @@
         <div class="filter-country-rank" style="display: { allFilters.songType.id !== 'what_to_play' ? 'flex' : 'none'}">
             <header>{$_.songBrowser.countryRankHeader}</header>
             <div class="values">
-                <Select bind:value={allFilters.countryRankOp} items={strings.countryRankOps} />
+                <Select bind:value={allFilters.countryRankOp} items={strings.countryRankOps} on:change={generateRefreshTag} />
                 <input type="number" value="1" min="1" step="1" on:input={onFilterCountryRankChange} on:keydown={onCountryRankKeyDown} />
             </div>
         </div>

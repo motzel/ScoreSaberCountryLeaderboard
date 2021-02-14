@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.4.1
+- [!] fix filtering by country rank, thx Rocker
+
 1.4.0
 - [+] add "what to play" mode to SongBrowser
 - [!] fix playlist generation in not-played mode
