@@ -78,6 +78,9 @@
     let prevPp = 0;
     let prevPpSince = null;
 
+    let prevRank = 0;
+    let prevRankSince = null;
+
     let playerScores = null;
 
     let mainPlayerId = null;
@@ -269,7 +272,36 @@
           .slice(0, MAX_COMPARE_PLAYERS);
     }
 
-    function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
+    async function addPlayerDiffCountryRank(profileId, countryRanks, numOfDays) {
+        if (!initialized || !profileId || !countryRanks || !countryRanks.length || !numOfDays) return countryRanks;
+
+        const compareTo = await getPlayerHistoryForDate(profileId, numOfDays);
+        if (!compareTo) return countryRanks;
+
+        return countryRanks.map(r => {
+            r.prevRank = null;
+            r.prevRankSince = null;
+
+            switch(r.type) {
+                case 'active-country':
+                    if(r.country && compareTo.ssplCountryRank && compareTo.ssplCountryRank[r.country] && Number.isFinite(compareTo.ssplCountryRank[r.country])) {
+                        r.prevRank = compareTo.ssplCountryRank[r.country];
+                        r.prevRankSince = formatDateRelative(compareTo.timestamp.toISOString(), Math.ceil, 'day');
+                    }
+                    break;
+                case 'country':
+                    if (compareTo.countryRank && Number.isFinite(compareTo.countryRank)) {
+                        r.prevRank = compareTo.countryRank;
+                        r.prevRankSince = formatDateRelative(compareTo.timestamp.toISOString(), Math.ceil, 'day');
+                    }
+                    break;
+            }
+
+            return r;
+        });
+    }
+
+    async function updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats) {
         let newCountryRanks = [];
 
         const ssplCountryRank = playerInfo && activeCountry && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "object" && playerInfo.ssplCountryRank[activeCountry] ? playerInfo.ssplCountryRank[activeCountry] : (playerInfo && playerInfo.ssplCountryRank && typeof playerInfo.ssplCountryRank === "number" ? playerInfo.ssplCountryRank : null);
@@ -277,21 +309,27 @@
           activeCountry === country
             ? [{
                 rank: ssplCountryRank,
+                prevRank: null,
+                prevRankSince: null,
                 subRank: ssStats && ssStats.countryRank ? ssStats.countryRank : null,
                 country: activeCountry,
                 type: 'active-country',
             }]
-            : newCountryRanks.concat([{rank: ssplCountryRank, country: activeCountry, type: 'active-country'}]);
+            : newCountryRanks.concat([{rank: ssplCountryRank, prevRank: null, prevRankSince: null, country: activeCountry, type: 'active-country'}]);
 
         if (country && ssStats && ssStats.countryRank && (!ssplCountryRank || activeCountry !== country))
             newCountryRanks = newCountryRanks
               .concat([{
                   rank: ssStats.countryRank,
+                  prevRank: null,
+                  prevRankSince: null,
                   country,
                   type: 'country',
               }]);
 
-        countryRanks = newCountryRanks;
+        countryRanks = playerInfo
+          ? await addPlayerDiffCountryRank(playerInfo.id, newCountryRanks, values.selectedPeriod.value)
+          : newCountryRanks
     }
 
     async function updateRankedsNotesCache() {
@@ -362,25 +400,51 @@
         setTimeout(() => refreshProfile(playerId), nextUpdateIn);
     }
 
-    async function refreshPlayerDiffPp(profileId, pp, numOfDays) {
-        if (!initialized || !profileId || !numOfDays || !pp || !Number.isFinite(pp)) return;
-
-        prevPp = 0;
-        prevPpSince = null;
+    async function getPlayerHistoryForDate(profileId, numOfDays) {
+        if (!initialized || !profileId || !numOfDays) return;
 
         numOfDays = numOfDays >= ALL ? 1 : numOfDays;
 
         const timestampDiffAgo = toSSTimestamp(daysAgo(numOfDays));
         const playerHistory = await getPlayerHistory(profileId);
-        if (!playerHistory || !playerHistory.length) return;
+        if (!playerHistory || !playerHistory.length) return null;
 
         const compareTo = playerHistory
           .sort((a,b) => b.timestamp - a.timestamp)
           .reduce((val, t) => t.timestamp >= timestampDiffAgo ? t : val, null);
-        if (!compareTo || !Number.isFinite(compareTo.pp) || !isDateObject(compareTo.timestamp)) return;
+        if (!compareTo || !isDateObject(compareTo.timestamp)) return null;
+
+        return compareTo;
+    }
+
+    async function refreshPlayerDiffPp(profileId, pp, numOfDays) {
+        if (!initialized || !profileId || !numOfDays || !pp || !Number.isFinite(pp)) return;
+
+        const compareTo = await getPlayerHistoryForDate(profileId, numOfDays);
+        if (!compareTo || !Number.isFinite(compareTo.pp)) return;
+
+        prevPp = 0;
+        prevPpSince = null;
 
         prevPp = compareTo.pp < pp ? compareTo.pp : 0;
-        prevPpSince = formatDateRelative(compareTo.timestamp.toISOString(), Math.floor);
+        prevPpSince = formatDateRelative(compareTo.timestamp.toISOString(), Math.ceil, 'day');
+    }
+
+    async function refreshPlayerDiffRank(chartHistory, numOfDays) {
+        if (!initialized || !chartHistory || chartHistory.length <= 1 || !numOfDays) return;
+
+        numOfDays = numOfDays >= ALL ? 1 : numOfDays;
+
+        prevRank = null;
+        prevRankSince = null;
+
+        const idx = chartHistory.length >= numOfDays + 1 ? numOfDays : null;
+        if (!idx) return;
+
+        const reversedChartHistory = chartHistory.slice().reverse();
+
+        prevRank = reversedChartHistory[idx];
+        prevRankSince = formatDateRelative(addToDate(new Date(), -idx * 1000 * 60 * 60 * 24).toISOString(), Math.ceil, 'day');
     }
 
     onMount(async () => {
@@ -560,12 +624,13 @@
     }
 
     $: {
-        updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats);
+        updatePlayerCountryRank(playerInfo, country, activeCountry, ssStats, values.selectedPeriod.value, initialized);
     }
 
     $: {
         refreshPlayerScores(playerInfo);
     }
+
     $: {
         refreshChart(config, chartHistory);
     }
@@ -584,6 +649,10 @@
 
     $: {
         refreshPlayerDiffPp(profileId, pp, values.selectedPeriod.value, initialized)
+    }
+
+    $: {
+        refreshPlayerDiffRank(chartHistory, values.selectedPeriod.value, initialized);
     }
 
     let currentPage = profilePage && profilePage.pageNum ? profilePage.pageNum - 1 : 0;
@@ -664,14 +733,14 @@
                                 <a href={rank ? "/global/" + (rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : '') : '#'}
                                    data-type="global" data-rank={rank}>
                                     <i class="fas fa-globe-americas"></i>
-                                    <Value value={rank} prefix="#" digits={0} zero="#0" />
+                                    <Value value={rank} prevValue={prevRank} prevLabel={prevRankSince} prefix="#" digits={0} zero="#0" inline={true} reversePrevSign={true} />
                                 </a>
                                 {#each countryRanks as countryRank}
                                     <a href={countryRank.rank ? "/global/" + (Math.floor((countryRank.rank-1) / PLAYERS_PER_PAGE) + 1) + '?country=' + countryRank.country : '#'}
                                        data-type={countryRank.type} data-rank={countryRank.rank} data-country={countryRank.country}
                                     >
                                         <img src="/imports/images/flags/{countryRank.country}.png">
-                                        <Value value={countryRank.rank} prefix="#" digits={0} zero="#0" />
+                                        <Value value={countryRank.rank} prevValue={countryRank.prevRank} prevLabel={countryRank.prevRankSince} prefix="#" digits={0} zero="#0" inline={true} reversePrevSign={true} />
                                         {#if countryRank.subRank && countryRank.subRank !== countryRank.rank}
                                             <small>(#{ countryRank.subRank })</small>
                                         {/if}

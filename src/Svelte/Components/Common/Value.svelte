@@ -3,6 +3,7 @@
 
     export let value = 0;
     export let prevValue = null;
+    export let reversePrevSign = false;
     export let digits = 2;
     export let zero = formatNumber(0, Number.isInteger(digits) ? digits : 2);
     export let withSign = false;
@@ -19,8 +20,8 @@
     $: formatted = (Math.abs(value) > minValue ? prefix + formatNumber(value, digits, withSign) + suffix : (withZeroPrefix ? prefix : "") + zero + (withZeroSuffix ? suffix : ""));
     $: showPrevValue = prevValue && prevValue !== value && value !== null;
     $: prevFormatted = prevValue ? (prevLabel ? prevLabel + ': ' : '') + formatNumber(prevValue, digits, withSign) + suffix : ""
-    $: prevDiffFormatted = prevValue ? formatNumber(value - prevValue, digits, true) + (suffixPrev ? suffixPrev : suffix) : ""
-    $: prevClass = (prevValue ? (value - prevValue > minValue ? "inc" : (value - prevValue < -minValue ? "dec" : "zero")): "") + (!inline ? " block" : " inline") + ' prev';
+    $: prevDiffFormatted = prevValue ? formatNumber((value - prevValue) * (reversePrevSign ? -1 : 1), digits, true) + (suffixPrev ? suffixPrev : suffix) : ""
+    $: prevClass = (prevValue ? ((value - prevValue) * (reversePrevSign ? -1 : 1) > minValue ? "inc" : ((value - prevValue) * (reversePrevSign ? -1 : 1) < -minValue ? "dec" : "zero")): "") + (!inline ? " block" : " inline") + ' prev';
     $: mainClass = (useColorsForValue && value ? (value > minValue ? "inc" : (value < -minValue ? "dec" : "zero")): "");
 </script>
 

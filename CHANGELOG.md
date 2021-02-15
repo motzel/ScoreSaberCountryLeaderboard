@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.4.2
+- [+] add ranking change for a selected period to the player profile, thx redegg89
+
 1.4.1
 - [!] fix filtering by country rank, thx Rocker
 

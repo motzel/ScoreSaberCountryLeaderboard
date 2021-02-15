@@ -40,7 +40,7 @@ export function formatDateRelativeInUnits(val, unit = 'day') {
     return rtf.format(val, 'day');
 }
 
-export function formatDateRelative(val, roundFunc = Math.round) {
+export function formatDateRelative(val, roundFunc = Math.round, unit = 'auto') {
     const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
         localeMatcher: 'best fit',
         numeric: 'auto',
@@ -49,24 +49,47 @@ export function formatDateRelative(val, roundFunc = Math.round) {
 
     const diffInSecs = (Date.now() - dateFromString(val)) / 1000;
 
-    if (diffInSecs < 60)
-        return rtf.format(-roundFunc(diffInSecs), 'second');
-    else if (diffInSecs < 60 * 60)
-        return rtf.format(-roundFunc(diffInSecs / 60), 'minute');
-    else if (diffInSecs < 60 * 60 * 24)
-        return rtf.format(-roundFunc(diffInSecs / (60 * 60)), 'hour');
-    else if (diffInSecs < 60 * 60 * 24 * 30)
-        return rtf.format(-roundFunc(diffInSecs / (60 * 60 * 24)), 'day');
-    else if (diffInSecs < 60 * 60 * 24 * 365)
-        return rtf.format(
-            -roundFunc(diffInSecs / (60 * 60 * 24 * 30)),
-            'month'
-        );
-    else
-        return rtf.format(
-            -roundFunc(diffInSecs / (60 * 60 * 24 * 365)),
-            'year'
-        );
+    switch(unit) {
+        case 'auto':
+            if (diffInSecs < 60)
+                return rtf.format(-roundFunc(diffInSecs), 'second');
+            else if (diffInSecs < 60 * 60)
+                return rtf.format(-roundFunc(diffInSecs / 60), 'minute');
+            else if (diffInSecs < 60 * 60 * 24)
+                return rtf.format(-roundFunc(diffInSecs / (60 * 60)), 'hour');
+            else if (diffInSecs < 60 * 60 * 24 * 30)
+                return rtf.format(-roundFunc(diffInSecs / (60 * 60 * 24)), 'day');
+            else if (diffInSecs < 60 * 60 * 24 * 365)
+                return rtf.format(
+                  -roundFunc(diffInSecs / (60 * 60 * 24 * 30)),
+                  'month'
+                );
+            else
+                return rtf.format(
+                  -roundFunc(diffInSecs / (60 * 60 * 24 * 365)),
+                  'year'
+                );
+            break;
+
+        default:
+            let unitDivider =
+              unit === 'second' ? 1 : (
+                unit === 'minute' ? 60 : (
+                  unit === 'hour' ? 60 * 60 : (
+                    unit === 'day' ? 60 * 60 * 24 : (
+                      unit === 'month' ? 60 * 60 * 24 * 30 : (
+                        unit === 'year' ? 60 * 60 * 24 * 365 : null
+                      )
+                    )
+                  )
+                )
+              );
+            if (!unitDivider) {
+                unitDivider = 1;
+                unit = 'second';
+            }
+            return rtf.format(-roundFunc(diffInSecs / unitDivider), unit);
+    }
 }
 
 export function substituteVars(url, vars) {
