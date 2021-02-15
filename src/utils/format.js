@@ -40,7 +40,7 @@ export function formatDateRelativeInUnits(val, unit = 'day') {
     return rtf.format(val, 'day');
 }
 
-export function formatDateRelative(val) {
+export function formatDateRelative(val, roundFunc = Math.round) {
     const rtf = new Intl.RelativeTimeFormat(getCurrentLang(), {
         localeMatcher: 'best fit',
         numeric: 'auto',
@@ -50,21 +50,21 @@ export function formatDateRelative(val) {
     const diffInSecs = (Date.now() - dateFromString(val)) / 1000;
 
     if (diffInSecs < 60)
-        return rtf.format(-Math.round(diffInSecs), 'second');
+        return rtf.format(-roundFunc(diffInSecs), 'second');
     else if (diffInSecs < 60 * 60)
-        return rtf.format(-Math.round(diffInSecs / 60), 'minute');
+        return rtf.format(-roundFunc(diffInSecs / 60), 'minute');
     else if (diffInSecs < 60 * 60 * 24)
-        return rtf.format(-Math.round(diffInSecs / (60 * 60)), 'hour');
+        return rtf.format(-roundFunc(diffInSecs / (60 * 60)), 'hour');
     else if (diffInSecs < 60 * 60 * 24 * 30)
-        return rtf.format(-Math.round(diffInSecs / (60 * 60 * 24)), 'day');
+        return rtf.format(-roundFunc(diffInSecs / (60 * 60 * 24)), 'day');
     else if (diffInSecs < 60 * 60 * 24 * 365)
         return rtf.format(
-            -Math.round(diffInSecs / (60 * 60 * 24 * 30)),
+            -roundFunc(diffInSecs / (60 * 60 * 24 * 30)),
             'month'
         );
     else
         return rtf.format(
-            -Math.round(diffInSecs / (60 * 60 * 24 * 365)),
+            -roundFunc(diffInSecs / (60 * 60 * 24 * 365)),
             'year'
         );
 }

@@ -380,7 +380,7 @@
         if (!compareTo || !Number.isFinite(compareTo.pp) || !isDateObject(compareTo.timestamp)) return;
 
         prevPp = compareTo.pp < pp ? compareTo.pp : 0;
-        prevPpSince = formatDateRelative(compareTo.timestamp.toISOString());
+        prevPpSince = formatDateRelative(compareTo.timestamp.toISOString(), Math.floor);
     }
 
     onMount(async () => {
