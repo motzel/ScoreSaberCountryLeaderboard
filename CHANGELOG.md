@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.4.3
+- [+] fix adding a new player to the cache, thx Rocker
+
 1.4.2
 - [+] add ranking change for a selected period to the player profile, thx redegg89
 

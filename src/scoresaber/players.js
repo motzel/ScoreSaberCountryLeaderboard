@@ -164,6 +164,8 @@ export const getPlayerSongScoreHistory = async (playerScore) => {
 }
 
 const getPlayerRankedsToUpdate = async (scores, previousLastUpdated) => {
+    if (!previousLastUpdated) return [];
+
     const songsChangedAfterPreviousUpdate = await getRankedsChangesSince(previousLastUpdated.getTime());
 
     // check all song changed after previous update
