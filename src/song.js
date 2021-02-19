@@ -130,8 +130,8 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
 export const getAnySongScore = async (leaderboardId) => scoresRepository().getFromIndex('scores-leaderboardId', leaderboardId);
 export const getSongScores = async (leaderboardId) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId);
 
-export function getAccFromScore(score, maxSongScore) {
-    const scoreMult = score.uScore && score.score ? score.score / score.uScore : 1
+export function getAccFromScore(score, maxSongScore = null, percentageInsteadOfAcc = false) {
+    const scoreMult = !percentageInsteadOfAcc && score.uScore && score.score ? score.score / score.uScore : 1
 
     return maxSongScore
       ? score.score / maxSongScore / scoreMult * 100

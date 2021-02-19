@@ -17,6 +17,7 @@
     export let optionsMinSelected = 1;
     export let right = false;
     export let top = false;
+    export let noLabel = false;
 
     function processItems(items, value, clickedIdx, multiple = false, minSelected = 1) {
         if (multiple) {
@@ -77,7 +78,7 @@
     <div class="dropdown is-hoverable">
         <div class="dropdown-trigger">
             <button class="button" title={current}>
-                <span>{current}</span>
+                {#if !noLabel}<span>{current}</span>{/if}
                 <span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>
             </button>
         </div>

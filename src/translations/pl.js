@@ -126,6 +126,8 @@ export default {
             estimatedPpShort: 'Szac. PP',
             acc: 'Celność',
             accShort: 'Cel.',
+            percentage: 'Procent',
+            percentageShort: '%',
             estimatedAcc: 'Szac. celność',
             estimatedAccShort: 'Szac. cel.',
             maxPp: 'Max PP',
@@ -284,9 +286,13 @@ export default {
         activityTooltip: 'Aktywność: ${value} (nutki)',
         starsLabel: 'Gwiazdki',
         accuracyLabel: 'Celność',
-        accTooltip: 'Celność: ${acc}% | Gwiazdki: ${stars}*',
+        accTooltip: 'Celność: ${acc}% (${mods}) | Gwiazdki: ${stars}*',
+        percentageTooltip: 'Procent: ${acc}% (${mods}) | Gwiazdki: ${stars}*',
+        accTooltipNoMods: 'Celność: ${acc}% | Gwiazdki: ${stars}*',
+        percentageTooltipNoMods: 'Procent: ${acc}% | Gwiazdki: ${stars}*',
         rankingButton: 'Ranking',
         accuracyButton: 'Celność',
+        percentageButton: 'Procent',
         none: 'Wyłączony'
     },
     themes: {

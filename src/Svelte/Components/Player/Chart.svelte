@@ -31,6 +31,28 @@
     let themeName = 'darkss';
     let theme = null;
 
+    let strings = {
+        accBtnOptions: [
+            {_key: 'chart.accuracyButton', value: 'acc'},
+            {_key: 'chart.percentageButton', value: 'percentage'},
+        ],
+    }
+
+    let values = {
+        accBtn: strings.accBtnOptions.find(p => p.value === 'acc'),
+    }
+
+    function translateAllStrings() {
+        Object.keys(strings).forEach(key => {
+            strings[key].forEach(item => {
+                if (item._key) item.label = trans(item._key);
+            })
+        })
+
+        strings = {...strings};
+        values = {...values};
+    }
+
     async function refreshConfig() {
         const othersConfig = await getConfig('others');
         themeName = othersConfig && othersConfig.theme ? othersConfig.theme : 'darkss';
@@ -89,13 +111,13 @@
         playerScores = await getScoresByPlayerId(profileId);
     }
 
-    async function calcAccChartData(playerScores, rankeds, rankedsNotesCache) {
+    async function calcAccChartData(playerScores, rankeds, rankedsNotesCache, type) {
         if (!playerScores || !rankeds || !rankedsNotesCache) return;
 
         chartData = Object.values(playerScores)
                 .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && (!accFilterFunc || accFilterFunc(s)))
                 .map(s => {
-                    const acc = getAccFromRankedScore(s, rankedsNotesCache);
+                    const acc = getAccFromRankedScore(s, rankedsNotesCache, type === 'percentage');
 
                     return {
                         x: rankeds[s.leaderboardId].stars,
@@ -104,7 +126,8 @@
                         name: s.name,
                         songAuthor: s.songAuthorName,
                         levelAuthor: s.levelAuthorName,
-                        timeset: dateFromString(s.timeset)
+                        timeset: dateFromString(s.timeset),
+                        mods: s.mods
                     }
                 })
         ;
@@ -306,7 +329,7 @@
         );
     }
 
-    function setupAccChart(canvas, chartData) {
+    function setupAccChart(canvas, chartData, type) {
         if (!canvas || !chartData || !chartData.length) return;
 
         if (chart) chart.destroy();
@@ -352,9 +375,25 @@
                             },
                             callbacks: {
                                 title: function (tooltipItem, data) {
+                                    const mods = tooltipItem && tooltipItem.length && tooltipItem[0].datasetIndex !== undefined &&
+                                    tooltipItem[0].index !== undefined && data && data.datasets &&
+                                    data.datasets[tooltipItem[0].datasetIndex] &&
+                                    data.datasets[tooltipItem[0].datasetIndex].data &&
+                                    data.datasets[tooltipItem[0].datasetIndex].data[tooltipItem[0].index] &&
+                                    data.datasets[tooltipItem[0].datasetIndex].data[tooltipItem[0].index].mods
+                                      ? data.datasets[tooltipItem[0].datasetIndex].data[tooltipItem[0].index].mods
+                                      : null;
+
                                     return tooltipItem.length
-                                            ? trans('chart.accTooltip', {acc: formatNumber(tooltipItem[0].yLabel), stars: formatNumber(tooltipItem[0].xLabel)})
-                                            : '';
+                                      ? trans(
+                                        (type === 'percentage' ? 'chart.percentageTooltip' : 'chart.accTooltip') + (!mods || !mods.length ? 'NoMods' : ''),
+                                        {
+                                            acc: formatNumber(tooltipItem[0].yLabel),
+                                            stars: formatNumber(tooltipItem[0].xLabel),
+                                            mods,
+                                        },
+                                      )
+                                      : '';
                                 },
                                 label: function (tooltipItem, data) {
                                     if (!tooltipItem || !data || !data.datasets || !data.datasets[tooltipItem.datasetIndex] || !data.datasets[tooltipItem.datasetIndex].data || !data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]) return '';
@@ -424,7 +463,8 @@
 
         switch (type) {
             case 'acc':
-                setupAccChart(canvas, chartData);
+            case 'percentage':
+                setupAccChart(canvas, chartData, type);
                 break;
 
             case 'rank':
@@ -432,6 +472,21 @@
                 setupRankChart(canvas, history && history.length ? history : null, userHistory, activityChart);
                 break;
         }
+    }
+
+    function onAccBtnClick(e) {
+        const btnType = e && e.detail && e.detail.value && ['acc', 'percentage'].includes(e.detail.value)
+          ? e.detail.value
+          : 'acc';
+
+        type = btnType;
+        values.accBtn = strings.accBtnOptions.find(o => o.value === btnType);
+    }
+
+    function setAccBtnOption(type) {
+        if (!['acc', 'percentage'].includes(type)) return;
+
+        values.accBtn = strings.accBtnOptions.find(o => o.value === type);
     }
 
     $: {
@@ -443,11 +498,19 @@
     }
 
     $: {
-        calcAccChartData(playerScores, allRankeds, rankedsNotesCache, refreshTag);
+        calcAccChartData(playerScores, allRankeds, rankedsNotesCache, values.accBtn.value, refreshTag);
     }
 
     $: {
         setupChart(type, canvas, chartData, history, userHistory, activityChart, theme)
+    }
+
+    $: {
+        setAccBtnOption(type)
+    }
+
+    $: {
+        translateAllStrings($_);
     }
 </script>
 
@@ -460,8 +523,10 @@
         <aside>
             <Button iconFa="fa fa-chart-line" type={type === 'rank' ? 'primary' : 'default'} label={$_.chart.rankingButton}
                     on:click={() => type = 'rank'} notSelected={type !== 'rank'} />
-            <Button iconFa="fa fa-crosshairs" type={type === 'acc' ? 'primary' : 'default'} label={$_.chart.accuracyButton}
-                    on:click={() => type = 'acc'} notSelected={type !== 'acc'} />
+            <Button iconFa="fa fa-crosshairs" type={['acc', 'percentage'].includes(type) ? 'primary' : 'default'}
+                    label={values.accBtn.label}
+                    on:click={onAccBtnClick} options={strings.accBtnOptions} bind:selectedOption={values.accBtn}
+                    notSelected={!['acc', 'percentage'].includes(type)} />
         </aside>
     {/if}
 </section>

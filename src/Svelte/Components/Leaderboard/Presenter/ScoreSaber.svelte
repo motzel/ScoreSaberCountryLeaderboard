@@ -65,7 +65,7 @@
          <th class="score">{$_.songBrowser.fields.score}</th>
          <th class="timeset">{$_.songBrowser.fields.timesetShort}</th>
          <th class="mods">{$_.songLeaderboard.mods}</th>
-         <th class="percentage">{$_.songBrowser.fields.accShort}</th>
+         <th class="percentage">{$_.songBrowser.fields.percentageShort}</th>
          <th class="pp">{$_.songBrowser.fields.pp}</th>
        </tr>
        </thead>

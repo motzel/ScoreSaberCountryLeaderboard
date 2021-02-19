@@ -25,18 +25,18 @@ export const getRankedsChangesSince = async (sinceTimestamp, upToTimestamp = nul
     }, {});
 }
 export const storeRankedsChanges = async rankedsChanges => Promise.all(rankedsChanges.map(async rc => rankedsChangesRepository().set(rc)));
-export const getAccFromRankedScore = (score, rankedsCache) => {
-    if (!score || !rankedsCache) return getAccFromScore(score);
+export const getAccFromRankedScore = (score, rankedsCache, percentageInsteadOfAcc = false) => {
+    if (!score || !rankedsCache) return getAccFromScore(score, null, percentageInsteadOfAcc);
 
     const hash = (score.hash) ? score.hash.toLowerCase() : null;
     const diffInfo = score.diffInfo;
 
-    if (!hash || !diffInfo || !diffInfo.type || !diffInfo.diff) return getAccFromScore(score);
+    if (!hash || !diffInfo || !diffInfo.type || !diffInfo.diff) return getAccFromScore(score, null, percentageInsteadOfAcc);
 
     const notesCount = rankedsCache?.[hash]?.[diffInfo.type]?.[diffInfo.diff];
-    if (!notesCount) return getAccFromScore(score);
+    if (!notesCount) return getAccFromScore(score, null, percentageInsteadOfAcc);
 
-    return getAccFromScore(score, getMaxScore(notesCount));
+    return getAccFromScore(score, getMaxScore(notesCount), percentageInsteadOfAcc);
 }
 export const setRankedsNotesCache = async rankedsNotesCache => keyValueRepository().set(rankedsNotesCache, RANKEDS_NOTES_CACHE_KEY);
 

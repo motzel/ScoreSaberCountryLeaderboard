@@ -1,5 +1,6 @@
 <script>
     import {createEventDispatcher} from 'svelte';
+    import Select from './Select.svelte'
 
     const dispatch = createEventDispatcher();
 
@@ -14,6 +15,10 @@
     export let color = null;
     export let bgColor = null;
     export let notSelected = false;
+    export let options = null;
+    export let selectedOption = null;
+
+    if (!selectedOption && options && Array.isArray(options) && options.length) selectedOption = options[0];
 
     const types = {
         default: {
@@ -22,7 +27,7 @@
             bgColor: "#dbdbdb",
             activeBgColor: "#aaa",
             border: "transparent",
-            activeBorder: "transparent"
+            activeBorder: "transparent",
         },
         primary: {
             color: "#dbdbdb",
@@ -30,7 +35,7 @@
             bgColor: "#3273db",
             activeBgColor: "#2366d1",
             border: "transparent",
-            activeBorder: "transparent"
+            activeBorder: "transparent",
         },
         text: {
             color: "var(--textColor)",
@@ -38,7 +43,7 @@
             bgColor: "transparent",
             activeBgColor: "transparent",
             border: "transparent",
-            activeBorder: "transparent"
+            activeBorder: "transparent",
         },
         twitch: {
             color: "#dbdbdb",
@@ -46,7 +51,7 @@
             bgColor: "#9146ff",
             activeBgColor: "#8333ff",
             border: "transparent",
-            activeBorder: "transparent"
+            activeBorder: "transparent",
         },
         danger: {
             color: "#dbdbdb",
@@ -54,8 +59,12 @@
             bgColor: "red",
             activeBgColor: "#bf0000",
             border: "transparent",
-            activeBorder: "transparent"
+            activeBorder: "transparent",
         },
+    }
+
+    function onOptionChange() {
+        dispatch('click', selectedOption)
     }
 
     $: selectedType = types[type] ? types[type] : types.default;
@@ -64,12 +73,16 @@
     $: btnMargin = noMargin ? 0 : "0 0 .45em 0";
 </script>
 
-<button style="--color:{color ? color : selectedType.color}; --bg-color: {bgColor ? bgColor : selectedType.bgColor}; --border:{selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType .activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click')} {disabled} {title} class={'button ' + (type?type:'default') + ' ' + cls}
+<button style="--color:{color ? color : selectedType.color}; --bg-color: {bgColor ? bgColor : selectedType.bgColor}; --border:{selectedType.border};--active-color: {selectedType.activeColor}; --active-bg-color: {selectedType .activeBgColor}; --active-border: {selectedType.activeBorder}; --margin: {margin}; --btn-padding: {btnPadding}; --btn-margin: {btnMargin}" on:click={() => dispatch('click', selectedOption)} {disabled} {title} class={'button ' + (type?type:'default') + ' ' + cls}
  class:not-selected={notSelected}>
     {#if icon}<span class="icon">{@html icon}</span>{/if}
     {#if iconFa}<i class={iconFa}></i>{/if}
     <span>{label}</span>
     <slot></slot>
+
+    {#if options && Array.isArray(options)}
+        <Select bind:value={selectedOption} items={options} on:change={onOptionChange} noLabel={true} right={true} />
+    {/if}
 </button>
 
 <style>
@@ -118,6 +131,11 @@
         height: 1.3em;
         margin-left: calc(- var(--margin, .45em) - 1px);
         margin-right: var(--margin, .45em);
+    }
+
+    button :global(.dropdown-trigger button) {
+        color: inherit!important;
+        background-color: inherit!important;
     }
 
     .not-selected {
