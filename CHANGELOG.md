@@ -5,8 +5,12 @@
 [!] bug fix
 [*] other changes
 
+1.5.0
+- [+] add a percentage mode to the chart on the player profile
+- [+] update browser url after song leaderboard page change
+
 1.4.3
-- [+] fix adding a new player to the cache, thx Rocker
+- [!] fix adding a new player to the cache, thx Rocker
 
 1.4.2
 - [+] add ranking change for a selected period to the player profile, thx redegg89

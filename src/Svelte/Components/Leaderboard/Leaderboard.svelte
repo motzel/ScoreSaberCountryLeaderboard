@@ -87,6 +87,8 @@
     if (!event || !event.detail || !event.detail.hasOwnProperty('currentPage')) return;
 
     currentPage = event.detail.currentPage;
+
+    dispatch('browse', {leaderboardId, type, page: currentPage})
   }
 
   function onLeaderboardPageLoaded(event) {

@@ -41,6 +41,10 @@
     history.replaceState(null, '', url.toString());
   }
 
+  function onBrowse(event) {
+    onDiffChange(event);
+  }
+
   $: {
     refreshLeaderboardPage(leaderboardPage);
   }
@@ -52,7 +56,7 @@
       <div class="box has-shadow">
         <Leaderboard bind:leaderboardId bind:leaderboardPage {type} {startAtRank}
                      bgWidth="1.4rem" bgLeft="-1.4rem" bgHeight="1rem" bgTop="-3.25rem"
-                     on:diff-change={onDiffChange}
+                     on:diff-change={onDiffChange} on:browse={onBrowse}
         />
       </div>
     </div>
