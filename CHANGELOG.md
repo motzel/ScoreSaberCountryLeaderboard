@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.5.1
+- [!] fix rendering song leaderboard pages when SS contains no info about difficulty
+
 1.5.0
 - [+] add a percentage mode to the chart on the player profile
 - [+] update browser url after song leaderboard page change

@@ -27,6 +27,7 @@ import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage
 import {setupDataFixes} from './db/fix-data'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
 import {getRankedSongs} from './scoresaber/rankeds'
+import {getHumanDiffInfo, getSongScores} from './song'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -60,6 +61,21 @@ async function setupLeaderboard() {
     const props = {
         leaderboardId,
         leaderboardPage: {...parseSsSongLeaderboardPage(document), pageNum}
+    }
+
+    if (!props.leaderboardPage?.currentDiff) {
+        const leaderboardScores = await getSongScores(leaderboardId);
+        if (leaderboardScores && leaderboardScores.length && leaderboardScores[0]?.diffInfo?.diff) {
+            const diffInfo = getHumanDiffInfo(leaderboardScores[0].diffInfo);
+
+            props.leaderboardPage.currentDiff = leaderboardScores[0].diffInfo.diff;
+            props.leaderboardPage.currentDiffHuman = diffInfo?.name ? diffInfo.name : '???';
+            props.leaderboardPage.diffs.push({id: leaderboardId, name: diffInfo?.name ? diffInfo.name : '???', color: diffInfo?.color ? diffInfo.color : '#444'})
+        } else {
+            props.leaderboardPage.currentDiff = '???';
+            props.leaderboardPage.currentDiffHuman = '???';
+            props.leaderboardPage.diffs.push({id: leaderboardId, name: '???', color: '#444'})
+        }
     }
 
     const profileDiv = document.createElement('div');
