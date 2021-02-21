@@ -37,8 +37,8 @@ async function openDatabase() {
         dbNewVersion = newVersion;
         dbOldVersion = oldVersion;
 
-        switch (newVersion) {
-          case 2:
+        switch (true) {
+          case newVersion >= 2 && oldVersion < 2:
             db.createObjectStore('players', {
               keyPath: 'id',
               autoIncrement: false,
@@ -91,6 +91,15 @@ async function openDatabase() {
             const groups = db.createObjectStore('groups', {keyPath: '_idbId', autoIncrement: true});
             groups.createIndex('groups-name', 'name', {unique: false});
             groups.createIndex('groups-playerId', 'playerId', {unique: false});
+
+            // NO break here!
+
+          // TODO: change version number to correct one
+          case newVersion >= 3 && oldVersion < 3:
+            const scoresStore3 = transaction.objectStore('scores');
+            scoresStore3.createIndex('scores-hash', 'hash', {unique: false});
+
+          // NO break here!
         }
 
         log.info("Database converted");

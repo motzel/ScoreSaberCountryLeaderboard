@@ -27,7 +27,7 @@ import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage
 import {setupDataFixes} from './db/fix-data'
 import {getSsplCountryRanks} from './scoresaber/sspl-cache'
 import {getRankedSongs} from './scoresaber/rankeds'
-import {getHumanDiffInfo, getSongScores} from './song'
+import {getHashScores, getHumanDiffInfo, getSongScores} from './song'
 
 const getLeaderboardId = () => parseInt(getFirstRegexpMatch(/\/leaderboard\/(\d+)(\?page=.*)?#?/, window.location.href.toLowerCase()), 10);
 const isLeaderboardPage = () => null !== getLeaderboardId();
@@ -63,14 +63,74 @@ async function setupLeaderboard() {
         leaderboardPage: {...parseSsSongLeaderboardPage(document), pageNum}
     }
 
-    if (!props.leaderboardPage?.currentDiff) {
-        const leaderboardScores = await getSongScores(leaderboardId);
-        if (leaderboardScores && leaderboardScores.length && leaderboardScores[0]?.diffInfo?.diff) {
-            const diffInfo = getHumanDiffInfo(leaderboardScores[0].diffInfo);
+    // TODO: move it to Leaderboard/Provider/ScoreSaber component
+    // TODO: leaderboardPage shouldn't be also parsed here but in component
+    const hash = props.leaderboardPage?.song?.hash ?? null;
+    if (hash) {
+        const diffsForHashFromScores = Object.values((await getHashScores(hash))
+          .reduce((cum, s) => {
+              const leaderboardId = s?.leaderboardId;
+              const diff = s?.diffInfo.diff;
+              const type = s?.diffInfo.type;
+              if (!leaderboardId || !diff || !type) return cum;
 
-            props.leaderboardPage.currentDiff = leaderboardScores[0].diffInfo.diff;
-            props.leaderboardPage.currentDiffHuman = diffInfo?.name ? diffInfo.name : '???';
-            props.leaderboardPage.diffs.push({id: leaderboardId, name: diffInfo?.name ? diffInfo.name : '???', color: diffInfo?.color ? diffInfo.color : '#444'})
+              const idx = diff + '-' + type;
+
+              cum[idx] = {leaderboardId, diffInfo: s.diffInfo}
+
+              return cum;
+          }, {}))
+          .map(d => {
+              const diffInfo = getHumanDiffInfo(d.diffInfo);
+
+              return {
+                  id: d.leaderboardId,
+                  name: diffInfo?.fullName ?? '???',
+                  color: diffInfo?.color ?? '#444',
+                  difficulty: diffInfo?.difficulty ?? 1000,
+                  type: diffInfo?.type ?? '???'
+              }
+          })
+          .sort((a, b) => {
+              if (a.type === 'Standard' && b.type !== 'Standard') return -1;
+              else if (b.type === 'Standard' && a.type !== 'Standard') return 1;
+              else if (a.type !== b.type) return a.type.localeCompare(b.type);
+              else return a.difficulty - b.difficulty;
+          });
+
+        const diffsFromPage = (Array.isArray(props.leaderboardPage?.diffs) ? props.leaderboardPage.diffs : [])
+          .map(d => {
+              const diffInfo = getHumanDiffInfo({
+                  diff: d.name.toLowerCase().replace('expert+', 'expertPlus'),
+                  type: 'Standard'
+              });
+              if (!diffInfo) return {...d, difficulty: 1000, type: 'Standard'}
+
+              return {
+                  id: d.id,
+                  name: diffInfo?.fullName ?? '???',
+                  color: diffInfo?.color ?? '#444',
+                  difficulty: diffInfo?.difficulty ?? 1000,
+                  type: diffInfo?.type ?? '???'
+              }
+          })
+
+        props.leaderboardPage.diffs = diffsFromPage.concat(
+          diffsForHashFromScores.reduce((cum, d) => {
+              if (!diffsFromPage.find(dfp => dfp.id === d.id)) cum.push(d);
+
+              return cum;
+          }, [])
+        );
+    }
+
+    console.table(props.leaderboardPage.diffs);
+
+    if (!props.leaderboardPage?.currentDiff) {
+        const diff = props.leaderboardPage.diffs.find(d => d.id === leaderboardId);
+        if (diff) {
+            props.leaderboardPage.currentDiff = diff.name.toLowerCase()?.replace('+', 'Plus');
+            props.leaderboardPage.currentDiffHuman = diff.name;
         } else {
             props.leaderboardPage.currentDiff = '???';
             props.leaderboardPage.currentDiffHuman = '???';

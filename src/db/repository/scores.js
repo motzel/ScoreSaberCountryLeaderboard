@@ -12,5 +12,6 @@ export default () => repository
       'scores-leaderboardId': 'leaderboardId',
       'scores-playerId': 'playerId',
       'scores-pp': 'pp',
+      'scores-hash': 'hash'
     }
   );
