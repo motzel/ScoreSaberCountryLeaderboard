@@ -138,12 +138,21 @@
           .map(score => ({...score, timeset: score.timeset ? dateFromString(score.timeset) : null}))
           .filter(score => score.timeset && score.timeset > oldestDate)
           .reduce((cum, score) => {
-              const ssDate = toSSTimestamp(score.timeset)
-              const ssTimestamp = (new Date(ssDate)).getTime();
+              const allSongScores = [dateFromString(score.timeset)]
+                .concat(
+                  score.history && score.history.length
+                    ? score.history.filter(h => h.timestamp).map(h => new Date(h.timestamp))
+                    : []
+                );
 
-              if (!cum.hasOwnProperty(ssTimestamp)) cum[ssTimestamp] = 0;
+              allSongScores.forEach(t => {
+                  const ssDate = toSSTimestamp(t);
+                  const ssTimestamp = (new Date(ssDate)).getTime();
 
-              cum[ssTimestamp]++;
+                  if (!cum.hasOwnProperty(ssTimestamp)) cum[ssTimestamp] = 0;
+
+                  cum[ssTimestamp]++;
+              });
 
               return cum;
           }, {})

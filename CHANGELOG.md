@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.5.2
+- [+] activity chart now uses historical scores too, thx Rocker
+
 1.5.1
 - [!] fix rendering song leaderboard pages when SS contains no info about difficulty
 
