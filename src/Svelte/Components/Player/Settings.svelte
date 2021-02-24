@@ -6,6 +6,7 @@
     import Select from '../Common/Select.svelte';
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
     import File from '../Common/File.svelte';
+    import BeatSaviorImporter from './BeatSaviorImporter.svelte';
     import Modal from '../Common/Modal.svelte';
 
     import {getConfig, setConfig} from "../../../plugin-config";
@@ -613,6 +614,7 @@
     {:else if playerInfo}
         {#if profileId === mainPlayerId}
             <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
+            <BeatSaviorImporter {profileId} />
         {/if}
 
         {#if isManuallyAddedPlayer || isFriend}

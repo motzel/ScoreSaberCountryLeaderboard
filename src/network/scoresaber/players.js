@@ -11,7 +11,7 @@ import {
     getScoresByPlayerId,
     updateSongScore,
 } from "../../scoresaber/players";
-import {dateFromString, toSSTimestamp, toUTCDate} from "../../utils/date";
+import {dateFromString, toSSTimestamp, toUTCDateTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsProfilePage} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../utils/multinode-sync';
@@ -216,7 +216,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
 
     const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
-    const shouldCheckForRankedsPp = playerLastUpdated && toUTCDate(playerLastUpdated) !== toUTCDate(new Date()); // check for pp update once a day
+    const shouldCheckForRankedsPp = playerLastUpdated && toUTCDateTimestamp(playerLastUpdated) !== toUTCDateTimestamp(new Date()); // check for pp update once a day
 
     const SIX_HOURS = 1000 * 60 * 60 * 6;
     const ONE_DAY = 1000 * 60 * 60 * 24;

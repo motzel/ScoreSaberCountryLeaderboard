@@ -4,7 +4,7 @@ import {isDateObject} from '../utils/js'
 import {updateSongCountryRanks} from '../song'
 import eventBus from '../utils/broadcast-channel-pubsub'
 
-const SSPL_DB_VERSION = 2;
+const SSPL_DB_VERSION = 3;
 export let db = null;
 
 import cacheRepository from './repository/cache';
@@ -37,8 +37,8 @@ async function openDatabase() {
         dbNewVersion = newVersion;
         dbOldVersion = oldVersion;
 
-        switch (newVersion) {
-          case 2:
+        switch (true) {
+          case newVersion >= 2 && oldVersion < 2:
             db.createObjectStore('players', {
               keyPath: 'id',
               autoIncrement: false,
@@ -91,6 +91,24 @@ async function openDatabase() {
             const groups = db.createObjectStore('groups', {keyPath: '_idbId', autoIncrement: true});
             groups.createIndex('groups-name', 'name', {unique: false});
             groups.createIndex('groups-playerId', 'playerId', {unique: false});
+
+            // NO break here!
+
+          case newVersion >= 3 && oldVersion < 3:
+            const beatSaviorFiles = db.createObjectStore('beat-savior-files', {
+              keyPath: 'name',
+              autoIncrement: false,
+            });
+
+            const beatSavior = db.createObjectStore('beat-savior', {
+              keyPath: '_idbId',
+              autoIncrement: true,
+            });
+            beatSavior.createIndex('beat-savior-playerId', 'playerId', {unique: false});
+            beatSavior.createIndex('beat-savior-songId', 'songId', {unique: false});
+            beatSavior.createIndex('beat-savior-fileName', 'fileName', {unique: false});
+
+          // NO break here!
         }
 
         log.info("Database converted");
