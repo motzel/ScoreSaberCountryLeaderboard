@@ -306,8 +306,8 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
 
                     const {pp, rank, score, uScore, timeset} = prevScore;
                     if (timeset?.getTime() && score && uScore && (newScores?.scores?.[leaderboardId]?.score && newScores?.scores?.[leaderboardId]?.score !== score))
-                        newScore.history = prevHistory
-                          .concat([{pp, rank, score, uScore, timestamp: timeset.getTime()}])
+                        newScore.history = [{pp, rank, score, uScore, timestamp: timeset.getTime()}]
+                          .concat(prevHistory)
                           .slice(0, 3);
                 }
 

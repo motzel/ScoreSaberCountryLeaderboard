@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.5.3
+- [!] fix storing historical scores, thx Rocker
+
 1.5.2
 - [+] activity chart now uses historical scores too, thx Rocker
 
