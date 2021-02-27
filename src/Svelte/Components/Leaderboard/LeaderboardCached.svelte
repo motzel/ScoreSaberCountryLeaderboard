@@ -19,7 +19,6 @@
     import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import {getLeaderboard} from "../../../song";
     import eventBus from '../../../utils/broadcast-channel-pubsub';
-    import nodeSync from '../../../utils/multinode-sync';
     import {_} from '../../stores/i18n';
     import {getActiveCountry} from '../../../scoresaber/country'
 
@@ -143,7 +142,7 @@
                     </td>
                     <td class="mods">{item.mods && item.mods.length ? item.mods : '-'}</td>
                     <td class="percentage">
-                        <Value value={item.acc} zero="-" suffix="%"
+                        <Value value={item.acc} zero="-" suffix="%" title={item.accTooltip}
                                prevValue={showDiff && item.playHistory && item.playHistory.length ? item.playHistory[0].acc : null}/>
                     </td>
                     <td class="pp">

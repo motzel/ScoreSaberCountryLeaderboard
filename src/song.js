@@ -13,6 +13,7 @@ import scoresRepository from './db/repository/scores'
 import {getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
 import eventBus from './utils/broadcast-channel-pubsub'
 import nodeSync from './utils/multinode-sync'
+import {getAccTooltipFromTrackers} from './scoresaber/beatsavior'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -193,6 +194,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
           pp: score.pp,
           playHistory,
           acc: getAccFromScore(score, maxSongScore),
+          accTooltip: getAccTooltipFromTrackers(score?.beatSavior?.trackers)
         };
       })
       .filter(score => score) // filter out empty items
