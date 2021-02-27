@@ -15,6 +15,7 @@
     export let inline = false;
     export let useColorsForValue = false;
     export let prevLabel = "";
+    export let title = '';
 
     $: minValue = Math.pow(10, -digits-1)
     $: formatted = (Math.abs(value) > minValue ? prefix + formatNumber(value, digits, withSign) + suffix : (withZeroPrefix ? prefix : "") + zero + (withZeroSuffix ? suffix : ""));
@@ -25,7 +26,7 @@
     $: mainClass = (useColorsForValue && value ? (value > minValue ? "inc" : (value < -minValue ? "dec" : "zero")): "");
 </script>
 
-<span class={mainClass}>{formatted}</span>{#if showPrevValue} <small class={prevClass} title={prevFormatted}>{prevDiffFormatted}</small>{/if}
+<span class={mainClass} {title}>{formatted}</span>{#if showPrevValue} <small class={prevClass} title={prevFormatted}>{prevDiffFormatted}</small>{/if}
 
 <style>
     small.block {display: block;}

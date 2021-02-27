@@ -85,6 +85,7 @@
                 {$_.songBrowser.fields.acc}:
                 <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 || !showDifferences ? null : playerScore.prevAcc} inline={true}
                        suffix={'%' + (playerScore.mods && playerScore.mods.length ? ' (' + playerScore.mods + ')' : '')} suffixPrev="%"
+                       title={playerScore.accTooltip}
                 />
               </span>
             </div>

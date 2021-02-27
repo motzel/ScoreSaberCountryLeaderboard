@@ -60,7 +60,7 @@
     <td class="percentage">
       <Value value={score.acc} withZeroSuffix={false}
              prevValue={!showDifferences ? null : score.prevAcc}
-             suffix="%" zero="-" />
+             suffix="%" zero="-" title={score.accTooltip} />
     </td>
 
     <td class="pp">
