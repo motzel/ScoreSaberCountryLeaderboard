@@ -16,6 +16,7 @@
     import {convertArrayToObjectByKey} from '../../../utils/js'
     import eventBus from '../../../utils/broadcast-channel-pubsub'
     import nodeSync from '../../../utils/multinode-sync'
+    import BeatSaviorIcon from './BeatSaviorIcon.svelte'
 
     const BEAT_SAVIOR_DIRECTORY_HANDLE = 'beatSaviorDirHandle';
 
@@ -52,8 +53,12 @@
 
         directoryHandle = await cacheRepository().get(BEAT_SAVIOR_DIRECTORY_HANDLE);
 
-        const startManualRefreshingUnsubscriber = eventBus.on('start-data-refreshing', () => {manualRefreshingInProgress = true});
-        const stopManualRefreshingUnsubscriber = eventBus.on('data-refreshed', () => {manualRefreshingInProgress = false});
+        const startManualRefreshingUnsubscriber = eventBus.on('start-data-refreshing', () => {
+            manualRefreshingInProgress = true
+        });
+        const stopManualRefreshingUnsubscriber = eventBus.on('data-refreshed', () => {
+            manualRefreshingInProgress = false
+        });
         const playerScoresUpdatedUnsubscriber = eventBus.on('player-scores-updated', async ({playerId}) => {
             if (playersScores[playerId]) {
                 await getPlayerScores(playerId);
@@ -356,10 +361,12 @@
 
 {#if initialized && profileId}
     {#if !showModal}
-        <Button iconFa="fas fa-file-import" type="default"}
-                label={$_.beatSaviorImporter.beatSaviorBtn} title={$_.beatSaviorImporter.header}
+        <Button type="default"}
+                title={$_.beatSaviorImporter.header}
                 disabled={manualRefreshingInProgress}
-                on:click={() => showModal = true}/>
+                on:click={() => showModal = true}>
+            <BeatSaviorIcon />
+        </Button>
     {:else}
         <Modal closeable={false} width="35em" on:close={() => showModal = false}>
             <header>

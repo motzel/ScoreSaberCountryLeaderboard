@@ -101,6 +101,8 @@ export function substituteVars(url, vars) {
 }
 
 export const round = (val, places = 2) => {
+    if (!Number.isFinite(val)) return null;
+
     const mult = Math.pow(10, places);
     return Math.round((val + Number.EPSILON) * mult) / mult;
 };

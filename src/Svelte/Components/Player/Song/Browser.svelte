@@ -57,6 +57,7 @@
     import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
     import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
     import beatSaviorRepository from '../../../../db/repository/beat-savior'
+    import BeatSaviorSongCard from '../../BeatSavior/SongCard.svelte'
 
     const dispatch = createEventDispatcher();
 
@@ -1763,6 +1764,8 @@
                                                                       pp={getScoreValueByKey(series, song, col.key)}/>{/if}
                                                     {/if}
                                                 {/if}{/each}
+
+                                                <BeatSaviorSongCard data={getScoreValueByKey(series, song, 'beatSavior')} />
                                             {:else}
                                                 <span class="dec">{$_.songBrowser.noScore}</span>
                                             {/if}
