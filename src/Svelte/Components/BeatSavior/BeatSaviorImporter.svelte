@@ -192,19 +192,22 @@
                     trackers,
                 };
 
-                if (
-                  start === 0 &&
-                  trackers && trackers.scoreTracker && trackers.scoreTracker.score &&
-                  playersScores[playerId] && playersScores[playerId][hash] &&
-                  playersScores[playerId][hash][difficultyName] &&
-                  playersScores[playerId][hash][difficultyName] &&
-                  playersScores[playerId][hash][difficultyName][timestamp]) {
-                    const score = playersScores[playerId][hash][difficultyName][timestamp].find(s => s.score === trackers.scoreTracker.score);
-                    if (score) {
-                        playData.ssScore = score;
-                        playData.leaderboardId = score.leaderboardId;
+                // check file timestamp and next day if BS session started on one day and lasts for the nexst
+                [timestamp, timestamp + 1000 * 60 * 60 * 24].forEach(timestamp => {
+                    if (
+                      start === 0 &&
+                      trackers && trackers.scoreTracker && trackers.scoreTracker.score &&
+                      playersScores[playerId] && playersScores[playerId][hash] &&
+                      playersScores[playerId][hash][difficultyName] &&
+                      playersScores[playerId][hash][difficultyName] &&
+                      playersScores[playerId][hash][difficultyName][timestamp]) {
+                        const score = playersScores[playerId][hash][difficultyName][timestamp].find(s => s.score === trackers.scoreTracker.score);
+                        if (score) {
+                            playData.ssScore = score;
+                            playData.leaderboardId = score.leaderboardId;
+                        }
                     }
-                }
+                });
 
                 data.plays.push(playData);
             } catch {
