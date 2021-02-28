@@ -1,21 +1,29 @@
 import {round} from '../utils/format'
 import {trans} from '../Svelte/stores/i18n'
 
-export const getAccTooltipFromTrackers = trackers => {
+export const extractBeatSaviorTrackersData = trackers => {
   if (!trackers) return null;
 
   let {
-    winTracker: {nbOfPause = null},
+    winTracker: {nbOfPause = null, won = null},
     hitTracker: {maxCombo = null, miss = null, bombHit = null, nbOfWallHit = null},
-    accuracyTracker: {accLeft = null, leftAverageCut = null, accRight = null, rightAverageCut = null},
+    accuracyTracker: {accLeft = null, leftAverageCut = null, accRight = null, rightAverageCut = null, gridAcc = null},
   } = trackers;
 
   accLeft = accLeft ? round(accLeft) : null;
   accRight = accRight ? round(accRight) : null;
-  leftAverageCut = leftAverageCut ? leftAverageCut.map(v => round(v)).join('/') : null;
-  rightAverageCut = rightAverageCut ? rightAverageCut.map(v => round(v)).join('/') : null;
+  leftAverageCut = leftAverageCut ? leftAverageCut.map(v => round(v)) : null;
+  rightAverageCut = rightAverageCut ? rightAverageCut.map(v => round(v)) : null;
 
-  let vars = {accLeft, leftAverageCut, accRight, rightAverageCut, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause};
+  return {accLeft, leftAverageCut, accRight, rightAverageCut, gridAcc, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause, fc: won && !miss};
+}
+
+export const getAccTooltipFromTrackers = trackers => {
+  if (!trackers) return null;
+
+  let vars = extractBeatSaviorTrackersData(trackers);
+  if (vars.leftAverageCut) vars.leftAverageCut = vars.leftAverageCut.join('/');
+  if (vars.rightAverageCut) vars.rightAverageCut = vars.rightAverageCut.join('/');
 
   const bsKey = 'beatSavior';
   const accTooltip =

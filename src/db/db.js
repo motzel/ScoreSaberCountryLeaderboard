@@ -96,17 +96,17 @@ async function openDatabase() {
 
           case newVersion >= 3 && oldVersion < 3:
             const beatSaviorFiles = db.createObjectStore('beat-savior-files', {
-              keyPath: 'name',
+              keyPath: 'fileId',
               autoIncrement: false,
             });
 
             const beatSavior = db.createObjectStore('beat-savior', {
-              keyPath: '_idbId',
-              autoIncrement: true,
+              keyPath: 'beatSaviorId',
+              autoIncrement: false,
             });
             beatSavior.createIndex('beat-savior-playerId', 'playerId', {unique: false});
             beatSavior.createIndex('beat-savior-songId', 'songId', {unique: false});
-            beatSavior.createIndex('beat-savior-fileName', 'fileName', {unique: false});
+            beatSavior.createIndex('beat-savior-fileId', 'fileId', {unique: false});
 
           // NO break here!
         }

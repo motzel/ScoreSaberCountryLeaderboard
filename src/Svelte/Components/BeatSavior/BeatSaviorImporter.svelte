@@ -143,7 +143,7 @@
 
             const {playerID: playerId, saberAColor, saberBColor} = header;
 
-            data = {...data, playerId, saberAColor, saberBColor, plays: []}
+            data = {...data, fileId: playerId + '_' + timestamp, playerId, saberAColor, saberBColor, plays: []}
         } catch {
             return null;
         }
@@ -171,11 +171,14 @@
                     ? trackers.hitTracker.leftNoteHit + trackers.hitTracker.rightNoteHit + trackers.hitTracker.miss
                     : null;
 
+                const timeset = new Date(timestamp + idx * 1000);
                 const playData = {
+                    beatSaviorId: playerId + '_' + timeset.getTime(),
                     leaderboardId: null,
                     songId: playerId + '_' + hash + '_' + difficultyName,
-                    timeset: new Date(timestamp + idx * 1000),
-                    fileName: file.name,
+                    timeset,
+                    fileId: data.fileId,
+                    fileName: data.name,
                     playerId,
                     start,
                     speed,
@@ -270,7 +273,7 @@
             const bsStore = tx.objectStore('beat-savior');
 
             // remove previously imported data for current file
-            let cursor = await bsStore.index('beat-savior-fileName').openCursor(IDBKeyRange.bound(data.name, data.name));
+            let cursor = await bsStore.index('beat-savior-fileId').openCursor(IDBKeyRange.bound(data.fileId, data.fileId));
             while (cursor) {
                 await cursor.delete();
                 cursor = await cursor.continue();
