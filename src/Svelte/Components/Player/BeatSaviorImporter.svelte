@@ -4,7 +4,7 @@
     import Button from '../Common/Button.svelte';
     import Modal from '../Common/Modal.svelte';
 
-    import {getPlayerInfo, getScoresByPlayerId, isDataAvailable} from "../../../scoresaber/players";
+    import {getPlayerInfo, getScoresByPlayerId} from "../../../scoresaber/players";
     import {_, trans} from "../../stores/i18n";
     import cacheRepository from "../../../db/repository/cache";
     import {dateFromString, getClientTimezoneOffset, truncateDate} from '../../../utils/date'
@@ -130,9 +130,11 @@
         const lines = contents.split('\n');
 
         const nameMatches = file.name.toLowerCase().match(/^(\d{2})-(\d{2})-(\d{4})\.bsd$/);
-        const date = nameMatches && nameMatches.length === 4
-          ? truncateDate(new Date(`${nameMatches[3]}-${nameMatches[2]}-${nameMatches[1]}T00:00:00${clientTimezoneOffset}`), 'day')
-          : truncateDate(new Date(file.lastModified), 'day');
+        if (!nameMatches || !nameMatches.length === 4) {
+            return null;
+        }
+
+        const date = truncateDate(new Date(`${nameMatches[3]}-${nameMatches[2]}-${nameMatches[1]}T00:00:00${clientTimezoneOffset}`), 'day');
         const timestamp = date.getTime();
 
         let data = {name: file.name, date: date, size: file.size, lastModified: new Date(file.lastModified)};
@@ -170,7 +172,9 @@
                     : null;
 
                 const playData = {
+                    leaderboardId: null,
                     songId: playerId + '_' + hash + '_' + difficultyName,
+                    timeset: new Date(timestamp + idx * 1000),
                     fileName: file.name,
                     playerId,
                     start,
@@ -196,7 +200,10 @@
                   playersScores[playerId][hash][difficultyName] &&
                   playersScores[playerId][hash][difficultyName][timestamp]) {
                     const score = playersScores[playerId][hash][difficultyName][timestamp].find(s => s.score === trackers.scoreTracker.score);
-                    if (score) playData.ssScore = score;
+                    if (score) {
+                        playData.ssScore = score;
+                        playData.leaderboardId = score.leaderboardId;
+                    }
                 }
 
                 data.plays.push(playData);
@@ -364,7 +371,11 @@
                         <p>{$_.beatSaviorImporter.importCompleted}</p>
                     {:else}
                         <p>{@html $_.beatSaviorImporter.introduction }</p>
-                        {#if !directoryHandle}<p>{@html $_.beatSaviorImporter.selectFolder }</p>{/if}
+                        {#if !directoryHandle}
+                            <p>{@html $_.beatSaviorImporter.selectFolderFirst }</p>
+                        {:else}
+                            <p>{@html $_.beatSaviorImporter.selectFolderConsecutive }</p>
+                        {/if}
                         <p>{@html $_.beatSaviorImporter.permissions }</p>
                     {/if}
                 {/if}
