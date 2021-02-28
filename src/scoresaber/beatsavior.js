@@ -23,9 +23,9 @@ export const getAccTooltipFromTrackers = trackers => {
       {key: 'accLeftShort', val: 'accLeft'},
       {key: 'accRightShort', val: 'accRight'},
       '\n',
-      {key: 'missesShort', val: 'miss'},
       {key: 'maxComboShort', val: 'maxCombo'},
       {key: 'pausesShort', val: 'nbOfPause'},
+      {key: 'missesShort', val: 'miss'},
       {key: 'bombHitShort', val: 'bombHit'},
       {key: 'wallHitShort', val: 'nbOfWallHit'},
     ].map(e => {
