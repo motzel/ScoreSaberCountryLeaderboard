@@ -204,7 +204,8 @@
                         const score = playersScores[playerId][hash][difficultyName][timestamp].find(s => s.score === trackers.scoreTracker.score);
                         if (score) {
                             playData.ssScore = score;
-                            playData.leaderboardId = score.leaderboardId;
+                            if (score.leaderboardId) playData.leaderboardId = score.leaderboardId;
+                            if (score.diffInfo) playData.diffInfo = score.diffInfo;
                         }
                     }
                 });
