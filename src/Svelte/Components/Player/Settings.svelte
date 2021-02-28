@@ -6,7 +6,7 @@
     import Select from '../Common/Select.svelte';
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
     import File from '../Common/File.svelte';
-    import BeatSaviorImporter from './BeatSaviorImporter.svelte';
+    import BeatSaviorImporter from '../BeatSavior/BeatSaviorImporter.svelte';
     import Modal from '../Common/Modal.svelte';
 
     import {getConfig, setConfig} from "../../../plugin-config";
@@ -253,7 +253,8 @@
             {_key: 'songBrowser.icons.beatsaver', id: 'bs'},
             {_key: 'songBrowser.icons.oneclick', id: 'oneclick'},
             {_key: 'songBrowser.icons.preview', id: 'preview'},
-            {_key: 'songBrowser.icons.twitch', id: 'twitch'}
+            {_key: 'songBrowser.icons.twitch', id: 'twitch'},
+            {_key: 'songBrowser.icons.beatsavior', id: 'beatsavior'},
         ],
 
         themes: Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def, _key: e[1]._key})),

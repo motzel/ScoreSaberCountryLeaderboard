@@ -56,6 +56,7 @@
     import ScoreRank from "../../Common/ScoreRank.svelte";
     import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
     import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+    import beatSaviorRepository from '../../../../db/repository/beat-savior'
 
     const dispatch = createEventDispatcher();
 
@@ -866,6 +867,21 @@
 
         for (const songsKey in songPage.songs) {
             const song = songPage.songs[songsKey];
+
+            const score = songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]
+              ? songPage.series[0].scores[song.leaderboardId]
+              : null;
+            const playerId = songPage.series[0].id;
+            if (score && playerId) {
+                if (score.beatSavior) song.bsExistsForPlayer = songPage.series[0].id;
+                else if(score.hash && score.diffInfo && score.diffInfo.diff) {
+                    const songId = playerId + '_' + score.hash + '_' + score.diffInfo.diff.toLowerCase()
+                    beatSaviorRepository().getFromIndex('beat-savior-songId', songId)
+                      .then(bsLastPlayed => {
+                          if (bsLastPlayed) song.bsExistsForPlayer = playerId;
+                      })
+                }
+            }
 
             song.maxPp = song.stars * PP_PER_STAR * ppFactorFromAcc(100);
 
@@ -1765,7 +1781,8 @@
                                     <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.card-' + song.leaderboardId)}} />
 
                                     {#if selectedAdditionalCols.length > 0 && song}
-                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
+                                    <Icons hash={song.hash} bsExistsForPlayer={song.bsExistsForPlayer}
+                                           twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                     {/if}
                                 </div>
                             </div>
@@ -1950,7 +1967,9 @@
                         {#each selectedAdditionalCols as col,idx (col.key)}
                             <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
                                 {#if col.key === 'icons' && song.hash && song.hash.length}
-                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
+                                    <Icons hash={song.hash} bsExistsForPlayer={song.bsExistsForPlayer}
+                                           twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null}
+                                    />
                                 {/if}
                             </td>
                         {/each}

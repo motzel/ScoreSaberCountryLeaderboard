@@ -53,7 +53,7 @@
 
       const cachedScore = playersScores[score.playerId] && playersScores[score.playerId].leaderboardId === score.leaderboardId ? playersScores[score.playerId] : null;
 
-      return await enhanceScore(score, cachedScore, maxScore, true);
+      return await enhanceScore(score, cachedScore, maxScore);
     }));
   }
 

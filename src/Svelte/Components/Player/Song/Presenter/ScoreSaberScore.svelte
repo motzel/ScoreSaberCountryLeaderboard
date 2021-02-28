@@ -112,7 +112,8 @@
     {/each}
     {#if song && song.hash}
     <td class="icons">
-      <Icons hash={song.hash} twitchUrl={song.video && song.video.url ? song.video.url : null}  />
+      <Icons hash={song.hash} twitchUrl={song.video && song.video.url ? song.video.url : null}
+             bsExistsForPlayer={series[0] && series[0].bsExistsForPlayer ? series[0].bsExistsForPlayer : null}  />
     </td>
     {/if}
   </tr>

@@ -90,7 +90,7 @@
         }
       }
 
-      return await enhanceScore(score, cachedScore, maxScore);
+      return await enhanceScore(score, cachedScore, maxScore, true);
     }))));
 
     if (currentLeaderboardsIdsToGetMaxScores && currentLeaderboardsIdsToGetMaxScores.length)

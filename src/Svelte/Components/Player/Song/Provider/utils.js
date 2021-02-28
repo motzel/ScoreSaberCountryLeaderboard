@@ -3,8 +3,9 @@ import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../
 import {shouldBeHidden} from '../../../../../eastereggs'
 import {round} from '../../../../../utils/format'
 import {getAccTooltipFromTrackers} from '../../../../../scoresaber/beatsavior'
+import beatSaviorRepository from '../../../../../db/repository/beat-savior'
 
-export const enhanceScore = async (score, cachedScore, maxScore) => {
+export const enhanceScore = async (score, cachedScore, maxScore, withBeatSaviorSongs = false) => {
   let enhancedScore = {};
   try {
     const maxScoreEx = maxScore ?? cachedScore?.maxScoreEx;
@@ -50,6 +51,12 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
     if (cachedScore?.beatSavior?.trackers ) {
       enhancedScore.accTooltip = getAccTooltipFromTrackers(cachedScore.beatSavior.trackers);
       enhancedScore.beatSavior = cachedScore.beatSavior;
+    }
+
+    if (withBeatSaviorSongs && score.playerId && score.hash && score?.diffInfo?.diff) {
+      const songId = score.playerId + '_' + score.hash + '_' + score.diffInfo.diff.toLowerCase()
+      const bsLastPlayed = await beatSaviorRepository().getFromIndex('beat-savior-songId', songId);
+      if (bsLastPlayed) enhancedScore.bsExistsForPlayer = score.playerId;
     }
   } catch (e) {} // swallow error
 

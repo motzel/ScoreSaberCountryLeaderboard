@@ -4,7 +4,7 @@
     import { tweened } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
     import {getSongDiffInfo, getSongScores} from "../../../song";
-    import {getConfig} from "../../../plugin-config";
+    import {getConfig, getMainPlayerId} from "../../../plugin-config";
     import eventBus from '../../../utils/broadcast-channel-pubsub'
     import {_} from '../../stores/i18n';
 
@@ -12,6 +12,7 @@
     import Value from "../Common/Value.svelte";
     import Difficulty from "../Common/Difficulty.svelte";
     import Duration from "../Common/Duration.svelte";
+    import beatSaviorRepository from '../../../db/repository/beat-savior'
 
     const dispatch = createEventDispatcher();
 
@@ -29,6 +30,9 @@
     export let bgTop = "0rem";
 
     let showBgCover = true;
+
+    let mainPlayerId;
+    let bsExistsForPlayer = null;
 
     let diffInfo;
     let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
@@ -74,6 +78,14 @@
     }
 
     onMount(async () => {
+        mainPlayerId = await getMainPlayerId();
+
+        if (mainPlayerId && hash && difficulty) {
+            const songId = mainPlayerId + '_' + hash + '_' + difficulty.toLowerCase()
+            const bsLastPlayed = await beatSaviorRepository().getFromIndex('beat-savior-songId', songId);
+            if (bsLastPlayed) bsExistsForPlayer = mainPlayerId;
+        }
+
         await refreshConfig();
 
         return eventBus.on('config-changed', refreshConfig);
@@ -173,7 +185,7 @@
                 </main>
 
                 <footer>
-                    {#if hash} <Icons {hash}/> {/if}
+                    {#if hash} <Icons {hash} {bsExistsForPlayer} /> {/if}
                 </footer>
             </div>
         </div>
