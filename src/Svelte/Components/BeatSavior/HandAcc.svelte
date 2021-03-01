@@ -26,7 +26,7 @@
   $: cutsRounded = cut && Array.isArray(cut) ? cut.map(c => Number.isFinite(c) ? formatNumber(c) : 0) : null;
 </script>
 
-<section>
+<section class={hand}>
   {#if cutsRounded && hand === 'left'}
     <div class="cuts">
       {#each cutsRounded as c, idx}

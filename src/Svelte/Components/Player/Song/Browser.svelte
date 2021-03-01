@@ -1964,6 +1964,13 @@
                                                               pp={getScoreValueByKey(series, song, col.key)}/>{/if}
                                             {/if}
                                         {/if}{/each}
+
+                                        {#if isBeatSaviorColsSelected}
+                                            <BeatSaviorSongCard
+                                              data={getScoreValueByKey(series, song, 'beatSavior')}
+                                              showAcc={isBeatSaviorAccSelected}
+                                              showStats={isBeatSaviorStatsSelected}/>
+                                        {/if}
                                     {:else}
                                         -
                                     {/if}
@@ -2415,6 +2422,18 @@
     tbody td.compact {
         width: 12rem;
         text-align: center;
+    }
+
+    tbody td.compact.left.series-1 :global(.beat-savior .left .donut) {
+        margin-right: 0;
+    }
+
+    tbody td.compact.left.series-1 :global(.beat-savior .right .donut) {
+        margin-left: 0;
+    }
+
+    tbody td.compact.left.series-1 :global(.beat-savior .stats) {
+        margin-bottom: .5rem;
     }
 
     tbody td.compact.left.series-1:not(.with-cols) {
