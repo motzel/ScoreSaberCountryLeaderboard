@@ -5,6 +5,8 @@
   import Value from '../Common/Value.svelte'
 
   export let data;
+  export let showAcc = true;
+  export let showStats = true;
 
   let bsData = null;
 
@@ -28,11 +30,14 @@
 
 <div class="beat-savior">
   {#if bsData}
+    {#if showAcc}
     <div class="acc">
       <HandAcc value={bsData.accLeft} cut={bsData.leftAverageCut} color={bsData.saberAColor} hand="left"/>
       <HandAcc value={bsData.accRight} cut={bsData.rightAverageCut} color={bsData.saberBColor} hand="right"/>
     </div>
+    {/if}
 
+    {#if showStats}
     <div class="stats">
       <span title={$_.beatSavior.maxCombo} class="block">{#if !bsData.fc}<i class="fas fa-cube"></i> {/if}<strong class:full-combo={bsData.fc}>{#if bsData.fc}FC{:else}<Value value={bsData.maxCombo} digits={0} title={$_.beatSavior.maxCombo}/>{/if}</strong></span>
 
@@ -46,6 +51,7 @@
 
       <span title={$_.beatSavior.wallHit} class="block"><i class="fas fa-gopuram"></i> <strong><Value value={bsData.nbOfWallHit} digits={0} title={$_.beatSavior.wallHit}/></strong></span>
     </div>
+    {/if}
   {/if}
 </div>
 
@@ -64,6 +70,15 @@
     .stats {
         display: flex;
         justify-content: space-around;
+        margin-top: 1em;
+    }
+
+    .acc + .stats {
+        margin-top: 0;
+    }
+
+    .acc:last-child {
+        margin-bottom: 0;
     }
 
     .stats .block {

@@ -215,6 +215,26 @@
                 valueProps  : {digits: 0, zero: "-"}
             },
             {
+                _key        : 'songBrowser.fields.beatSaviorAcc',
+                compactLabel: null,
+                name        : 'Beat Savior Acc',
+                key         : 'beatSaviorAcc',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
+                _key        : 'songBrowser.fields.beatSaviorStats',
+                compactLabel: null,
+                name        : 'Beat Savior Stats',
+                key         : 'beatSaviorStats',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
                 _key     : 'songBrowser.fields.diff',
                 name     : 'Różnice',
                 key      : 'diff',
@@ -694,7 +714,7 @@
                             <Select bind:value={values.viewTypes} items={strings.viewTypes}/>
                         </div>
 
-                        <div class="column is-one-third">
+                        <div class="column fields is-one-third">
                             <label class="menu-label">{$_.profile.settings.songBrowser.defaultColumnsHeader}</label>
                             <Select multiple bind:value={configShowColumns} items={columns}/>
                         </div>
@@ -873,6 +893,10 @@
 
     :global(.column .dropdown, .column .dropdown-trigger, .column .dropdown-trigger button) {
         width: 100%;
+    }
+
+    .column.fields :global(.dropdown-menu) {
+        max-height: 20rem;
     }
 
     footer {

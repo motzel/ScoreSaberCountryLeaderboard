@@ -150,6 +150,10 @@ export default {
             diffShort: 'Diff',
             icons: 'Action icons',
             iconsShort: 'Icons',
+            beatSaviorAcc: 'Beat Savior Acc',
+            beatSaviorAccShort: 'Sav. Acc',
+            beatSaviorStats: 'Beat Savior Stats',
+            beatSaviorStatsShort: 'Sav. Stats',
         },
         sort: {
             ascending: 'Ascending',

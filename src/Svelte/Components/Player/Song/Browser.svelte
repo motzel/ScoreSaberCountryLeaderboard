@@ -304,6 +304,28 @@
                 valueProps  : {digits: 0, zero: "-"}
             },
             {
+                _key        : 'songBrowser.fields.beatSaviorAcc',
+                _keyName    : 'songBrowser.fields.beatSaviorAccShort',
+                compactLabel: null,
+                name        : 'Beat Savior Acc',
+                key         : 'beatSaviorAcc',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
+                _key        : 'songBrowser.fields.beatSaviorStats',
+                _keyName    : 'songBrowser.fields.beatSaviorStatsShort',
+                compactLabel: null,
+                name        : 'Beat Savior Stats',
+                key         : 'beatSaviorStats',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
                 _key     : 'songBrowser.fields.diff',
                 _keyName : 'songBrowser.fields.diffShort',
                 name     : 'Różnice',
@@ -1569,6 +1591,9 @@
     $: shownColumns = strings.columns.filter(c => c.displayed)
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
+    $: isBeatSaviorAccSelected = selectedSeriesCols.map(c => c.key).includes('beatSaviorAcc')
+    $: isBeatSaviorStatsSelected = selectedSeriesCols.map(c => c.key).includes('beatSaviorStats')
+    $: isBeatSaviorColsSelected = isBeatSaviorAccSelected || isBeatSaviorStatsSelected
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(refreshTag) : null;
@@ -1765,7 +1790,12 @@
                                                     {/if}
                                                 {/if}{/each}
 
-                                                <BeatSaviorSongCard data={getScoreValueByKey(series, song, 'beatSavior')} />
+                                                {#if isBeatSaviorColsSelected}
+                                                    <BeatSaviorSongCard
+                                                      data={getScoreValueByKey(series, song, 'beatSavior')}
+                                                      showAcc={isBeatSaviorAccSelected}
+                                                      showStats={isBeatSaviorStatsSelected}/>
+                                                {/if}
                                             {:else}
                                                 <span class="dec">{$_.songBrowser.noScore}</span>
                                             {/if}

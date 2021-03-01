@@ -345,6 +345,10 @@ export default {
         bombHitShort: 'Bomby',
         wallHit: 'Trafienie ściany',
         wallHitShort: 'Ściany',
+        beatSaviorAcc: 'Beat Savior Cel.',
+        beatSaviorAccShort: 'Sav. Cel.',
+        beatSaviorStats: 'Beat Savior Stat.',
+        beatSaviorStatsShort: 'Sav. Stat.',
     },
     themes: {
         dark: 'Jedyny słuszny',
