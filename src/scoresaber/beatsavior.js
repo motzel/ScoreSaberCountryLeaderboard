@@ -1,4 +1,4 @@
-import {round} from '../utils/format'
+import {formatNumber, round} from '../utils/format'
 import {trans} from '../Svelte/stores/i18n'
 
 export const extractBeatSaviorTrackersData = trackers => {
@@ -22,8 +22,8 @@ export const getAccTooltipFromTrackers = trackers => {
   if (!trackers) return null;
 
   let vars = extractBeatSaviorTrackersData(trackers);
-  if (vars.leftAverageCut) vars.leftAverageCut = vars.leftAverageCut.join('/');
-  if (vars.rightAverageCut) vars.rightAverageCut = vars.rightAverageCut.join('/');
+  if (vars.leftAverageCut) vars.leftAverageCut = vars.leftAverageCut.filter(c => c && Number.isFinite(c)).map(c => formatNumber(c)).join('/');
+  if (vars.rightAverageCut) vars.rightAverageCut = vars.rightAverageCut.filter(c => c && Number.isFinite(c)).map(c => formatNumber(c)).join('/');
 
   const bsKey = 'beatSavior';
   const accTooltip =
@@ -41,7 +41,7 @@ export const getAccTooltipFromTrackers = trackers => {
 
       if (vars[e.val] === undefined || isNaN(vars[e.val])) return null;
 
-      return trans(bsKey + '.' + e.key) + ': ' + vars[e.val] + (
+      return trans(bsKey + '.' + e.key) + ': ' + (Number.isFinite(vars[e.val]) ? formatNumber(vars[e.val], ['accLeft', 'accRight'].includes(e.val) ? 2 : 0) : '-') + (
         ['accLeftShort', 'accRightShort'].includes(e.key)
           ? ' (' + (e.key === 'accLeftShort' && vars['leftAverageCut'] ? vars['leftAverageCut'] : (vars['rightAverageCut'] ? vars['rightAverageCut'] : '')) + ')'
           : ''
