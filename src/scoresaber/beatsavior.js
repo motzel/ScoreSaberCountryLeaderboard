@@ -18,7 +18,7 @@ export const extractBeatSaviorTrackersData = trackers => {
   return {accLeft, leftAverageCut, accRight, rightAverageCut, gridAcc, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause, fc: won && !miss};
 }
 
-export const getAccTooltipFromTrackers = trackers => {
+export const getAccTooltipFromTrackers = (trackers, onlyKeys = [], joinValue = ' | ') => {
   if (!trackers) return null;
 
   let vars = extractBeatSaviorTrackersData(trackers);
@@ -36,7 +36,9 @@ export const getAccTooltipFromTrackers = trackers => {
       {key: 'missesShort', val: 'miss'},
       {key: 'bombHitShort', val: 'bombHit'},
       {key: 'wallHitShort', val: 'nbOfWallHit'},
-    ].map(e => {
+    ]
+      .filter(i => !onlyKeys || !onlyKeys.length || (!i.val || onlyKeys.includes(i.val)))
+      .map(e => {
       if (!e.key) return e;
 
       if (vars[e.val] === undefined || isNaN(vars[e.val])) return null;
@@ -47,9 +49,8 @@ export const getAccTooltipFromTrackers = trackers => {
           : ''
       );
     })
-      .filter(v => v)
-      .join(' | ')
-      .replace(' | \n | ', '\n');
+      .filter((v, idx) => v && (v !== '\n' || idx));
+  if(accTooltip && accTooltip.length && accTooltip[accTooltip.length - 1] === joinValue) accTooltip.pop();
 
-  return accTooltip && accTooltip.length ? accTooltip : null;
+  return accTooltip && accTooltip.length ? accTooltip.join(joinValue).replace(joinValue + '\n' + joinValue,'\n') : null;
 }

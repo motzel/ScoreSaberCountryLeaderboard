@@ -58,6 +58,7 @@
     import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
     import beatSaviorRepository from '../../../../db/repository/beat-savior'
     import BeatSaviorSongCard from '../../BeatSavior/SongCard.svelte'
+    import {getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
 
     const dispatch = createEventDispatcher();
 
@@ -832,7 +833,21 @@
 
     function getScoreValueByKey(series, song, key, prev = false) {
         const valueKey = prev ? 'prev' + capitalize(key) : key;
-        return series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId][valueKey] ? series.scores[song.leaderboardId][valueKey] : null
+        const score = series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId] : null;
+        if (!score) return null;
+
+        switch (key) {
+            case 'beatSaviorAcc':
+                if (!score.beatSavior) return null;
+
+                return getAccTooltipFromTrackers(score.beatSavior.trackers, ['accLeft', 'accRight'], '<br />');
+            case 'beatSaviorStats':
+                if (!score.beatSavior) return null;
+
+                return getAccTooltipFromTrackers(score.beatSavior.trackers, ['maxCombo', 'nbOfPause', 'miss', 'bombHit', 'nbOfWallHit'], '<br />');
+            default:
+                return score && score[valueKey] ? score[valueKey] : null
+        }
     }
 
     function getEmptyNewPages() {
@@ -1770,6 +1785,7 @@
                                                                    {...col.valueProps}
                                                             />
                                                         </div>
+                                                    {:else if ['beatSaviorAcc', 'beatSaviorStats'].includes(col.key)}
                                                     {:else}
                                                         {#if getScoreValueByKey(series, song, col.key)}
                                                             <div>
@@ -1945,6 +1961,7 @@
                                                                {...col.valueProps}
                                                     />
                                                 </div>
+                                            {:else if ['beatSaviorAcc', 'beatSaviorStats'].includes(col.key)}
                                             {:else}
                                                 {#if getScoreValueByKey(series, song, col.key)}
                                                     <div>
@@ -1981,6 +1998,12 @@
                                         class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                         {#if col.key === 'timeset'}
                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                        {:else if ['beatSaviorAcc', 'beatSaviorStats'].includes(col.key)}
+                                            {#if getScoreValueByKey(series, song, col.key)}
+                                                {@html getScoreValueByKey(series, song, col.key)}
+                                            {:else}
+                                                -
+                                            {/if}
                                         {:else if col.key === 'rank'}
                                             <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
                                                        countryRank={getScoreValueByKey(series, song, 'ssplCountryRank')}
@@ -2299,6 +2322,10 @@
 
     thead th.timeset {
         width: 5.5rem;
+    }
+
+    thead th.beatSaviorStats {
+        min-width: 5.7rem;
     }
 
     thead th.icons {
