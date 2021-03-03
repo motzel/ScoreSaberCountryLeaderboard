@@ -349,6 +349,9 @@ export default {
         bombHitShort: 'Bomb hit',
         wallHit: 'Wall hit',
         wallHitShort: 'Wall hit',
+        avgStatsBtn: 'Average',
+        avgStatsTooltip: 'Show average accuracy',
+        avgStatsHeader: 'Average accuracy from ${num} song(s)',
     },
     themes: {
         dark: 'The one and the only',

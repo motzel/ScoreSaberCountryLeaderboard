@@ -349,6 +349,9 @@ export default {
         beatSaviorAccShort: 'Sav. Cel.',
         beatSaviorStats: 'Beat Savior Stat.',
         beatSaviorStatsShort: 'Sav. Stat.',
+        avgStatsBtn: 'Średnia',
+        avgStatsTooltip: 'Pokaż średnią celność',
+        avgStatsHeader: 'Średnia celność (liczba nutek: ${num})',
     },
     themes: {
         dark: 'Jedyny słuszny',

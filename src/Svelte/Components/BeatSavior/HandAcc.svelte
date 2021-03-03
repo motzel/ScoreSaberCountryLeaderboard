@@ -4,7 +4,8 @@
   import {formatNumber} from '../../../utils/format'
 
   const MAX_BLOCK_VALUE = 115;
-  const DEFAULT_COLOR = 'rgba(255,0,0,1)';
+  const DEFAULT_LEFT_COLOR = 'rgba(255,0,0,1)';
+  const DEFAULT_RIGHT_COLOR = 'rgba(0,0,255,1)';
 
   export let value;
   export let cut;
@@ -15,7 +16,7 @@
     const keys = ['r', 'g', 'b', 'a']
 
     const isOk = color && keys.reduce((ok, key) => ok && Number.isFinite(color[key]) && color[key] >= 0 && color[key] <= 1, true);
-    if (!isOk) return DEFAULT_COLOR;
+    if (!isOk) return hand === 'left' ? DEFAULT_LEFT_COLOR : DEFAULT_RIGHT_COLOR;
 
     return 'rgba(' + keys.reduce((prev, key) => prev.concat(key !== 'a' ? Math.round(color[key] * 255) : color[key]), []) + ')';
   }

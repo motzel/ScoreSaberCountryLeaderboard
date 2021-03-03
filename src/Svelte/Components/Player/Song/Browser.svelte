@@ -39,7 +39,7 @@
     import balibalo from '../../../../scoresaber/balibalo';
     import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
     import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
-    import {getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
+    import {extractBeatSaviorTrackersData, getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
     import beatSaviorRepository from '../../../../db/repository/beat-savior'
 
     import Song from "../../Song/Song.svelte";
@@ -59,7 +59,9 @@
     import Icons from "../../Song/Icons.svelte";
     import ScoreRank from "../../Common/ScoreRank.svelte";
     import BeatSaviorSongCard from '../../BeatSavior/SongCard.svelte'
-    import {getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
+    import BeatSaviorStats from '../../BeatSavior/Stats.svelte'
+    import BeatSaviorIcon from '../../BeatSavior/BeatSaviorIcon.svelte'
+    import Modal from '../../Common/Modal.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -96,6 +98,9 @@
     let estimatedScores = null;
 
     let resultsEl = null;
+
+    let showBeatSaviorAvgModal = false;
+    let beatSaviorAvg = null;
 
     let browserWasInitialized = false;
 
@@ -1459,8 +1464,86 @@
         return allSongs.filter(s => !checkedSongs || !checkedSongs.length || checkedSongs.includes(s.leaderboardId));
     }
 
+    async function showBeatSaviorAverageAcc() {
+        const stats = (await getCheckedSongs())
+          .filter(s => s.beatSavior)
+          .reduce((stats, s) => {
+                const data = extractBeatSaviorTrackersData(s.beatSavior.trackers, false);
+                if (!data) return stats;
+
+                stats.total++;
+
+                ['left', 'right'].forEach(key => {
+                    const keyCapitalized = key[0].toUpperCase() + key.substr(1);
+
+                    const totalVar = 'total' + keyCapitalized;
+                    const accVar = 'acc' + keyCapitalized;
+                    const cutVar = key + 'AverageCut';
+
+                    if (Number.isFinite(data[accVar])) {
+                        stats[totalVar]++;
+                        stats[accVar] += data[accVar];
+                        if (data[cutVar] && Array.isArray(data[cutVar]))
+                            data[cutVar].forEach((v, idx) => stats[cutVar][idx] += Number.isFinite(v) ? v : 0);
+                    }
+                })
+
+                stats.fc += data.fc ? 1 : 0;
+                stats.miss += Number.isFinite(data.miss) ? data.miss : 0;
+                stats.nbOfPause += Number.isFinite(data.nbOfPause) ? data.nbOfPause : 0;
+                stats.bombHit += Number.isFinite(data.bombHit) ? data.bombHit : 0;
+                stats.nbOfWallHit += Number.isFinite(data.nbOfWallHit) ? data.nbOfWallHit : 0;
+
+                if (s.beatSavior.saberAColor) stats.saberAColor = s.beatSavior.saberAColor;
+                if (s.beatSavior.saberBColor) stats.saberBColor = s.beatSavior.saberBColor;
+
+                return stats;
+            },
+            {
+                total: 0,
+                totalLeft: 0,
+                totalRight: 0,
+                fc: 0,
+                miss: 0,
+                nbOfPause: 0,
+                bombHit: 0,
+                nbOfWallHit: 0,
+                accLeft: 0,
+                accRight: 0,
+                leftAverageCut: [0, 0, 0],
+                rightAverageCut: [0, 0, 0],
+                saberAColor: {r: 255, g: 0, b: 0, a: 1},
+                saberBColor: {r: 0, g: 0, b: 255, a: 1},
+            },
+          )
+        ;
+
+        if (stats.total) {
+            ['fc', 'miss', 'nbOfPause', 'bombHit', 'nbOfWallHit'].forEach(key => {
+                stats[key] = stats[key] / stats.total;
+            });
+
+            ['left', 'right'].forEach(key => {
+                const keyCapitalized = key[0].toUpperCase() + key.substr(1);
+
+                const totalVar = 'total' + keyCapitalized;
+                const accVar = 'acc' + keyCapitalized;
+                const cutVar = key + 'AverageCut';
+
+                if(stats[totalVar] && Number.isFinite(stats[accVar])) {
+                    stats[accVar] = stats[accVar] / stats[totalVar];
+                    if (stats[cutVar] && Array.isArray(stats[cutVar]))
+                        stats[cutVar].forEach((v, idx) => stats[cutVar][idx] = v / stats[totalVar]);
+                }
+            })
+        }
+
+        beatSaviorAvg = stats;
+        showBeatSaviorAvgModal = true;
+    }
+
     async function exportCsv() {
-        const songs = await getCheckedSongs()
+        const songs = await getCheckedSongs();
         const transformedData = await Promise.all(
           songs
           .map(async s => {
@@ -2126,8 +2209,26 @@
             <span class="button-group">
                 <Button label={$_.songBrowser.playlist.label} iconFa="fas fa-music" title={$_.songBrowser.playlist.export} disabled={!checkedSongs.length} on:click={exportPlaylist}/>
                 <Button label={$_.songBrowser.csv.label} iconFa="fas fa-download" title={$_.songBrowser.csv.export} on:click={exportCsv}/>
+                <Button type="default"
+                        title={$_.beatSavior.avgStatsTooltip}
+                        on:click={showBeatSaviorAverageAcc}>
+                    <span class="beat-savior-avg-stats-icon"><BeatSaviorIcon /></span>
+                    <span class="beat-savior-avg-stats">{$_.beatSavior.avgStatsBtn}</span>
+                </Button>
             </span>
         </div>
+
+        {#if showBeatSaviorAvgModal}
+        <Modal closeable={true} width="35em" on:close={() => showBeatSaviorAvgModal = false}>
+            <header>
+                <div class="menu-label">{trans('beatSavior.avgStatsHeader', {num: beatSaviorAvg && beatSaviorAvg.total ? beatSaviorAvg.total : 0})}</div>
+            </header>
+
+            <main class="beat-savior-avg-stats-modal">
+                <BeatSaviorStats data={beatSaviorAvg} dataIsAvg={true} />
+            </main>
+        </Modal>
+        {/if}
     {/if}
 {/if}
 
@@ -2578,5 +2679,17 @@
     }
     .button-group:last-of-type {
         margin-right: 0;
+    }
+
+    .beat-savior-avg-stats-icon {
+        margin: 0 .45em;
+    }
+
+    .beat-savior-avg-stats {
+        margin-right: .45em;
+    }
+
+    .beat-savior-avg-stats-modal {
+        font-size: 1.5rem;
     }
 </style>
