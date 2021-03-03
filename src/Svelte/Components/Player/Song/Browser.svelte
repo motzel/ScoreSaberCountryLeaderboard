@@ -37,6 +37,10 @@
     import {_, trans} from "../../../stores/i18n";
     import twitch from '../../../../services/twitch';
     import balibalo from '../../../../scoresaber/balibalo';
+    import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
+    import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+    import {getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
+    import beatSaviorRepository from '../../../../db/repository/beat-savior'
 
     import Song from "../../Song/Song.svelte";
     import Pager from "../../Common/Pager.svelte";
@@ -54,9 +58,6 @@
     import Card from "../../Song/Card.svelte";
     import Icons from "../../Song/Icons.svelte";
     import ScoreRank from "../../Common/ScoreRank.svelte";
-    import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
-    import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
-    import beatSaviorRepository from '../../../../db/repository/beat-savior'
     import BeatSaviorSongCard from '../../BeatSavior/SongCard.svelte'
     import {getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
 
@@ -1449,25 +1450,20 @@
         }
     }
 
+    async function getCheckedSongs() {
+        const allSongs =
+          ['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id)
+            ? Object.values(allRankeds)
+            : Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
+
+        return allSongs.filter(s => !checkedSongs || !checkedSongs.length || checkedSongs.includes(s.leaderboardId));
+    }
+
     async function exportCsv() {
-        const headers = [
-            {field: 'leaderboardId', label: 'ID'},
-            {field: 'name', label: 'Song'},
-            {field: 'songAuthor', label: 'Song author'},
-            {field: 'levelAuthor', label: 'Level author'},
-            {field: 'stars', label: 'Stars'},
-            {field: 'difficulty', label: 'Difficulty'},
-            {field: 'maxScore', label: 'Max score'},
-            {field: 'timeset', label: 'Date'},
-            {field: 'score', label: 'Score'},
-            {field: 'mods', label: 'Mods'},
-            {field: 'uScore', label: 'Score w/mod'},
-            {field: 'pp', label: 'PP'},
-            {field: 'weightedPp', label: 'Weighted PP'},
-        ]
-        const data = await calcPromised;
+        const songs = await getCheckedSongs()
         const transformedData = await Promise.all(
-          data.songs.map(async s => {
+          songs
+          .map(async s => {
               const humanDiffInfo = getHumanDiffInfo(s.diffInfo);
 
               let maxScore = s.maxScoreEx;
@@ -1484,27 +1480,35 @@
               return Object.assign({}, s, {
                   difficulty: humanDiffInfo ? humanDiffInfo.name : '',
                   maxScore  : maxScore ? maxScore : '',
-                  timeset   : getScoreValueByKey(data.series[0], s, 'timeset'),
-                  score     : getScoreValueByKey(data.series[0], s, 'score'),
-                  mods      : getScoreValueByKey(data.series[0], s, 'mods'),
-                  uScore    : getScoreValueByKey(data.series[0], s, 'uScore'),
-                  pp        : getScoreValueByKey(data.series[0], s, 'pp'),
-                  weightedPp: getScoreValueByKey(data.series[0], s, 'weightedPp'),
+                  songAuthor: s.songAuthor ? s.songAuthor : s.songAuthorName,
+                  levelAuthor: s.levelAuthor ? s.levelAuthor : s.levelAuthorName,
+                  stars: s.stars ? s.stars : (allRankeds && s.leaderboardId && allRankeds[s.leaderboardId] ? allRankeds[s.leaderboardId].stars : null)
               })
           })
-          )
-        ;
+        );
+
+        const headers = [
+            {field: 'leaderboardId', label: 'ID'},
+            {field: 'name', label: 'Song'},
+            {field: 'songAuthor', label: 'Song author'},
+            {field: 'levelAuthor', label: 'Level author'},
+            {field: 'stars', label: 'Stars'},
+            {field: 'difficulty', label: 'Difficulty'},
+            {field: 'maxScore', label: 'Max score'},
+            {field: 'timeset', label: 'Date'},
+            {field: 'score', label: 'Score'},
+            {field: 'mods', label: 'Mods'},
+            {field: 'uScore', label: 'Score w/mod'},
+            {field: 'pp', label: 'PP'},
+            {field: 'weightedPp', label: 'Weighted PP'},
+        ]
         const csv = generateCsv(transformedData, headers);
 
         downloadCsv("scores.csv", csv);
     }
 
     async function exportPlaylist() {
-        const allSongs =
-          ['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id)
-            ? Object.values(allRankeds)
-            : Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
-        const songs = allSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
+        const songs = (await getCheckedSongs()).map(s => ({hash: s.hash}));
         const bloodTrailImg = (await import('../../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
             playlistTitle      : "SSPL playlist",
@@ -1745,7 +1749,7 @@
                               nps={selectedSongCols.find(c=>c.key==='nps') ? song.nps : null}
                         >
                             <div slot="before-header" class="check">
-                                {#if showCheckboxes}
+                                {#if showCheckboxes || (checkedSongs && checkedSongs.length)}
                                     <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
                                 {/if}
                             </div>
@@ -1845,7 +1849,7 @@
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
                     <tr>
-                        {#if showCheckboxes}<th class="check" rowspan={viewType.id === 'compact' ? 1 : 2}></th>{/if}
+                        {#if showCheckboxes || (checkedSongs && checkedSongs.length)}<th class="check" rowspan={viewType.id === 'compact' ? 1 : 2}></th>{/if}
                         <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">{$_.songBrowser.songHeader}</th>
 
                         {#each selectedSongCols as col,idx (col.key)}
@@ -1899,7 +1903,7 @@
                 {#each songsPage.songs as song (song.leaderboardId)}
                     <tr class={"item tr-" + song.leaderboardId} class:opened={!!song.leaderboardOpened}
                         on:dblclick={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.tr-' + song.leaderboardId)}}>
-                        {#if showCheckboxes}
+                        {#if showCheckboxes || (checkedSongs && checkedSongs.length)}
                             <td class="check">
                                 <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
                             </td>
@@ -2038,7 +2042,7 @@
                         {/each}
                     </tr>
                     {#if !!song.leaderboardOpened}
-                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => toggleLeaderboardOpen(song)}>
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes || (checkedSongs && checkedSongs.length) ? 1 : 0)} on:dblclick={() => toggleLeaderboardOpen(song)}>
                         <Leaderboard leaderboardId={song.leaderboardId}
                                      showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')}
                                      bgLeft="-2rem" bgTop="-3rem" bgWidth="2rem" bgHeight="1.5rem"
@@ -2051,7 +2055,7 @@
                 {#if shouldCalculateTotalPp}
                     <tfoot>
                     <tr>
-                        {#if showCheckboxes}<th class="check" rowspan={songsPage.series.length > 2 ? 2 : 1}></th>{/if}
+                        {#if showCheckboxes || (checkedSongs && checkedSongs.length)}<th class="check" rowspan={songsPage.series.length > 2 ? 2 : 1}></th>{/if}
 
                         <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                             colspan={2 + selectedSongCols.length}>
@@ -2112,14 +2116,15 @@
     {#if !calculating}
         <div class="actions">
             <span class="button-group">
-                <Button iconFa={"fas fa-eye" + (showCheckboxes ? '-slash': '')} title={showCheckboxes ? $_.songBrowser.playlist.hideChecks : $_.songBrowser.playlist.showChecks} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}/>
+                <Button iconFa={"fas fa-eye" + (showCheckboxes || (checkedSongs && checkedSongs.length) ? '-slash': '')} title={showCheckboxes || (checkedSongs && checkedSongs.length) ? $_.songBrowser.playlist.hideChecks : $_.songBrowser.playlist.showChecks} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}
+                disabled={checkedSongs && checkedSongs.length}/>
                 <Button iconFa="fas fa-check" title={$_.songBrowser.playlist.checkAll} on:click={checkAll}/>
                 <Button iconFa="far fa-file-alt" title={$_.songBrowser.playlist.checkPage} on:click={checkPage}/>
                 <Button iconFa="fas fa-broom" title={$_.songBrowser.playlist.clear} disabled={!checkedSongs.length} on:click={checkNone}/>
-                <Button label={$_.songBrowser.playlist.label} iconFa="fas fa-music" title={$_.songBrowser.playlist.export} disabled={!checkedSongs.length} on:click={exportPlaylist}/>
             </span>
 
             <span class="button-group">
+                <Button label={$_.songBrowser.playlist.label} iconFa="fas fa-music" title={$_.songBrowser.playlist.export} disabled={!checkedSongs.length} on:click={exportPlaylist}/>
                 <Button label={$_.songBrowser.csv.label} iconFa="fas fa-download" title={$_.songBrowser.csv.export} on:click={exportCsv}/>
             </span>
         </div>
