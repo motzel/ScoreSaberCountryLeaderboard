@@ -28,8 +28,13 @@
 </script>
 
 {#if bsData}
-  <Stats data={bsData} {showAcc} {showStats} {showGrid} />
+  <div>
+    <Stats data={bsData} {showAcc} {showStats} {showGrid} />
+  </div>
 {/if}
 
 <style>
+  div {
+      max-width: 20em;
+  }
 </style>
