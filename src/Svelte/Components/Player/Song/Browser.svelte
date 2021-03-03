@@ -59,7 +59,7 @@
     import Icons from "../../Song/Icons.svelte";
     import ScoreRank from "../../Common/ScoreRank.svelte";
     import BeatSaviorSongCard from '../../BeatSavior/SongCard.svelte'
-    import BeatSaviorStats from '../../BeatSavior/Stats.svelte'
+    import BeatSaviorStats from '../../BeatSavior/Stats/Stats.svelte'
     import BeatSaviorIcon from '../../BeatSavior/BeatSaviorIcon.svelte'
     import Modal from '../../Common/Modal.svelte';
 
@@ -1905,6 +1905,7 @@
                                                       data={getScoreValueByKey(series, song, 'beatSavior')}
                                                       showAcc={isBeatSaviorAccSelected}
                                                       showStats={isBeatSaviorStatsSelected}
+                                                      showGrid={false}
                                                     />
                                                 {/if}
                                             {:else}
@@ -2282,8 +2283,8 @@
         width: 100%;
     }
 
-    .card-view > .song-card .card-icons {
-        margin-top: 1rem;
+    .card-view > .song-card :global(.card-icons) {
+        margin-top: 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -2699,5 +2700,6 @@
 
     .beat-savior-avg-stats-modal {
         font-size: 1.5rem;
+        margin-top: .5em;
     }
 </style>

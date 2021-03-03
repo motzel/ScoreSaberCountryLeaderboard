@@ -1,6 +1,6 @@
 <script>
   import {extractBeatSaviorTrackersData} from '../../../scoresaber/beatsavior'
-  import Stats from './Stats.svelte'
+  import Stats from './Stats/Stats.svelte'
 
   export let data;
   export let showAcc = true;

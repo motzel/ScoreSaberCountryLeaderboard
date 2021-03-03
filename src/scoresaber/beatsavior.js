@@ -7,9 +7,10 @@ export const extractBeatSaviorTrackersData = (trackers, rounded = true) => {
   const roundFunc = rounded ? round : v => v;
 
   let {
-    winTracker: {nbOfPause = null, won = null},
-    hitTracker: {maxCombo = null, miss = null, bombHit = null, nbOfWallHit = null},
-    accuracyTracker: {accLeft = null, leftAverageCut = null, accRight = null, rightAverageCut = null, gridAcc = null},
+    winTracker: {nbOfPause = null, won = null} = {nbOfPause: null, won: null},
+    hitTracker: {maxCombo = null, miss = null, bombHit = null, nbOfWallHit = null} = {maxCombo: null, miss: null, bombHit: null, nbOfWallHit: null},
+    accuracyTracker: {accLeft = null, leftAverageCut = null, accRight = null, rightAverageCut = null, gridAcc = null} = {accLeft: null, leftAverageCut: null, accRight: null, rightAverageCut: null, gridAcc: null},
+    scoreGraphTracker: {graph = null} = {graph: null}
   } = trackers;
 
   accLeft = accLeft ? roundFunc(accLeft) : null;
@@ -21,7 +22,9 @@ export const extractBeatSaviorTrackersData = (trackers, rounded = true) => {
     ? gridAcc.slice(-4).concat(gridAcc.slice(4, 8)).concat(gridAcc.slice(0, 4))
     : null;
 
-  return {accLeft, leftAverageCut, accRight, rightAverageCut, gridAcc, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause, fc: won && !miss};
+  graph = graph && Array.isArray(graph) ? graph : null
+
+  return {accLeft, leftAverageCut, accRight, rightAverageCut, gridAcc, graph, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause, fc: won && !miss};
 }
 
 export const getAccTooltipFromTrackers = (trackers, onlyKeys = [], joinValue = ' | ') => {

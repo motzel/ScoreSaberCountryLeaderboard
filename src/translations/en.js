@@ -351,7 +351,7 @@ export default {
         wallHitShort: 'Wall hit',
         avgStatsBtn: 'Average',
         avgStatsTooltip: 'Show average accuracy',
-        avgStatsHeader: 'Average accuracy from ${num} song(s)',
+        avgStatsHeader: 'Average accuracy of ${num} song(s)',
     },
     themes: {
         dark: 'The one and the only',
