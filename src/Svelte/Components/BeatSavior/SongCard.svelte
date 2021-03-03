@@ -5,6 +5,7 @@
   export let data;
   export let showAcc = true;
   export let showStats = true;
+  export let showGrid = false;
 
   let bsData = null;
 
@@ -27,7 +28,7 @@
 </script>
 
 {#if bsData}
-  <Stats data={bsData} {showAcc} {showStats} />
+  <Stats data={bsData} {showAcc} {showStats} {showGrid} />
 {/if}
 
 <style>

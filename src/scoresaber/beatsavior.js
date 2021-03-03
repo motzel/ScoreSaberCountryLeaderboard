@@ -17,6 +17,10 @@ export const extractBeatSaviorTrackersData = (trackers, rounded = true) => {
   leftAverageCut = leftAverageCut && Array.isArray(leftAverageCut) ? leftAverageCut.map(v => Number.isFinite(v) ? roundFunc(v) : 0) : null;
   rightAverageCut = rightAverageCut && Array.isArray(rightAverageCut) ? rightAverageCut.map(v => Number.isFinite(v) ? roundFunc(v) : 0) : null;
 
+  gridAcc = gridAcc && Array.isArray(gridAcc) && gridAcc.length === 12
+    ? gridAcc.slice(-4).concat(gridAcc.slice(4, 8)).concat(gridAcc.slice(0, 4))
+    : null;
+
   return {accLeft, leftAverageCut, accRight, rightAverageCut, gridAcc, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause, fc: won && !miss};
 }
 

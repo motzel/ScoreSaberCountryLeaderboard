@@ -1486,7 +1486,11 @@
                         if (data[cutVar] && Array.isArray(data[cutVar]))
                             data[cutVar].forEach((v, idx) => stats[cutVar][idx] += Number.isFinite(v) ? v : 0);
                     }
-                })
+                });
+
+                if (data.gridAcc && Array.isArray(data.gridAcc)) {
+                    data.gridAcc.forEach((v, idx) => stats.gridAcc[idx] += Number.isFinite(v) ? v: 0);
+                }
 
                 stats.fc += data.fc ? 1 : 0;
                 stats.miss += Number.isFinite(data.miss) ? data.miss : 0;
@@ -1512,6 +1516,7 @@
                 accRight: 0,
                 leftAverageCut: [0, 0, 0],
                 rightAverageCut: [0, 0, 0],
+                gridAcc: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 saberAColor: {r: 255, g: 0, b: 0, a: 1},
                 saberBColor: {r: 0, g: 0, b: 255, a: 1},
             },
@@ -1522,6 +1527,8 @@
             ['fc', 'miss', 'nbOfPause', 'bombHit', 'nbOfWallHit'].forEach(key => {
                 stats[key] = stats[key] / stats.total;
             });
+
+            stats.gridAcc.forEach((v, idx) => stats.gridAcc[idx] = v / stats.total);
 
             ['left', 'right'].forEach(key => {
                 const keyCapitalized = key[0].toUpperCase() + key.substr(1);
@@ -1535,7 +1542,7 @@
                     if (stats[cutVar] && Array.isArray(stats[cutVar]))
                         stats[cutVar].forEach((v, idx) => stats[cutVar][idx] = v / stats[totalVar]);
                 }
-            })
+            });
         }
 
         beatSaviorAvg = stats;
@@ -1897,7 +1904,8 @@
                                                     <BeatSaviorSongCard
                                                       data={getScoreValueByKey(series, song, 'beatSavior')}
                                                       showAcc={isBeatSaviorAccSelected}
-                                                      showStats={isBeatSaviorStatsSelected}/>
+                                                      showStats={isBeatSaviorStatsSelected}
+                                                    />
                                                 {/if}
                                             {:else}
                                                 <span class="dec">{$_.songBrowser.noScore}</span>
@@ -2225,7 +2233,7 @@
             </header>
 
             <main class="beat-savior-avg-stats-modal">
-                <BeatSaviorStats data={beatSaviorAvg} dataIsAvg={true} />
+                <BeatSaviorStats data={beatSaviorAvg} showGrid={true} dataIsAvg={true} />
             </main>
         </Modal>
         {/if}
