@@ -26,7 +26,7 @@
         align-items: center;
         justify-content: center;
         background-color: var(--dimmed);
-        width: 4em;
-        height: 4em;
+        width: 3.5em;
+        height: 3.5em;
     }
 </style>

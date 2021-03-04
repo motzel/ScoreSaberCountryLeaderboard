@@ -352,6 +352,9 @@ export default {
         avgStatsBtn: 'Average',
         avgStatsTooltip: 'Show average accuracy',
         avgStatsHeader: 'Average accuracy of ${num} song(s)',
+        switchToAccView: 'Switch to accuracy view',
+        switchToGridView: 'Switch to grid view',
+        switchToChartView: 'Switch to chart view',
     },
     themes: {
         dark: 'The one and the only',

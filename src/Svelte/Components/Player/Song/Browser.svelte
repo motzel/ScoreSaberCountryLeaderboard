@@ -2240,7 +2240,7 @@
             </header>
 
             <main class="beat-savior-avg-stats-modal">
-                <BeatSaviorStats data={beatSaviorAvg} showGrid={true} dataIsAvg={true} />
+                <BeatSaviorStats data={beatSaviorAvg} showGrid={true} dataIsAvg={true} switchable={false} />
             </main>
         </Modal>
         {/if}

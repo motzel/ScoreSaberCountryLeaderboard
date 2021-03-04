@@ -352,6 +352,9 @@ export default {
         avgStatsBtn: 'Średnia',
         avgStatsTooltip: 'Pokaż średnią celność',
         avgStatsHeader: 'Średnia celność (liczba nutek: ${num})',
+        switchToAccView: 'Przełącz na widok celności',
+        switchToGridView: 'Przełącz na widok siatki',
+        switchToChartView: 'Przełącz na widok wykresu',
     },
     themes: {
         dark: 'Jedyny słuszny',
