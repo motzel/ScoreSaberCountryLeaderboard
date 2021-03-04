@@ -1489,7 +1489,12 @@
                 });
 
                 if (data.gridAcc && Array.isArray(data.gridAcc)) {
-                    data.gridAcc.forEach((v, idx) => stats.gridAcc[idx] += Number.isFinite(v) ? v: 0);
+                    data.gridAcc.forEach((v, idx) => {
+                        if (Number.isFinite(v)) {
+                            stats.gridAcc[idx] += v;
+                            stats.totalGridAcc[idx]++;
+                        }
+                    });
                 }
 
                 stats.fc += data.fc ? 1 : 0;
@@ -1507,6 +1512,7 @@
                 total: 0,
                 totalLeft: 0,
                 totalRight: 0,
+                totalGridAcc: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 fc: 0,
                 miss: 0,
                 nbOfPause: 0,
@@ -1528,7 +1534,7 @@
                 stats[key] = stats[key] / stats.total;
             });
 
-            stats.gridAcc.forEach((v, idx) => stats.gridAcc[idx] = v / stats.total);
+            stats.gridAcc.forEach((v, idx) => stats.gridAcc[idx] = stats.totalGridAcc[idx] ? v / stats.totalGridAcc[idx] : 0);
 
             ['left', 'right'].forEach(key => {
                 const keyCapitalized = key[0].toUpperCase() + key.substr(1);
