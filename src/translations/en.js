@@ -355,6 +355,7 @@ export default {
         switchToAccView: 'Switch to accuracy view',
         switchToGridView: 'Switch to grid view',
         switchToChartView: 'Switch to chart view',
+        clickToShowDetails: 'Click to show/hide details',
     },
     themes: {
         dark: 'The one and the only',

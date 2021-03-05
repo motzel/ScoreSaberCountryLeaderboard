@@ -15,6 +15,7 @@
   import Icons from '../../../Song/Icons.svelte'
   import Leaderboard from '../../../Leaderboard/Leaderboard.svelte'
   import Button from '../../../Common/Button.svelte'
+  import BeatSaviorSongCard from '../../../BeatSavior/SongCard.svelte'
 
   export let song = null;
   export let series = [];
@@ -24,6 +25,8 @@
   let showDifferences = true;
 
   let showLeaderboard = false;
+
+  let showBeatSavior = false
 
   async function updateConfig() {
     const slConfig = await getConfig('songLeaderboard');
@@ -81,11 +84,11 @@
 
           {#if playerScore.acc}
             <div class:bigger={!playerScore.pp}>
-              <span class="scoreBottom">
+              <span class="scoreBottom" class:clickable={playerScore.beatSavior && playerScore.accTooltip} on:click={() => showBeatSavior = !showBeatSavior}>
                 {$_.songBrowser.fields.acc}:
                 <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 || !showDifferences ? null : playerScore.prevAcc} inline={true}
                        suffix={'%' + (playerScore.mods && playerScore.mods.length ? ' (' + playerScore.mods + ')' : '')} suffixPrev="%"
-                       title={playerScore.accTooltip}
+                       title={playerScore.beatSavior && playerScore.accTooltip ? playerScore.accTooltip + '\n' + $_.beatSavior.clickToShowDetails : null}
                 />
               </span>
             </div>
@@ -99,6 +102,15 @@
                        inline={true} digits={0} prefix={playerScore.scoreApproximate ? '~' : ''}/>
               </span>
             </div>
+          {/if}
+
+          {#if playerScore.beatSavior && playerScore.accTooltip && showBeatSavior}
+            <BeatSaviorSongCard
+              data={playerScore.beatSavior}
+              showAcc={true}
+              showStats={true}
+              showGrid={false}
+            />
           {/if}
 
           {#if showWhatIfPp}
@@ -215,5 +227,9 @@
     font-size: 0.65rem;
     width: 4rem;
     padding-right: 0;
+  }
+
+  .clickable {
+      cursor: pointer;
   }
 </style>

@@ -355,6 +355,7 @@ export default {
         switchToAccView: 'Przełącz na widok celności',
         switchToGridView: 'Przełącz na widok siatki',
         switchToChartView: 'Przełącz na widok wykresu',
+        clickToShowDetails: 'Kliknij, aby pokazać/ukryć szczegóły',
     },
     themes: {
         dark: 'Jedyny słuszny',
