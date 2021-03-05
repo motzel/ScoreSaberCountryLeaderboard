@@ -51,6 +51,7 @@ export default {
         removePlayer: 'Remove player',
         rawNewPlay: 'raw pp new play',
         onePpParseError: 'Type in a number, ok? ${num1} is a number or ${num2} is. But "${str}"?',
+        ppAttribution: 'Actual contribution of the score to the total PP',
         stats: {
             ranking: 'Player ranking',
             pp: 'Performance points',

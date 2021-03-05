@@ -52,6 +52,7 @@ export default {
         removePlayer: 'Usuń gracza',
         rawNewPlay: 'pp w nowej grze',
         onePpParseError: 'Wpisz może jakąś liczbę, ok? ${num1} jest liczbą, czy ${num2} jest. Ale "${str}"?',
+        ppAttribution: 'Rzeczywisty wkład wyniku w całkowite PP',
         stats: {
             ranking: 'Ranking',
             pp: 'Punkty',
