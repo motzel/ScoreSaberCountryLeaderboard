@@ -4,11 +4,13 @@
   import Hands from './Hands.svelte'
   import Grid from './Grid.svelte'
   import OtherStats from './OtherStats.svelte'
+  import Chart from './Chart.svelte'
 
   export let data = null;
   export let showAcc = true;
   export let showStats = true;
-  export let showGrid = false;
+  export let showGrid = true;
+  export let showChart = true;
   export let switchable = true;
 
   export let dataIsAvg = false;
@@ -21,8 +23,8 @@
     {#if switchable}
       <div class="switch">
         <i class="fa fa-exchange-alt"
-           title={currentlyDisplayed === 'grid' ? $_.beatSavior.switchToAccView : $_.beatSavior.switchToGridView}
-           on:click={() => currentlyDisplayed = currentlyDisplayed === 'acc' ? 'grid' : 'acc'}
+           title={currentlyDisplayed === 'acc' ? $_.beatSavior.switchToGridView : (currentlyDisplayed === 'grid' ? $_.beatSavior.switchToChartView : $_.beatSavior.switchToAccView)}
+           on:click={() => currentlyDisplayed = currentlyDisplayed === 'acc' ? 'grid' : (currentlyDisplayed === 'grid' ? 'chart' : 'acc')}
         ></i>
       </div>
 
@@ -34,10 +36,16 @@
       <div class:not-visible={currentlyDisplayed !== 'grid'}>
         <Grid {data} />
       </div>
+
+      <div class:not-visible={currentlyDisplayed !== 'chart'} class="chart">
+        <Chart {data} />
+      </div>
     {:else}
     {#if showAcc}<Hands {data} />{/if}
 
     {#if showGrid}<Grid {data} />{/if}
+
+    {#if showChart}<Chart {data} />{/if}
 
     {#if showStats}<OtherStats {data} {dataIsAvg} />{/if}
     {/if}
@@ -95,5 +103,8 @@
     }
     .beat-savior.switchable > div.acc :global(.acc) {
         margin-bottom: 1em;
+    }
+    .beat-savior.switchable > div.chart {
+        margin-top: 1em;
     }
 </style>

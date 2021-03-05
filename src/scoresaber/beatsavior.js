@@ -22,7 +22,7 @@ export const extractBeatSaviorTrackersData = (trackers, rounded = true) => {
     ? gridAcc.slice(-4).concat(gridAcc.slice(4, 8)).concat(gridAcc.slice(0, 4))
     : null;
 
-  graph = graph && Array.isArray(graph) ? graph : null
+  graph = graph && Object.keys(graph).length ? graph : null
 
   return {accLeft, leftAverageCut, accRight, rightAverageCut, gridAcc, graph, miss, maxCombo, bombHit, nbOfWallHit, nbOfPause, fc: won && !miss};
 }
