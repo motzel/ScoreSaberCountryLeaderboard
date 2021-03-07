@@ -17,6 +17,7 @@
     import eventBus from '../../../utils/broadcast-channel-pubsub'
     import nodeSync from '../../../utils/multinode-sync'
     import BeatSaviorIcon from './BeatSaviorIcon.svelte'
+    import {DATA_TYPE} from '../../../scoresaber/beatsavior'
 
     const BEAT_SAVIOR_DIRECTORY_HANDLE = 'beatSaviorDirHandle';
 
@@ -168,6 +169,9 @@
                     songStartTime: start,
                     trackers,
                 } = lineData;
+
+                if (dataType && [DATA_TYPE.None, DATA_TYPE.Replay].includes(dataType))
+                    throw 'Unsupported data type';
 
                 const notesCount =
                   trackers && trackers.winTracker && trackers.winTracker.won && trackers.hitTracker &&

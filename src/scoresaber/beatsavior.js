@@ -1,6 +1,15 @@
 import {formatNumber, round} from '../utils/format'
 import {trans} from '../Svelte/stores/i18n'
 
+export const DATA_TYPE = {
+  'None': 0,
+  'Pass': 1,
+  'Fail': 2,
+  'Practice mode': 3,
+  'Replay': 4,
+  'Campaign': 5
+};
+
 export const extractBeatSaviorTrackersData = (trackers, rounded = true) => {
   if (!trackers) return null;
 
