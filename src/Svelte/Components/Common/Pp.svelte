@@ -1,7 +1,6 @@
 <script>
     import {onMount} from 'svelte'
     import {_} from "../../stores/i18n"
-    import {getMainPlayerId} from '../../../plugin-config'
     import {getWhatIfScore} from '../../../scoresaber/pp'
     import {round} from '../../../utils/format'
     import Value from './Value.svelte'
@@ -14,16 +13,12 @@
     export let playerId = null;
     export let leaderboardId = null;
 
-    let mainPlayerId;
     let ppAttribution = null;
 
     onMount(async () => {
       if (playerId) {
-        mainPlayerId = await getMainPlayerId();
-        if (playerId === mainPlayerId) {
-          const diff = await getWhatIfScore(mainPlayerId, leaderboardId, 0);
-          if (diff.diff) ppAttribution = round(-diff.diff);
-        }
+        const diff = await getWhatIfScore(playerId, leaderboardId, 0);
+        if (diff.diff) ppAttribution = round(-diff.diff);
       }
     });
 </script>
