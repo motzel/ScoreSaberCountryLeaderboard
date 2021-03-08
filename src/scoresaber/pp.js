@@ -90,7 +90,7 @@ export async function getWhatIfScore(userId, leaderboardId, pp) {
 
 // written by BaliBalo: https://github.com/BaliBalo/ScoreSaber/blob/master/pages/peepee.js
 export const PP_PER_STAR = 42.114296;
-const ppCurve = [
+export const ppCurve = [
     { at: 0, value: 0 },
     { at: 45, value: 0.015 },
     { at: 50, value: 0.03 },
@@ -108,19 +108,22 @@ const ppCurve = [
     { at: 110, value: 1.18 },
     { at: 114, value: 1.25 },
 ];
-export function ppFactorFromAcc(acc) {
+
+export function ppFactorFromAcc(acc, alternatePpCurve = null) {
     if (!acc || acc <= 0) {
         return 0;
     }
-    let index = ppCurve.findIndex(o => o.at >= acc);
+    const curve = alternatePpCurve ? alternatePpCurve : ppCurve;
+
+    let index = curve.findIndex(o => o.at >= acc);
     if (index === -1) {
-        return ppCurve[ppCurve.length - 1].value;
+        return curve[curve.length - 1].value;
     }
     if (!index) {
-        return ppCurve[0].value;
+        return curve[0].value;
     }
-    let from = ppCurve[index - 1];
-    let to = ppCurve[index];
+    let from = curve[index - 1];
+    let to = curve[index];
     let progress = (acc - from.at) / (to.at - from.at);
     return from.value + (to.value - from.value) * progress;
 }

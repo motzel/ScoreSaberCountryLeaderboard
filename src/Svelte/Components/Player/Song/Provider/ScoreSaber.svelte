@@ -44,7 +44,30 @@
   let leaderboardsMaxScores = {};
 
   const enhanceScores = async pageData => {
-    if (!(songs && series && songs.length && series.length && playersScores)) return;
+    if (!pageData || !pageData.scores) return;
+
+    const pageSongs = pageData.scores.map(s => {
+      const {diffInfo, hash, leaderboardId, levelAuthorName:levelAuthor, songDiff:diff, songImg:img, songName: name, songAuthorName:songAuthor} = s;
+
+      return {diffInfo, diff, hash, leaderboardId, levelAuthor, name, songAuthor, img};
+    });
+
+    const pageSeries = pageData.scores.map(s => {
+      const {lastUpdated, leaderboardId, mods, acc, pp, ppWeighted, rank, score, timeset, hash, diffInfo} = s;
+
+      const series = [{leaderboardId, lastUpdated, mods, acc, pp, ppWeighted, rank, score, hash, diffInfo, playerId: pageData.playerId, timeset: dateFromString(timeset)}];
+
+      // get other players data from cache
+      if (players && players.length > 1) {
+        players.slice(1).map((player, idx) => {
+          series.push(playersScores[idx + 1] && playersScores[idx + 1][leaderboardId] ? playersScores[idx + 1][leaderboardId] : null);
+        })
+      }
+
+      return series;
+    });
+
+    if (!(pageSongs && pageSeries && pageSongs.length && pageSeries.length && playersScores)) return;
 
     const createEnhanceScoresTag = pageData => pageData && pageData.pageNum && pageData.type && pageData.playerId
       ? pageData.playerId + '-' + pageData.type + '-' + pageData.pageNum
@@ -53,13 +76,13 @@
     const currentEnhanceScoresTag = createEnhanceScoresTag(pageData);
     const currentLeaderboardsIdsToGetMaxScores = [];
 
-    series = await Promise.all(series.map(async (songSeries, songIdx) => await Promise.all(songSeries.map(async (score, idx) => {
+    series = await Promise.all(pageSeries.map(async (songSeries, songIdx) => await Promise.all(songSeries.map(async (score, idx) => {
       if (!score) return score;
 
       const player = players[idx];
       const cachedScore = playersScores[idx] && playersScores[idx][score.leaderboardId];
 
-      const song = songs[songIdx];
+      const song = pageSongs[songIdx];
       if (playerTwitchProfile && song && song.diffInfo && song.hash && score.timeset && idx === 0) {
         const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
         if (songInfo && songInfo.length) {
@@ -94,7 +117,7 @@
     }))));
 
     if (currentLeaderboardsIdsToGetMaxScores && currentLeaderboardsIdsToGetMaxScores.length)
-      Promise.all(currentLeaderboardsIdsToGetMaxScores.map(f => f())).then(all => {
+      Promise.all(currentLeaderboardsIdsToGetMaxScores.map(async f => f())).then(all => {
         if (currentEnhanceScoresTag === createEnhanceScoresTag(lastPageData))
           enhanceScores(lastPageData)
       })
@@ -107,7 +130,7 @@
     }
 
     // force refresh songs
-    songs = songs;
+    songs = pageSongs;
   }
 
   const getPlayersScores = async players => {
@@ -198,8 +221,15 @@
     return true;
   }
 
+  let lastPlayersTag = null;
   async function updatePlayerId(players) {
     if ((!players || !players.length) && !playerId) return;
+
+    const newPlayersTag = players.map(p => p.playerId).join('::');
+    if (newPlayersTag === lastPlayersTag) return;
+
+    lastPlayersTag = newPlayersTag;
+
     playerId = players && players.length ? players[0].id : playerId;
 
     await getPlayersScores(players);
@@ -220,8 +250,6 @@
     await getPlayersScores(players);
     await getSsplCountryRanks();
 
-    if(lastPageData) processFetched(lastPageData);
-
     const updatePlayerScoresAndProcess = async () => {
       await getPlayersScores(players);
       processFetched(lastPageData);
@@ -236,11 +264,17 @@
       await updatePlayerScoresAndProcess();
     })
 
+    const curveChangedUnsubscriber = eventBus.on('curve-changed', async () => {
+      console.warn("CURVE CHANGED")
+      processFetched(lastPageData);
+    })
+
     initialized = true;
 
     return () => {
       unsubscriberScoresUpdated();
       unsubscriberDataRefreshed();
+      curveChangedUnsubscriber();
     }
   })
 

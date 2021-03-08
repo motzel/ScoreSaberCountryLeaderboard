@@ -1,7 +1,9 @@
 import {getAccFromScore} from '../../../../../song'
 import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../../../../../utils/date'
-import {shouldBeHidden} from '../../../../../eastereggs'
 import {round} from '../../../../../utils/format'
+import {getRankedSongs} from '../../../../../scoresaber/rankeds'
+import {PP_PER_STAR, ppCurve, ppFactorFromAcc} from '../../../../../scoresaber/pp'
+import cacheRepository from '../../../../../db/repository/cache';
 
 export const enhanceScore = async (score, cachedScore, maxScore) => {
   let enhancedScore = {};
@@ -20,8 +22,6 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
 
     if (maxScoreEx && enhancedScore.score && (!enhancedScore?.mods?.length || enhancedScore?.mods === "-")) enhancedScore.acc = enhancedScore.score * 100 / maxScoreEx;
 
-    const useCurrentScoreAsPrev = score.timeset && cachedScore?.timeset && cachedScore.timeset < score.timeset;
-
     if (!enhancedScore.acc && enhancedScore.score && maxScoreEx) {
       enhancedScore.acc = getAccFromScore({score: enhancedScore.score, maxScoreEx});
     }
@@ -31,20 +31,26 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
       enhancedScore.scoreApproximate = true;
     }
 
-    enhancedScore.hidden = cachedScore?.acc ? shouldBeHidden(Object.assign({}, cachedScore, {id: cachedScore.playerId, acc: cachedScore.acc})) : false;
+    if (!enhancedScore.pp) return enhancedScore;
 
-    const history = ((Array.isArray(cachedScore?.history) && cachedScore.history.length ? cachedScore.history : []).sort((a,b) => b.score - a.score))[0];
-    if (useCurrentScoreAsPrev || history) {
-      enhancedScore.prevRank = useCurrentScoreAsPrev ? cachedScore.rank : history.rank;
-      enhancedScore.prevPp = useCurrentScoreAsPrev ? cachedScore.pp : history.pp;
-      enhancedScore.prevScore = useCurrentScoreAsPrev ? cachedScore.score : history.score;
-      enhancedScore.prevTimeset = useCurrentScoreAsPrev ? dateFromString(cachedScore.timeset) : new Date(history.timestamp);
-      enhancedScore.prevAcc = getAccFromScore({
-        score: useCurrentScoreAsPrev ? cachedScore.score : history.score,
-        uScore: useCurrentScoreAsPrev ? cachedScore.uScore : history.uScore,
-        maxScoreEx,
-      });
+    if (!enhancedScore.acc) {
+      console.warn('No acc found for', enhancedScore)
+      return enhancedScore
     }
+
+    // recalc against new curve
+    const allRankeds = await getRankedSongs();
+    const stars = allRankeds?.[enhancedScore.leaderboardId]?.stars ?? 0
+
+    if (!stars) {
+      console.warn('No stars found for', enhancedScore);
+      return enhancedScore;
+    }
+
+    const newCurve = (await cacheRepository().get('ppCurve')) ?? null;
+
+    enhancedScore.prevPp = score.pp;
+    enhancedScore.pp = round(PP_PER_STAR * stars * ppFactorFromAcc(enhancedScore.acc, newCurve),3)
   } catch (e) {} // swallow error
 
   return enhancedScore;

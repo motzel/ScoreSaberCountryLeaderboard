@@ -6,8 +6,14 @@
     import Select from "../Common/Select.svelte";
 
     import {getConfig, getMainPlayerId} from '../../../plugin-config';
-    import {getAccFromRankedScore, getRankedsNotesCache, RANKED, UNRANKED} from '../../../scoresaber/rankeds';
-    import {diffColors} from '../../../song';
+    import {
+        getAccFromRankedScore,
+        getRankedsNotesCache,
+        getRankedSongs,
+        RANKED,
+        UNRANKED,
+    } from '../../../scoresaber/rankeds';
+    import {diffColors, getAccFromScore} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
     import {
@@ -42,8 +48,11 @@
     import TwitchVideosBadge from './TwitchVideosBadge.svelte'
     import {fetchSsProfilePage} from '../../../network/scoresaber/scores'
     import nodeSync from '../../../utils/multinode-sync'
-    import {formatDateRelative} from '../../../utils/format'
+    import {formatDateRelative, round} from '../../../utils/format'
     import WhatToPlay from './WhatToPlay.svelte'
+    import {getTotalPp, PP_PER_STAR, ppFactorFromAcc} from '../../../scoresaber/pp'
+    import cacheRepository from '../../../db/repository/cache'
+    import CurveEdit from '../Leaderboard/CurveEdit.svelte'
 
     export let profileId;
     export let profilePage = {};
@@ -74,6 +83,7 @@
     let rank = null;
     let countryRanks = [];
     let pp = null;
+    let newCurvePp = 0;
 
     let prevPp = 0;
     let prevPpSince = null;
@@ -175,7 +185,7 @@
                     bgColor: `var(--${color})`,
                     type,
                     fluid: true,
-                    styling: badgeStyling
+                    styling: badgeStyling,
                 }, ...otherProps,
             })
             : null;
@@ -187,7 +197,7 @@
               digits: 0,
               bgColor: `var(--ppColour)`,
               fluid: true,
-              styling: badgeStyling
+              styling: badgeStyling,
           })
           : null;
 
@@ -229,7 +239,7 @@
               bgColor: `var(--${color})`,
               fluid: true,
               suffix: '%',
-              styling: badgeStyling
+              styling: badgeStyling,
           })
           : null;
         addSsplStat('avgAcc', badgeStyling === 'text' ? $_.profile.stats.avgRankedAccuracy : $_.profile.stats.avgRankedAccuracyShort, badgeStyling === 'text' ? '' : $_.profile.stats.avgRankedAccuracy, 'selected');
@@ -256,8 +266,10 @@
         defaultChartType = config && config.profile && config.profile.showChart ? config.profile.showChart : 'rank';
     }
 
+    let lastPlayersTag = null;
+
     function setPlayers(profileId, mainPlayerId, name, compareTo) {
-        players = []
+        const newPlayers = []
           .concat(profileId ? [{playerId: profileId, name}] : [])
           .concat(
             profileId && mainPlayerId && mainPlayerId !== profileId
@@ -266,10 +278,19 @@
           )
           .concat(
             compareTo && compareTo.length
-              ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({playerId: pId, name: ''}))
+              ? compareTo.filter(pId => pId !== mainPlayerId && pId !== profileId).map(pId => ({
+                  playerId: pId,
+                  name: '',
+              }))
               : [],
           )
           .slice(0, MAX_COMPARE_PLAYERS);
+
+        const newPlayersTag = newPlayers.map(p => p.playerId).join('::');
+        if (newPlayersTag !== lastPlayersTag) {
+            lastPlayersTag = newPlayersTag;
+            players = newPlayers;
+        }
     }
 
     async function addPlayerDiffCountryRank(profileId, countryRanks, numOfDays) {
@@ -282,9 +303,9 @@
             r.prevRank = null;
             r.prevRankSince = null;
 
-            switch(r.type) {
+            switch (r.type) {
                 case 'active-country':
-                    if(r.country && compareTo.ssplCountryRank && compareTo.ssplCountryRank[r.country] && Number.isFinite(compareTo.ssplCountryRank[r.country])) {
+                    if (r.country && compareTo.ssplCountryRank && compareTo.ssplCountryRank[r.country] && Number.isFinite(compareTo.ssplCountryRank[r.country])) {
                         r.prevRank = compareTo.ssplCountryRank[r.country];
                         r.prevRankSince = formatDateRelative(compareTo.timestamp.toISOString(), Math.ceil, 'day');
                     }
@@ -315,7 +336,13 @@
                 country: activeCountry,
                 type: 'active-country',
             }]
-            : newCountryRanks.concat([{rank: ssplCountryRank, prevRank: null, prevRankSince: null, country: activeCountry, type: 'active-country'}]);
+            : newCountryRanks.concat([{
+                rank: ssplCountryRank,
+                prevRank: null,
+                prevRankSince: null,
+                country: activeCountry,
+                type: 'active-country',
+            }]);
 
         if (country && ssStats && ssStats.countryRank && (!ssplCountryRank || activeCountry !== country))
             newCountryRanks = newCountryRanks
@@ -365,6 +392,32 @@
         if (!playerInfo) return;
 
         playerScores = await getScoresByPlayerId(playerInfo.id);
+
+        const allRankeds = await getRankedSongs();
+        const newCurve = (await cacheRepository().get('ppCurve'));
+        const newCurveScores = playerScores
+          .filter(s => s.pp)
+          .map(s => {
+              const acc = round(getAccFromRankedScore(s, rankedsNotesCache));
+              let realAcc = s.mods && s.mods.length ? getAccFromScore(s) : acc;
+              if (realAcc > acc) realAcc = acc;
+              const stars = allRankeds && allRankeds[s.leaderboardId] && allRankeds[s.leaderboardId].stars ? allRankeds[s.leaderboardId].stars : 0
+
+              return {
+                  leaderboardId: s.leaderboardId,
+                  stars,
+                  mods: s.mods,
+                  name: s.name + ' ' + s.levelAuthorName,
+                  acc,
+                  realAcc,
+                  realPp: s.pp,
+                  pp: round(PP_PER_STAR * stars * ppFactorFromAcc(realAcc, newCurve), 3),
+              }
+          })
+          .sort((a, b) => b.pp - a.pp)
+        ;
+
+        newCurvePp = round(getTotalPp(newCurveScores));
     }
 
     async function refreshProfile(playerId) {
@@ -376,9 +429,13 @@
               ? pageData.scores[0].timeset
               : addToDate(new Date(), -ONE_DAY); // no scores at all - schedule as if player is not playing rn
 
-            eventBus.publish('player-profile-page-parsed', {nodeId: nodeSync().getId(), playerId, profilePage: pageData});
-        }
-        catch {} // swallow error
+            eventBus.publish('player-profile-page-parsed', {
+                nodeId: nodeSync().getId(),
+                playerId,
+                profilePage: pageData,
+            });
+        } catch {
+        } // swallow error
 
         scheduleProfileRefresh(playerId);
     }
@@ -410,7 +467,7 @@
         if (!playerHistory || !playerHistory.length) return null;
 
         const compareTo = playerHistory
-          .sort((a,b) => b.timestamp - a.timestamp)
+          .sort((a, b) => b.timestamp - a.timestamp)
           .reduce((val, t) => t.timestamp >= timestampDiffAgo ? t : val, null);
         if (!compareTo || !isDateObject(compareTo.timestamp)) return null;
 
@@ -480,10 +537,16 @@
                 await updatePlayerInfo(profileId);
             }
         });
-        const unsubscriberRecentPlayUpdated = eventBus.on('recent-play-updated', ({playerId, recentPlay: newRecentPlay}) => {
+        const unsubscriberRecentPlayUpdated = eventBus.on('recent-play-updated', ({
+                                                                                      playerId,
+                                                                                      recentPlay: newRecentPlay,
+                                                                                  }) => {
             if (playerId === profileId) recentPlay = newRecentPlay;
         });
-        const unsubscriberPlayerStatsUpdated = eventBus.on('player-profile-page-parsed', async ({playerId, profilePage}) => {
+        const unsubscriberPlayerStatsUpdated = eventBus.on('player-profile-page-parsed', async ({
+                                                                                                    playerId,
+                                                                                                    profilePage,
+                                                                                                }) => {
             if (!playerId || playerId !== profileId) return;
 
             const chartHistoryFingerprint = history => history.reduce((cum, item) => cum + ':' + item, '');
@@ -505,6 +568,10 @@
             anyDataIsAvailable = await isDataAvailable();
         });
 
+        const curveChangedUnsubscriber = eventBus.on('curve-changed', async () => {
+            await refreshPlayerScores(playerInfo);
+        })
+
         initialized = true;
 
         return () => {
@@ -517,11 +584,12 @@
             unsubscriberRecentPlayUpdated();
             unsubscriberPlayerStatsUpdated();
             unsubscriberMainPlayerChanged();
+            curveChangedUnsubscriber();
         }
     })
 
     function getSsplCountryRankStats(scores, country, ssplCountryRanksCache) {
-        if(!initialized || !scores || !scores.length || !country || isEmpty(ssplCountryRanksCache)) return;
+        if (!initialized || !scores || !scores.length || !country || isEmpty(ssplCountryRanksCache)) return;
 
         let stats = {
             bestRank: null,
@@ -567,7 +635,7 @@
             avgAcc: 0,
             playCount: scores.length,
             medianAcc: 0,
-            stdDeviation: 0
+            stdDeviation: 0,
         };
 
         if (!scores || !scores.length) return stats;
@@ -690,14 +758,14 @@
         transformed = false;
         await tick();
 
-        if(ssPresenter) ssPresenter.onTypeChange(event.detail);
+        if (ssPresenter) ssPresenter.onTypeChange(event.detail);
     }
 
     function onSongTypeChanged(event) {
         browserSongType = event.detail;
     }
 
-    let ssPresenter  = null;
+    let ssPresenter = null;
 </script>
 
 <div class="sspl-page-container">
@@ -726,8 +794,8 @@
                         <div class="column">
                             <h1 class="title is-4">
                                 {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
-                                <span class="pp"><Value value={pp} suffix="pp" prevValue={prevPp}
-                                                        prevLabel={prevPpSince} inline={true} /></span>
+                                <span class="pp"><Value value={newCurvePp} suffix="pp" prevValue={pp} inline={true} /></span>
+                                <span class="curve-edit"><CurveEdit /></span>
                             </h1>
                             <h2 class="title is-5 ranks">
                                 <a href={rank ? "/global/" + (rank ? Math.floor((rank-1) / PLAYERS_PER_PAGE) + 1 : '') : '#'}
@@ -901,6 +969,13 @@
 </div>
 
 <style>
+    .curve-edit {
+        font-size: .75rem;
+        vertical-align: top;
+        display: inline-block;
+        cursor: pointer;
+    }
+
     .sspl-page-container {
         display: flex;
     }
