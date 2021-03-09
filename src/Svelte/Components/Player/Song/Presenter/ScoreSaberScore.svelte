@@ -76,7 +76,14 @@
         {#if playerScore}
           {#if playerScore.pp}
           <Pp pp="{playerScore.pp}" prevPp={idx > 0 || !showDifferences ? null : playerScore.prevPp} zero={formatNumber(0)}
-              withZeroSuffix={true} weighted={playerScore.ppWeighted} inline={true}/>
+              withZeroSuffix={true}  inline={true}/>
+          {/if}
+
+          {#if playerScore.pp2}
+            <div>
+            <Pp pp="{playerScore.pp2}" prevPp={idx > 0 || !showDifferences ? null : playerScore.prevPp} zero={formatNumber(0)}
+                withZeroSuffix={true} inline={true}/>
+            </div>
           {/if}
 
           {#if playerScore.acc}

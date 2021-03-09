@@ -48,9 +48,11 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
     }
 
     const newCurve = (await cacheRepository().get('ppCurve')) ?? null;
+    const newCurve2 = (await cacheRepository().get('ppCurve2')) ?? null;
 
     enhancedScore.prevPp = score.pp;
     enhancedScore.pp = round(PP_PER_STAR * stars * ppFactorFromAcc(enhancedScore.acc, newCurve),3)
+    enhancedScore.pp2 = round(PP_PER_STAR * stars * ppFactorFromAcc(enhancedScore.acc, newCurve2),3)
   } catch (e) {} // swallow error
 
   return enhancedScore;

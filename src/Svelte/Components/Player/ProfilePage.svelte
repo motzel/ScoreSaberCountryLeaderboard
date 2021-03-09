@@ -84,6 +84,7 @@
     let countryRanks = [];
     let pp = null;
     let newCurvePp = 0;
+    let newCurvePp2 = 0;
 
     let prevPp = 0;
     let prevPpSince = null;
@@ -418,6 +419,31 @@
         ;
 
         newCurvePp = round(getTotalPp(newCurveScores));
+
+        const newCurve2 = (await cacheRepository().get('ppCurve2'));
+        const newCurveScores2 = playerScores
+          .filter(s => s.pp)
+          .map(s => {
+              const acc = round(getAccFromRankedScore(s, rankedsNotesCache));
+              let realAcc = s.mods && s.mods.length ? getAccFromScore(s) : acc;
+              if (realAcc > acc) realAcc = acc;
+              const stars = allRankeds && allRankeds[s.leaderboardId] && allRankeds[s.leaderboardId].stars ? allRankeds[s.leaderboardId].stars : 0
+
+              return {
+                  leaderboardId: s.leaderboardId,
+                  stars,
+                  mods: s.mods,
+                  name: s.name + ' ' + s.levelAuthorName,
+                  acc,
+                  realAcc,
+                  realPp: s.pp,
+                  pp: round(PP_PER_STAR * stars * ppFactorFromAcc(realAcc, newCurve2), 3),
+              }
+          })
+          .sort((a, b) => b.pp - a.pp)
+        ;
+
+        newCurvePp2 = round(getTotalPp(newCurveScores2));
     }
 
     async function refreshProfile(playerId) {
@@ -795,6 +821,7 @@
                             <h1 class="title is-4">
                                 {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
                                 <span class="pp"><Value value={newCurvePp} suffix="pp" prevValue={pp} inline={true} /></span>
+                                <span class="pp"><Value value={newCurvePp2} suffix="pp" prevValue={pp} inline={true}/></span>
                                 <span class="curve-edit"><CurveEdit /></span>
                             </h1>
                             <h2 class="title is-5 ranks">
