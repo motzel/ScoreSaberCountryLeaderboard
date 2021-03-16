@@ -198,8 +198,17 @@
     return true;
   }
 
+  let lastPlayersTag = null;
   async function updatePlayerId(players) {
     if ((!players || !players.length) && !playerId) return;
+
+    const newPlayersTag = players.map(p => p.id).join(':');
+    if (newPlayersTag === lastPlayersTag) {
+      return;
+    }
+
+    lastPlayersTag = newPlayersTag;
+
     playerId = players && players.length ? players[0].id : playerId;
 
     await getPlayersScores(players);
@@ -220,7 +229,7 @@
     await getPlayersScores(players);
     await getSsplCountryRanks();
 
-    if(lastPageData) processFetched(lastPageData);
+    // if(lastPageData) processFetched(lastPageData);
 
     const updatePlayerScoresAndProcess = async () => {
       await getPlayersScores(players);
