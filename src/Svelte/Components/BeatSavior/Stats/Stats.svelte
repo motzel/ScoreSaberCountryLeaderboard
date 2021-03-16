@@ -56,6 +56,9 @@
     .switch {
         position: relative;
         z-index: 1;
+        height: 1rem;
+        margin: 0;
+        padding: 0;
     }
 
     .switch i.fa {
