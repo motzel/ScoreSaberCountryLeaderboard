@@ -199,7 +199,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
       })
       .filter(score => score) // filter out empty items
       .map(score => ({...score, hidden: shouldBeHidden(score)}))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score !== a.score ? b.score - a.score : a.timeset - b.timeset);
 }
 
 export function getMaxScoreFromSongCharacteristics(songCharacteristics, diffInfo, maxScorePerBlock = 115) {
