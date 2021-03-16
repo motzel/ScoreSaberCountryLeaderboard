@@ -1,5 +1,8 @@
 <script>
+  import {formatNumber} from '../../../../utils/format'
   import Value from '../../Common/Value.svelte'
+
+  const MAX_BLOCK_VALUE = 115;
 
   export let data = null;
 </script>
@@ -7,7 +10,7 @@
 {#if data && data.gridAcc && Array.isArray(data.gridAcc) && data.gridAcc.length === 12}
   <div class="grid">
     {#each data.gridAcc as gridVal}
-      <span><Value value={gridVal} digits={2}/></span>
+      <span><Value value={gridVal} digits={2} title={Number.isFinite(gridVal) ? formatNumber(gridVal/MAX_BLOCK_VALUE*100)+'%' : ''}/></span>
     {/each}
   </div>
 {/if}
