@@ -288,8 +288,8 @@
                 cursor = await cursor.continue();
             }
 
-            // store new plays
-            await Promise.all(plays.map(async play => {
+            // store new plays - only with matched scores for now
+            await Promise.all(plays.filter(play => play.ssScore).map(async play => {
                 const {ssScore, ...playData} = play;
 
                 bsStore.put(playData);
