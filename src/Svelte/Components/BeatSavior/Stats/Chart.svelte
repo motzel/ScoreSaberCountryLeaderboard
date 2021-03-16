@@ -1,9 +1,10 @@
 <script>
-    import {_} from '../../../stores/i18n';
+    import {_, trans} from '../../../stores/i18n';
     import {getConfig} from '../../../../plugin-config'
     import {getTheme} from '../../../../theme'
     import {onMount} from 'svelte'
     import eventBus from '../../../../utils/broadcast-channel-pubsub'
+    import {formatNumber} from '../../../../utils/format'
 
     export let data = null;
     export let height = "120px";
@@ -73,7 +74,24 @@
                             display: false,
                         },
                         tooltips: {
-                            enabled: false
+                            mode: 'index',
+                            intersect: false,
+                            displayColors: false,
+                            callbacks: {
+                                title: (tooltipItem, data) => {
+                                    if (!tooltipItem.length) return '';
+
+                                    const tooltip = [tooltipItem[0].xLabel ? tooltipItem[0].xLabel : ''];
+                                    tooltipItem.forEach(t => t.yLabel ? tooltip.push(formatNumber(t.yLabel, 2) + '%') : '');
+
+                                    return tooltip;
+                                },
+                                label: () => ''
+                            }
+                        },
+                        hover: {
+                            mode: 'nearest',
+                            intersect: true
                         },
                         scales: {
                             xAxes: [{
