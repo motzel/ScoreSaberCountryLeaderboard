@@ -1,7 +1,8 @@
 <script>
+  export let title;
 </script>
 
-<div class="beatsavior-icon"></div>
+<div class="beatsavior-icon" {title}></div>
 
 <style>
     .beatsavior-icon {

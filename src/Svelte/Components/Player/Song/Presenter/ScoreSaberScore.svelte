@@ -16,6 +16,7 @@
   import Leaderboard from '../../../Leaderboard/Leaderboard.svelte'
   import Button from '../../../Common/Button.svelte'
   import BeatSaviorSongCard from '../../../BeatSavior/SongCard.svelte'
+  import BeatSaviorIcon from '../../../BeatSavior/BeatSaviorIcon.svelte'
 
   export let song = null;
   export let series = [];
@@ -89,8 +90,10 @@
                 {$_.songBrowser.fields.acc}:
                 <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 || !showDifferences ? null : playerScore.prevAcc} inline={true}
                        suffix={'%' + (playerScore.mods && playerScore.mods.length ? ' (' + playerScore.mods + ')' : '')} suffixPrev="%"
-                       title={playerScore.beatSavior && playerScore.accTooltip ? playerScore.accTooltip + '\n' + $_.beatSavior.clickToShowDetails : null}
                 />
+                {#if playerScore.beatSavior && playerScore.accTooltip}
+                  <BeatSaviorIcon title={playerScore.beatSavior && playerScore.accTooltip ? playerScore.accTooltip + '\n' + $_.beatSavior.clickToShowDetails : null} />
+                {/if}
               </span>
             </div>
           {/if}
@@ -222,6 +225,13 @@
 
   :global(td.score.main .what-if) {
     right: .5rem;
+  }
+
+  td.score :global(.beatsavior-icon) {
+      display: inline-block;
+      position: relative;
+      top: 5px;
+      margin-left: 4px;
   }
 
   td.icons {

@@ -64,7 +64,7 @@
             </a>
         {/if}
 
-        {#if shownIcons.includes('beatsavior') && bsExistsForPlayer}
+        {#if false && shownIcons.includes('beatsavior') && bsExistsForPlayer}
             <Button title={$_.songBrowser.icons.beatSaviorTooltip}>
                 <BeatSaviorIcon />
             </Button>

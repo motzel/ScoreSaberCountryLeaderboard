@@ -53,14 +53,8 @@ export const enhanceScore = async (score, cachedScore, maxScore, withBeatSaviorS
       enhancedScore.beatSavior = cachedScore.beatSavior;
     }
 
-    if (withBeatSaviorSongs && ((score.beatSavior && score.playerId) || (score.playerId && score.hash && score?.diffInfo?.diff))) {
-      if (score.beatSavior) {
-        enhancedScore.bsExistsForPlayer = score.playerId;
-      } else {
-        const songId = score.playerId + '_' + score.hash + '_' + score.diffInfo.diff.toLowerCase()
-        const bsLastPlayed = await beatSaviorRepository().getFromIndex('beat-savior-songId', songId);
-        if (bsLastPlayed) enhancedScore.bsExistsForPlayer = score.playerId;
-      }
+    if (withBeatSaviorSongs && score.beatSavior) {
+      enhancedScore.bsExistsForPlayer = score.playerId;
     }
   } catch (e) {} // swallow error
 
