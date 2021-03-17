@@ -4,20 +4,22 @@
     import Button from '../Common/Button.svelte';
     import Modal from '../Common/Modal.svelte';
 
-    import {getPlayerInfo, getScoresByPlayerId} from "../../../scoresaber/players";
-    import {_, trans} from "../../stores/i18n";
+    import {getPlayerInfo} from "../../../scoresaber/players";
+    import {_} from "../../stores/i18n";
     import cacheRepository from "../../../db/repository/cache";
-    import {dateFromString, getClientTimezoneOffset, truncateDate} from '../../../utils/date'
+    import {getClientTimezoneOffset, truncateDate} from '../../../utils/date'
     import {getMainPlayerId} from '../../../plugin-config'
     import Progress from '../Common/Progress.svelte'
-    import {db} from '../../../db/db'
     import beatSaviorFilesRepository from '../../../db/repository/beat-savior-files';
-    import scoresRepository from '../../../db/repository/scores'
     import {convertArrayToObjectByKey} from '../../../utils/js'
     import eventBus from '../../../utils/broadcast-channel-pubsub'
     import nodeSync from '../../../utils/multinode-sync'
     import BeatSaviorIcon from './BeatSaviorIcon.svelte'
-    import {DATA_TYPE} from '../../../scoresaber/beatsavior'
+    import {
+        getPlayerScoresForBeatSaviorMatching,
+        parseBeatSaviorLine,
+        storeBeatSaviorData,
+    } from '../../../scoresaber/beatsavior'
 
     const BEAT_SAVIOR_DIRECTORY_HANDLE = 'beatSaviorDirHandle';
 
@@ -103,21 +105,7 @@
         if (!playersScores[playerId]) {
             importSubLabel = $_.beatSaviorImporter.fetchPlayerScores;
 
-            playersScores[playerId] = (await getScoresByPlayerId(playerId))
-              .reduce((cum, s) => {
-                  if (!s.timeset || !s.hash || !s.diffInfo || !s.diffInfo.diff) return cum;
-
-                  const currentTzTimestamp = truncateDate(dateFromString(s.timeset), 'day').getTime();
-                  const diff = s.diffInfo.diff.toLowerCase();
-
-                  if (!cum[s.hash]) cum[s.hash] = {};
-                  if (!cum[s.hash][diff]) cum[s.hash][diff] = {};
-                  if (!cum[s.hash][diff][currentTzTimestamp]) cum[s.hash][diff][currentTzTimestamp] = [];
-
-                  cum[s.hash][diff][currentTzTimestamp].push({...s});
-
-                  return cum;
-              }, {});
+            playersScores[playerId] = await getPlayerScoresForBeatSaviorMatching(playerId);
         }
     }
 
@@ -160,69 +148,17 @@
 
         lines.forEach((line, idx) => {
             try {
-                const {deepTrackers, ...lineData} = JSON.parse(line);
+                const jsonLine = JSON.parse(line);
+                if (!jsonLine || !jsonLine.playerID) throw 'No player';
 
-                const {
-                    playerID: playerId,
-                    songID: hash, songName, songArtist: songAuthorName, songMapper: levelAuthorName,
-                    songDataType: dataType, songDifficulty: difficultyName, songDuration: duration, songSpeed: speed,
-                    songStartTime: start,
-                    trackers,
-                } = lineData;
-
-                if (dataType && [DATA_TYPE.None, DATA_TYPE.Replay].includes(dataType))
-                    throw 'Unsupported data type';
-
-                const notesCount =
-                  trackers && trackers.winTracker && trackers.winTracker.won && trackers.hitTracker &&
-                  trackers.hitTracker.leftNoteHit !== undefined && trackers.hitTracker.rightNoteHit !== undefined &&
-                  trackers.hitTracker.miss !== undefined
-                    ? trackers.hitTracker.leftNoteHit + trackers.hitTracker.rightNoteHit + trackers.hitTracker.miss
-                    : null;
-
-                const timeset = new Date(timestamp + idx * 1000);
-                const playData = {
-                    beatSaviorId: playerId + '_' + timeset.getTime(),
-                    leaderboardId: null,
-                    songId: playerId + '_' + hash + '_' + difficultyName,
-                    timeset,
-                    fileId: data.fileId,
-                    fileName: data.name,
-                    playerId,
-                    start,
-                    speed,
-                    notesCount,
-                    hash,
-                    difficultyName,
-                    songName,
-                    songAuthorName,
-                    levelAuthorName,
-                    duration,
-                    dataType,
-                    saberAColor: data.saberAColor,
-                    saberBColor: data.saberBColor,
-                    trackers,
-                };
-
-                // check file timestamp and next day if BS session started on one day and lasts for the nexst
-                [timestamp, timestamp + 1000 * 60 * 60 * 24].forEach(timestamp => {
-                    if (
-                      start === 0 &&
-                      trackers && trackers.scoreTracker && trackers.scoreTracker.score &&
-                      playersScores[playerId] && playersScores[playerId][hash] &&
-                      playersScores[playerId][hash][difficultyName] &&
-                      playersScores[playerId][hash][difficultyName] &&
-                      playersScores[playerId][hash][difficultyName][timestamp]) {
-                        const score = playersScores[playerId][hash][difficultyName][timestamp].find(s => s.score === trackers.scoreTracker.score);
-                        if (score) {
-                            playData.ssScore = score;
-                            if (score.leaderboardId) playData.leaderboardId = score.leaderboardId;
-                            if (score.diffInfo) playData.diffInfo = score.diffInfo;
-                        }
-                    }
-                });
-
-                data.plays.push(playData);
+                const playData = parseBeatSaviorLine(
+                  jsonLine,
+                  playersScores ? playersScores[jsonLine.playerID] : null,
+                  idx,
+                  data.saberAColor, data.saberBColor,
+                  data.fileId, data.name, timestamp
+                );
+                if (playData) data.plays.push(playData);
             } catch {
                 // skip line
             }
@@ -246,8 +182,6 @@
         importProgress = 0;
         importMax = items.length;
 
-        let scoresToSave = [];
-
         for (const entry of items) {
             importLabel = entry.name;
             importSubLabel = '';
@@ -269,47 +203,8 @@
 
             importSubLabel = $_.beatSaviorImporter.savingToDb;
 
-            // -- START OF TRANSACTION --
-
-            const tx = db.transaction(['beat-savior', 'beat-savior-files', 'scores'], 'readwrite', {durability: 'strict'});
-
             const {plays, ...data} = fileData;
-
-            // store current file
-            const bsFilesStore = tx.objectStore('beat-savior-files');
-            await bsFilesStore.put({...data, importedOn: new Date()});
-
-            const bsStore = tx.objectStore('beat-savior');
-
-            // remove previously imported data for current file
-            let cursor = await bsStore.index('beat-savior-fileId').openCursor(IDBKeyRange.bound(data.fileId, data.fileId));
-            while (cursor) {
-                await cursor.delete();
-                cursor = await cursor.continue();
-            }
-
-            // store new plays - only with matched scores for now
-            await Promise.all(plays.filter(play => play.ssScore).map(async play => {
-                const {ssScore, ...playData} = play;
-
-                bsStore.put(playData);
-            }));
-
-            // store scores
-            const scoresStore = tx.objectStore('scores');
-            await Promise.all(plays.filter(play => play.ssScore).map(async play => {
-                const {ssScore, ...playData} = play;
-                const scoreData = {...ssScore, beatSavior: playData};
-
-                scoresStore.put(scoreData);
-                scoresToSave.push(scoreData);
-            }));
-
-            await tx.done;
-
-            // -- END OF TRANSACTION --
-
-            scoresRepository().addToCache(scoresToSave);
+            await storeBeatSaviorData(plays, data);
 
             importProgress++;
         }

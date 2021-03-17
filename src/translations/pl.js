@@ -1,3 +1,5 @@
+import {IS_BEAT_SAVIOR_API_ENABLED} from '../network/beatsavior'
+
 export default {
     profile: {
         settings: {
@@ -303,7 +305,9 @@ export default {
         header: 'Import danych Beat Savior',
         importBtn: 'Importuj',
         selectOtherFolderBtn: 'Wybierz inny folder',
-        introduction: 'Plugin pobiera dane z serwisu Beat Savior automatycznie, jednak są tam przechowywane tylko najnowsze wyniki.<br /><br />To narzędzie pozwala na zaimportowanie danych z moda <a href="https://www.beatsavior.io/" target="_blank" rel="noopener">BeatSavior</a> przechowywanych <strong>na Twoim komputerze</strong> , które są trzymane dla ostatnich 30 dni. Narzędzie korzysta z nowego API File System Access, wymagana jest przeglądarka Chrome/Edge w wersji co najmniej 86.',
+        introduction: !IS_BEAT_SAVIOR_API_ENABLED
+          ? 'To narzędzie pozwala na zaimportowanie danych z moda <a href="https://www.beatsavior.io/" target="_blank" rel="noopener">BeatSavior</a> przechowywanych <strong>na Twoim komputerze</strong>. Narzędzie korzysta z nowego API File System Access, wymagana jest przeglądarka Chrome/Edge w wersji co najmniej 86.'
+          : 'Plugin pobiera dane z serwisu Beat Savior automatycznie, jednak są tam przechowywane tylko najnowsze wyniki.<br /><br />To narzędzie pozwala na zaimportowanie danych z moda <a href="https://www.beatsavior.io/" target="_blank" rel="noopener">BeatSavior</a> przechowywanych <strong>na Twoim komputerze</strong> , które są trzymane dla ostatnich 30 dni. Narzędzie korzysta z nowego API File System Access, wymagana jest przeglądarka Chrome/Edge w wersji co najmniej 86.',
         selectFolderFirst: 'Przy pierwszym imporcie będziesz musiał wskazać folder, w którym przechowywane są dane. Ponieważ przeglądarka nie zezwala na dostęp do katalogów systemowych musisz najpierw skopiować katalog <strong>C:\Users\&lt;YOUR WINDOWS USER&gt;\AppData\Roaming\Beat Savior Data</strong> w inne miejsce, np. na pulpit. Następnie wskaż ten folder, gdy zostaniesz zapytany.',
         selectFolderConsecutive: 'Skopiuj nowe dane z folderu <strong>C:\Users\&lt;YOUR WINDOWS USER&gt;\AppData\Roaming\Beat Savior Data</strong> do lokalizacji, w której trzymasz dane Beat Savior.',
         permissions: 'Przeglądarka poprosi Cię o potwierdzenie, że udzielasz zgody do odczytu lokalnych plików, udziel jej. To potwierdzenie będzie konieczne podczas każdej nowej sesji (po zamknięciu zakładki lub przeładowaniu strony).',
