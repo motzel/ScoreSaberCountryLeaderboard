@@ -4,8 +4,8 @@
   import {formatNumber} from '../../../utils/format'
 
   const MAX_BLOCK_VALUE = 115;
-  const DEFAULT_LEFT_COLOR = 'rgba(255,0,0,1)';
-  const DEFAULT_RIGHT_COLOR = 'rgba(0,0,255,1)';
+  const DEFAULT_LEFT_COLOR = 'rgba(168,32,32,1)';
+  const DEFAULT_RIGHT_COLOR = 'rgba(32,100,168,1)';
 
   export let value;
   export let cut;
