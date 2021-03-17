@@ -70,5 +70,5 @@ export const getAccTooltipFromTrackers = (trackers, onlyKeys = [], joinValue = '
       .filter((v, idx) => v && (v !== '\n' || idx));
   if(accTooltip && accTooltip.length && accTooltip[accTooltip.length - 1] === joinValue) accTooltip.pop();
 
-  return accTooltip && accTooltip.length ? 'Beat Savior:\n' + accTooltip.join(joinValue).replace(joinValue + '\n' + joinValue,'\n') : null;
+  return accTooltip && accTooltip.length ? 'Beat Savior\n' + accTooltip.join(joinValue).replace(joinValue + '\n' + joinValue,'\n') : null;
 }

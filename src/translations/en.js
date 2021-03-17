@@ -306,7 +306,7 @@ export default {
         header: 'Beat Savior data import',
         importBtn: 'Import',
         selectOtherFolderBtn: 'Select other folder',
-        introduction: 'This tool allows you to import data from the <a href="https://www.beatsavior.io/" target="_blank" rel="noopener">BeatSavior</a> mod stored <strong>on your computer</strong>. The tool uses the new File System Access API, Chrome/Edge browser version 86 or higher is required.',
+        introduction: 'The plugin retrieves data from Beat Savior automatically, but only the most recent scores are stored there.<br /><br />This tool allows you to import data from the <a href="https://www.beatsavior.io/" target="_blank" rel="noopener">BeatSavior</a> mod stored <strong>on your computer</strong> that are held for the last 30 days. The tool uses the new File System Access API, Chrome/Edge browser version 86 or higher is required.',
         selectFolderFirst: 'The first time you import, you will need to point to the folder where the data is stored. Because the browser does not allow access to system directories you must first copy the <strong>C:\\Users\\&lt;YOUR WINDOWS USER&gt;\\AppData\\Roaming\\Beat Savior Data</strong> folder to another location, such as the desktop. Then point to that folder when prompted.',
         selectFolderConsecutive: 'Copy the new data from the <strong>C:\\Users\\&lt;YOUR WINDOWS USER&gt;\\AppData\\Roaming\\Beat Savior Data</strong> folder to the location where you keep your Beat Savior data.',
         permissions: 'The browser will ask you to confirm that you give permission to read local files, confirm it. This confirmation will be necessary during each new session (after closing a tab or reloading a page).',
