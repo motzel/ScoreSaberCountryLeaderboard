@@ -109,7 +109,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const leaderboards = convertArrayToObjectByKey(scores, 'leaderboardId', true);
   Object.keys(leaderboards).forEach(leaderboardId => {
     ssplCountryRanks[leaderboardId] = leaderboards[leaderboardId]
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => b.score !== a.score ? b.score - a.score : a.timeset - b.timeset)
       .map((score, idx, leaderboard) => ({
         playerId: score.playerId,
         ssplCountryRank: {[country]: {rank: idx + 1, total: leaderboard.length}},
