@@ -5,6 +5,13 @@
 [!] bug fix
 [*] other changes
 
+1.6.0
+- [+] add Beat Savior local data importer, Chrome/Edge 86+ only!
+- [+] add Beat Savior averages for selected songs  
+- [+] add actual contribution of the score to the total PP
+- [+] add ability to export only selected data to CSV file  
+- [!] fix sorting leaderboards - if scores are identical, they are additionally sorted by the date of its obtaining, thx MakeMonni for bug report
+
 1.5.3
 - [!] fix storing historical scores, thx Rocker
 
