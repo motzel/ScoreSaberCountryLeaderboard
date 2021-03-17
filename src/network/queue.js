@@ -29,4 +29,11 @@ export default {
         intervalCap: 800,
         interval: 60 * 1000
     }),
+    BEATSAVIOR: new PQueue({
+        concurrency: 3,
+        timeout: 60000,
+        throwOnTimeout: true,
+        intervalCap: 60,
+        interval: 60 * 1000
+    }),
 };

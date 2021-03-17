@@ -15,6 +15,8 @@
   import Icons from '../../../Song/Icons.svelte'
   import Leaderboard from '../../../Leaderboard/Leaderboard.svelte'
   import Button from '../../../Common/Button.svelte'
+  import BeatSaviorSongCard from '../../../BeatSavior/SongCard.svelte'
+  import BeatSaviorIcon from '../../../BeatSavior/BeatSaviorIcon.svelte'
 
   export let song = null;
   export let series = [];
@@ -24,6 +26,8 @@
   let showDifferences = true;
 
   let showLeaderboard = false;
+
+  let showBeatSavior = false
 
   async function updateConfig() {
     const slConfig = await getConfig('songLeaderboard');
@@ -75,17 +79,21 @@
       <td class="score" class:main={idx === 0}>
         {#if playerScore}
           {#if playerScore.pp}
-          <Pp pp="{playerScore.pp}" prevPp={idx > 0 || !showDifferences ? null : playerScore.prevPp} zero={formatNumber(0)}
-              withZeroSuffix={true} weighted={playerScore.ppWeighted} inline={true}/>
+          <Pp playerId={playerScore.playerId} leaderboardId={playerScore.leaderboardId}
+              pp="{playerScore.pp}" prevPp={idx > 0 || !showDifferences ? null : playerScore.prevPp}
+              zero={formatNumber(0)} withZeroSuffix={true} weighted={playerScore.ppWeighted} inline={true}/>
           {/if}
 
           {#if playerScore.acc}
             <div class:bigger={!playerScore.pp}>
-              <span class="scoreBottom">
+              <span class="scoreBottom" class:clickable={playerScore.beatSavior && playerScore.accTooltip} on:click={() => showBeatSavior = !showBeatSavior}>
                 {$_.songBrowser.fields.acc}:
                 <Value value={playerScore.acc} withZeroSuffix={true} prevValue={idx > 0 || !showDifferences ? null : playerScore.prevAcc} inline={true}
                        suffix={'%' + (playerScore.mods && playerScore.mods.length ? ' (' + playerScore.mods + ')' : '')} suffixPrev="%"
                 />
+                {#if playerScore.beatSavior && playerScore.accTooltip}
+                  <BeatSaviorIcon title={playerScore.beatSavior && playerScore.accTooltip ? playerScore.accTooltip + '\n' + $_.beatSavior.clickToShowDetails : null} />
+                {/if}
               </span>
             </div>
           {/if}
@@ -100,6 +108,15 @@
             </div>
           {/if}
 
+          {#if playerScore.beatSavior && playerScore.accTooltip && showBeatSavior}
+            <BeatSaviorSongCard
+              data={playerScore.beatSavior}
+              showAcc={true}
+              showStats={true}
+              showGrid={false}
+            />
+          {/if}
+
           {#if showWhatIfPp}
             <WhatIfPp leaderboardId={playerScore.leaderboardId} pp={playerScore.pp}/>
           {/if}
@@ -111,7 +128,8 @@
     {/each}
     {#if song && song.hash}
     <td class="icons">
-      <Icons hash={song.hash} twitchUrl={song.video && song.video.url ? song.video.url : null}  />
+      <Icons hash={song.hash} twitchUrl={song.video && song.video.url ? song.video.url : null}
+             bsExistsForPlayer={series[0] && series[0].bsExistsForPlayer ? series[0].bsExistsForPlayer : null}  />
     </td>
     {/if}
   </tr>
@@ -202,16 +220,27 @@
   }
 
   td.score.main {
-    width: 14.5rem;
+    width: 17rem;
   }
 
   :global(td.score.main .what-if) {
     right: .5rem;
   }
 
+  td.score :global(.beatsavior-icon) {
+      display: inline-block;
+      position: relative;
+      top: 5px;
+      margin-left: 4px;
+  }
+
   td.icons {
     font-size: 0.65rem;
     width: 4rem;
     padding-right: 0;
+  }
+
+  .clickable {
+      cursor: pointer;
   }
 </style>

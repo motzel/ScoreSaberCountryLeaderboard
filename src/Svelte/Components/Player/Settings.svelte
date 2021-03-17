@@ -6,6 +6,7 @@
     import Select from '../Common/Select.svelte';
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
     import File from '../Common/File.svelte';
+    import BeatSaviorImporter from '../BeatSavior/BeatSaviorImporter.svelte';
     import Modal from '../Common/Modal.svelte';
 
     import {getConfig, setConfig} from "../../../plugin-config";
@@ -214,6 +215,26 @@
                 valueProps  : {digits: 0, zero: "-"}
             },
             {
+                _key        : 'songBrowser.fields.beatSaviorAcc',
+                compactLabel: null,
+                name        : 'Beat Savior Acc',
+                key         : 'beatSaviorAcc',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
+                _key        : 'songBrowser.fields.beatSaviorStats',
+                compactLabel: null,
+                name        : 'Beat Savior Stats',
+                key         : 'beatSaviorStats',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
                 _key     : 'songBrowser.fields.diff',
                 name     : 'Różnice',
                 key      : 'diff',
@@ -252,7 +273,8 @@
             {_key: 'songBrowser.icons.beatsaver', id: 'bs'},
             {_key: 'songBrowser.icons.oneclick', id: 'oneclick'},
             {_key: 'songBrowser.icons.preview', id: 'preview'},
-            {_key: 'songBrowser.icons.twitch', id: 'twitch'}
+            {_key: 'songBrowser.icons.twitch', id: 'twitch'},
+            {_key: 'songBrowser.icons.beatsavior', id: 'beatsavior'},
         ],
 
         themes: Object.entries(themes).map(e => ({id: e[0], label: e[1].name, def: e[1].def, _key: e[1]._key})),
@@ -613,6 +635,7 @@
     {:else if playerInfo}
         {#if profileId === mainPlayerId}
             <Button iconFa="fas fa-cog" title={$_.profile.settings.header} on:click={() => showSettingsModal = true}/>
+            <BeatSaviorImporter {profileId} />
         {/if}
 
         {#if isManuallyAddedPlayer || isFriend}
@@ -691,7 +714,7 @@
                             <Select bind:value={values.viewTypes} items={strings.viewTypes}/>
                         </div>
 
-                        <div class="column is-one-third">
+                        <div class="column fields is-one-third">
                             <label class="menu-label">{$_.profile.settings.songBrowser.defaultColumnsHeader}</label>
                             <Select multiple bind:value={configShowColumns} items={columns}/>
                         </div>
@@ -870,6 +893,10 @@
 
     :global(.column .dropdown, .column .dropdown-trigger, .column .dropdown-trigger button) {
         width: 100%;
+    }
+
+    .column.fields :global(.dropdown-menu) {
+        max-height: 20rem;
     }
 
     footer {

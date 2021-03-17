@@ -13,6 +13,7 @@ import scoresRepository from './db/repository/scores'
 import {getSsplCountryRanks, setSsplCountryRanks} from './scoresaber/sspl-cache'
 import eventBus from './utils/broadcast-channel-pubsub'
 import nodeSync from './utils/multinode-sync'
+import {getAccTooltipFromTrackers} from './scoresaber/beatsavior'
 
 export const diffColors = {
     easy: 'MediumSeaGreen',
@@ -108,7 +109,7 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const leaderboards = convertArrayToObjectByKey(scores, 'leaderboardId', true);
   Object.keys(leaderboards).forEach(leaderboardId => {
     ssplCountryRanks[leaderboardId] = leaderboards[leaderboardId]
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => b.score !== a.score ? b.score - a.score : a.timeset - b.timeset)
       .map((score, idx, leaderboard) => ({
         playerId: score.playerId,
         ssplCountryRank: {[country]: {rank: idx + 1, total: leaderboard.length}},
@@ -193,11 +194,12 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
           pp: score.pp,
           playHistory,
           acc: getAccFromScore(score, maxSongScore),
+          accTooltip: getAccTooltipFromTrackers(score?.beatSavior?.trackers)
         };
       })
       .filter(score => score) // filter out empty items
       .map(score => ({...score, hidden: shouldBeHidden(score)}))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score !== a.score ? b.score - a.score : a.timeset - b.timeset);
 }
 
 export function getMaxScoreFromSongCharacteristics(songCharacteristics, diffInfo, maxScorePerBlock = 115) {

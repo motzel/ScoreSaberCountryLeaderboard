@@ -256,8 +256,9 @@
         defaultChartType = config && config.profile && config.profile.showChart ? config.profile.showChart : 'rank';
     }
 
+    let lastPlayersTag = null;
     function setPlayers(profileId, mainPlayerId, name, compareTo) {
-        players = []
+        const newPlayers  = []
           .concat(profileId ? [{playerId: profileId, name}] : [])
           .concat(
             profileId && mainPlayerId && mainPlayerId !== profileId
@@ -270,6 +271,11 @@
               : [],
           )
           .slice(0, MAX_COMPARE_PLAYERS);
+
+        const newPlayersTag = newPlayers.map(p => p.playerId).join(':');
+        if (newPlayersTag !== lastPlayersTag) players = newPlayers;
+
+        lastPlayersTag = newPlayersTag;
     }
 
     async function addPlayerDiffCountryRank(profileId, countryRanks, numOfDays) {
@@ -347,6 +353,8 @@
 
         playerInfo = await getPlayerInfo(profileId);
         if (!playerInfo) return;
+
+        if (!recentPlay) recentPlay = playerInfo.recentPlay;
 
         name = playerInfo.name;
         if (rank === null || rank === undefined) rank = playerInfo.rank;

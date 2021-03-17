@@ -2,8 +2,10 @@ import {getAccFromScore} from '../../../../../song'
 import {addToDate, dateFromString, durationToMillis, millisToDuration} from '../../../../../utils/date'
 import {shouldBeHidden} from '../../../../../eastereggs'
 import {round} from '../../../../../utils/format'
+import {getAccTooltipFromTrackers} from '../../../../../scoresaber/beatsavior'
+import beatSaviorRepository from '../../../../../db/repository/beat-savior'
 
-export const enhanceScore = async (score, cachedScore, maxScore) => {
+export const enhanceScore = async (score, cachedScore, maxScore, withBeatSaviorSongs = false) => {
   let enhancedScore = {};
   try {
     const maxScoreEx = maxScore ?? cachedScore?.maxScoreEx;
@@ -44,6 +46,15 @@ export const enhanceScore = async (score, cachedScore, maxScore) => {
         uScore: useCurrentScoreAsPrev ? cachedScore.uScore : history.uScore,
         maxScoreEx,
       });
+    }
+
+    if (cachedScore?.beatSavior?.trackers ) {
+      enhancedScore.accTooltip = getAccTooltipFromTrackers(cachedScore.beatSavior.trackers);
+      enhancedScore.beatSavior = cachedScore.beatSavior;
+    }
+
+    if (withBeatSaviorSongs && score.beatSavior) {
+      enhancedScore.bsExistsForPlayer = score.playerId;
     }
   } catch (e) {} // swallow error
 

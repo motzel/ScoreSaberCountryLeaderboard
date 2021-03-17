@@ -12,7 +12,7 @@ import log from './utils/logger';
 import {getThemeFromFastCache} from "./store";
 import {convertArrayToObjectByKey, getFirstRegexpMatch} from "./utils/js";
 import twitch from './services/twitch';
-import {getConfig} from "./plugin-config";
+import {getConfig, getMainPlayerId} from "./plugin-config";
 import {getSsDefaultTheme, setTheme} from "./theme";
 import eventBus from './utils/broadcast-channel-pubsub';
 import initDownloadManager from './network/download-manager';
@@ -20,7 +20,7 @@ import initDatabase from './db/db';
 import {setLangFromConfig} from "./Svelte/stores/i18n";
 import {getActiveCountry} from "./scoresaber/country";
 import {
-    getPlayerProfileUrl, getPlayers,
+    getPlayerProfileUrl, getPlayers, getScoresByPlayerId,
     isPlayerDataAvailable, updatePlayer,
 } from "./scoresaber/players";
 import {parseSsLeaderboardScores, parseSsProfilePage, parseSsSongLeaderboardPage} from './scoresaber/scores'
@@ -349,9 +349,13 @@ async function init() {
         await setupDataFixes();
 
         // pre-warm cache
-        await getConfig();
-        await getSsplCountryRanks();
-        await getRankedSongs();
+        const mainPlayerId = await getMainPlayerId();
+        await Promise.all([
+            getConfig(),
+            getSsplCountryRanks(),
+            getRankedSongs(),
+            getScoresByPlayerId(mainPlayerId),
+        ]);
 
         await Promise.allSettled(
             [

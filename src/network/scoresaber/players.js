@@ -11,7 +11,7 @@ import {
     getScoresByPlayerId,
     updateSongScore,
 } from "../../scoresaber/players";
-import {dateFromString, toSSTimestamp, toUTCDate} from "../../utils/date";
+import {dateFromString, toSSTimestamp, toUTCDateTimestamp} from "../../utils/date";
 import {fetchAllNewScores, fetchRecentScores, fetchSsProfilePage} from "./scores";
 import eventBus from "../../utils/broadcast-channel-pubsub";
 import nodeSync from '../../utils/multinode-sync';
@@ -216,21 +216,21 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
 
     const songsChangedAfterPreviousUpdate = playerLastUpdated ? await getRankedsChangesSince(playerLastUpdated.getTime()) : null;
 
-    const shouldCheckForRankedsPp = playerLastUpdated && toUTCDate(playerLastUpdated) !== toUTCDate(new Date()); // check for pp update once a day
+    const shouldCheckForRankedsWithZeroPp = playerLastUpdated && toUTCDateTimestamp(playerLastUpdated) !== toUTCDateTimestamp(new Date()); // check for pp update once a day
 
     const SIX_HOURS = 1000 * 60 * 60 * 6;
     const ONE_DAY = 1000 * 60 * 60 * 24;
     const MAX_RANKEDS_TO_FETCH = 200;
-    const lastRankedsRefetch = dateFromString(player?.lastRankedsRefetch) ?? new Date(Date.parse('2021-02-06T00:00:00Z')); // arbitrary date, when feature is added
+    let lastRankedsRefetch = dateFromString(player?.lastRankedsRefetch) ?? new Date(Date.parse('2021-02-06T00:00:00Z')); // arbitrary date, when feature is added
     const shouldRankedsBeCheckedForRefetch = new Date() - lastRankedsRefetch >= SIX_HOURS;
 
     let additionalLeaderboardsToUpdate = [];
 
-    if (shouldRankedsBeCheckedForRefetch || shouldCheckForRankedsPp || Object.keys(newScores.scores).length) {
+    if (shouldRankedsBeCheckedForRefetch || shouldCheckForRankedsWithZeroPp || Object.keys(newScores.scores).length) {
         const playerScoresArr = await getScoresByPlayerId(playerId) ?? []
         playerScores = convertArrayToObjectByKey(playerScoresArr, 'leaderboardId');
 
-        if (shouldCheckForRankedsPp) {
+        if (shouldCheckForRankedsWithZeroPp) {
             const HOUNDRED_DAYS_AGO = new Date(Date.now() - 1000 * 60 * 60 * 24 * 100);
 
             const allRankeds = await getRankedSongs();
@@ -244,6 +244,8 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             const recentlyChangedRankeds = Object.keys(await getRankedsChangesSince(lastRankedsRefetch.getTime() - ONE_DAY, Date.now() - ONE_DAY)).map(leaderboardId => parseInt(leaderboardId, 10));
             if (recentlyChangedRankeds && recentlyChangedRankeds.length <= MAX_RANKEDS_TO_FETCH)
                 additionalLeaderboardsToUpdate = additionalLeaderboardsToUpdate.concat(recentlyChangedRankeds);
+
+            lastRankedsRefetch = new Date();
         }
     }
 
@@ -290,7 +292,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             const playersStore = tx.objectStore('players')
             player = await playersStore.get(playerId);
             player.lastUpdated = new Date();
-            player.lastRankedsRefetch = new Date();
+            player.lastRankedsRefetch = lastRankedsRefetch;
             player.recentPlay = newScores.recentPlay;
             await playersStore.put(player);
 
@@ -325,7 +327,7 @@ export const updatePlayerScores = async (playerId, emitEvents = true, progressCa
             const playersStore = tx.objectStore('players')
             player = await playersStore.get(playerId);
             player.lastUpdated = new Date();
-            player.lastRankedsRefetch = new Date();
+            player.lastRankedsRefetch = lastRankedsRefetch;
             await playersStore.put(player);
 
             playersCacheToUpdate.push(player);

@@ -11,10 +11,18 @@ import rankedsChangesRepository from "../db/repository/rankeds-changes";
 import scoresRepository from "../db/repository/scores";
 import songsRepository from "../db/repository/songs";
 import twitchRepository from "../db/repository/twitch";
+import beatSaviorFilesRepository from "../db/repository/beat-savior-files";
+import beatSaviorRepository from "../db/repository/beat-savior";
 import {dateFromString} from './date'
 import log from './logger'
 
 const repositories = [
+	{
+		repository: beatSaviorFilesRepository, casts: {
+			date: ['date', 'importedOn', 'lastModified'],
+		},
+	},
+	{repository: beatSaviorRepository},
 	{repository: groupsRepository},
 	{repository: rankedsRepository},
 	{

@@ -8,12 +8,14 @@
     import {_, trans} from "../../stores/i18n";
 
     import Button from "../Common/Button.svelte";
+    import BeatSaviorIcon from '../BeatSavior/BeatSaviorIcon.svelte'
 
     export let hash;
     export let twitchUrl;
+    export let bsExistsForPlayer = null;
 
     let songKey;
-    let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick"];
+    let shownIcons = ["bsr", "bs", "preview", "twitch", "oneclick", "beatsavior"];
 
     async function refreshConfig() {
         const config = await getConfig('songBrowser');
@@ -60,6 +62,12 @@
             <a class="video" href="{twitchUrl}" target="_blank">
                 <Button iconFa="fab fa-twitch" type="twitch" title={$_.songBrowser.icons.twitchTooltip}/>
             </a>
+        {/if}
+
+        {#if false && shownIcons.includes('beatsavior') && bsExistsForPlayer}
+            <Button title={$_.songBrowser.icons.beatSaviorTooltip}>
+                <BeatSaviorIcon />
+            </Button>
         {/if}
     {/if}
 </div>

@@ -37,6 +37,10 @@
     import {_, trans} from "../../../stores/i18n";
     import twitch from '../../../../services/twitch';
     import balibalo from '../../../../scoresaber/balibalo';
+    import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
+    import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+    import {extractBeatSaviorTrackersData, getAccTooltipFromTrackers} from '../../../../scoresaber/beatsavior'
+    import beatSaviorRepository from '../../../../db/repository/beat-savior'
 
     import Song from "../../Song/Song.svelte";
     import Pager from "../../Common/Pager.svelte";
@@ -54,8 +58,10 @@
     import Card from "../../Song/Card.svelte";
     import Icons from "../../Song/Icons.svelte";
     import ScoreRank from "../../Common/ScoreRank.svelte";
-    import {refreshPlayerScoreRank} from "../../../../network/scoresaber/players";
-    import {getSsplCountryRanks} from '../../../../scoresaber/sspl-cache'
+    import BeatSaviorSongCard from '../../BeatSavior/SongCard.svelte'
+    import BeatSaviorStats from '../../BeatSavior/Stats/Stats.svelte'
+    import BeatSaviorIcon from '../../BeatSavior/BeatSaviorIcon.svelte'
+    import Modal from '../../Common/Modal.svelte';
 
     const dispatch = createEventDispatcher();
 
@@ -92,6 +98,9 @@
     let estimatedScores = null;
 
     let resultsEl = null;
+
+    let showBeatSaviorAvgModal = false;
+    let beatSaviorAvg = null;
 
     let browserWasInitialized = false;
 
@@ -300,6 +309,28 @@
                 type        : 'series',
                 displayed   : true,
                 valueProps  : {digits: 0, zero: "-"}
+            },
+            {
+                _key        : 'songBrowser.fields.beatSaviorAcc',
+                _keyName    : 'songBrowser.fields.beatSaviorAccShort',
+                compactLabel: null,
+                name        : 'Beat Savior Acc',
+                key         : 'beatSaviorAcc',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
+            },
+            {
+                _key        : 'songBrowser.fields.beatSaviorStats',
+                _keyName    : 'songBrowser.fields.beatSaviorStatsShort',
+                compactLabel: null,
+                name        : 'Beat Savior Stats',
+                key         : 'beatSaviorStats',
+                selected    : true,
+                type        : 'series',
+                displayed   : true,
+                valueProps  : {zero: "-"}
             },
             {
                 _key     : 'songBrowser.fields.diff',
@@ -808,7 +839,21 @@
 
     function getScoreValueByKey(series, song, key, prev = false) {
         const valueKey = prev ? 'prev' + capitalize(key) : key;
-        return series.scores && series.scores[song.leaderboardId] && series.scores[song.leaderboardId][valueKey] ? series.scores[song.leaderboardId][valueKey] : null
+        const score = series.scores && series.scores[song.leaderboardId] ? series.scores[song.leaderboardId] : null;
+        if (!score) return null;
+
+        switch (key) {
+            case 'beatSaviorAcc':
+                if (!score.beatSavior) return null;
+
+                return getAccTooltipFromTrackers(score.beatSavior.trackers, ['accLeft', 'accRight'], '<br />');
+            case 'beatSaviorStats':
+                if (!score.beatSavior) return null;
+
+                return getAccTooltipFromTrackers(score.beatSavior.trackers, ['maxCombo', 'nbOfPause', 'miss', 'bombHit', 'nbOfWallHit'], '<br />');
+            default:
+                return score && score[valueKey] ? score[valueKey] : null
+        }
     }
 
     function getEmptyNewPages() {
@@ -866,6 +911,21 @@
 
         for (const songsKey in songPage.songs) {
             const song = songPage.songs[songsKey];
+
+            const score = songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]
+              ? songPage.series[0].scores[song.leaderboardId]
+              : null;
+            const playerId = songPage.series[0].id;
+            if (score && playerId) {
+                if (score.beatSavior) song.bsExistsForPlayer = songPage.series[0].id;
+                else if(score.hash && score.diffInfo && score.diffInfo.diff) {
+                    const songId = playerId + '_' + score.hash + '_' + score.diffInfo.diff.toLowerCase()
+                    beatSaviorRepository().getFromIndex('beat-savior-songId', songId)
+                      .then(bsLastPlayed => {
+                          if (bsLastPlayed) song.bsExistsForPlayer = playerId;
+                      })
+                }
+            }
 
             song.maxPp = song.stars * PP_PER_STAR * ppFactorFromAcc(100);
 
@@ -1395,25 +1455,111 @@
         }
     }
 
+    async function getCheckedSongs() {
+        const allSongs =
+          ['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id)
+            ? Object.values(allRankeds)
+            : Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
+
+        return allSongs.filter(s => !checkedSongs || !checkedSongs.length || checkedSongs.includes(s.leaderboardId));
+    }
+
+    async function showBeatSaviorAverageAcc() {
+        const stats = (await getCheckedSongs())
+          .filter(s => s.beatSavior)
+          .reduce((stats, s) => {
+                const data = extractBeatSaviorTrackersData(s.beatSavior.trackers, false);
+                if (!data) return stats;
+
+                stats.total++;
+
+                ['left', 'right'].forEach(key => {
+                    const keyCapitalized = key[0].toUpperCase() + key.substr(1);
+
+                    const totalVar = 'total' + keyCapitalized;
+                    const accVar = 'acc' + keyCapitalized;
+                    const cutVar = key + 'AverageCut';
+
+                    if (Number.isFinite(data[accVar])) {
+                        stats[totalVar]++;
+                        stats[accVar] += data[accVar];
+                        if (data[cutVar] && Array.isArray(data[cutVar]))
+                            data[cutVar].forEach((v, idx) => stats[cutVar][idx] += Number.isFinite(v) ? v : 0);
+                    }
+                });
+
+                if (data.gridAcc && Array.isArray(data.gridAcc)) {
+                    data.gridAcc.forEach((v, idx) => {
+                        if (Number.isFinite(v)) {
+                            stats.gridAcc[idx] += v;
+                            stats.totalGridAcc[idx]++;
+                        }
+                    });
+                }
+
+                stats.fc += data.fc ? 1 : 0;
+                stats.miss += Number.isFinite(data.miss) ? data.miss : 0;
+                stats.nbOfPause += Number.isFinite(data.nbOfPause) ? data.nbOfPause : 0;
+                stats.bombHit += Number.isFinite(data.bombHit) ? data.bombHit : 0;
+                stats.nbOfWallHit += Number.isFinite(data.nbOfWallHit) ? data.nbOfWallHit : 0;
+
+                if (s.beatSavior.saberAColor) stats.saberAColor = s.beatSavior.saberAColor;
+                if (s.beatSavior.saberBColor) stats.saberBColor = s.beatSavior.saberBColor;
+
+                return stats;
+            },
+            {
+                total: 0,
+                totalLeft: 0,
+                totalRight: 0,
+                totalGridAcc: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                fc: 0,
+                miss: 0,
+                nbOfPause: 0,
+                bombHit: 0,
+                nbOfWallHit: 0,
+                accLeft: 0,
+                accRight: 0,
+                leftAverageCut: [0, 0, 0],
+                rightAverageCut: [0, 0, 0],
+                gridAcc: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                saberAColor: {r: 255, g: 0, b: 0, a: 1},
+                saberBColor: {r: 0, g: 0, b: 255, a: 1},
+            },
+          )
+        ;
+
+        if (stats.total) {
+            ['fc', 'miss', 'nbOfPause', 'bombHit', 'nbOfWallHit'].forEach(key => {
+                stats[key] = stats[key] / stats.total;
+            });
+
+            stats.gridAcc.forEach((v, idx) => stats.gridAcc[idx] = stats.totalGridAcc[idx] ? v / stats.totalGridAcc[idx] : 0);
+
+            ['left', 'right'].forEach(key => {
+                const keyCapitalized = key[0].toUpperCase() + key.substr(1);
+
+                const totalVar = 'total' + keyCapitalized;
+                const accVar = 'acc' + keyCapitalized;
+                const cutVar = key + 'AverageCut';
+
+                if(stats[totalVar] && Number.isFinite(stats[accVar])) {
+                    stats[accVar] = stats[accVar] / stats[totalVar];
+                    if (stats[cutVar] && Array.isArray(stats[cutVar]))
+                        stats[cutVar].forEach((v, idx) => stats[cutVar][idx] = v / stats[totalVar]);
+                }
+            });
+        }
+
+        beatSaviorAvg = stats;
+        showBeatSaviorAvgModal = true;
+    }
+
     async function exportCsv() {
-        const headers = [
-            {field: 'leaderboardId', label: 'ID'},
-            {field: 'name', label: 'Song'},
-            {field: 'songAuthor', label: 'Song author'},
-            {field: 'levelAuthor', label: 'Level author'},
-            {field: 'stars', label: 'Stars'},
-            {field: 'difficulty', label: 'Difficulty'},
-            {field: 'maxScore', label: 'Max score'},
-            {field: 'timeset', label: 'Date'},
-            {field: 'score', label: 'Score'},
-            {field: 'mods', label: 'Mods'},
-            {field: 'uScore', label: 'Score w/mod'},
-            {field: 'pp', label: 'PP'},
-            {field: 'weightedPp', label: 'Weighted PP'},
-        ]
-        const data = await calcPromised;
+        const songs = await getCheckedSongs();
         const transformedData = await Promise.all(
-          data.songs.map(async s => {
+          songs
+          .map(async s => {
               const humanDiffInfo = getHumanDiffInfo(s.diffInfo);
 
               let maxScore = s.maxScoreEx;
@@ -1430,27 +1576,35 @@
               return Object.assign({}, s, {
                   difficulty: humanDiffInfo ? humanDiffInfo.name : '',
                   maxScore  : maxScore ? maxScore : '',
-                  timeset   : getScoreValueByKey(data.series[0], s, 'timeset'),
-                  score     : getScoreValueByKey(data.series[0], s, 'score'),
-                  mods      : getScoreValueByKey(data.series[0], s, 'mods'),
-                  uScore    : getScoreValueByKey(data.series[0], s, 'uScore'),
-                  pp        : getScoreValueByKey(data.series[0], s, 'pp'),
-                  weightedPp: getScoreValueByKey(data.series[0], s, 'weightedPp'),
+                  songAuthor: s.songAuthor ? s.songAuthor : s.songAuthorName,
+                  levelAuthor: s.levelAuthor ? s.levelAuthor : s.levelAuthorName,
+                  stars: s.stars ? s.stars : (allRankeds && s.leaderboardId && allRankeds[s.leaderboardId] ? allRankeds[s.leaderboardId].stars : null)
               })
           })
-          )
-        ;
+        );
+
+        const headers = [
+            {field: 'leaderboardId', label: 'ID'},
+            {field: 'name', label: 'Song'},
+            {field: 'songAuthor', label: 'Song author'},
+            {field: 'levelAuthor', label: 'Level author'},
+            {field: 'stars', label: 'Stars'},
+            {field: 'difficulty', label: 'Difficulty'},
+            {field: 'maxScore', label: 'Max score'},
+            {field: 'timeset', label: 'Date'},
+            {field: 'score', label: 'Score'},
+            {field: 'mods', label: 'Mods'},
+            {field: 'uScore', label: 'Score w/mod'},
+            {field: 'pp', label: 'PP'},
+            {field: 'weightedPp', label: 'Weighted PP'},
+        ]
         const csv = generateCsv(transformedData, headers);
 
         downloadCsv("scores.csv", csv);
     }
 
     async function exportPlaylist() {
-        const allSongs =
-          ['rankeds_unplayed', 'what_to_play'].includes(allFilters.songType.id)
-            ? Object.values(allRankeds)
-            : Object.values(Object.values(await getPlayersScores()).reduce((cum, scores) => ({...cum, ...scores}), {}));
-        const songs = allSongs.filter(s => checkedSongs.includes(s.leaderboardId)).map(s => ({hash: s.hash}));
+        const songs = (await getCheckedSongs()).map(s => ({hash: s.hash}));
         const bloodTrailImg = (await import('../../../../resource/img/bloodtrail-playlist.png')).default;
         const playlist = {
             playlistTitle      : "SSPL playlist",
@@ -1552,6 +1706,9 @@
     $: shownColumns = strings.columns.filter(c => c.displayed)
     $: selectedSongCols = getSelectedCols(selectedColumns, viewType, 'song')
     $: selectedSeriesCols = getSelectedCols(selectedColumns, viewType, 'series')
+    $: isBeatSaviorAccSelected = selectedSeriesCols.map(c => c.key).includes('beatSaviorAcc')
+    $: isBeatSaviorStatsSelected = selectedSeriesCols.map(c => c.key).includes('beatSaviorStats')
+    $: isBeatSaviorColsSelected = isBeatSaviorAccSelected || isBeatSaviorStatsSelected
     $: selectedAdditionalCols = getSelectedCols(selectedColumns, viewType, 'additional')
     $: shouldCalculateTotalPp = !!getObjectFromArrayByKey(selectedColumns, 'diffPp') && 'sniper_mode' === allFilters.songType.id
     $: calcPromised = initialized ? calculate(refreshTag) : null;
@@ -1688,7 +1845,7 @@
                               nps={selectedSongCols.find(c=>c.key==='nps') ? song.nps : null}
                         >
                             <div slot="before-header" class="check">
-                                {#if showCheckboxes}
+                                {#if showCheckboxes || (checkedSongs && checkedSongs.length)}
                                     <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
                                 {/if}
                             </div>
@@ -1728,6 +1885,7 @@
                                                                    {...col.valueProps}
                                                             />
                                                         </div>
+                                                    {:else if ['beatSaviorAcc', 'beatSaviorStats'].includes(col.key)}
                                                     {:else}
                                                         {#if getScoreValueByKey(series, song, col.key)}
                                                             <div>
@@ -1747,6 +1905,15 @@
                                                                       pp={getScoreValueByKey(series, song, col.key)}/>{/if}
                                                     {/if}
                                                 {/if}{/each}
+
+                                                {#if isBeatSaviorColsSelected}
+                                                    <BeatSaviorSongCard
+                                                      data={getScoreValueByKey(series, song, 'beatSavior')}
+                                                      showAcc={isBeatSaviorAccSelected}
+                                                      showStats={isBeatSaviorStatsSelected}
+                                                      showGrid={false}
+                                                    />
+                                                {/if}
                                             {:else}
                                                 <span class="dec">{$_.songBrowser.noScore}</span>
                                             {/if}
@@ -1765,7 +1932,8 @@
                                     <Button type="text" iconFa={song.leaderboardOpened ? "fas fa-chevron-up" : "fas fa-chevron-right"} on:click={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.card-' + song.leaderboardId)}} />
 
                                     {#if selectedAdditionalCols.length > 0 && song}
-                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
+                                    <Icons hash={song.hash} bsExistsForPlayer={song.bsExistsForPlayer}
+                                           twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
                                     {/if}
                                 </div>
                             </div>
@@ -1779,7 +1947,7 @@
                 {#if viewType.id !== 'compact' || songsPage.series.length > 1}
                     <thead>
                     <tr>
-                        {#if showCheckboxes}<th class="check" rowspan={viewType.id === 'compact' ? 1 : 2}></th>{/if}
+                        {#if showCheckboxes || (checkedSongs && checkedSongs.length)}<th class="check" rowspan={viewType.id === 'compact' ? 1 : 2}></th>{/if}
                         <th class="song" rowspan={viewType.id === 'compact' ? 1 : 2} colspan="2">{$_.songBrowser.songHeader}</th>
 
                         {#each selectedSongCols as col,idx (col.key)}
@@ -1833,7 +2001,7 @@
                 {#each songsPage.songs as song (song.leaderboardId)}
                     <tr class={"item tr-" + song.leaderboardId} class:opened={!!song.leaderboardOpened}
                         on:dblclick={() => {song.leaderboardOpened = !song.leaderboardOpened; scrollCardIntoView('.tr-' + song.leaderboardId)}}>
-                        {#if showCheckboxes}
+                        {#if showCheckboxes || (checkedSongs && checkedSongs.length)}
                             <td class="check">
                                 <Checkbox checked={checkedSongs.includes(song.leaderboardId)} on:click={toggleChecked(song.leaderboardId)} />
                             </td>
@@ -1895,6 +2063,7 @@
                                                                {...col.valueProps}
                                                     />
                                                 </div>
+                                            {:else if ['beatSaviorAcc', 'beatSaviorStats'].includes(col.key)}
                                             {:else}
                                                 {#if getScoreValueByKey(series, song, col.key)}
                                                     <div>
@@ -1914,6 +2083,13 @@
                                                               pp={getScoreValueByKey(series, song, col.key)}/>{/if}
                                             {/if}
                                         {/if}{/each}
+
+                                        {#if isBeatSaviorColsSelected}
+                                            <BeatSaviorSongCard
+                                              data={getScoreValueByKey(series, song, 'beatSavior')}
+                                              showAcc={isBeatSaviorAccSelected}
+                                              showStats={isBeatSaviorStatsSelected}/>
+                                        {/if}
                                     {:else}
                                         -
                                     {/if}
@@ -1924,6 +2100,12 @@
                                         class:best={getScoreValueByKey(series, song, 'best') && songsPage.series.length > 1}>
                                         {#if col.key === 'timeset'}
                                             <FormattedDate date={getScoreValueByKey(series, song, col.key)} {...col.valueProps}/>
+                                        {:else if ['beatSaviorAcc', 'beatSaviorStats'].includes(col.key)}
+                                            {#if getScoreValueByKey(series, song, col.key)}
+                                                {@html getScoreValueByKey(series, song, col.key)}
+                                            {:else}
+                                                -
+                                            {/if}
                                         {:else if col.key === 'rank'}
                                             <ScoreRank rank={getScoreValueByKey(series, song, col.key)}
                                                        countryRank={getScoreValueByKey(series, song, 'ssplCountryRank')}
@@ -1950,13 +2132,15 @@
                         {#each selectedAdditionalCols as col,idx (col.key)}
                             <td class:left={viewType.id === 'tabular' || songsPage.series.length > 1} class={col.key}>
                                 {#if col.key === 'icons' && song.hash && song.hash.length}
-                                    <Icons hash={song.hash} twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null} />
+                                    <Icons hash={song.hash} bsExistsForPlayer={song.bsExistsForPlayer}
+                                           twitchUrl={song.video && song.video.url && shownIcons.includes('twitch') ? song.video.url : null}
+                                    />
                                 {/if}
                             </td>
                         {/each}
                     </tr>
                     {#if !!song.leaderboardOpened}
-                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes ? 1 : 0)} on:dblclick={() => toggleLeaderboardOpen(song)}>
+                    <tr class="leaderboard" class:opened={!!song.leaderboardOpened}><td colspan={2 + selectedSongCols.length + songsPage.series.length * (viewType.id === 'compact' ? 1 : selectedSeriesCols.length) + selectedAdditionalCols.length + (showCheckboxes || (checkedSongs && checkedSongs.length) ? 1 : 0)} on:dblclick={() => toggleLeaderboardOpen(song)}>
                         <Leaderboard leaderboardId={song.leaderboardId}
                                      showDifferences={!!getObjectFromArrayByKey(selectedColumns, 'diff')}
                                      bgLeft="-2rem" bgTop="-3rem" bgWidth="2rem" bgHeight="1.5rem"
@@ -1969,7 +2153,7 @@
                 {#if shouldCalculateTotalPp}
                     <tfoot>
                     <tr>
-                        {#if showCheckboxes}<th class="check" rowspan={songsPage.series.length > 2 ? 2 : 1}></th>{/if}
+                        {#if showCheckboxes || (checkedSongs && checkedSongs.length)}<th class="check" rowspan={songsPage.series.length > 2 ? 2 : 1}></th>{/if}
 
                         <th class="song" rowspan={songsPage.series.length > 2 ? 2 : 1}
                             colspan={2 + selectedSongCols.length}>
@@ -2030,17 +2214,36 @@
     {#if !calculating}
         <div class="actions">
             <span class="button-group">
-                <Button iconFa={"fas fa-eye" + (showCheckboxes ? '-slash': '')} title={showCheckboxes ? $_.songBrowser.playlist.hideChecks : $_.songBrowser.playlist.showChecks} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}/>
+                <Button iconFa={"fas fa-eye" + (showCheckboxes || (checkedSongs && checkedSongs.length) ? '-slash': '')} title={showCheckboxes || (checkedSongs && checkedSongs.length) ? $_.songBrowser.playlist.hideChecks : $_.songBrowser.playlist.showChecks} label={checkedSongs.length ? checkedSongs.length : ''} on:click={() => showCheckboxes = !showCheckboxes}
+                disabled={checkedSongs && checkedSongs.length}/>
                 <Button iconFa="fas fa-check" title={$_.songBrowser.playlist.checkAll} on:click={checkAll}/>
                 <Button iconFa="far fa-file-alt" title={$_.songBrowser.playlist.checkPage} on:click={checkPage}/>
                 <Button iconFa="fas fa-broom" title={$_.songBrowser.playlist.clear} disabled={!checkedSongs.length} on:click={checkNone}/>
-                <Button label={$_.songBrowser.playlist.label} iconFa="fas fa-music" title={$_.songBrowser.playlist.export} disabled={!checkedSongs.length} on:click={exportPlaylist}/>
             </span>
 
             <span class="button-group">
+                <Button label={$_.songBrowser.playlist.label} iconFa="fas fa-music" title={$_.songBrowser.playlist.export} disabled={!checkedSongs.length} on:click={exportPlaylist}/>
                 <Button label={$_.songBrowser.csv.label} iconFa="fas fa-download" title={$_.songBrowser.csv.export} on:click={exportCsv}/>
+                <Button type="default"
+                        title={$_.beatSavior.avgStatsTooltip}
+                        on:click={showBeatSaviorAverageAcc}>
+                    <span class="beat-savior-avg-stats-icon"><BeatSaviorIcon /></span>
+                    <span class="beat-savior-avg-stats">{$_.beatSavior.avgStatsBtn}</span>
+                </Button>
             </span>
         </div>
+
+        {#if showBeatSaviorAvgModal}
+        <Modal closeable={true} width="35em" on:close={() => showBeatSaviorAvgModal = false}>
+            <header>
+                <div class="menu-label">{trans('beatSavior.avgStatsHeader', {num: beatSaviorAvg && beatSaviorAvg.total ? beatSaviorAvg.total : 0})}</div>
+            </header>
+
+            <main class="beat-savior-avg-stats-modal">
+                <BeatSaviorStats data={beatSaviorAvg} showGrid={true} showChart={false} dataIsAvg={true} switchable={false} />
+            </main>
+        </Modal>
+        {/if}
     {/if}
 {/if}
 
@@ -2086,8 +2289,8 @@
         width: 100%;
     }
 
-    .card-view > .song-card .card-icons {
-        margin-top: 1rem;
+    .card-view > .song-card :global(.card-icons) {
+        margin-top: 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -2242,6 +2445,10 @@
         width: 5.5rem;
     }
 
+    thead th.beatSaviorStats {
+        min-width: 5.7rem;
+    }
+
     thead th.icons {
         width: 4.9rem;
     }
@@ -2365,6 +2572,18 @@
         text-align: center;
     }
 
+    tbody td.compact.left.series-1 :global(.beat-savior .left .donut) {
+        margin-right: 0;
+    }
+
+    tbody td.compact.left.series-1 :global(.beat-savior .right .donut) {
+        margin-left: 0;
+    }
+
+    tbody td.compact.left.series-1 :global(.beat-savior .stats) {
+        margin-bottom: .5rem;
+    }
+
     tbody td.compact.left.series-1:not(.with-cols) {
         border-left: none;
     }
@@ -2475,5 +2694,18 @@
     }
     .button-group:last-of-type {
         margin-right: 0;
+    }
+
+    .beat-savior-avg-stats-icon {
+        margin: 0 .45em;
+    }
+
+    .beat-savior-avg-stats {
+        margin-right: .45em;
+    }
+
+    .beat-savior-avg-stats-modal {
+        font-size: 1.5rem;
+        margin-top: .5em;
     }
 </style>

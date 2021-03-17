@@ -5,7 +5,33 @@ export const DAY = 24 * 60 * 60 * 1000;
 
 export const isValidDate = d =>d instanceof Date && !isNaN(d);
 
-export function toUTCDate(date) {
+export function getClientTimezoneOffset() {
+    const offset = new Date().getTimezoneOffset();
+    const totalMinutes = Math.abs(offset);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const prefix = offset < 0 ? "+" : "-";
+
+    return prefix + hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+}
+
+export function truncateDate(date, precision = 'day') {
+    const newDate = new Date(date.getTime());
+
+    // no breaks here!
+    switch(precision) {
+        case 'year': newDate.setMonth(0);
+        case 'month': newDate.setDate(1);
+        case 'day': newDate.setHours(0);
+        case 'hour': newDate.setMinutes(0);
+        case 'minute': newDate.setSeconds(0);
+        case 'second': newDate.setMilliseconds(0);
+    }
+
+    return newDate;
+}
+
+export function toUTCDateTimestamp(date) {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth();
     const day = date.getUTCDate();
