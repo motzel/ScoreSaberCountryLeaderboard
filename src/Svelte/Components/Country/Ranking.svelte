@@ -12,6 +12,7 @@
     import {getAllPlayersHistory, getAllPlayersRanking} from "../../../scoresaber/players";
     import {_, trans} from "../../stores/i18n";
     import {formatNumber} from "../../../utils/format";
+    import {getPlayerName} from '../../../eastereggs'
 
     export let country;
     export let overridePlayersPp = {};
@@ -69,7 +70,9 @@
                     return {...player, change, weeklyDiff_className: 'diff ' + (change ? (change > 0 ? 'inc' : 'dec') : '')};
                 })
                 .sort((a,b) => b.pp - a.pp) // sort it again after override
-                .filter(p => !filterFunc || filterFunc(p));
+                .filter(p => !filterFunc || filterFunc(p))
+                .map((player, idx) => ({...player, name: getPlayerName(player.name, idx)}))
+        ;
     }
 
     $: addPlayersHistory(players, refreshTag, overridePlayersPp, filterFunc);

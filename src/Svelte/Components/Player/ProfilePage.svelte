@@ -44,6 +44,7 @@
     import nodeSync from '../../../utils/multinode-sync'
     import {formatDateRelative} from '../../../utils/format'
     import WhatToPlay from './WhatToPlay.svelte'
+    import {getPlayerName} from '../../../eastereggs'
 
     export let profileId;
     export let profilePage = {};
@@ -733,7 +734,7 @@
                     <div class="columns player-name">
                         <div class="column">
                             <h1 class="title is-4">
-                                {#if steamUrl}<a href={steamUrl}>{name}</a>{:else}{name}{/if}
+                                {#if steamUrl}<a href={steamUrl}>{countryRanks && countryRanks.length ? getPlayerName(name,countryRanks[0].rank-1) : name}</a>{:else}{countryRanks && countryRanks.length ? getPlayerName(name,countryRanks[0].rank-1) : name}{/if}
                                 <span class="pp"><Value value={pp} suffix="pp" prevValue={prevPp}
                                                         prevLabel={prevPpSince} inline={true} /></span>
                             </h1>

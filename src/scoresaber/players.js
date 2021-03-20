@@ -8,8 +8,9 @@ import {getRankedsChangesSince, getRankedSongs} from "./rankeds";
 import {NEW_SCORESABER_URL, PLAYS_PER_PAGE, PLAYER_PROFILE_URL} from "../network/scoresaber/consts";
 import {substituteVars} from "../utils/format";
 import {dateFromString} from "../utils/date";
-import {arrayUnique, convertArrayToObjectByKey, isEmpty} from "../utils/js";
+import {arrayUnique, convertArrayToObjectByKey} from "../utils/js";
 import {getMainPlayerId} from "../plugin-config";
+import {getPlayerName, isEasterEggDay} from '../eastereggs'
 
 export const isCountryPlayer = (u, country) => u && u.id && !!u.ssplCountryRank && !!u.ssplCountryRank[country] && (getAdditionalPlayers(country).includes(u.id) || (country && u.country.toLowerCase() === country.toLowerCase()));
 
@@ -117,7 +118,16 @@ export const getManuallyAddedPlayers = async (country, withMain = false) => filt
 
 export const getAllActivePlayersIds = async (country) => arrayUnique((await getActiveCountryPlayersIds(country, true)).concat(await getManuallyAddedPlayersIds(country, false)));
 
-export const getAllActivePlayers = async (country) => filterPlayersByIdsList(await getAllActivePlayersIds(country), await getPlayers());
+export const getAllActivePlayers = async (country) => {
+    const players = await filterPlayersByIdsList(await getAllActivePlayersIds(country), await getPlayers());
+    if (!isEasterEggDay()) return players;
+
+    let idx = 0;
+    return players
+      .filter(player => player.name)
+      .sort((a,b) => b.pp - a.pp)
+      .map(player => ({...player, name: isCountryPlayer(player, country) ? getPlayerName(player.name, idx++) : player.name}))
+}
 
 export const getPlayerProfileUrl = (playerId, recentPlaysPage = false, transform = false, page = 1) => substituteVars(
   `${PLAYER_PROFILE_URL}?page=${page}&${recentPlaysPage ? 'sort=2' : 'sort=1'}${transform ? '&transform=true' : ''}`,

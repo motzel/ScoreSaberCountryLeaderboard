@@ -13,6 +13,7 @@
     import queue from "../../../network/queue";
     import {getActiveCountry} from "../../../scoresaber/country";
     import {parseSsLeaderboardScores} from '../../../scoresaber/scores'
+    import {getPlayerName} from '../../../eastereggs'
 
     export let type = "country";
     export let country;
@@ -104,7 +105,7 @@
                          return player;
                      })
                      .sort((a, b) => b.pp - a.pp) // sort it again after override
-                     .map((p, idx) => ({...p, miniRank: idx + 1}));
+                     .map((p, idx) => ({...p, miniRank: idx + 1, name: getPlayerName(p.name, idx)}));
                 }
 
                 players = cache.players = ranking;

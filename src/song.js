@@ -1,5 +1,5 @@
 import {capitalize, convertArrayToObjectByKey, isEmpty} from "./utils/js";
-import {shouldBeHidden} from "./eastereggs";
+import {getPlayerName, shouldBeHidden} from "./eastereggs";
 import {getSongByHash} from "./network/beatsaver";
 import {
   getActiveCountryPlayers,
@@ -199,7 +199,8 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
       })
       .filter(score => score) // filter out empty items
       .map(score => ({...score, hidden: shouldBeHidden(score)}))
-      .sort((a, b) => b.score !== a.score ? b.score - a.score : a.timeset - b.timeset);
+      .sort((a, b) => b.score !== a.score ? b.score - a.score : a.timeset - b.timeset)
+      .map((score, idx) => ({...score, name: getPlayerName(score.name, idx)}));
 }
 
 export function getMaxScoreFromSongCharacteristics(songCharacteristics, diffInfo, maxScorePerBlock = 115) {
