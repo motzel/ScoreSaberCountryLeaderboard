@@ -39,6 +39,8 @@ export const extractBeatSaviorTrackersData = (trackers, rounded = true) => {
     scoreGraphTracker: {graph = null} = {graph: null},
   } = trackers;
 
+  if (nbOfPause > 99) nbOfPause = 0;
+
   accLeft = accLeft ? roundFunc(accLeft) : null;
   accRight = accRight ? roundFunc(accRight) : null;
   leftAverageCut = leftAverageCut && Array.isArray(leftAverageCut) ? leftAverageCut.map(v => Number.isFinite(v) ? roundFunc(v) : 0) : null;

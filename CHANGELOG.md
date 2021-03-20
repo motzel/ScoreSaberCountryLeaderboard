@@ -5,6 +5,10 @@
 [!] bug fix
 [*] other changes
 
+1.6.1
+- [!] fix Beat Savior filename handling after BS update
+- [+] add support for hiding number of pauses option of BS
+
 1.6.0
 - [+] add Beat Savior local data importer, Chrome/Edge 86+ only!
 - [+] add Beat Savior averages for selected songs  

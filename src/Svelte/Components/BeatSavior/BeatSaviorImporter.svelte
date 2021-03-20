@@ -123,12 +123,12 @@
         const contents = await file.text();
         const lines = contents.split('\n');
 
-        const nameMatches = file.name.toLowerCase().match(/^(\d{2})-(\d{2})-(\d{4})\.bsd$/);
-        if (!nameMatches || !nameMatches.length === 4) {
+        const nameMatches = file.name.toLowerCase().match(/^(?:(\d{2})-(\d{2})-(\d{4})|(\d{4})-(\d{2})-(\d{2}))\.bsd$/);
+        if (!nameMatches || !nameMatches.length === 7) {
             return null;
         }
 
-        const date = truncateDate(new Date(`${nameMatches[3]}-${nameMatches[2]}-${nameMatches[1]}T00:00:00${clientTimezoneOffset}`), 'day');
+        const date = truncateDate(new Date(`${nameMatches[4] ? `${nameMatches[4]}-${nameMatches[5]}-${nameMatches[6]}` : `${nameMatches[3]}-${nameMatches[2]}-${nameMatches[1]}`}T00:00:00${clientTimezoneOffset}`), 'day');
         const timestamp = date.getTime();
 
         let data = {name: file.name, date: date, size: file.size, lastModified: new Date(file.lastModified)};
