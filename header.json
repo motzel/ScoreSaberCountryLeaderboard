@@ -1,8 +1,8 @@
 {
   "name": "ScoreSaber country leaderboard",
   "namespace": "https://motzel.dev",
-  "version": "1.6.2",
-  "versionNumeric": 10602000,
+  "version": "1.6.3",
+  "versionNumeric": 10603000,
   "description": "ScoreSaber Enhancements",
   "author": "motzel",
   "icon": "https://scoresaber.com/imports/images/logo.ico",
@@ -11,6 +11,7 @@
   "supportURL": "https://github.com/motzel/ScoreSaberCountryLeaderboard/issues",
   "match": ["https://scoresaber.com/*"],
   "include": ["/^https://scoresaber\\.com\\/global(\\/\\d+&country=pl|\\?country=pl)/"],
+  "connect": ["www.beatsavior.io"],
   "require": [],
   "grant": [
     "GM_addStyle", "GM_info", "GM_xmlhttpRequest", "GM_getTab", "GM_getTabs", "GM_saveTab", "GM_getValue", "GM_setValue", "GM_addValueChangeListener", "unsafeWindow"

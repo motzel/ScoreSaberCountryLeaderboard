@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.6.3
+- [+] add automatic data download from Beat Savior API
+
 1.6.1
 - [!] fix Beat Savior filename handling after BS update
 - [+] add support for hiding number of pauses option of BS

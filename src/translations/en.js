@@ -241,6 +241,7 @@ export default {
         lastDownload: 'Downloaded:',
         rankedsDownload: 'Downloading current rankeds',
         countryPlayersDownload: 'Downloading active players',
+        beatSavior: 'Updating Beat Savior data',
         waiting: '[Waiting ${seconds}s]',
         error: 'Download error. Try again.',
         btnDisabledBgDlInProgress: 'Refreshing disabled. Background downloading in progress...',

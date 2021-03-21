@@ -1,7 +1,10 @@
 import {padNumber} from "./format";
 import {isString} from "./js";
 
-export const DAY = 24 * 60 * 60 * 1000;
+export const SECOND = 1000;
+export const MINUTE = 60 * SECOND;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
 
 export const isValidDate = d =>d instanceof Date && !isNaN(d);
 

@@ -9,7 +9,14 @@ export class SsplError extends Error {
     }
 }
 
-export class TimeoutError extends SsplError {
+export class ResponseError extends SsplError {
+    constructor(message) {
+        super(message);
+        this.name = "ResponseError";
+    }
+}
+
+export class TimeoutError extends ResponseError {
     constructor(timeout, message) {
         super(message);
         this.name = "TimeoutError";
@@ -17,12 +24,43 @@ export class TimeoutError extends SsplError {
     }
 }
 
-export class NotFoundError extends SsplError {
+export class AbortError extends ResponseError {
+    constructor(message) {
+        super(message);
+        this.name = "AbortError";
+    }
+}
+
+export class JsonParsingError extends ResponseError {
+    constructor(message) {
+        super(message);
+        this.name = "JsonParsingError";
+    }
+}
+
+export class NotFoundError extends ResponseError {
     constructor(message) {
         super(message);
         this.name = "NotFoundError";
     }
 }
+
+export const gmFetch = (url, timeout = 10000) => new Promise((resolve, reject) => GM_xmlhttpRequest({
+    method: 'GET',
+    url,
+    timeout,
+    onabort: () => reject(new AbortError('Request was aborted')),
+    onerror: () => reject(new ResponseError('Response error')),
+    onload: response => {
+        try {
+            resolve(JSON.parse(response.response));
+        } catch(err) {
+            reject(new JsonParsingError('JSON parsing error'))
+        }
+        resolve(response.response)
+    },
+    ontimeout: () => reject(new TimeoutError("Timeout error", timeout)),
+}));
 
 export async function queueRetriedPromise(queue, promiseReturningFunc, abortController = null, retries = 3) {
     let error;

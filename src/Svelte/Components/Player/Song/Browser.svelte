@@ -721,6 +721,15 @@
             await generateRefreshTag();
         });
 
+        const beatSaviorUpdatedUnsubscriber = eventBus.on('player-beat-savior-updated', async ({playerId}) => {
+            // return if not relevant for current dataset
+            if (!playerId || !getCurrentlySelectedPlayersIds().includes(playerId)) return;
+
+            estimatedScores = null;
+
+            await generateRefreshTag();
+        });
+
         const rankedsUnsubscriber = eventBus.on('rankeds-changed', async () => await refreshRankedSongs());
 
         const countryRanksUpdatedUnsubscriber = eventBus.on('sspl-country-ranks-cache-updated', ({ssplCountryRanks}) => {
@@ -757,6 +766,7 @@
             countryRanksUpdatedUnsubscriber();
             configChangedUnsubscriber();
             twitchVideosUpdated();
+            beatSaviorUpdatedUnsubscriber();
         }
     });
 

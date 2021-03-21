@@ -16,7 +16,7 @@
     import nodeSync from '../../../utils/multinode-sync'
     import BeatSaviorIcon from './BeatSaviorIcon.svelte'
     import {
-        getPlayerScoresForBeatSaviorMatching,
+        getPlayerScoresForBeatSaviorMatching, IMPORT_ONLY_SS_SCORES,
         parseBeatSaviorLine,
         storeBeatSaviorData,
     } from '../../../scoresaber/beatsavior'
@@ -182,6 +182,7 @@
         importProgress = 0;
         importMax = items.length;
 
+        let allNewPlaysFromImport = [];
         for (const entry of items) {
             importLabel = entry.name;
             importSubLabel = '';
@@ -207,7 +208,16 @@
             await storeBeatSaviorData(plays, data);
 
             importProgress++;
+
+            allNewPlaysFromImport = allNewPlaysFromImport.concat(plays.filter(play => !IMPORT_ONLY_SS_SCORES || play.ssScore));
         }
+
+        if (allNewPlaysFromImport && allNewPlaysFromImport.length)
+            eventBus.publish('player-beat-savior-updated', {
+                nodeId: nodeSync().getId(),
+                playerId: allNewPlaysFromImport[0].playerId,
+                matchedBsData: allNewPlaysFromImport,
+            });
     }
 
     function onClose() {

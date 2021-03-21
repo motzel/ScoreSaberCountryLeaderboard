@@ -3,13 +3,15 @@ import nodeSync from '../utils/multinode-sync';
 import {getMainPlayerId, isBackgroundDownloadEnabled} from "../plugin-config";
 import fifoQueue from "../utils/queue";
 import {getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
-import {dateFromString} from "../utils/date";
+import {dateFromString, SECOND} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
 import {getRankedsNotesCache, getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
 import logger from "../utils/logger";
 import {getActiveCountry} from "../scoresaber/country";
 import {fetchRankedsFromBs} from './beatsaver'
+import {updateBeatSaviorData} from './beatsavior'
+import {delay} from './fetch'
 
 let bgDownload = false;
 let isPaused = false;
@@ -78,7 +80,14 @@ const enqueueMainPlayer = async (queue, force = false, then = null) => {
         await enqueueActivePlayers(queue, true, async () => {
             await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true})
         }, MAIN_PLAYER_PRIORITY + 1);
-    else await enqueuePlayerScores(queue, mainPlayerId, force, then, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true});
+    else await enqueuePlayerScores(queue, mainPlayerId, force, async () => {
+        try {
+            await delay(SECOND)
+            await updateBeatSaviorData(mainPlayerId)
+        } catch {} // skip errors
+
+        if (then) await then();
+    }, MAIN_PLAYER_REFRESH, MAIN_PLAYER_PRIORITY, {mainPlayerId: true});
 }
 
 const enqueueRankeds = async (queue, force = false, then = null) => {

@@ -135,11 +135,12 @@
     if(lastPageData) await processFetched(lastPageData);
 
     const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
-      refreshPlayersScores();
+      refreshPlayersScores(leaderboardId);
     });
     const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async () => {
-      await refreshPlayersScores();
+      await refreshPlayersScores(leaderboardId);
     });
+
 
     initialized = true;
 

@@ -238,6 +238,7 @@ export default {
         lastDownload: 'Pobrano:',
         rankedsDownload: 'Pobieranie aktualnych rankedów',
         countryPlayersDownload: 'Pobieranie aktywnych graczy',
+        beatSavior: 'Aktualizacja danych Beat Savior',
         waiting: '[Czekam ${seconds}s]',
         error: 'Błąd pobierania danych. Spróbuj ponownie.',
         btnDisabledBgDlInProgress: 'Odświeżanie wyłączone. Trwa pobieranie w tle...',

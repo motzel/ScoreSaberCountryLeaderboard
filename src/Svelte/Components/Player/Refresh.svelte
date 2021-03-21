@@ -19,13 +19,14 @@
     import {createBroadcastChannelStore} from '../../stores/broadcast-channel';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {getPlayerLastUpdated} from "../../../scoresaber/players";
-    import {isBackgroundDownloadEnabled} from "../../../plugin-config";
+    import {getMainPlayerId, isBackgroundDownloadEnabled} from "../../../plugin-config";
     import nodeSync from '../../../utils/multinode-sync';
 
     import logger from "../../../utils/logger";
     import {_, trans} from '../../stores/i18n';
     import {formatNumber} from "../../../utils/format";
     import {getActiveCountry} from "../../../scoresaber/country";
+    import {shouldBeatSaviorBeUpdated, updateBeatSaviorData} from '../../../network/beatsavior'
 
     export let profileId;
     export let forceShowProgress = false;
@@ -180,6 +181,14 @@
                 eventBus.publish('dl-manager-unpause-cmd');
                 return;
             }
+        }
+
+        const mainPlayerId = await getMainPlayerId()
+        if (mainPlayerId && await shouldBeatSaviorBeUpdated(mainPlayerId)) {
+            try {
+                updateState({errorMsg: '', label: '', subLabel: $_.refresh.beatSavior});
+                await updateBeatSaviorData(mainPlayerId)
+            } catch {} // skip errors
         }
 
         updateState({started: false});

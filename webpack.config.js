@@ -26,7 +26,7 @@ module.exports = {
                 terserOptions: {
                     mangle: true,
                     output: {
-                        comments: /(UserScript|@name|@namespace|@version|@description|@author|@icon|@.*URL|@match|@include|@require|@grant|@run-at)/i
+                        comments: /(UserScript|@name|@namespace|@version|@description|@author|@icon|@.*URL|@match|@include|@require|@grant|@run-at|@connect)/i
                     }
                 },
                 extractComments: {

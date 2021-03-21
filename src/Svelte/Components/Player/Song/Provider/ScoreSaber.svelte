@@ -235,24 +235,32 @@
       await getPlayersScores(players);
       processFetched(lastPageData);
     }
+    const isPlayerCurrentlyDisplayed = playerId => {
+      const currentlyShownPlayers = (players ? players : []).map(player => player.playerId);
+      return currentlyShownPlayers.includes(playerId);
+    }
     const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
       await updatePlayerScoresAndProcess();
     });
     const unsubscriberScoresUpdated = eventBus.on('player-scores-updated', async ({playerId}) => {
-      const currentlyShownPlayers = (players ? players : []).map(player => player.playerId);
-      if (!currentlyShownPlayers.includes(playerId)) return;
+      if (!isPlayerCurrentlyDisplayed(playerId)) return;
 
       await updatePlayerScoresAndProcess();
     })
+    const unsubscriberBeatSaviorUpdated = eventBus.on('player-beat-savior-updated', async ({playerId}) => {
+      if (!isPlayerCurrentlyDisplayed(playerId)) return;
+
+      await updatePlayerScoresAndProcess();
+    });
 
     initialized = true;
 
     return () => {
       unsubscriberScoresUpdated();
       unsubscriberDataRefreshed();
+      unsubscriberBeatSaviorUpdated();
     }
   })
-
 
   $: if (lastPageData) {
     processFetched(lastPageData, playerTwitchProfile)
