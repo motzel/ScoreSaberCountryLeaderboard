@@ -2,6 +2,7 @@ import keyValueRepository from './repository/key-value';
 import log from '../utils/logger';
 import {db} from './db'
 import {getConfig, setConfig} from '../plugin-config'
+import {dateFromString} from '../utils/date'
 
 const FIXES_KEY = 'data-fix';
 
@@ -76,6 +77,58 @@ const allFixes = {
         const store = tx.objectStore('key-value');
         const allAppliedFixes = await store.get(FIXES_KEY) ?? [];
         allAppliedFixes.push('rankeds-20210117');
+        await store.put(allAppliedFixes, FIXES_KEY);
+      });
+    },
+  },
+  'april-fools-2021': {
+    validTo: new Date(2021, 3, 30),
+    apply: async () => {
+      log.info('Apply april fools fix (2021)')
+
+      const fixDate = new Date(2021, 2, 31);
+      const playersKeys = ['lastRankedsRefetch', 'lastUpdated', 'profileLastUpdated', 'beatSaviorLastUpdated'];
+      const keyValueKeys = ['activePlayersLastUpdate', 'lastUpdated', 'rankedSongsLastUpdated'];
+
+      return db.runInTransaction(['players', 'key-value'], async tx => {
+        let cursor = await tx.objectStore('players').openCursor();
+
+        while (cursor) {
+          const player = cursor.value;
+
+          let shouldUpdate = false;
+          playersKeys.forEach(key => {
+            if (player[key]) {
+              if (dateFromString(player[key]) > fixDate) {
+                player[key] = fixDate;
+
+                shouldUpdate = true;
+              }
+            }
+          });
+
+          if (shouldUpdate) {
+            await cursor.update(player);
+          }
+
+          cursor = await cursor.continue();
+        }
+
+        cursor = await tx.objectStore('key-value').openCursor();
+
+        while (cursor) {
+          const keyValue = cursor.value;
+
+          if (keyValueKeys.includes(cursor.key) && dateFromString(keyValue) > fixDate) {
+            await cursor.update(fixDate);
+          }
+
+          cursor = await cursor.continue();
+        }
+
+        const store = tx.objectStore('key-value');
+        const allAppliedFixes = await store.get(FIXES_KEY) ?? [];
+        allAppliedFixes.push('april-fools-2021');
         await store.put(allAppliedFixes, FIXES_KEY);
       });
     },

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.6.4
+- [!] reset the date of the last update for all those who changed the date on their computer on April Fool's Day
+
 1.6.3
 - [+] add automatic data download from Beat Savior API
 
