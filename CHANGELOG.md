@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.6.5
+- [!] fix data update from Beat Savior API
+
 1.6.4
 - [!] reset the date of the last update for all those who changed the date on their computer on April Fool's Day
 

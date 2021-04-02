@@ -11,12 +11,13 @@ import {getPlayerInfo, updatePlayer} from '../scoresaber/players'
 import {dateFromString, HOUR} from '../utils/date'
 
 export const IS_BEAT_SAVIOR_API_ENABLED = true;
-const REFRESH_INTERVAL = HOUR;
 
 const BEAT_SAVIOR_API_URL = 'https://www.beatsavior.io/api/livescores/player/${playerId}'
 export const fetchBeatSaviorData = async (playerId) => gmFetch(substituteVars(BEAT_SAVIOR_API_URL, {playerId}));
 
 export const shouldBeatSaviorBeUpdated = async playerId => {
+  const REFRESH_INTERVAL = HOUR;
+
   const playerInfo = await getPlayerInfo(playerId);
   if (!playerInfo) return false;
 
