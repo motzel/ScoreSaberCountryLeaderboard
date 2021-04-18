@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.6.6
+- [!] fix comparision of player scores, thx Khenab
+
 1.6.5
 - [!] fix data update from Beat Savior API
 

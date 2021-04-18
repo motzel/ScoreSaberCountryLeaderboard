@@ -202,14 +202,14 @@
   async function updatePlayerId(players) {
     if ((!players || !players.length) && !playerId) return;
 
-    const newPlayersTag = players.map(p => p.id).join(':');
+    const newPlayersTag = players.map(p => p.playerId).join(':');
     if (newPlayersTag === lastPlayersTag) {
       return;
     }
 
     lastPlayersTag = newPlayersTag;
 
-    playerId = players && players.length ? players[0].id : playerId;
+    playerId = players && players.length ? players[0].playerId : playerId;
 
     await getPlayersScores(players);
 
