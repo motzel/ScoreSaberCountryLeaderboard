@@ -29,7 +29,7 @@ import playersRepository from '../../db/repository/players';
 import playersHistoryRepository from '../../db/repository/players-history';
 import scoresRepository from '../../db/repository/scores';
 
-export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992']};
+export const ADDITIONAL_COUNTRY_PLAYERS_IDS = {pl: ['76561198967371424', '76561198093469724', '76561198204804992', '76561198275502920']};
 
 export const getActivePlayersLastUpdate = async () => keyValueRepository().get('activePlayersLastUpdate')
 // TODO: get it from DB
