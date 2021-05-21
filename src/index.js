@@ -2,6 +2,7 @@ import initNodeSync from './utils/multinode-sync'
 import Profile from './Svelte/Components/Player/ProfilePage.svelte';
 import CountryDashboard from './Svelte/Components/Country/Dashboard.svelte';
 import Avatar from './Svelte/Components/Common/Avatar.svelte';
+import FriendsDropdown from './Svelte/Components/Common/FriendsDropdown.svelte';
 import Flag from './Svelte/Components/Common/Flag.svelte';
 import SetCountry from './Svelte/Components/Country/SetCountry.svelte';
 import Message from './Svelte/Components/Global/Message.svelte';
@@ -251,6 +252,19 @@ async function setupPlayerAvatar() {
     new Flag({target: cont, props: {country: await getActiveCountry()}});
 }
 
+async function setupFriendsDropdown() {
+    log.info("Setup friends dropdown");
+
+    const navbar = document.querySelector('.navbar-start')
+    if(!navbar) return;
+
+    const cont = document.createElement('div');
+    cont.classList.add('navbar-item');
+    navbar.appendChild(cont);
+
+    new FriendsDropdown({target: cont});
+}
+
 async function setupTwitch() {
     await twitch.processTokenIfAvailable();
     await twitch.createTwitchUsersCache();
@@ -364,6 +378,7 @@ async function init() {
                 setupGlobalEventsListeners(),
                 setupCountryRanking(),
                 setupPlayerAvatar(),
+                setupFriendsDropdown(),
                 setupTwitch(),
             ]
         )
