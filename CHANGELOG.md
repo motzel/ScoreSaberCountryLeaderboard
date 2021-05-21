@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.7.0
+- [+] add friends dropdown. feat added by Solaris9, thx for a pull request! 
+
 1.6.6
 - [!] fix comparision of player scores, thx Khenab
 
