@@ -1,18 +1,21 @@
 <script>
-    import { onMount } from 'svelte';
-    import { getActiveCountry } from '../../../scoresaber/country';
-    import { getManuallyAddedPlayers } from '../../../scoresaber/players';
+    import {onMount} from 'svelte';
+    import {getActiveCountry} from '../../../scoresaber/country';
+    import {getFriends} from '../../../scoresaber/players';
 
     let friends = null;
 
     onMount(async () => {
-        const players = await getManuallyAddedPlayers(await getActiveCountry());
-        
-        friends = players.map((p) => ({
-            id: p.id,
-            name: p.name,
-            url: p.url
-        }));
+        const players = await getFriends(await getActiveCountry());
+
+        friends = players
+          .map((p) => ({
+              id: p.id,
+              name: p.name,
+              url: p.url,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+        ;
     });
 </script>
 
