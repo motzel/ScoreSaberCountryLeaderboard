@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.7.1
+- [+] add an option to remove the current country, thx Mana 
+
 1.7.0
 - [+] add friends dropdown. feat added by Solaris9, thx for a pull request! 
 

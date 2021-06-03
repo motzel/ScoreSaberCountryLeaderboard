@@ -8,6 +8,7 @@
     import Refresh from "../Player/Refresh.svelte";
     import {getActiveCountryPlayers, getAllActivePlayers, getFriends} from "../../../scoresaber/players";
     import TypeFilterSelect from "../Common/TypeFilterSelect.svelte";
+    import RemoveCountry from './RemoveCountry.svelte'
 
     export let country;
     export let overridePlayersPp = {};
@@ -109,6 +110,7 @@
 
             <Ranking {country} {overridePlayersPp} itemsPerPage={20} filterFunc={rankingFilter} {refreshTag}/>
         </div>
+        <RemoveCountry />
     </div>
 
     <div class="scores content column is-full-tablet is-half-widescreen is-three-fifths-fullhd">
@@ -190,5 +192,10 @@
 
     .ranking header nav {
         font-size: .8em!important;
+    }
+
+    .country-remove {
+        text-align: right;
+        font-size: .75em;
     }
 </style>
