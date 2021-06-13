@@ -151,6 +151,12 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
         players = await getFriends(country, true);
         break;
 
+      case 'country_and_friends':
+        const countryPlayers = await getActiveCountryPlayers(country, true);
+        const friendsFromCountry = (await getFriends(country, true)).filter(p => p.country && country && p.country.toLowerCase() === country.toLowerCase());
+        players = Object.values({...convertArrayToObjectByKey(countryPlayers, 'id'), ...convertArrayToObjectByKey(friendsFromCountry, 'id')});
+        break;
+
       case 'country':
       default:
         players = await getActiveCountryPlayers(country, true);

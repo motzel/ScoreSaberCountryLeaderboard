@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.7.2
+- [+] add filtering the leaderboard by country players along with friends from the country, thx Omurky
+
 1.7.1
 - [+] add an option to remove the current country, thx Mana 
 

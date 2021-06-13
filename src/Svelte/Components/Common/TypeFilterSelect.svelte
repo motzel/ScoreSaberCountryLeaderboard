@@ -12,6 +12,7 @@
         leaderboardTypes: [
             {id: 'all', _key: 'songLeaderboard.types.all'},
             {id: 'country', _key: 'songLeaderboard.types.country'},
+            {id: 'country_and_friends', _key: 'songLeaderboard.types.country_and_friends'},
             {id: 'manually_added', _key: 'songLeaderboard.types.manually_added'},
         ],
     }
@@ -43,7 +44,7 @@
             values.leaderboardType = strings.leaderboardTypes.find(t => t.id === config.defaultType);
         }
 
-        if (!country && values.leaderboardType.id === 'country') {
+        if (!country && ['country', 'country_and_friends'].includes(values.leaderboardType.id)) {
             values.leaderboardType = strings.leaderboardTypes.find(t => t.id === 'all');
         }
     });

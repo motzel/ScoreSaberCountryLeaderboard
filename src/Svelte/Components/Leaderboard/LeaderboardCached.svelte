@@ -43,7 +43,7 @@
     let initialized = false;
 
     async function refreshLeaderboard() {
-        if (!leaderboardId || !leaderboardType || (leaderboardType === 'country' && !country)) return;
+        if (!leaderboardId || !leaderboardType || (['country', 'country_and_friends'].includes(leaderboardType) && !country)) return;
 
         leaderboard = await getLeaderboard(leaderboardId, country, leaderboardType);
     }

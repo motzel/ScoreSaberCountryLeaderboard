@@ -227,7 +227,8 @@ export default {
         types: {
             all: 'All',
             country: 'Country only',
-            manually_added: 'Friends',
+            country_and_friends: 'Country + Friends',
+            manually_added: 'Friends only',
         },
         difficultyGraph: 'Difficulty graph',
     },
