@@ -1,7 +1,16 @@
 # ScoreSaber Country Leaderboard
 Provides additional features to [ScoreSaber](https://scoresaber.com). See the feature list below.
 
-## UPDATE: After 8 months and 523 commits plugin version 1.0.0 is released! Tons of changes!
+## DEPRECATION NOTICE
+
+### As of 2021-06-25, it looks like the project will soon be dead.
+
+![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/ss-api-umby-2021-06-10.png)
+
+I was going to write a similar note soon with a redirect to my new shiny project, though it looks like it will be affected by that too so I'm suspending it as well.
+
+**Thank you all for the good reception of the project and all the kind words about it. We will see what the future brings.**
+
 
 # Userscript installation
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js).
