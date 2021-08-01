@@ -124,14 +124,14 @@ export default (storeName, inlineKeyName = undefined, indexesKeyNames = {}) => {
 
     if (query && query instanceof IDBKeyRange) return getFromDb();
 
+    const field = getFieldForIndexName(indexName);
+
     const filterItems = item => (!query || item?.[field] === query) && item !== undefined;
 
     if (refreshCache) {
       removeDataAvailabilityStatus(cacheKey);
       repositoryCache.forgetByFilter(filterItems);
     }
-
-    const field = getFieldForIndexName(indexName);
 
     if (!isAllDataAvailable() && !isIndexDataAvailable(cacheKey)) {
       const data = await getFromDb();
