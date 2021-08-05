@@ -7,10 +7,13 @@ Provides additional features to [ScoreSaber](https://scoresaber.com). See the fe
 
 ![](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/doc/ss-api-umby-2021-06-10.png)
 
-I was going to write a similar note soon with a redirect to my new shiny project, though it looks like it will be affected by that too so I'm suspending it as well.
-
 **Thank you all for the good reception of the project and all the kind words about it. We will see what the future brings.**
 
+### Update (2021-08-05): Turns out this happened earlier than I thought. After the BeatSaver API change, the project will no longer be patched to support the new API. 
+
+I invite everyone to check out my new project at **[ssr.motzel.dev](https://ssr.motzel.dev)**, which already supports the new API.
+
+It is still in the early stages of development, but will eventually include most, if not all, features of SSCL.
 
 # Userscript installation
 Get Tampermonkey for [Chrome/Edge Chromium](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/). Then install the script from [here](https://github.com/motzel/ScoreSaberCountryLeaderboard/raw/master/dist/scoresaber-country-leaderboard.user.js).
