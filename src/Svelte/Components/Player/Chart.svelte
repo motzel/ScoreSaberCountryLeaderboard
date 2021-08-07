@@ -1,5 +1,5 @@
 <script>
-    import {getAccFromRankedScore, getRankedsNotesCache, getRankedSongs} from "../../../scoresaber/rankeds";
+    import {getRankedSongs} from "../../../scoresaber/rankeds";
     import {getPlayerHistory, getScoresByPlayerId} from "../../../scoresaber/players";
     import {addToDate, dateFromString, DAY, toSSTimestamp} from "../../../utils/date";
     import {formatDateRelative, formatDateRelativeInUnits, formatNumber, round} from "../../../utils/format";
@@ -9,6 +9,7 @@
     import Button from "../Common/Button.svelte";
     import {getConfig} from '../../../plugin-config'
     import {getTheme} from '../../../theme'
+    import {getAccFromScore, getSongMaxScore} from '../../../song'
 
     export let profileId = null;
     export let history = null;
@@ -22,8 +23,6 @@
 
     let canvas = null;
     let chart = null;
-
-    let rankedsNotesCache = null;
 
     let userHistory = null;
     let playerScores = null;
@@ -66,10 +65,8 @@
         canvas = document.getElementById('rankChart');
 
         await refreshRankedSongs();
-        await refreshRankedsNotesCache();
 
         const rankedSongsUnsubscriber = eventBus.on('rankeds-changed', async () => await refreshRankedSongs());
-        const rankedsNotesCacheUnsubscriber = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
         const activePlayersUpdatedUnsubscriber = eventBus.on('active-players-updated', async ({allPlayers}) => {
             if (profileId && allPlayers && allPlayers[profileId]) await refreshUserHistory(profileId);
         });
@@ -85,17 +82,12 @@
 
         return () => {
             rankedSongsUnsubscriber();
-            rankedsNotesCacheUnsubscriber();
             activePlayersUpdatedUnsubscriber();
             playerScoresUpdatedUnsubscriber();
             dataRefreshedUnsubscriber();
             configChangedUnsubscriber();
         }
     });
-
-    async function refreshRankedsNotesCache() {
-        rankedsNotesCache = await getRankedsNotesCache();
-    }
 
     async function refreshUserHistory(profileId) {
         userHistory = await getPlayerHistory(profileId);
@@ -111,13 +103,14 @@
         playerScores = await getScoresByPlayerId(profileId);
     }
 
-    async function calcAccChartData(playerScores, rankeds, rankedsNotesCache, type) {
-        if (!playerScores || !rankeds || !rankedsNotesCache) return;
+    async function calcAccChartData(playerScores, rankeds, type) {
+        if (!playerScores || !rankeds) return;
 
-        chartData = Object.values(playerScores)
+        chartData = await Promise.all(Object.values(playerScores)
                 .filter(s => !!s.pp && !!s.maxScoreEx && !!rankeds[s.leaderboardId] && (!accFilterFunc || accFilterFunc(s)))
-                .map(s => {
-                    const acc = getAccFromRankedScore(s, rankedsNotesCache, type === 'percentage');
+                .map(async s => {
+                    const maxScore = await getSongMaxScore(s.hash, s.diffInfo, s.leaderboardId)
+                    const acc = getAccFromScore(s, maxScore, type === 'percentage')
 
                     return {
                         x: rankeds[s.leaderboardId].stars,
@@ -129,7 +122,7 @@
                         timeset: dateFromString(s.timeset),
                         mods: s.mods
                     }
-                })
+                }))
         ;
 
         const ssToday = new Date(toSSTimestamp(new Date()))
@@ -507,7 +500,7 @@
     }
 
     $: {
-        calcAccChartData(playerScores, allRankeds, rankedsNotesCache, values.accBtn.value, refreshTag);
+        calcAccChartData(playerScores, allRankeds, values.accBtn.value, refreshTag);
     }
 
     $: {

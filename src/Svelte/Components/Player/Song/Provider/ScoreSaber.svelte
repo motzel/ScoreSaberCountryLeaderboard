@@ -63,7 +63,7 @@
       if (playerTwitchProfile && song && song.diffInfo && song.hash && score.timeset && idx === 0) {
         const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
         if (songInfo && songInfo.length) {
-          const video = await findTwitchVideo(playerTwitchProfile, dateFromString(score.timeset), songInfo.length);
+          const video = await findTwitchVideo(playerTwitchProfile, dateFromString(score.timeset), songInfo.seconds);
           if (video) song.video = video;
         }
       }

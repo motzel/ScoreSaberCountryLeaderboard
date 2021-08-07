@@ -102,14 +102,14 @@
             if(!data[i].acc) {
                 if (!data[i].maxScoreEx && data[i].diffInfo) {
                     try {
-                        const songInfo = await getSongDiffInfo(data[i].hash, data[i].diffInfo, true);
+                        const songInfo = await getSongDiffInfo(data[i].hash, data[i].diffInfo, data[i].leaderboardId, true);
                         if (songInfo) {
                             data[i].maxScoreEx = songInfo.maxScore;
                             data[i].acc = getAccFromScore(data[i]);
                         } else {
                             // try to fetch song info from beat saver and populate it later
                             promisesToResolve.push({
-                                promise: getSongDiffInfo(data[i].hash, data[i].diffInfo, false),
+                                promise: getSongDiffInfo(data[i].hash, data[i].diffInfo, data[i].leaderboardId, false),
                                 song: data[i],
                                 page
                             })

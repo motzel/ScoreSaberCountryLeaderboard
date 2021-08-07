@@ -4,7 +4,7 @@ import {isDateObject} from '../utils/js'
 import {updateSongCountryRanks} from '../song'
 import eventBus from '../utils/broadcast-channel-pubsub'
 
-const SSPL_DB_VERSION = 3;
+const SSPL_DB_VERSION = 4;
 export let db = null;
 
 import cacheRepository from './repository/cache';
@@ -15,7 +15,7 @@ import playersHistoryRepository from './repository/players-history';
 import rankedsRepository from './repository/rankeds';
 import rankedsChangesRepository from './repository/rankeds-changes';
 import scoresRepository from './repository/scores';
-import songsRepository from './repository/songs';
+import songsBeatMapsRepository from './repository/songs-beatmaps';
 import twitchRepository from './repository/twitch';
 
 export default async () => {
@@ -109,6 +109,15 @@ async function openDatabase() {
             beatSavior.createIndex('beat-savior-fileId', 'fileId', {unique: false});
 
           // NO break here!
+
+          case newVersion >= 4 && oldVersion < 4:
+            const songsBeatMapsStore = db.createObjectStore('songs-beatmaps', {
+              keyPath: 'hash',
+              autoIncrement: false,
+            });
+            songsBeatMapsStore.createIndex('songs-beatmaps-key', 'key', {unique: true});
+
+          // NO break here
         }
 
         log.info("Database converted");
@@ -178,7 +187,7 @@ async function openDatabase() {
     }
 
     // initialize all repositories in order to create cache to sync
-    [cacheRepository, groupsRepository, keyValueRepository, playersRepository, playersHistoryRepository, rankedsRepository, rankedsChangesRepository, scoresRepository, songsRepository, twitchRepository].map(repository => repository());
+    [cacheRepository, groupsRepository, keyValueRepository, playersRepository, playersHistoryRepository, rankedsRepository, rankedsChangesRepository, scoresRepository, songsBeatMapsRepository, twitchRepository].map(repository => repository());
 
     return db;
   }

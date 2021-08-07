@@ -942,23 +942,23 @@
             if (!song.maxScoreEx || !song.bpm) {
                 try {
                     // try to get max score from cache
-                    const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, true);
+                    const songInfo = await getSongDiffInfo(song.hash, song.diffInfo, song.leaderboardId, true);
                     if (songInfo) {
                         song.maxScoreEx = songInfo.maxScore;
                         song.bpm = songInfo.bpm;
                         song.njs = songInfo.njs;
-                        song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
-                        song.length = songInfo.length;
+                        song.nps = songInfo.notes && songInfo.seconds ? songInfo.notes / songInfo.seconds : null;
+                        song.length = songInfo.seconds;
                         song.key = songInfo.key;
 
                         if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
-                            const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
+                            const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, songInfo.seconds);
                             if (video) song.video = video;
                         }
                     } else {
                         // try to fetch song info from beat saver and populate it later
                         promisesToResolve.push({
-                            promise: getSongDiffInfo(song.hash, song.diffInfo, false),
+                            promise: getSongDiffInfo(song.hash, song.diffInfo, song.leaderboardId, false),
                             song,
                             current
                         })
@@ -984,12 +984,12 @@
                              song.maxScoreEx = songInfo.maxScore;
                              song.bpm = songInfo.bpm;
                              song.njs = songInfo.njs;
-                             song.nps = songInfo.notes && songInfo.length ? songInfo.notes / songInfo.length : null;
-                             song.length = songInfo.length;
+                             song.nps = songInfo.notes && songInfo.seconds ? songInfo.notes / songInfo.seconds : null;
+                             song.length = songInfo.seconds;
                              song.key = songInfo.key;
 
                              if (songPage.series[0] && songPage.series[0].scores && songPage.series[0].scores[song.leaderboardId]) {
-                                 const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, song.length);
+                                 const video = await findTwitchVideo(songPage.series[0].id, songPage.series[0].scores[song.leaderboardId].timeset, songInfo.seconds);
                                  if (video) song.video = video;
                              }
 
@@ -1576,7 +1576,7 @@
               if (!maxScore) {
                   try {
                       // try to get max score from cache
-                      maxScore = await getSongMaxScore(s.hash, s.diffInfo, true);
+                      maxScore = await getSongMaxScore(s.hash, s.diffInfo, s.leaderboardId, true);
                   }
                   catch (e) {
                       // swallow error

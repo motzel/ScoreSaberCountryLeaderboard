@@ -6,8 +6,7 @@ import {extractDiffAndType} from "../../song";
 import eventBus from "../../utils/broadcast-channel-pubsub"
 import nodeSync from "../../utils/multinode-sync";
 import {
-  getRankedsNotesCache,
-  getRankedSongs, setRankedsNotesCache,
+  getRankedSongs,
   setRankedSongsLastUpdated,
   storeRankeds,
   storeRankedsChanges,
@@ -98,22 +97,6 @@ export async function updateRankeds() {
       await storeRankedsChanges(changed);
       await setRankedSongsLastUpdated(new Date());
     });
-
-    if (newRankeds.length) {
-      const newHashes = newRankeds.map(r => fetchedRankedSongs?.[r?.leaderboardId]?.hash?.toLowerCase()).filter(hash => hash);
-      const rankedsNotesCache = await getRankedsNotesCache();
-
-      // set empty notes cache for newly downloaded rankeds in order to be downloaded
-      let shouldNotesCacheBeSaved = false;
-      newHashes.forEach(hash => {
-        if (rankedsNotesCache[hash]) return;
-
-        rankedsNotesCache[hash] = null;
-        shouldNotesCacheBeSaved = true;
-      });
-
-      if (shouldNotesCacheBeSaved) await setRankedsNotesCache(rankedsNotesCache);
-    }
 
     if (changed.length) {
       eventBus.publish('rankeds-changed', {nodeId: nodeSync().getId(), changed, allRankeds: fetchedRankedSongs});

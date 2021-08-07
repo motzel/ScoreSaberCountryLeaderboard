@@ -9,7 +9,7 @@ import playersRepository from "../db/repository/players";
 import playersHistoryRepository from "../db/repository/players-history";
 import rankedsChangesRepository from "../db/repository/rankeds-changes";
 import scoresRepository from "../db/repository/scores";
-import songsRepository from "../db/repository/songs";
+import songsBeatMapsRepository from "../db/repository/songs-beatmaps";
 import twitchRepository from "../db/repository/twitch";
 import beatSaviorFilesRepository from "../db/repository/beat-savior-files";
 import beatSaviorRepository from "../db/repository/beat-savior";
@@ -49,7 +49,7 @@ const repositories = [
 			date: ['timeset', 'lastUpdated'],
 		},
 	},
-	{repository: songsRepository},
+	{repository: songsBeatMapsRepository},
 	{
 		repository: twitchRepository,
 		casts: {

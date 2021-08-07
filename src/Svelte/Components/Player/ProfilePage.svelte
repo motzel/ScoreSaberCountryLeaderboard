@@ -6,8 +6,8 @@
     import Select from "../Common/Select.svelte";
 
     import {getConfig, getMainPlayerId} from '../../../plugin-config';
-    import {getAccFromRankedScore, getRankedsNotesCache, RANKED, UNRANKED} from '../../../scoresaber/rankeds';
-    import {diffColors} from '../../../song';
+    import {RANKED, UNRANKED} from '../../../scoresaber/rankeds';
+    import {diffColors, getAccFromScore, getSongMaxScore} from '../../../song';
     import eventBus from '../../../utils/broadcast-channel-pubsub';
     import {_, trans} from '../../stores/i18n';
     import {
@@ -147,8 +147,6 @@
     let config = null;
 
     let initialized = false;
-
-    let rankedsNotesCache = null;
 
     function filterAccChart(score) {
         return filterByPeriod(score, values.selectedPeriod.value) && (
@@ -339,10 +337,6 @@
           : newCountryRanks
     }
 
-    async function updateRankedsNotesCache() {
-        rankedsNotesCache = await getRankedsNotesCache();
-    }
-
     async function updateSsplCountryRanksCache(activeCountry) {
         if (!activeCountry) return;
 
@@ -360,8 +354,6 @@
         name = playerInfo.name;
         if (rank === null || rank === undefined) rank = playerInfo.rank;
         if (!pp) pp = playerInfo.pp;
-
-        await updateRankedsNotesCache();
 
         if (activeCountry) await updateSsplCountryRanksCache(activeCountry);
 
@@ -470,7 +462,6 @@
 
         await updatePlayerInfo(profileId);
 
-        const unsubscriberRankedsNotesCache = eventBus.on('rankeds-notes-cache-updated', ({rankedsNotesCache: newRankedsNotesCache}) => rankedsNotesCache = newRankedsNotesCache);
         const unsubscriberDataRefreshed = eventBus.on('data-refreshed', async () => {
             await updatePlayerInfo(profileId);
             anyDataIsAvailable = await isDataAvailable();
@@ -519,7 +510,6 @@
         return () => {
             unsubscriberDataRefreshed();
             unsubscriberSsplCountryRanksCacheUpdated();
-            unsubscriberRankedsNotesCache();
             unsubscriberConfigChanged();
             unsubscriberScoresUpdated();
             unsubscriberTwitchVideosUpdated();
@@ -561,7 +551,8 @@
         return stats;
     }
 
-    function getPlayerStats(scores, rankedsNotesCache) {
+    let stats = null;
+    async function getPlayerStats(scores) {
         if (!initialized || !scores) return;
 
         badgesDef.forEach(badge => {
@@ -569,8 +560,8 @@
             badge.title = !badge.min ? '< ' + badge.max + '%' : (!badge.max ? '> ' + badge.min + '%' : badge.min + '% - ' + badge.max + '%');
         });
 
-        let stats = {
-            badges: badgesDef,
+        let calcStats = {
+            badges: badgesDef.map(b => ({...b})),
             totalAcc: 0,
             totalScore: 0,
             avgAcc: 0,
@@ -579,32 +570,31 @@
             stdDeviation: 0
         };
 
-        if (!scores || !scores.length) return stats;
+        if (!scores || !scores.length) return calcStats;
 
-        stats = scores.reduce((cum, s) => {
-            if (!s.maxScoreEx) return cum;
+        for (const s of scores) {
+            if (!s.maxScoreEx) continue;
 
-            s.acc = getAccFromRankedScore(s, rankedsNotesCache);
+            const maxScore = await getSongMaxScore(s.hash, s.diffInfo, s.leaderboardId, true)
+            s.acc = getAccFromScore(s, maxScore)
 
-            cum.totalScore += s.uScore ? s.uScore : s.score;
-            cum.totalAcc += s.acc;
+            calcStats.totalScore += s.uScore ? s.uScore : s.score;
+            calcStats.totalAcc += s.acc;
 
-            cum.badges.forEach(badge => {
+            calcStats.badges.forEach(badge => {
                 if ((!badge.min || badge.min <= s.acc) && (!badge.max || badge.max > s.acc)) badge.value++;
             })
+        }
 
-            return cum;
-        }, {...stats})
-
-        stats.medianAcc = scores.length > 1
+        calcStats.medianAcc = scores.length > 1
           ? (scores.sort((a, b) => a.acc - b.acc))[Math.ceil(scores.length / 2)].acc
           : scores[0].acc;
-        stats.avgAcc = stats.totalAcc / scores.length;
-        stats.stdDeviation = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(stats.avgAcc - s.acc, 2), 0) / scores.length);
+        calcStats.avgAcc = calcStats.totalAcc / scores.length;
+        calcStats.stdDeviation = Math.sqrt(scores.reduce((sum, s) => sum + Math.pow(calcStats.avgAcc - s.acc, 2), 0) / scores.length);
 
-        delete stats.totalAcc;
+        delete calcStats.totalAcc;
 
-        return stats;
+        stats = {...calcStats};
     }
 
     const filterByPeriod = (s, period) => period === ALL || Date.now() - timestampFromString(s.timeset) <= period * ONE_DAY;
@@ -616,7 +606,7 @@
     $: filteredRankedScores = allRankedScores.filter(s => filterByPeriod(s, values.selectedPeriod.value));
     $: filteredAllScores = playerScores ? playerScores.filter(s => filterByPeriod(s, values.selectedPeriod.value)) : null;
 
-    $: stats = getPlayerStats(filteredRankedScores, rankedsNotesCache, initialized)
+    $: getPlayerStats(filteredRankedScores, initialized)
     $: ssplCountryRankStats = getSsplCountryRankStats(filteredRankedScores, activeCountry, ssplCountryRanksCache, initialized)
 
     $: basicStats = getBasicStats(ssStats, stats, filteredAllScores, badgeStyling, $_);
@@ -815,7 +805,7 @@
 
                                 {#if stats && stats.badges}
                                     <div class="badges std right">
-                                        {#each stats.badges as badge (badge)}
+                                        {#each stats.badges as badge (badge.name)}
                                             <Badge label={badge.name} value={badge.value} title={badge.title} color="white"
                                                    bgColor={badge.color} digits={0} on:click={() => onAccBadgeClick(badge)}
                                                    clickable={true} notSelected={selectedAccBadges.length && ! (selectedAccBadges.includes(badge))} />

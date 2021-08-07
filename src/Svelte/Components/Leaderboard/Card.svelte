@@ -64,10 +64,6 @@
             const bsSongInfo = await getSongDiffInfo(hash, diffInfo);
             if (bsSongInfo) songInfo = bsSongInfo;
         }
-
-        if (songInfo && songInfo.length && songInfo.notes) {
-            songInfo.nps = songInfo.length ? songInfo.notes / songInfo.length : null;
-        }
     }
 
     async function refreshLeaderboard(leaderboardId) {
@@ -129,9 +125,9 @@
                         {#if status}<span>{status}</span>{/if}
                         {#if $starsTweened}<Value value={$starsTweened} digits={2} zero="" suffix="★"/>{/if}
                         {#if diffInfo}<span class="diff"><Difficulty diff={diffInfo} reverseColors={true}/></span>{/if}
-                        {#if songInfo.length}
+                        {#if songInfo.seconds}
                         <span class="time" transition:fade={{duration: 500}}>
-                            <i class="fas fa-clock"></i> <Duration value={songInfo.length}/>
+                            <i class="fas fa-clock"></i> <Duration value={songInfo.seconds}/>
                         </span>
                         {/if}
                     </h3>

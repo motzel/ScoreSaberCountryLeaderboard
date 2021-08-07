@@ -15,6 +15,9 @@ import eventBus from './utils/broadcast-channel-pubsub'
 import nodeSync from './utils/multinode-sync'
 import {getAccTooltipFromTrackers} from './scoresaber/beatsavior'
 
+// rankeds with incorrect maxScore in SS
+const FUCKED_UP_RANKEDS = {"1950":798675,"1962":747155,"2720":468395,"2895":651475,"2900":531875,"3231":374555,"4022":262315,"6004":516235,"8270":176755,"9007":476675,"9023":324875,"9025":181355,"9028":141795,"11909":340515,"17020":449995,"18691":237475,"18728":438955,"19580":491395,"21628":357075,"21670":254035,"23871":594435,"29546":227355,"30818":383755,"33282":639515,"40338":311995,"40892":249435,"41481":605475,"45370":539235,"50288":824435,"50328":526355,"51360":946795,"58409":597195,"58412":721395,"59096":424235,"59409":320275,"61728":2001115,"66449":771995,"66930":875035,"66944":599035,"78657":426075,"79636":576035,"84513":487715,"99196":492315};
+
 export const diffColors = {
     easy: 'MediumSeaGreen',
     normal: '#59b0f4',
@@ -75,21 +78,6 @@ export function getDiffAndTypeFromOnlyDiffName(ssString) {
     return extractDiffAndType('_' + ssString.replace('Expert+', 'ExpertPlus') + '_SoloStandard');
 }
 
-export function findDiffInfoWithDiffAndType(characteristics, diffAndType) {
-    if (!characteristics || !diffAndType) return null;
-
-    return characteristics.reduce((cum, ch) => {
-        if (ch.name === diffAndType.type) {
-            return ch.difficulties?.[diffAndType.diff];
-        }
-
-        return cum;
-    }, null);
-}
-export function findDiffInfo(characteristics, ssDiff) {
-    return findDiffInfoWithDiffAndType(characteristics, extractDiffAndType(ssDiff));
-}
-
 export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
   const country = await getActiveCountry();
   if (!country) return {};
@@ -131,6 +119,10 @@ export const updateSongCountryRanks = async (onlyLeaderboardsIds = null) => {
 export const getAnySongScore = async (leaderboardId) => scoresRepository().getFromIndex('scores-leaderboardId', leaderboardId);
 export const getSongScores = async (leaderboardId) => scoresRepository().getAllFromIndex('scores-leaderboardId', leaderboardId);
 
+export function getFixedLeaderboardMaxScore(leaderboardId, maxScore = null) {
+  return leaderboardId && FUCKED_UP_RANKEDS[leaderboardId] ? FUCKED_UP_RANKEDS[leaderboardId] : maxScore;
+}
+
 export function getAccFromScore(score, maxSongScore = null, percentageInsteadOfAcc = false) {
     const scoreMult = !percentageInsteadOfAcc && score.uScore && score.score ? score.score / score.uScore : 1
 
@@ -140,6 +132,7 @@ export function getAccFromScore(score, maxSongScore = null, percentageInsteadOfA
         ? score.score / score.maxScoreEx / scoreMult * 100
         : null)
 }
+
 export async function getLeaderboard(leaderboardId, country, type = 'country') {
     let players;
     switch(type) {
@@ -172,9 +165,7 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
     const filteredScores = songScores.filter(s => playersIds.includes(s.playerId));
     if (!filteredScores.length) return [];
 
-    const songInfo = filteredScores[0].hash ? await getSongByHash(filteredScores[0].hash) : null;
-    const songCharacteristics = songInfo?.metadata?.characteristics;
-    let diffInfo = null, maxSongScore = undefined;
+    const maxSongScore = filteredScores[0].hash && songScores?.[0]?.diffInfo ? await getSongMaxScore(filteredScores[0].hash, songScores[0].diffInfo, leaderboardId) : null;
 
     players = convertArrayToObjectByKey(players, 'id');
 
@@ -182,11 +173,6 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
       .map(score => {
         const player = players[score.playerId];
         if (!player) return null;
-
-        if (maxSongScore === undefined) {
-          diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, score.diffInfo);
-          maxSongScore = diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : null;
-        }
 
         const playHistory = (score.history ?? []).map(score => ({...score, acc: getAccFromScore(score, maxSongScore), timeset: new Date(score.timestamp)}));
 
@@ -209,43 +195,41 @@ export async function getLeaderboard(leaderboardId, country, type = 'country') {
       .map((score, idx) => ({...score, name: getPlayerName(score.name, idx)}));
 }
 
-export function getMaxScoreFromSongCharacteristics(songCharacteristics, diffInfo, maxScorePerBlock = 115) {
-  const songDiffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffInfo);
+export async function getSongMaxScore(hash, diffInfo, leaderboardId = null, cacheOnly = false, forceUpdate = false, maxScorePerBlock = 115) {
+  if (leaderboardId) {
+    const leaderboardMaxScore = getFixedLeaderboardMaxScore(leaderboardId);
+    if (leaderboardMaxScore) return leaderboardMaxScore;
+  }
 
-  return songDiffInfo?.length && songDiffInfo?.notes ? getMaxScore(songDiffInfo.notes, maxScorePerBlock) : 0;
-}
+  if (!diffInfo?.diff || !diffInfo?.type) return null;
 
-export async function getSongMaxScore(hash, diffInfo, cacheOnly = false, forceUpdate = false, maxScorePerBlock = 115) {
   const songInfo = await getSongByHash(hash, forceUpdate, cacheOnly);
-  const songCharacteristics = songInfo?.metadata?.characteristics;
-  return getMaxScoreFromSongCharacteristics(songCharacteristics, diffInfo, maxScorePerBlock)
+  const diffStats = (songInfo?.versions?.[0]?.diffs ?? []).find(d => d.characteristic === diffInfo.type && d.difficulty === capitalize(diffInfo.diff))
+  if (!diffStats || !diffStats?.notes) return null;
+
+  return getMaxScore(diffStats.notes);
 }
 
-// TODO: add support for mods
 export async function getLeaderboardMaxScore(leaderboardId, hash, difficulty, mods=[], cacheOnly = false, maxScorePerBlock = 115) {
   const score = await getAnySongScore(leaderboardId);
   if (!score && (!hash || !difficulty)) return null;
 
   const diffInfo = score?.diffInfo ?? {type: 'Standard', diff: difficulty};
 
-  return getSongMaxScore(hash, diffInfo, cacheOnly, false, maxScorePerBlock);
+  return getSongMaxScore(hash, diffInfo, leaderboardId, cacheOnly, false, maxScorePerBlock);
 }
 
-export async function getSongDiffInfo(hash, diffAndType, cacheOnly = false) {
+export async function getSongDiffInfo(hash, diffAndType, leaderboardId = null, cacheOnly = false) {
+    if (!diffAndType?.diff || !diffAndType?.type) return null;
+
     const songInfo = await getSongByHash(hash, false, cacheOnly);
     if (!songInfo) return null;
 
-    const songMetadata = songInfo.metadata;
-    if (!songMetadata) return null;
-
-    const songCharacteristics = songMetadata.characteristics;
-    if (!songCharacteristics) return null;
-
-    const diffInfo = findDiffInfoWithDiffAndType(songCharacteristics, diffAndType);
-    if (!diffInfo) return null;
+    const diffInfo = (songInfo?.versions?.[0]?.diffs ?? []).find(d => d.characteristic === diffAndType.type && d.difficulty === capitalize(diffAndType.diff));
+    const bpm = songInfo?.metadata?.bpm ?? null;
 
     return Object.assign(
-        {bpm: songMetadata.bpm, maxScore: diffInfo?.length && diffInfo?.notes ? getMaxScore(diffInfo.notes) : 0},
+        {bpm, maxScore: await getSongMaxScore(hash, diffAndType, leaderboardId, true)},
         songInfo,
         diffInfo
     );

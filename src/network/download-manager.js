@@ -5,11 +5,10 @@ import fifoQueue from "../utils/queue";
 import {getAllActivePlayersIds, getPlayerInfo} from "../scoresaber/players";
 import {dateFromString, SECOND} from "../utils/date";
 import {getActivePlayersLastUpdate, updateActivePlayers, updatePlayerScores} from "./scoresaber/players";
-import {getRankedsNotesCache, getRankedSongsLastUpdated} from "../scoresaber/rankeds";
+import {getRankedSongsLastUpdated} from "../scoresaber/rankeds";
 import {updateRankeds} from "./scoresaber/rankeds";
 import logger from "../utils/logger";
 import {getActiveCountry} from "../scoresaber/country";
-import {fetchRankedsFromBs} from './beatsaver'
 import {updateBeatSaviorData} from './beatsavior'
 import {delay} from './fetch'
 
@@ -24,18 +23,14 @@ const PLAYERS_SCORES_REFRESH = 1000 * 60 * 25; // 25 min
 const MAIN_PLAYER_REFRESH = 1000 * 60 * 3; // 3 min
 
 const RANKEDS_PRIORITY = 200;
-const RANKEDS_NOTES_CACHE_PRIORITY = 300;
 const MAIN_PLAYER_PRIORITY = 100;
 const ACTIVE_PLAYERS_PRIORITY = 20;
 const PLAYER_SCORES_PRIORITY = 1;
-
-const RANKEDS_NOTES_TO_FETCH_EACH_TIME = 10;
 
 export const TYPES = {
     RANKEDS: 'rankeds',
     ACTIVE_PLAYERS: 'active-players',
     PLAYER_SCORES: 'player-score',
-    RANKEDS_NOTES_CACHE: 'rankeds-notes-cache',
 }
 
 const enqueuePlayerScores = async (queue, playerId, force = false, then = null, refreshInterval = PLAYERS_SCORES_REFRESH, priority = PLAYER_SCORES_PRIORITY, metadata = {}) => {
@@ -143,27 +138,6 @@ const enqueueActivePlayersScores = async (queue, force = false, then = null) => 
     }
 }
 
-const enqueueRankedsNotesCache = async (queue, then = null) => {
-    logger.debug(`Starting enqueuing rankeds notes cache`, 'DlManager');
-
-    const QUEUE_LABEL = TYPES.RANKEDS_NOTES_CACHE;
-    if (queue.contains(QUEUE_LABEL)) return;
-
-    const rankedsCache = await getRankedsNotesCache();
-    const allRankedshHashesToFetch = Object.keys(rankedsCache).filter(hash => !rankedsCache[hash]);
-
-    logger.trace(`Rankeds hashes to fetch: ${allRankedshHashesToFetch.length}`, 'DlManager');
-
-    if (allRankedshHashesToFetch.length) {
-        const rankedsHashesToFetch = allRankedshHashesToFetch.slice(0, RANKEDS_NOTES_TO_FETCH_EACH_TIME);
-
-        logger.trace(`Fetching first 10 rankeds: ${JSON.stringify(rankedsHashesToFetch)}`, 'DlManager');
-
-        const metadata = {type: TYPES.RANKEDS_NOTES_CACHE, nodeId: nodeSync().getId()};
-        queue.add(async () => await fetchRankedsFromBs(rankedsHashesToFetch), QUEUE_LABEL, RANKEDS_NOTES_CACHE_PRIORITY, then, metadata);
-    }
-};
-
 let queueIsProcessed = false;
 const processQueue = async (queue) => {
     logger.debug(`Try to process queue. isPaused: ${isPaused ? 'ON' : 'OFF'}, BgDownload: ${bgDownload ? 'ON' : 'OFF'}, isMaster: ${nodeSync().isMaster()}, queueIsProcessed: ${queueIsProcessed}`, 'DlManager');
@@ -245,10 +219,6 @@ const enqueue = async (queue, type, force = false, data = null, then = null) => 
             await enqueueRankeds(queue, force, then);
             break;
 
-        case TYPES.RANKEDS_NOTES_CACHE:
-            await enqueueRankedsNotesCache(queue, then);
-            break;
-
         case TYPES.ACTIVE_PLAYERS:
             await enqueueActivePlayers(queue, force, then);
             break;
@@ -275,7 +245,6 @@ const enqueueAndProcess = async (queue, force = false) => {
     await enqueue(queue, TYPES.RANKEDS, force);
     await enqueue(queue, TYPES.ACTIVE_PLAYERS, force);
     await enqueue(queue, TYPES.PLAYER_SCORES, force);
-    await enqueue(queue, TYPES.RANKEDS_NOTES_CACHE);
 
     await processQueue(queue);
 }

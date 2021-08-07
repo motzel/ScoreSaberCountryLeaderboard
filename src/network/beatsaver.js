@@ -2,21 +2,17 @@ import {fetchApiPage, NotFoundError} from "./fetch";
 import {substituteVars} from "../utils/format";
 import {default as queue} from "./queue";
 import log from '../utils/logger';
-import songsRepository from "../db/repository/songs";
+import songsBeatmapsRepository from "../db/repository/songs-beatmaps";
 import cacheRepository from "../db/repository/cache";
-import {
-    getRankedsNotesCache,
-    getRankedsNotesSongCacheFromCharacteristics,
-    setRankedsNotesCache,
-} from '../scoresaber/rankeds'
 import eventBus from '../utils/broadcast-channel-pubsub'
 import nodeSync from '../utils/multinode-sync'
-import {addToDate} from '../utils/date'
+import {addToDate, dateFromString} from '../utils/date'
 import makePendingPromisePool from '../utils/pending-promises'
+import {capitalize} from '../utils/js'
 
 const BEATSAVER_API_URL = 'https://beatsaver.com/api';
-const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/by-hash/${hash}';
-const SONG_BY_KEY_URL = BEATSAVER_API_URL + '/maps/detail/${key}'
+const SONG_BY_HASH_URL = BEATSAVER_API_URL + '/maps/hash/${hash}';
+const SONG_BY_KEY_URL = BEATSAVER_API_URL + '/maps/id/${key}'
 
 const BS_SUSPENSION_KEY = 'bsSuspension';
 const BS_NOT_FOUND_KEY = 'bs404';
@@ -62,7 +58,7 @@ const resolvePromiseOrWaitForPending = makePendingPromisePool();
 export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false) => {
     hash = hash.toLowerCase();
 
-    const songInfo = await songsRepository().get(hash);
+    const songInfo = await songsBeatmapsRepository().get(hash);
     if (!forceUpdate && songInfo) return Promise.resolve(songInfo);
 
     if(cacheOnly) return null;
@@ -97,7 +93,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
 export const getSongByKey = async (key, forceUpdate = false, cacheOnly = false) => {
     key = key.toLowerCase();
 
-    const songInfo = await songsRepository().getFromIndex('songs-key', key);
+    const songInfo = await songsBeatmapsRepository().getFromIndex('songs-beatmaps-key', key);
     if (!forceUpdate && songInfo) return Promise.resolve(songInfo);
 
     if(cacheOnly) return null;
@@ -124,40 +120,116 @@ export const getSongByKey = async (key, forceUpdate = false, cacheOnly = false) 
     }
 };
 
-async function cacheSongInfo(songInfo) {
-    if (!songInfo.hash || !songInfo.key) return null;
+export const convertOldBeatSaverToBeatMaps = song => {
+    let {key, hash, name, metadata: {characteristics}} = song;
 
-    songInfo.hash = songInfo.hash.toLowerCase();
-    songInfo.key = songInfo.key.toLowerCase();
+    if (!key || !hash || !name || !characteristics || !Array.isArray(characteristics)) return null;
+
+    if (hash.toLowerCase) hash = hash.toLowerCase();
+
+    const diffs = characteristics.reduce((diffs, ch) => {
+        if (!ch.name || !ch.difficulties) return diffs;
+        const characteristic = ch.name;
+
+        return diffs.concat(
+          Object.entries(ch.difficulties)
+            .map(([difficulty, obj]) => {
+                if (!obj) return null;
+                difficulty = capitalize(difficulty);
+
+                const seconds = obj?.length ?? null;
+                const notes = obj?.notes ?? null
+
+                const nps = notes && seconds ? notes / seconds : null;
+
+                return {
+                    njs: obj?.njs ?? null,
+                    offset: obj?.njsOffset ?? null,
+                    notes,
+                    bombs: obj?.bombs ?? null,
+                    obstacles: obj?.obstacles ?? null,
+                    nps,
+                    length: obj?.duration ?? null,
+                    characteristic,
+                    difficulty,
+                    events: null,
+                    chroma: null,
+                    me: null,
+                    ne: null,
+                    cinema: null,
+                    seconds,
+                    paritySummary: {
+                        errors: null,
+                        warns: null,
+                        resets: null,
+                    },
+                    stars: null,
+                };
+            }))
+          .filter(diff => diff)
+    }, []);
+
+    return {
+        lastUpdated: dateFromString(song?.uploaded) ?? new Date(),
+        oldBeatSaverId: song?._id ?? null,
+        id: key,
+        hash,
+        key,
+        name,
+        description: '',
+        uploader: {
+            id: null,
+            name: song?.uploader?.username ?? null,
+            hash: null,
+            avatar: null
+        },
+        metadata: {
+            bpm: song?.metadata?.bpm ?? null,
+            duration: song?.metadata?.duration ?? null,
+            songName: song?.metadata?.songName ?? '',
+            songSubName: song?.metadata?.songSubName ?? '',
+            songAuthorName: song?.metadata?.songAuthorName ?? '',
+            levelAuthorName: song?.metadata?.levelAuthorName ?? ''
+        },
+        stats: {
+            plays: song?.stats?.plays ?? 0,
+            downloads: song?.stats?.downloads ?? 0,
+            upvotes: song?.stats?.upVotes ?? 0,
+            downvotes: song?.stats?.downVotes ?? 0,
+            score: null
+        },
+        uploaded: song?.uploaded ?? null,
+        automapper: !!(song?.metadata?.automapper ?? false),
+        ranked: null,
+        qualified: null,
+        versions: [
+            {
+                hash,
+                key,
+                state: "Published",
+                createdAt: song?.uploaded ?? null,
+                sageScore: null,
+                diffs,
+                downloadURL: `https://cdn.beatsaver.com/${hash}.zip`,
+                coverURL: `https://cdn.beatsaver.com/${hash}.jpg`,
+                previewURL: `https://cdn.beatsaver.com/${hash}.mp3`
+            }
+        ]
+    }
+}
+
+async function cacheSongInfo(songInfo) {
+    const hash = songInfo?.versions?.[0].hash;
+    const key = songInfo?.versions?.[0].key;
+
+    if (!hash || !key || !hash.toLowerCase) return null;
+
+    songInfo.hash = hash.toLowerCase();
+    songInfo.key = key.toLowerCase();
 
     delete songInfo.description;
 
-    await songsRepository().set(songInfo);
+    await songsBeatmapsRepository().set(songInfo);
 
     return songInfo;
-}
-
-export const fetchRankedsFromBs = async rankedsHashesToFetch => {
-    if (!rankedsHashesToFetch || !rankedsHashesToFetch.length || isSuspended(await getCurrentSuspension())) return;
-
-    const currentRankedsCache = await getRankedsNotesCache();
-
-    const songInfos = await Promise.allSettled(rankedsHashesToFetch.map(hash => getSongByHash(hash)));
-
-    if (songInfos && songInfos.length) {
-        songInfos.forEach(value => {
-            if (value?.status !== 'fulfilled' || !value?.value?.hash) return;
-
-            const songCharacteristics = value?.value?.metadata?.characteristics ?? null;
-
-            currentRankedsCache[value?.value?.hash?.toLowerCase()] = getRankedsNotesSongCacheFromCharacteristics(songCharacteristics);
-        });
-
-        await setRankedsNotesCache(currentRankedsCache);
-
-        eventBus.publish('rankeds-notes-cache-updated', {
-            nodeId: nodeSync().getId(),
-            rankedsNotesCache: currentRankedsCache,
-        });
-    }
 }

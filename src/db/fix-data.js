@@ -3,6 +3,7 @@ import log from '../utils/logger';
 import {db} from './db'
 import {getConfig, setConfig} from '../plugin-config'
 import {dateFromString} from '../utils/date'
+import {convertOldBeatSaverToBeatMaps} from '../network/beatsaver'
 
 const FIXES_KEY = 'data-fix';
 
@@ -133,6 +134,47 @@ const allFixes = {
       });
     },
   },
+
+  'beatsaver-20210807': {
+    apply: async fixName => {
+      log.info('Converting BeatSaver songs to a new format...', 'DBFix')
+
+      return db.runInTransaction(['songs', 'songs-beatmaps', 'key-value'], async tx => {
+        const songsBeatMapsStore = tx.objectStore('songs-beatmaps');
+
+        let cursor = await tx.objectStore('songs').openCursor();
+
+        let songCount = 0;
+
+        while (cursor) {
+          const beatSaverSong = cursor.value;
+
+          if (beatSaverSong?.metadata?.characteristics) {
+            const beatMapsSong = convertOldBeatSaverToBeatMaps(beatSaverSong);
+            if (beatMapsSong) {
+              songsBeatMapsStore.put(beatMapsSong)
+
+              songCount++;
+            } else {
+              log.info(`Unable to convert, deleting a song`, 'DBFix');
+            }
+          } else {
+            log.info(`No metadata characteristics, skipping a song`, 'DBFix');
+          }
+
+          cursor = await cursor.continue();
+        }
+
+        const keyValueStore = tx.objectStore('key-value')
+        let allAppliedFixes = await keyValueStore.get(FIXES_KEY);
+        allAppliedFixes = allAppliedFixes && Array.isArray(allAppliedFixes) ? allAppliedFixes : [];
+        allAppliedFixes.push(fixName);
+        await keyValueStore.put(allAppliedFixes, FIXES_KEY);
+
+        log.info(`${songCount} BeatSaver song(s) converted`, 'DBFix')
+      });
+    }
+  },
 };
 
 export const setupDataFixes = async () => {
@@ -142,6 +184,6 @@ export const setupDataFixes = async () => {
   if (!neededFixes.length) return;
 
   for (let key of neededFixes) {
-    await allFixes[key].apply();
+    await allFixes[key].apply(key);
   }
 }

@@ -9,7 +9,7 @@ Provides additional features to [ScoreSaber](https://scoresaber.com). See the fe
 
 **Thank you all for the good reception of the project and all the kind words about it. We will see what the future brings.**
 
-### Update (2021-08-05): Turns out this happened earlier than I thought. After the BeatSaver API change, the project will no longer be patched to support the new API. 
+### Update (2021-08-05): Turns out this happened earlier than I thought. ~~After the BeatSaver API change, the project will no longer be patched to support the new API.~~ And yet not ;-) I was asked to do this, so I added support for the new Beat Saver API. And at this point, support for the project is really ending. :-) 
 
 I invite everyone to check out my new project at **[ssr.motzel.dev](https://ssr.motzel.dev)**, which already supports the new API.
 
