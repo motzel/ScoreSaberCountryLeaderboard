@@ -220,7 +220,7 @@ export const convertOldBeatSaverToBeatMaps = song => {
 
 async function cacheSongInfo(songInfo) {
     const hash = songInfo?.versions?.[0].hash;
-    const key = songInfo?.versions?.[0].key;
+    const key = songInfo?.id;
 
     if (!hash || !key || !hash.toLowerCase) return null;
 

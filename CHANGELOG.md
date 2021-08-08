@@ -5,8 +5,11 @@
 [!] bug fix
 [*] other changes
 
+1.8.1
+- [!] fix support for a new Beat Saver API
+
 1.8.0
-- [+] add support for new Beat Saver API
+- [+] add support for a new Beat Saver API
 
 1.7.2
 - [+] add filtering the leaderboard by country players along with friends from the country, thx Omurky
