@@ -74,7 +74,7 @@ export const getSongByHash = async (hash, forceUpdate = false, cacheOnly = false
             return Promise.resolve(null)
         }
 
-        return cacheSongInfo(songInfo);
+        return cacheSongInfo(songInfo, hash);
     } catch (err) {
         if (err instanceof TypeError && err.toString().indexOf('Failed to fetch') >= 0) {
             try {await prolongSuspension(bsSuspension)} catch {}
@@ -218,8 +218,8 @@ export const convertOldBeatSaverToBeatMaps = song => {
     }
 }
 
-async function cacheSongInfo(songInfo) {
-    const hash = songInfo?.versions?.[0].hash;
+async function cacheSongInfo(songInfo, originalHash) {
+    const hash = originalHash?.length ? originalHash : songInfo?.versions?.[0].hash;
     const key = songInfo?.id;
 
     if (!hash || !key || !hash.toLowerCase) return null;

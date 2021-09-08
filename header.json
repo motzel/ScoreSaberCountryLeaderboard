@@ -1,8 +1,8 @@
 {
   "name": "ScoreSaber country leaderboard",
   "namespace": "https://motzel.dev",
-  "version": "1.8.2",
-  "versionNumeric": 10802000,
+  "version": "1.8.3",
+  "versionNumeric": 10803000,
   "description": "ScoreSaber Enhancements",
   "author": "motzel",
   "icon": "https://scoresaber.com/imports/images/logo.ico",

@@ -5,6 +5,9 @@
 [!] bug fix
 [*] other changes
 
+1.8.3
+- [!] beat saver duplicated keys fix, thx Rocker
+
 1.8.2
 - [!] update beat saver map url, thx Rocker
 
