@@ -353,6 +353,15 @@ async function init() {
             return;
         }
 
+        if (unsafeWindow) {
+            if(unsafeWindow.ssplInitalizing) {
+                log.info("It looks like initialization has already started, skipping.");
+                return;
+            }
+
+            unsafeWindow.ssplInitalizing = true;
+        }
+
         await initNodeSync();
 
         new Message({
