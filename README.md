@@ -1,6 +1,12 @@
 # ScoreSaber Country Leaderboard
 Provides additional features to [ScoreSaber](https://scoresaber.com). See the feature list below.
 
+## The project has been closed.
+
+### As of 2021-10-20, the new ScoreSaber API is ready and will likely be made public in the near future. Once the old API is disabled, this userscript will no longer work, nor will it be updated anymore.
+
+Most features of this userscript are already supported in my new [ScoreSaber Reloaded](https://github.com/motzel/scoresaber-reloaded) project. Check it out if you enjoyed this one.
+
 ## DEPRECATION NOTICE
 
 ### As of 2021-06-25, it looks like the project will soon be dead.
